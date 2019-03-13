@@ -494,7 +494,11 @@ namespace CloacaInterpreter
                             var list = new List<object>();
                             for (int i = listSize - 1; i >= 0; --i)
                             {
-                                list.Add(DataStack.Pop());
+                                list.Add(null);
+                            }
+                            for (int i = listSize - 1; i >= 0; --i)
+                            {
+                                list[i] = DataStack.Pop();
                             }
                             DataStack.Push(list);
                         }

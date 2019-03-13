@@ -64,6 +64,19 @@ namespace CloacaTests
         }
 
         [Test]
+        public void ListReadWrite()
+        {
+            var interpreter = runProgram("a = [1, 2]\n" +
+                "b = a[0]\n" +
+                "a[1] = 200\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            Assert.That(variables["a"], Is.EquivalentTo(new List<object> { new BigInteger(1), new BigInteger(200) }));
+            Assert.That(variables.ContainsKey("b"));
+            Assert.That(variables["b"], Is.EqualTo(new BigInteger(1)));
+        }
+
+        [Test]
         public void DeclareBasicTuple()
         {
             // The peephole optimizer for reference Python code can turn the constants straight into a tuple.

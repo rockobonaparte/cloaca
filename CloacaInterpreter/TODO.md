@@ -22,8 +22,8 @@ General
 * Compound data structures
   * Lists
     * [DONE] Parse list
-    * Subscript read
-    * Subscript write
+    * [DONE] Subscript read
+    * [DONE] Subscript write
     * Subscript with variable
   * Tuples
     * [DONE] Parse tuple
@@ -31,8 +31,8 @@ General
   * Sets
   * Dictionary
     * [DONE] Parse dictionary
-    * Set value
-    * get value
+    * [DONE] Set value
+    * [DONE] get value
     * [DONE] Implement default using BUILD_CONST_KEY_MAP (even if not used)
     * [DONE] Implement default using BUILD_MAP
       * You have to use this when the names are dynamically generated
@@ -87,7 +87,6 @@ At this point you should start trying to embed it and suffer it.
 
 
 Tech debt:
-* Switch to "expr cascade" as shown in Python3.g4
 * Implement BYTES_LITERAL
 * Implement full atom rule
   * Requires yield
