@@ -8,11 +8,8 @@ namespace LanguageImplementation
     /// </summary>
     public class WrappedCodeObject
     {
-        public MethodInfo methodInfo
-        {
-            get;
-            protected set;
-        }
+        private MethodInfo methodInfo;
+        private object instance;
 
         public int ArgCount
         {
@@ -40,16 +37,37 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public WrappedCodeObject(string interpreterName, MethodInfo methodInfo)
+        public object Call(object[] args)
+        {
+            return methodInfo.Invoke(instance, args);
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo)
         {
             this.methodInfo = methodInfo;
-            Name = interpreterName;
+            Name = nameInsideInterpreter;
+            instance = null;
         }
 
         public WrappedCodeObject(MethodInfo methodInfo)
         {
             this.methodInfo = methodInfo;
             Name = methodInfo.Name;
+            instance = null;
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance)
+        {
+            this.methodInfo = methodInfo;
+            Name = nameInsideInterpreter;
+            this.instance = instance;
+        }
+
+        public WrappedCodeObject(MethodInfo methodInfo, object instance)
+        {
+            this.methodInfo = methodInfo;
+            Name = methodInfo.Name;
+            this.instance = instance;
         }
     }
 
