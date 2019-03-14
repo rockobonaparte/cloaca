@@ -187,6 +187,10 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(null, cursor - 1, "STORE_SUBSCR", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.BUILD_CLASS:
+                        disassembly += disassembleLine(null, cursor - 1, "LOAD_BUILD_CLASS", null, null);
+                        cursor += 1;
+                        break;
                     default:
                         throw new Exception("Unexpected opcode to disassemble: " + code[cursor]);
                 }

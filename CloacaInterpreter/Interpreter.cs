@@ -566,6 +566,11 @@ namespace CloacaInterpreter
                             }
                         }
                         break;
+                    case ByteCodes.BUILD_CLASS:
+                        {
+
+                        }
+                        break;
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);
                 }

@@ -1,7 +1,58 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace LanguageImplementation
 {
+    /// <summary>
+    /// Represents callable code outside of the scope of the interpreter.
+    /// </summary>
+    public class WrappedCodeObject
+    {
+        public MethodInfo methodInfo
+        {
+            get;
+            protected set;
+        }
+
+        public int ArgCount
+        {
+            get
+            {
+                return methodInfo.GetParameters().Length;
+            }
+        }
+
+        public List<string> ArgVarNames
+        {
+            get
+            {
+                List<string> variableNames = new List<string>();
+                foreach(var paramInfo in methodInfo.GetParameters())
+                {
+                    variableNames.Add(paramInfo.Name);
+                }
+                return variableNames;
+            }
+        }
+
+        public string Name
+        {
+            get; protected set;
+        }
+
+        public WrappedCodeObject(string interpreterName, MethodInfo methodInfo)
+        {
+            this.methodInfo = methodInfo;
+            Name = interpreterName;
+        }
+
+        public WrappedCodeObject(MethodInfo methodInfo)
+        {
+            this.methodInfo = methodInfo;
+            Name = methodInfo.Name;
+        }
+    }
+
     public class CodeObject
     {
         //'co_argcount', 'co_cellvars', 'co_code', 'co_consts', 'co_filename',
