@@ -269,13 +269,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var variableName = context.test()[0].or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
         if (maybeAtom.trailer().Length > 0)
         {
-            // Order to push on stack: assignment value (should already be specified before we got here), container, index
-
-            variableName = maybeAtom.atom().GetText();
-            var idx = ActiveProgram.VarNames.IndexOf(variableName);
-            AddInstruction(ByteCodes.LOAD_FAST, idx);
-            base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
-            AddInstruction(ByteCodes.STORE_SUBSCR);
+            // Is it subscriptable?
+            if (maybeAtom.trailer()[0].subscriptlist() != null)
+            {
+                // Order to push on stack: assignment value (should already be specified before we got here), container, index
+                variableName = maybeAtom.atom().GetText();
+                var idx = ActiveProgram.VarNames.IndexOf(variableName);
+                AddInstruction(ByteCodes.LOAD_FAST, idx);
+                base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
+                AddInstruction(ByteCodes.STORE_SUBSCR);
+            }
+            else
+            {
+                // Function call?
+                base.Visit(context);
+            }
         }
         else
         {

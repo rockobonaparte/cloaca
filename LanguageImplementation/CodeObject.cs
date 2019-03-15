@@ -8,14 +8,19 @@ namespace LanguageImplementation
     /// </summary>
     public class WrappedCodeObject
     {
-        private MethodInfo methodInfo;
+        public MethodInfo MethodInfo
+        {
+            get;
+            private set;
+        }
+
         private object instance;
 
         public int ArgCount
         {
             get
             {
-                return methodInfo.GetParameters().Length;
+                return MethodInfo.GetParameters().Length;
             }
         }
 
@@ -24,7 +29,7 @@ namespace LanguageImplementation
             get
             {
                 List<string> variableNames = new List<string>();
-                foreach(var paramInfo in methodInfo.GetParameters())
+                foreach(var paramInfo in MethodInfo.GetParameters())
                 {
                     variableNames.Add(paramInfo.Name);
                 }
@@ -39,33 +44,33 @@ namespace LanguageImplementation
 
         public object Call(object[] args)
         {
-            return methodInfo.Invoke(instance, args);
+            return MethodInfo.Invoke(instance, args);
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo)
         {
-            this.methodInfo = methodInfo;
+            this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             instance = null;
         }
 
         public WrappedCodeObject(MethodInfo methodInfo)
         {
-            this.methodInfo = methodInfo;
+            this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             instance = null;
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance)
         {
-            this.methodInfo = methodInfo;
+            this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             this.instance = instance;
         }
 
         public WrappedCodeObject(MethodInfo methodInfo, object instance)
         {
-            this.methodInfo = methodInfo;
+            this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             this.instance = instance;
         }

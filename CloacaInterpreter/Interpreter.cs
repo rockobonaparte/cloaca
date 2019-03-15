@@ -410,19 +410,38 @@ namespace CloacaInterpreter
                                 args.Insert(0, DataStack.Pop());
                             }
 
-                            var functionToRun = (CodeObject)DataStack.Pop();
-                            Frame nextFrame = new Frame();
-                            nextFrame.Program = functionToRun;
-
-                            // Assigning argument's initial values.
-                            for (int argIdx = 0; argIdx < argCount; ++argIdx)
+                            object abstractFunctionToRun = DataStack.Pop();
+                            if (abstractFunctionToRun is WrappedCodeObject)
                             {
-                                nextFrame.Names.Add(nextFrame.Program.ArgVarNames[argIdx]);
-                                nextFrame.Locals.Add(args[argIdx]);
+                                // This is currently done very naively. No conversion of types between
+                                // Python and .NET. We're just starting to enable the plumbing before stepping
+                                // back and seeing what we got for all the trouble.
+                                var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
+                                object retVal = functionToRun.Call(args.ToArray());
+                                if(functionToRun.MethodInfo.ReturnType != typeof(void))
+                                {
+                                    DataStack.Push(retVal);
+                                }
+                                Cursor += 2;
                             }
+                            else
+                            {
+                                // Assuming it's a good-old-fashioned CodeObject
 
-                            Cursor += 2;                    // Resume at next instruction in this program.
-                            callStack.Push(nextFrame);      // nextFrame is now the active frame.
+                                var functionToRun = (CodeObject)abstractFunctionToRun;
+                                Frame nextFrame = new Frame();
+                                nextFrame.Program = functionToRun;
+
+                                // Assigning argument's initial values.
+                                for (int argIdx = 0; argIdx < argCount; ++argIdx)
+                                {
+                                    nextFrame.Names.Add(nextFrame.Program.ArgVarNames[argIdx]);
+                                    nextFrame.Locals.Add(args[argIdx]);
+                                }
+
+                                Cursor += 2;                    // Resume at next instruction in this program.
+                                callStack.Push(nextFrame);      // nextFrame is now the active frame.
+                            }
                             continue;
                         }
                     case ByteCodes.RETURN_VALUE:

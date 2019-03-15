@@ -46,6 +46,8 @@
   <ItemGroup>
     <Compile Include="CodeTests.cs" />
     <Compile Include="ConstantFactoryTests.cs" />
+    <Compile Include="EmbeddingTests.cs" />
+    <Compile Include="ObjectTests.cs" />
     <Compile Include="DataStructureTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBench.cs" />
