@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Collections.Generic;
 
@@ -68,6 +69,13 @@ namespace CloacaInterpreter
         private CodeObject rootProgram;
         private Stack<Frame> callStack;
         public bool DumpState;
+        
+        // Implementation of builtins.__build_class__
+        // TODO: Add params type to handle one or more base classes (inheritance test)
+        public void builtins__build_class(CodeObject func, string name)
+        {
+
+        }
 
         public Frame CurrentFrame
         {
@@ -587,7 +595,13 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BUILD_CLASS:
                         {
-
+                            Cursor += 1;
+                            // Push builtins.__build_class__ on to the datastack
+                            // TODO: Build and register these just once.
+                            Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null);
+                            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+                            var class_builder = new WrappedCodeObject("__build_class__", methodInfo, this);
+                            DataStack.Push(class_builder);
                         }
                         break;
                     default:

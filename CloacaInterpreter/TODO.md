@@ -58,7 +58,7 @@ General
   * Start to wrap data types as classes
 * Scheduler controlling interpreter to switch programs when one waits
 * Integration with parent runtime
-  * Call embedded C# function from script
+  * [DONE] Call embedded C# function from script
   * Call Python function through interpreter
   * Manage async call with waiting in interpreter
 * Serialization
@@ -73,6 +73,11 @@ General
   * clr library for .NET stuff
   * Import Unity stuff?
 * See if you can use that REPL helper module directly.
+
+
+Part 2: First, harden the code, but keep some of this in mind while doing that.
+
+
 * Strings (part 2)
   * % operator
   * format command
@@ -81,6 +86,9 @@ General
   * f-strings
   * docstrings (long strings)
   * Unit test that spins through all the major variations
+* Classes
+  * metaclasses
+  * Multiple inheritance
 
 At this point you should start trying to embed it and suffer it.
 
