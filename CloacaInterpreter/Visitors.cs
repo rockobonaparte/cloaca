@@ -682,5 +682,33 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
+    {                
+        var className = context.NAME().GetText();
+
+        // Load a dummy constructor for now.
+        CodeObject constructor = new CodeObject(new byte[0]);
+        constructor.Name = className;
+
+        // We don't recognize the arglist yet (inheritance) for the class
+        ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
+
+        ActiveProgram.Constants.Add(constructor);
+        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
+
+        ActiveProgram.Constants.Add(className);
+        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
+
+        AddInstruction(ByteCodes.MAKE_FUNCTION, 0);
+
+        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
+        AddInstruction(ByteCodes.CALL_FUNCTION, 2);
+
+        ActiveProgram.VarNames.Add(className);
+        AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1);
+
+        return null;
+    }
+
 }
 

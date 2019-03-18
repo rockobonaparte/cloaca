@@ -4,6 +4,8 @@
 General
 * Try to create a traverser to get down to atom_expr
   for assignments_
+* Look into what happens to constants if overridden (two classes with same name?)
+* A lot of the disassembly lines are off by one
 
 * Strings (part 1)
   * [DONE] Parse strings

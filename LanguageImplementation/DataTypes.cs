@@ -39,4 +39,15 @@ namespace LanguageImplementation
             this.values = values;
         }
     }
+
+    public class PyClass
+    {
+        public string Name;
+        public CodeObject __init__;
+        public PyClass(string name, CodeObject __init__)
+        {
+            Name = name;
+            this.__init__ = __init__;
+        }
+    }
 }

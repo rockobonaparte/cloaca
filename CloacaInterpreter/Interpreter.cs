@@ -72,9 +72,9 @@ namespace CloacaInterpreter
         
         // Implementation of builtins.__build_class__
         // TODO: Add params type to handle one or more base classes (inheritance test)
-        public void builtins__build_class(CodeObject func, string name)
+        public PyClass builtins__build_class(CodeObject func, string name)
         {
-
+            return new PyClass(name, func);
         }
 
         public Frame CurrentFrame
@@ -597,7 +597,7 @@ namespace CloacaInterpreter
                         {
                             Cursor += 1;
                             // Push builtins.__build_class__ on to the datastack
-                            // TODO: Build and register these just once.
+                            // TODO: Build and register these built-ins just once.
                             Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null);
                             var methodInfo = ((MethodCallExpression)expr.Body).Method;
                             var class_builder = new WrappedCodeObject("__build_class__", methodInfo, this);
