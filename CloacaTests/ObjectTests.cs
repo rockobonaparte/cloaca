@@ -23,15 +23,15 @@ namespace CloacaTests
         public void DeclareConstructor()
         {
             runBasicTest("a = 1\n" +
-                                         "class Foo:\n" +
-                                         "   def Foo(self):\n" +
-                                         "      a = 2\n", 
-                                         new Dictionary<string, object>(),
-                                         new Dictionary<string, object>
-                                         {
-                                                { "a", new BigInteger(2) }
-                                         },
-                                         1);
+                         "class Foo:\n" +
+                         "   def __init__(self):\n" +
+                         "      a = 2\n", 
+                         new Dictionary<string, object>(),
+                         new Dictionary<string, object>
+                         {
+                             { "a", new BigInteger(2) }
+                         },
+                         1);
         }
 
         [Test]
@@ -39,7 +39,7 @@ namespace CloacaTests
         public void DeclareClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
-                                         "   def Foo(self):\n" +
+                                         "   def __init__(self):\n" +
                                          "      self.a = 1\n" +
                                          "\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
@@ -51,7 +51,7 @@ namespace CloacaTests
         public void AccessClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
-                                         "   def Foo(self):\n" +
+                                         "   def __init__(self):\n" +
                                          "      self.a = 1\n" +
                                          "\n" +
                                          "bar = Foo()\n" + 
@@ -65,7 +65,7 @@ namespace CloacaTests
         public void AccessClassMethod()
         {
             var interpreter = runProgram("class Foo:\n" +
-                                         "   def Foo(self):\n" +
+                                         "   def __init__(self):\n" +
                                          "      self.a = 1\n" +
                                          "\n" +
                                          "   def change_a(new_a):\n"+
