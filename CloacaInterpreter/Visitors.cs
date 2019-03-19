@@ -571,46 +571,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    //public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
-    //{
-    //    // Calling a function--I hope.
-    //    var funcname = context.atom().NAME().GetText();
-
-    //    var funcIdx = findFunctionIndex(funcname);
-    //    if(funcIdx < 0)
-    //    {
-    //        throw new Exception("Unknown function: " + funcname);
-    //    }
-
-    //    AddInstruction(ByteCodes.LOAD_NAME, funcIdx);
-
-    //    // TODO: Expand argument to be any kind of statement since people can run all kinds of code as arguments to a function
-    //    int argIdx = 0;
-    //    if (context.trailer(0).arglist() != null)
-    //    {
-    //        for (argIdx = 0; context.trailer(0).arglist().argument(argIdx) != null; ++argIdx)
-    //        {
-    //            base.Visit(context.trailer(0).arglist().argument(argIdx));
-    //        }
-    //    }
-
-    //    AddInstruction(ByteCodes.CALL_FUNCTION, argIdx);
-    //    return null;
-    //}
-
-    //public override object VisitArgument([NotNull] CloacaParser.ArgumentContext context)
-    //{
-    //    if (context.NAME() != null)
-    //    {
-    //        LoadVariable(context);
-    //    }
-    //    else
-    //    {
-    //        LoadConstantNumber(context);
-    //    }
-    //    return null;
-    //}
-
     public override object VisitComparison([NotNull] CloacaParser.ComparisonContext context)
     {
         // This might just be a pass-through to greener pastures (atoms). If no operator
@@ -686,12 +646,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {                
         var className = context.NAME().GetText();
 
-        // Load a dummy constructor for now.
-        CodeObject constructor = new CodeObject(new byte[0]);
-        constructor.Name = className;
-
         // We don't recognize the arglist yet (inheritance) for the class
         ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
+
+        // TODO: Need a way to associate the methods with the class.
+        // This method of plucking out the constructor is ... not quite it.
+        if (context.suite() != null)
+        {
+            Visit(context.suite());
+        }
+
+        CodeObject constructor = null;
+        int constructorIdx = findFunctionIndex("__init__");
+        if(constructorIdx >= 0)
+        {
+            constructor = (CodeObject) ActiveProgram.Constants[constructorIdx];
+        }
+        else
+        {
+            // Load a dummy constructor for now.
+            constructor = new CodeObject(new byte[0]);
+            constructor.Name = className;
+        }
 
         ActiveProgram.Constants.Add(constructor);
         AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);

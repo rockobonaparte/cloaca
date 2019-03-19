@@ -434,9 +434,18 @@ namespace CloacaInterpreter
                             }
                             else
                             {
-                                // Assuming it's a good-old-fashioned CodeObject
+                                CodeObject functionToRun = null;
+                                if(abstractFunctionToRun is PyClass)
+                                {
+                                    var asClass = (PyClass)abstractFunctionToRun;
+                                    functionToRun = asClass.__init__;
+                                }
+                                else
+                                {
+                                    // Assuming it's a good-old-fashioned CodeObject
+                                    functionToRun = (CodeObject)abstractFunctionToRun;
+                                }
 
-                                var functionToRun = (CodeObject)abstractFunctionToRun;
                                 Frame nextFrame = new Frame();
                                 nextFrame.Program = functionToRun;
 

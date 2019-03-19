@@ -283,6 +283,22 @@ namespace CloacaTests
                 }, 1, new string[] { "foo" });
         }
 
+        [Test]
+        [Ignore("MUST FIX FIRST")]
+        public void UsingOuterScopeVariables()
+        {
+            string program =
+                "a = 1\n" +
+                "def foo():\n" +
+                "   a = 2\n" +
+                "foo()\n";
+
+            runBasicTest(program,
+                new Dictionary<string, object>(), new Dictionary<string, object>()
+                {
+                    { "a", new BigInteger(2) }
+                }, 1);
+        }
 
         [Test]
         public void IntIntFunction()

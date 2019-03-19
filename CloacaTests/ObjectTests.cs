@@ -19,19 +19,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Have not enabled custom class constructors yet")]
+        [Ignore("Doesn't work yet; a doesn't propagate back up")]
         public void DeclareConstructor()
         {
-            runBasicTest("a = 1\n" +
-                         "class Foo:\n" +
-                         "   def __init__(self):\n" +
-                         "      a = 2\n", 
-                         new Dictionary<string, object>(),
-                         new Dictionary<string, object>
-                         {
-                             { "a", new BigInteger(2) }
-                         },
-                         1);
+            var interpreter = runProgram("a = 1\n" +
+                                         "class Foo:\n" +
+                                         "   def __init__(self):\n" +
+                                         "      a = 2\n" +
+                                         "\n" +
+                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables["a"], Is.EqualTo(new BigInteger(2)));
         }
 
         [Test]

@@ -1,6 +1,8 @@
 ﻿Cloaca TODO
 ===========
 
+Current problem is that locals don't get propagated down in scope.
+
 General
 * Try to create a traverser to get down to atom_expr
   for assignments_
