@@ -102,6 +102,7 @@ namespace LanguageImplementation
         public int ArgCount;            // co_argcount
         public List<string> VarNames;   // co_varnames (not really; this should be a tuple used by LOAD_FAST/STORE_FAST
         public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LAOD_FAST/STORE_FAST
+        public List<string> Names;      // co_names. Referenced by LOAD/STORE_NAME and globals.
 
         public CodeByteArray Code;      // co_code
         public string Filename;         // co_filename
@@ -118,6 +119,7 @@ namespace LanguageImplementation
             VarNames = new List<string>();
             Constants = new List<object>();
             ArgVarNames = new List<string>();
+            Names = new List<string>();
         }
     }
 
@@ -169,6 +171,7 @@ namespace LanguageImplementation
             newCodeObj.VarNames = VarNames;
             newCodeObj.Constants = Constants;
             newCodeObj.ArgVarNames = ArgVarNames;
+            newCodeObj.Names = Names;
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {

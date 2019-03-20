@@ -68,6 +68,11 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(null, cursor - 1, "LOAD_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
+                    case ByteCodes.LOAD_GLOBAL:
+                        cursor += 1;
+                        disassembly += disassembleLine(null, cursor - 1, "LOAD_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        cursor += 2;
+                        break;
                     case ByteCodes.STORE_NAME:
                         cursor += 1;
                         disassembly += disassembleLine(null, cursor - 1, "STORE_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
@@ -76,6 +81,11 @@ namespace LanguageImplementation
                     case ByteCodes.STORE_FAST:
                         cursor += 1;
                         disassembly += disassembleLine(null, cursor - 1, "STORE_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        cursor += 2;
+                        break;
+                    case ByteCodes.STORE_GLOBAL:
+                        cursor += 1;
+                        disassembly += disassembleLine(null, cursor - 1, "STORE_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.COMPARE_OP:

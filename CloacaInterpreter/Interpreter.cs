@@ -40,7 +40,7 @@ namespace CloacaInterpreter
         public Stack<Block> BlockStack;
         public Stack<object> DataStack;
         public CodeObject Program;
-        public List<string> Names;
+        public List<string> LocalNames;
         public List<object> Locals;
 
         public Frame()
@@ -49,7 +49,7 @@ namespace CloacaInterpreter
             BlockStack = new Stack<Block>();
             DataStack = new Stack<object>();
             Program = null;
-            Names = new List<string>();
+            LocalNames = new List<string>();
             Locals = new List<object>();
         }
 
@@ -58,7 +58,7 @@ namespace CloacaInterpreter
             Cursor = 0;
             BlockStack = new Stack<Block>();
             DataStack = new Stack<object>();
-            Names = new List<string>();
+            LocalNames = new List<string>();
             Program = program;
             Locals = new List<object>();
         }
@@ -149,7 +149,7 @@ namespace CloacaInterpreter
         {
             get
             {
-                return callStack.Peek().Names;
+                return callStack.Peek().LocalNames;
             }
         }
 
@@ -267,6 +267,39 @@ namespace CloacaInterpreter
                         }
                         Cursor += 2;
                         break;
+                    case ByteCodes.STORE_GLOBAL:
+                        {
+                            {
+                                Cursor += 1;
+                                var globalIdx = CodeBytes.GetUShort(Cursor);
+                                var globalName = Program.Names[globalIdx];
+
+                                bool foundVar = false;
+
+                                foreach (var stackFrame in callStack)
+                                {
+                                    // Skip current stack
+                                    if (stackFrame == CurrentFrame)
+                                    {
+                                        continue;
+                                    }
+
+                                    var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
+                                    if (nameIdx >= 0)
+                                    {
+                                        stackFrame.Locals[nameIdx] = DataStack.Pop();
+                                        foundVar = true;
+                                    }
+                                }
+
+                                if (!foundVar)
+                                {
+                                    throw new Exception("Global '" + globalName + "' was not found!");
+                                }
+                            }
+                            Cursor += 2;
+                            break;
+                        }
                     case ByteCodes.LOAD_NAME:
                         {
                             throw new NotImplementedException("LOAD_NAME is unsupported; we're still trying to figure out what it does");
@@ -278,6 +311,43 @@ namespace CloacaInterpreter
                         }
                         Cursor += 2;
                         break;
+                    case ByteCodes.LOAD_GLOBAL:
+                        {
+                            {
+                                Cursor += 1;
+                                var globalIdx = CodeBytes.GetUShort(Cursor);
+                                var globalName = Program.Names[globalIdx];
+
+                                object foundVar = null;
+
+                                foreach(var stackFrame in callStack)
+                                {
+                                    // Skip current stack
+                                    if(stackFrame == CurrentFrame)
+                                    {
+                                        continue;
+                                    }
+
+                                    var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
+                                    if(nameIdx >= 0)
+                                    {
+                                        foundVar = stackFrame.Locals[nameIdx];
+                                        break;
+                                    }                                        
+                                }
+
+                                if(foundVar != null)
+                                {
+                                    DataStack.Push(foundVar);
+                                }
+                                else
+                                {
+                                    throw new Exception("Global '" + globalName + "' was not found!");
+                                }
+                            }
+                            Cursor += 2;
+                            break;
+                        }
                     case ByteCodes.WAIT:
                         {
                             keepRunning = false;
@@ -452,12 +522,12 @@ namespace CloacaInterpreter
                                 // Assigning argument's initial values.
                                 for (int argIdx = 0; argIdx < argCount; ++argIdx)
                                 {
-                                    nextFrame.Names.Add(nextFrame.Program.ArgVarNames[argIdx]);
+                                    nextFrame.LocalNames.Add(nextFrame.Program.ArgVarNames[argIdx]);
                                     nextFrame.Locals.Add(args[argIdx]);
                                 }
                                 for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
                                 {
-                                    nextFrame.Names.Add(nextFrame.Program.VarNames[varIndex]);
+                                    nextFrame.LocalNames.Add(nextFrame.Program.VarNames[varIndex]);
                                     nextFrame.Locals.Add(null);
                                 }
 

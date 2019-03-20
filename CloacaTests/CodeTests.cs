@@ -300,15 +300,31 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Globals will be implemented next")]
         public void InnerGlobal()
         {
             string program =
                 "a = 1\n" +
                 "def foo():\n" +
-                "   global a" +
+                "   global a\n" +
                 "   a = 2\n" +
                 "foo()\n";
+
+            runBasicTest(program,
+                new Dictionary<string, object>(), new Dictionary<string, object>()
+                {
+                    { "a", new BigInteger(2) }
+                }, 1, new string[] { "foo" });
+        }
+
+        [Test]
+        public void ImplicitlyUsesGlobal()
+        {
+            string program =
+                "a = 1\n" +
+                "def foo():\n" +
+                "   b = a + 1\n" +
+                "   return b\n" +
+                "a = foo()\n";
 
             runBasicTest(program,
                 new Dictionary<string, object>(), new Dictionary<string, object>()

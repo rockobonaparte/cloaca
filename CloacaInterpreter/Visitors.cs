@@ -55,6 +55,55 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return ActiveProgram.Code.Count;
     }
 
+    private void generateLoadForVariable(string variableName)
+    {
+        // If it's in VarNames, we use it from there. If not, 
+        // we assume it's global and deal with it at run time if
+        // we can't find it.
+        var idx = ActiveProgram.VarNames.IndexOf(variableName);
+        if (idx >= 0)
+        {
+            AddInstruction(ByteCodes.LOAD_FAST, idx);
+            return;
+        }
+
+        var nameIdx = ActiveProgram.Names.IndexOf(variableName);
+        if(nameIdx >= 0)
+        {
+            AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx);
+            return;
+        }
+        else
+        {
+            ActiveProgram.Names.Add(variableName);
+            AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1);
+            return;
+        }
+    }
+
+    private void generateStoreForVariable(string variableName)
+    {
+        var nameIdx = ActiveProgram.Names.IndexOf(variableName);
+        if (nameIdx >= 0)
+        {
+            AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx);
+        }
+        else
+        {
+            var idx = ActiveProgram.VarNames.IndexOf(variableName);
+            if (idx >= 0)
+            {
+                AddInstruction(ByteCodes.STORE_FAST, idx);
+            }
+            else
+            {
+                ActiveProgram.VarNames.Add(variableName);
+                idx = ActiveProgram.VarNames.Count - 1;
+                AddInstruction(ByteCodes.STORE_FAST, idx);
+            }
+        }
+    }
+
     /// <summary>
     /// Add an instruction to the end of the active program.
     /// </summary>
@@ -124,32 +173,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    //public override object VisitParens([NotNull] CloacaParser.ParensContext context)
-    //{
-    //    return Visit(context.expr());
-    //}
-
-    // Return false if variable not found
-    private void LoadVariable(RuleContext context)
-    {
-        var variableName = context.GetText();
-        //var idx = ActiveProgram.ArgVarNames.IndexOf(variableName);
-        //if (idx >= 0)
-        //{
-        //    AddInstruction(ByteCodes.LOAD_FAST, idx);
-        //    return;
-        //}
-
-        var idx = ActiveProgram.VarNames.IndexOf(variableName);
-        if (idx >= 0)
-        {
-            AddInstruction(ByteCodes.LOAD_FAST, idx);
-            return;
-        }
-
-        throw new ParseException("Use of undeclared variable: " + variableName);
-    }
-
     private void LoadConstantNumber(RuleContext context)
     {
         ActiveProgram.Constants.Add(ConstantsFactory.CreateNumber(context));
@@ -166,7 +189,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            LoadVariable(context);
+            generateLoadForVariable(context.GetText());
         }
         return null;
     }
@@ -224,11 +247,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    //public override object VisitAtomCurlyBrackets([NotNull] CloacaParser.AtomCurlyBracketsContext context)
-    //{
-    //    // Assuming a dictionary!
-    //    return null;
-    //}
+    public override object VisitGlobal_stmt([NotNull] CloacaParser.Global_stmtContext context)
+    {
+        for(int name_i = 0; name_i < context.NAME().Length; ++name_i)
+        {
+            var name = context.NAME(name_i).GetText();
+            if (ActiveProgram.Names.IndexOf(name) < 0)
+            {
+                ActiveProgram.Names.Add(name);
+            }
+        }
+        return null;
+    }
 
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
     {
@@ -274,8 +304,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 // Order to push on stack: assignment value (should already be specified before we got here), container, index
                 variableName = maybeAtom.atom().GetText();
-                var idx = ActiveProgram.VarNames.IndexOf(variableName);
-                AddInstruction(ByteCodes.LOAD_FAST, idx);
+                generateLoadForVariable(variableName);
                 base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
                 AddInstruction(ByteCodes.STORE_SUBSCR);
             }
@@ -294,14 +323,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 return null;
             }
 
-            // Local (store fast)
-            var idx = ActiveProgram.VarNames.IndexOf(variableName);
-            if (idx < 0)
-            {
-                ActiveProgram.VarNames.Add(variableName);
-                idx = ActiveProgram.VarNames.Count - 1;
-            }
-            AddInstruction(ByteCodes.STORE_FAST, idx);
+            // Store value
+            generateStoreForVariable(variableName);
         }
         return null;
     }
