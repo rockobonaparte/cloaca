@@ -455,6 +455,11 @@ namespace CloacaInterpreter
                                     nextFrame.Names.Add(nextFrame.Program.ArgVarNames[argIdx]);
                                     nextFrame.Locals.Add(args[argIdx]);
                                 }
+                                for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
+                                {
+                                    nextFrame.Names.Add(nextFrame.Program.VarNames[varIndex]);
+                                    nextFrame.Locals.Add(null);
+                                }
 
                                 Cursor += 2;                    // Resume at next instruction in this program.
                                 callStack.Push(nextFrame);      // nextFrame is now the active frame.

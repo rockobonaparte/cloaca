@@ -25,6 +25,7 @@ namespace CloacaTests
             var interpreter = runProgram("a = 1\n" +
                                          "class Foo:\n" +
                                          "   def __init__(self):\n" +
+                                         "      global a\n" +
                                          "      a = 2\n" +
                                          "\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);

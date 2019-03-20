@@ -284,8 +284,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("MUST FIX FIRST")]
-        public void UsingOuterScopeVariables()
+        public void InnerAndOuterScopesLocal()
         {
             string program =
                 "a = 1\n" +
@@ -296,8 +295,26 @@ namespace CloacaTests
             runBasicTest(program,
                 new Dictionary<string, object>(), new Dictionary<string, object>()
                 {
+                    { "a", new BigInteger(1) }
+                }, 1, new string[] { "foo" });
+        }
+
+        [Test]
+        [Ignore("Globals will be implemented next")]
+        public void InnerGlobal()
+        {
+            string program =
+                "a = 1\n" +
+                "def foo():\n" +
+                "   global a" +
+                "   a = 2\n" +
+                "foo()\n";
+
+            runBasicTest(program,
+                new Dictionary<string, object>(), new Dictionary<string, object>()
+                {
                     { "a", new BigInteger(2) }
-                }, 1);
+                }, 1, new string[] { "foo" });
         }
 
         [Test]
