@@ -64,7 +64,7 @@ namespace CloacaInterpreter
         }
     }
 
-    public class Interpreter
+    public class Interpreter: IInterpreter
     {
         private CodeObject rootProgram;
         private Stack<Frame> callStack;
@@ -74,7 +74,7 @@ namespace CloacaInterpreter
         // TODO: Add params type to handle one or more base classes (inheritance test)
         public PyClass builtins__build_class(CodeObject func, string name)
         {
-            return new PyClass(name, func);
+            return new PyClass(name, func, this);
         }
 
         public Frame CurrentFrame
@@ -101,17 +101,17 @@ namespace CloacaInterpreter
             }
         }
 
-        public int Cursor
-        {
-            get
-            {
-                return callStack.Peek().Cursor;
-            }
-            set
-            {
-                callStack.Peek().Cursor = value;
-            }
-        }
+        //public int Cursor
+        //{
+        //    get
+        //    {
+        //        return callStack.Peek().Cursor;
+        //    }
+        //    set
+        //    {
+        //        callStack.Peek().Cursor = value;
+        //    }
+        //}
 
         public CodeObject Program
         {
@@ -168,6 +168,45 @@ namespace CloacaInterpreter
             get; private set;
         }
 
+        /// <summary>
+        /// Retains the current frame state but enters a new child CodeObject. This is equivalent to
+        /// using a CALL_FUNCTION opcode to descene into a subroutine or similar, but can be invoked
+        /// external into the interpreter. It is used for inner, coordinating code to call back into
+        /// the interpreter to get results. For example, this is used in object creation to invoke
+        /// __new__ and __init__.
+        /// </summary>
+        /// <param name="functionToRun">The code object to call into</param>
+        /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
+        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
+        public object CallInto(CodeObject functionToRun, object[] args)
+        {
+            Frame nextFrame = new Frame();
+            nextFrame.Program = functionToRun;
+
+            // Assigning argument's initial values.
+            for (int argIdx = 0; argIdx < args.Length; ++argIdx)
+            {
+                nextFrame.LocalNames.Add(nextFrame.Program.ArgVarNames[argIdx]);
+                nextFrame.Locals.Add(args[argIdx]);
+            }
+            for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
+            {
+                nextFrame.LocalNames.Add(nextFrame.Program.VarNames[varIndex]);
+                nextFrame.Locals.Add(null);
+            }
+
+            callStack.Push(nextFrame);      // nextFrame is now the active frame.
+            Run();
+            if(DataStack.Count > 0)
+            {
+                return DataStack.Pop();
+            }
+            else
+            {
+                return null;
+            }            
+        }
+
         public Interpreter(CodeObject program)
         {
             this.rootProgram = program;
@@ -197,23 +236,19 @@ namespace CloacaInterpreter
             }
         }
 
-        public object Run()
+        public void Run()
         {
-            // If we terminated, then do nothing.
-            if(Terminated)
-            {
-                return DumpVariables();
-            }
+            int cursor = 0;
 
             bool keepRunning = true;
-            while(Cursor < Code.Length && keepRunning)
+            while(cursor < Code.Length && keepRunning)
             {
                 if(DumpState)
                 {
-                    Console.WriteLine(Dis.dis(callStack.Peek().Program, Cursor, 1));
+                    Console.WriteLine(Dis.dis(callStack.Peek().Program, cursor, 1));
                 }
 
-                var opcode = (ByteCodes)Code[Cursor];
+                var opcode = (ByteCodes)Code[cursor];
                 switch(opcode)
                 {
                     case ByteCodes.BINARY_ADD:
@@ -222,7 +257,7 @@ namespace CloacaInterpreter
                             dynamic left = DataStack.Pop();
                             DataStack.Push(left + right);
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.BINARY_SUBTRACT:
                         {
@@ -230,7 +265,7 @@ namespace CloacaInterpreter
                             dynamic left = DataStack.Pop();
                             DataStack.Push(left - right);
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.BINARY_MULTIPLY:
                         {
@@ -238,7 +273,7 @@ namespace CloacaInterpreter
                             dynamic left = DataStack.Pop();
                             DataStack.Push(left * right);
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.BINARY_DIVIDE:
                         {
@@ -246,14 +281,14 @@ namespace CloacaInterpreter
                             dynamic left = DataStack.Pop();
                             DataStack.Push(left / right);
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.LOAD_CONST:
                         {
-                            Cursor += 1;
-                            DataStack.Push(Program.Constants[CodeBytes.GetUShort(Cursor)]);
+                            cursor += 1;
+                            DataStack.Push(Program.Constants[CodeBytes.GetUShort(cursor)]);
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.STORE_NAME:
                         {
@@ -261,17 +296,17 @@ namespace CloacaInterpreter
                         }
                     case ByteCodes.STORE_FAST:
                         {
-                            Cursor += 1;
-                            var localIdx = CodeBytes.GetUShort(Cursor);
+                            cursor += 1;
+                            var localIdx = CodeBytes.GetUShort(cursor);
                             Locals[localIdx] = DataStack.Pop();
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.STORE_GLOBAL:
                         {
                             {
-                                Cursor += 1;
-                                var globalIdx = CodeBytes.GetUShort(Cursor);
+                                cursor += 1;
+                                var globalIdx = CodeBytes.GetUShort(cursor);
                                 var globalName = Program.Names[globalIdx];
 
                                 bool foundVar = false;
@@ -297,7 +332,7 @@ namespace CloacaInterpreter
                                     throw new Exception("Global '" + globalName + "' was not found!");
                                 }
                             }
-                            Cursor += 2;
+                            cursor += 2;
                             break;
                         }
                     case ByteCodes.LOAD_NAME:
@@ -306,16 +341,16 @@ namespace CloacaInterpreter
                         }
                     case ByteCodes.LOAD_FAST:
                         {
-                            Cursor += 1;
-                            DataStack.Push(Locals[CodeBytes.GetUShort(Cursor)]);
+                            cursor += 1;
+                            DataStack.Push(Locals[CodeBytes.GetUShort(cursor)]);
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.LOAD_GLOBAL:
                         {
                             {
-                                Cursor += 1;
-                                var globalIdx = CodeBytes.GetUShort(Cursor);
+                                cursor += 1;
+                                var globalIdx = CodeBytes.GetUShort(cursor);
                                 var globalName = Program.Names[globalIdx];
 
                                 object foundVar = null;
@@ -345,19 +380,19 @@ namespace CloacaInterpreter
                                     throw new Exception("Global '" + globalName + "' was not found!");
                                 }
                             }
-                            Cursor += 2;
+                            cursor += 2;
                             break;
                         }
                     case ByteCodes.WAIT:
                         {
                             keepRunning = false;
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.COMPARE_OP:
                         {
-                            Cursor += 1;
-                            var compare_op = (CompareOps)Program.Code.GetUShort(Cursor);
+                            cursor += 1;
+                            var compare_op = (CompareOps)Program.Code.GetUShort(cursor);
                             dynamic right = DataStack.Pop();
                             dynamic left = DataStack.Pop();
                             switch (compare_op)
@@ -397,39 +432,39 @@ namespace CloacaInterpreter
                                     throw new Exception("Unexpected comparision operation opcode: " + compare_op);
                             }
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_TRUE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
+                            cursor += 1;
+                            var jumpPosition = CodeBytes.GetUShort(cursor);
                             var conditional = (bool)DataStack.Pop();
                             if (conditional)
                             {
-                                Cursor = jumpPosition;
+                                cursor = jumpPosition;
                                 continue;
                             }
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_FALSE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
+                            cursor += 1;
+                            var jumpPosition = CodeBytes.GetUShort(cursor);
                             var conditional = (bool)DataStack.Pop();
                             if(!conditional)
                             {
-                                Cursor = jumpPosition;
+                                cursor = jumpPosition;
                                 continue;
                             }
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.SETUP_LOOP:
                         {
-                            Cursor += 1;
-                            var loopResumptionPoint = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            cursor += 1;
+                            var loopResumptionPoint = CodeBytes.GetUShort(cursor);
+                            cursor += 2;
                             BlockStack.Push(new Block(ByteCodes.SETUP_LOOP, loopResumptionPoint, DataStack.Count));
                         }
                         break;
@@ -443,40 +478,40 @@ namespace CloacaInterpreter
                                 DataStack.Pop();
                             }
                         }
-                        Cursor += 1;
+                        cursor += 1;
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
-                            Cursor = jumpPosition;
+                            cursor += 1;
+                            var jumpPosition = CodeBytes.GetUShort(cursor);
+                            cursor = jumpPosition;
                             continue;
                         }
                     case ByteCodes.JUMP_FORWARD:
                         {
-                            Cursor += 1;
-                            var jumpOffset = CodeBytes.GetUShort(Cursor);
+                            cursor += 1;
+                            var jumpOffset = CodeBytes.GetUShort(cursor);
                             
                             // Offset is based off of the NEXT instruction so add one.
-                            Cursor += jumpOffset + 2;
+                            cursor += jumpOffset + 2;
                             continue;
                         }
                     case ByteCodes.MAKE_FUNCTION:
                         {
                             // TOS-1 is the code object
                             // TOS is the function's qualified name
-                            Cursor += 1;
-                            var functionOpcode = CodeBytes.GetUShort(Cursor);             // Currently not using.
+                            cursor += 1;
+                            var functionOpcode = CodeBytes.GetUShort(cursor);             // Currently not using.
                             string qualifiedName = (string)DataStack.Pop();
                             CodeObject functionCode = (CodeObject)DataStack.Pop();
                             DataStack.Push(functionCode);
                         }
-                        Cursor += 2;
+                        cursor += 2;
                         break;
                     case ByteCodes.CALL_FUNCTION:
                         {
-                            Cursor += 1;
-                            var argCount = CodeBytes.GetUShort(Cursor);             // Currently not using.
+                            cursor += 1;
+                            var argCount = CodeBytes.GetUShort(cursor);             // Currently not using.
 
                             // This is annoying. The arguments are at the top of the stack while
                             // the function is under them, but we need the function to assign the
@@ -500,12 +535,12 @@ namespace CloacaInterpreter
                                 {
                                     DataStack.Push(retVal);
                                 }
-                                Cursor += 2;
+                                cursor += 2;
                             }
                             else
                             {
                                 CodeObject functionToRun = null;
-                                if(abstractFunctionToRun is PyClass)
+                                if (abstractFunctionToRun is PyClass)
                                 {
                                     var asClass = (PyClass)abstractFunctionToRun;
                                     functionToRun = asClass.__init__;
@@ -516,23 +551,12 @@ namespace CloacaInterpreter
                                     functionToRun = (CodeObject)abstractFunctionToRun;
                                 }
 
-                                Frame nextFrame = new Frame();
-                                nextFrame.Program = functionToRun;
-
-                                // Assigning argument's initial values.
-                                for (int argIdx = 0; argIdx < argCount; ++argIdx)
+                                var retVal = CallInto(functionToRun, args.ToArray());
+                                if(retVal != null)
                                 {
-                                    nextFrame.LocalNames.Add(nextFrame.Program.ArgVarNames[argIdx]);
-                                    nextFrame.Locals.Add(args[argIdx]);
+                                    DataStack.Push(retVal);
                                 }
-                                for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
-                                {
-                                    nextFrame.LocalNames.Add(nextFrame.Program.VarNames[varIndex]);
-                                    nextFrame.Locals.Add(null);
-                                }
-
-                                Cursor += 2;                    // Resume at next instruction in this program.
-                                callStack.Push(nextFrame);      // nextFrame is now the active frame.
+                                cursor += 2;                    // Resume at next instruction in this program.                                
                             }
                             continue;
                         }
@@ -554,9 +578,9 @@ namespace CloacaInterpreter
                         }
                     case ByteCodes.BUILD_TUPLE:
                         {
-                            Cursor += 1;
-                            var tupleCount = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            cursor += 1;
+                            var tupleCount = CodeBytes.GetUShort(cursor);
+                            cursor += 2;
                             object[] tuple = new object[tupleCount];
                             for(int i = tupleCount-1; i >= 0; --i)
                             {
@@ -567,9 +591,9 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BUILD_MAP:
                         {
-                            Cursor += 1;
-                            var dictSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            cursor += 1;
+                            var dictSize = CodeBytes.GetUShort(cursor);
+                            cursor += 2;
                             var dict = new Dictionary<object, object>();
                             for(int i = 0; i < dictSize; ++i)
                             {
@@ -585,9 +609,9 @@ namespace CloacaInterpreter
                             // NOTE: Our code visitor doesn't generate this opcode.
                             // Top of a stack is the tuple for keys. Operand is how many values to pop off of the
                             // stack, which is kind of interesting since the tuple length should imply that...
-                            Cursor += 1;
-                            var dictSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            cursor += 1;
+                            var dictSize = CodeBytes.GetUShort(cursor);
+                            cursor += 2;
                             var dict = new Dictionary<object, object>();
                             var keyTuple = (PyTuple)DataStack.Pop();
                             for(int i = keyTuple.values.Length-1; i >= 0; --i)
@@ -599,9 +623,9 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BUILD_LIST:
                         {
-                            Cursor += 1;
-                            var listSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            cursor += 1;
+                            var listSize = CodeBytes.GetUShort(cursor);
+                            cursor += 2;
                             var list = new List<object>();
                             for (int i = listSize - 1; i >= 0; --i)
                             {
@@ -616,7 +640,7 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BINARY_SUBSCR:
                         {
-                            Cursor += 1;
+                            cursor += 1;
                             var index = DataStack.Pop();
                             var container = DataStack.Pop();
                             if(container is Dictionary<object, object>)
@@ -644,7 +668,7 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.STORE_SUBSCR:
                         {
-                            Cursor += 1;
+                            cursor += 1;
                             var rawIndex = DataStack.Pop();
                             var rawContainer = DataStack.Pop();
                             var toStore = DataStack.Pop();
@@ -679,7 +703,7 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BUILD_CLASS:
                         {
-                            Cursor += 1;
+                            cursor += 1;
                             // Push builtins.__build_class__ on to the datastack
                             // TODO: Build and register these built-ins just once.
                             Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null);
@@ -692,13 +716,6 @@ namespace CloacaInterpreter
                         throw new Exception("Unexpected opcode: " + opcode);
                 }
             }
-
-            if (Cursor >= Code.Length)
-            {
-                Terminated = true;
-            }
-
-            return DumpVariables();
         }
     }
 }

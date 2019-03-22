@@ -19,6 +19,16 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Doesn't work yet, but starting to fill in. This should be the next object unit test to pass.")]
+        public void DeclareAndCreateClass()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   pass\n" +
+                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            Assert.That(interpreter.DumpVariables(), Contains.Key("bar"));
+        }
+
+        [Test]
         [Ignore("Doesn't work yet; a doesn't propagate back up")]
         public void DeclareConstructor()
         {

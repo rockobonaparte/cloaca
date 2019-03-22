@@ -49,11 +49,19 @@ namespace CloacaTests
             Dictionary<string, object> variables = null;
             int runCount = 0;
 
-            while (!interpreter.Terminated)
-            {
-                variables = (Dictionary<string, object>)interpreter.Run();
-                runCount += 1;
-            }
+            // This was busted apart when the interpreter was exposed to injected calls.
+            // TODO: Re-enable to get those juicy coroutines!
+            //while (!interpreter.Terminated)
+            //{
+            //    interpreter.Run();
+            //    runCount += 1;
+            //}
+
+            // Fallback code
+            interpreter.Run();
+            runCount += 1;
+
+            variables = (Dictionary<string, object>)interpreter.DumpVariables();
 
             Assert.That(runCount, Is.EqualTo(expectedIterations));
             return interpreter;
