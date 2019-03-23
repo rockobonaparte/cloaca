@@ -19,17 +19,29 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Doesn't work yet, but starting to fill in. This should be the next object unit test to pass.")]
-        public void DeclareAndCreateClass()
+        public void DeclareAndCreateClassNoConstructor()
         {
             var interpreter = runProgram("class Foo:\n" +
                                          "   pass\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            Assert.That(interpreter.DumpVariables(), Contains.Key("bar"));
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables, Contains.Key("bar"));
         }
 
         [Test]
-        [Ignore("Doesn't work yet; a doesn't propagate back up")]
+        [Ignore("Can't recognize class member functions as implicitly needing a self pointer (yet). Next to implement in ObjectTests.")]
+        public void DeclareAndCreateClassDefaultConstructor()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   def Foo(self):\n" +
+                                         "      pass\n" +
+                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables, Contains.Key("bar"));
+        }
+
+        [Test]
+        [Ignore("Have no reached this far with constructor implementation")]
         public void DeclareConstructor()
         {
             var interpreter = runProgram("a = 1\n" +

@@ -50,8 +50,43 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     /// <returns>The index of the NEXT instruction in the program.</returns>
     private int AddInstruction(ByteCodes opcode, int data)
     {
-        ActiveProgram.Code.AddByte((byte) opcode);
-        ActiveProgram.Code.AddUShort(data);
+        return AddInstruction(ActiveProgram.Code, opcode, data);
+    }
+
+    /// <summary>
+    /// Add an instruction to the end of the given program.
+    /// </summary>
+    /// <param name="builder">The code builder to which to add the instruction.</param>
+    /// <param name="opcode">The instruction opcode</param>
+    /// <param name="data">Opcode data.</param>
+    /// <returns>The index of the NEXT instruction in the program.</returns>
+    private int AddInstruction(CodeBuilder builder, ByteCodes opcode, int data)
+    {
+        builder.AddByte((byte)opcode);
+        builder.AddUShort(data);
+        return ActiveProgram.Code.Count;
+    }
+
+    /// <summary>
+    /// Add an instruction to the end of the active program.
+    /// </summary>
+    /// <param name="opcode">The instruction opcode</param>
+    /// <returns>The index of the NEXT instruction in the program.</returns>
+    private int AddInstruction(ByteCodes opcode)
+    {
+        return AddInstruction(ActiveProgram.Code, opcode);
+    }
+
+
+    /// <summary>
+    /// Add an instruction to the end of the given program.
+    /// </summary>
+    /// <param name="builder">The code builder to which to add the instruction.</param>
+    /// <param name="opcode">The instruction opcode</param>
+    /// <returns>The index of the NEXT instruction in the program.</returns>
+    private int AddInstruction(CodeBuilder builder, ByteCodes opcode)
+    {
+        builder.AddByte((byte)opcode);
         return ActiveProgram.Code.Count;
     }
 
@@ -102,17 +137,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 AddInstruction(ByteCodes.STORE_FAST, idx);
             }
         }
-    }
-
-    /// <summary>
-    /// Add an instruction to the end of the active program.
-    /// </summary>
-    /// <param name="opcode">The instruction opcode</param>
-    /// <returns>The index of the NEXT instruction in the program.</returns>
-    private int AddInstruction(ByteCodes opcode)
-    {
-        ActiveProgram.Code.AddByte((byte)opcode);
-        return ActiveProgram.Code.Count;
     }
 
     public override object VisitArith_expr([NotNull] CloacaParser.Arith_exprContext context)
@@ -687,9 +711,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            // Load a dummy constructor for now.
-            constructor = new CodeObject(new byte[0]);
+            // Default, dummy constructor.
+            var constructorBuilder = new CodeBuilder();
+            AddInstruction(constructorBuilder, ByteCodes.RETURN_VALUE);
+
+            constructor = new CodeObject(constructorBuilder.ToArray());
             constructor.Name = className;
+            constructor.ArgVarNames.Add("self");
         }
 
         ActiveProgram.Constants.Add(constructor);
