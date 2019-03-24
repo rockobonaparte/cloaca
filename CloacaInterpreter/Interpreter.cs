@@ -554,8 +554,21 @@ namespace CloacaInterpreter
                                 }
                                 else
                                 {
-                                    // Assuming it's a good-old-fashioned CodeObject
+                                    // Could still be a constructor!
                                     functionToRun = (CodeObject)abstractFunctionToRun;
+
+                                    if(functionToRun.Name == "__init__")
+                                    {
+                                        // Yeap, it's a user-specified constructor. We'll still use our internal __new__
+                                        // to make the stub since we don't support overridding __new__ yet.
+                                        // TODO: Reconcile this with stubbed __new__. This is such a mess.
+                                        var self = new PyObject();      // This is the default __new__ for now.
+                                        args.Insert(0, self);
+                                        CallInto(functionToRun, args.ToArray());
+                                        DataStack.Push(self);
+                                    }
+
+                                    // We're assuming it's a good-old-fashioned CodeObject
                                     var retVal = CallInto(functionToRun, args.ToArray());
                                     if (retVal != null)
                                     {

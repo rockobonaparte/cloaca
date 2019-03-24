@@ -29,13 +29,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Can't recognize class member functions as implicitly needing a self pointer (yet). Next to implement in ObjectTests.")]
+        [Ignore("Name collision in variable space between class Foo and function Foo. Need to look up how this is managed in CPython")]
         public void DeclareAndCreateClassDefaultConstructor()
         {
             var interpreter = runProgram("class Foo:\n" +
                                          "   def Foo(self):\n" +
                                          "      pass\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
+
             var variables = interpreter.DumpVariables();
             Assert.That(variables, Contains.Key("bar"));
         }
