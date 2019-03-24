@@ -1,6 +1,18 @@
 ﻿Cloaca TODO
 ===========
 
+Current problem:
+Class constructors brought up a variable collision:
+
+class Foo:
+  def __init__(self):
+    pass
+
+b = bar()
+
+I have a class Foo() and a a string Foo in the variables, so I collide when
+dumping them. So now I need to create a smarter variable store to drive the assertions.
+
 * Strings (part 1)
   * [DONE] Parse strings
   * [DONE] Single quote
@@ -85,6 +97,46 @@ Part 2: First, harden the code, but keep some of this in mind while doing that.
 * Classes
   * metaclasses
   * Multiple inheritance
+
+* Functions
+  * Implement co_flags
+
+https://docs.python.org/3/library/inspect.html
+Notes on co_flags
+inspect.CO_OPTIMIZED
+The code object is optimized, using fast locals.
+
+inspect.CO_NEWLOCALS
+If set, a new dict will be created for the frame’s f_locals when the code object is executed.
+
+inspect.CO_VARARGS
+The code object has a variable positional parameter (*args-like).
+
+inspect.CO_VARKEYWORDS
+The code object has a variable keyword parameter (**kwargs-like).
+
+inspect.CO_NESTED
+The flag is set when the code object is a nested function.
+
+inspect.CO_GENERATOR
+The flag is set when the code object is a generator function, i.e. a generator object is returned when the code object is executed.
+
+inspect.CO_NOFREE
+The flag is set if there are no free or cell variables.
+
+inspect.CO_COROUTINE
+The flag is set when the code object is a coroutine function. When the code object is executed it returns a coroutine object. See PEP 492 for more details.
+
+New in version 3.5.
+
+inspect.CO_ITERABLE_COROUTINE
+The flag is used to transform generators into generator-based coroutines. Generator objects with this flag can be used in await expression, and can yield from coroutine objects. See PEP 492 for more details.
+
+New in version 3.5.
+
+inspect.CO_ASYNC_GENERATOR
+The flag is set when the code object is an asynchronous generator function. When the code object is executed it returns an asynchronous generator object. See PEP 525 for more details._
+
 
 At this point you should start trying to embed it and suffer it.
 
