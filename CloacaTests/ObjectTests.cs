@@ -29,7 +29,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Name collision in variable space between class Foo and function Foo. Need to look up how this is managed in CPython")]
         public void DeclareAndCreateClassDefaultConstructor()
         {
             var interpreter = runProgram("class Foo:\n" +
@@ -37,8 +36,9 @@ namespace CloacaTests
                                          "      pass\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
 
-            var variables = interpreter.DumpVariables();
-            Assert.That(variables, Contains.Key("bar"));
+            var variables = new VariableMultimap(interpreter);
+            Assert.That(variables.ContainsKey("bar"));
+            var bar = variables.Get("bar", typeof(PyObject));
         }
 
         [Test]

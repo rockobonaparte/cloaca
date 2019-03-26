@@ -46,7 +46,6 @@ namespace CloacaTests
                 interpreter.SetVariable(varName, variablesIn[varName]);
             }
 
-            Dictionary<string, object> variables = null;
             int runCount = 0;
 
             // This was busted apart when the interpreter was exposed to injected calls.
@@ -61,47 +60,39 @@ namespace CloacaTests
             interpreter.Run();
             runCount += 1;
 
-            variables = (Dictionary<string, object>)interpreter.DumpVariables();
+            var variables = new VariableMultimap(interpreter);
 
             Assert.That(runCount, Is.EqualTo(expectedIterations));
             return interpreter;
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> expectedVariables, int expectedIterations,
+        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
             string[] ignoreVariables)
         {
             var interpreter = runProgram(program, variablesIn, expectedIterations);
-            var variables = interpreter.DumpVariables();
-
-            if (ignoreVariables.Length == 0)
+            var variables = new VariableMultimap(interpreter);
+            try
             {
-                CollectionAssert.AreEquivalent(expectedVariables, variables);
+                expectedVariables.AssertSubsetEquals(variables);
             }
-            else
+            catch(Exception e)
             {
-                foreach (var key in expectedVariables.Keys)
-                {
-                    Assert.That(variables[key], Is.EqualTo(expectedVariables[key]));
-                }
-                foreach (string ignored in ignoreVariables)
-                {
-                    Assert.That(variables.ContainsKey(ignored));
-                }
+                Assert.Fail(e.Message);
             }
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> expectedVariables, int expectedIterations)
+        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations)
         {
             runBasicTest(program, variablesIn, expectedVariables, expectedIterations, new string[0]);
         }
 
 
-        protected void runBasicTest(string program, Dictionary<string, object> expectedVariables, int expectedIterations)
+        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations)
         {
             runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, new string[0]);
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> expectedVariables, int expectedIterations, string[] ignoreVariables)
+        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations, string[] ignoreVariables)
         {
             runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, ignoreVariables);
         }
