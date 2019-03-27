@@ -59,7 +59,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Class members have not been enabled yet")]
+        [Ignore("Class members have not been enabled yet. (but we have started generating code for it!)")]
         public void DeclareClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
@@ -67,7 +67,7 @@ namespace CloacaTests
                                          "      self.a = 1\n" +
                                          "\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            // TODO: Figure out how to extract "a"
+            var variables = new VariableMultimap(interpreter);
         }
 
         [Test]

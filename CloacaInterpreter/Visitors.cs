@@ -332,6 +332,26 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
                 AddInstruction(ByteCodes.STORE_SUBSCR);
             }
+            // Object subscript (self.x)
+            else if(maybeAtom.trailer()[0].NAME() != null)
+            {
+                variableName = maybeAtom.atom().GetText();
+                generateLoadForVariable(variableName);
+
+                var attrName = maybeAtom.trailer()[0].NAME().GetText();
+                var attrIdx = ActiveProgram.Names.IndexOf(attrName);
+                if (attrIdx >= 0)
+                {
+                    AddInstruction(ByteCodes.STORE_ATTR, attrIdx);
+                    return null;
+                }
+                else
+                {
+                    ActiveProgram.Names.Add(attrName);
+                    AddInstruction(ByteCodes.STORE_ATTR, ActiveProgram.Names.Count - 1);
+                    return null;
+                }
+            }
             else
             {
                 // Function call?
