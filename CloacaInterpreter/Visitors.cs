@@ -704,8 +704,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         CodeObject constructor = null;
-        int constructorIdx = findFunctionIndex(className);
-        if(constructorIdx >= 0)
+        int constructorIdx = findFunctionIndex("__init__");
+        if (constructorIdx >= 0)
         {
             // We reference it in code as Foo() but the method itself is called __init__
             constructor = (CodeObject) ActiveProgram.Constants[constructorIdx];

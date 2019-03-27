@@ -32,7 +32,7 @@ namespace CloacaTests
         public void DeclareAndCreateClassDefaultConstructor()
         {
             var interpreter = runProgram("class Foo:\n" +
-                                         "   def Foo(self):\n" +
+                                         "   def __init__(self):\n" +
                                          "      pass\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
 
@@ -42,7 +42,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Have not reached this far with constructor implementation")]
         public void DeclareConstructor()
         {
             var interpreter = runProgram("a = 1\n" +
@@ -52,8 +51,11 @@ namespace CloacaTests
                                          "      a = 2\n" +
                                          "\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
-            Assert.That(variables["a"], Is.EqualTo(new BigInteger(2)));
+            var variables = new VariableMultimap(interpreter);
+            var reference = new VariableMultimap(new TupleList<string, object> {
+                { "a", new BigInteger(2) }
+            });
+            Assert.DoesNotThrow(() => variables.AssertSubsetEquals(reference));
         }
 
         [Test]
