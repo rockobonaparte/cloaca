@@ -42,7 +42,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Have no reached this far with constructor implementation")]
+        [Ignore("Have not reached this far with constructor implementation")]
         public void DeclareConstructor()
         {
             var interpreter = runProgram("a = 1\n" +

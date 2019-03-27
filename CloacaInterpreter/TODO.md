@@ -1,18 +1,6 @@
 ﻿Cloaca TODO
 ===========
 
-Current problem:
-Class constructors brought up a variable collision:
-
-class Foo:
-  def __init__(self):
-    pass
-
-b = bar()
-
-I have a class Foo() and a a string Foo in the variables, so I collide when
-dumping them. So now I need to create a smarter variable store to drive the assertions.
-
 * Strings (part 1)
   * [DONE] Parse strings
   * [DONE] Single quote
@@ -76,10 +64,15 @@ dumping them. So now I need to create a smarter variable store to drive the asse
 * Flush out other major operators
   * += etc
   * Logic operators
-* Exception handling try-catch-finally (else?)
 * Imports
   * clr library for .NET stuff
   * Import Unity stuff?
+* Exception
+* Exceptions
+  * AssertionError
+  * try-catch-finally (else?)
+  * Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
+  * assert function
 * See if you can use that REPL helper module directly.
 
 
