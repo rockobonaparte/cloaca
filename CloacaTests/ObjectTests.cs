@@ -59,7 +59,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Class members have not been enabled yet. (but we have started generating code for it!)")]
         public void DeclareClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
@@ -68,6 +67,8 @@ namespace CloacaTests
                                          "\n" +
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject) variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(1)));
         }
 
         [Test]

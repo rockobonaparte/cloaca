@@ -1,6 +1,10 @@
 ﻿Cloaca TODO
 ===========
 
+DeclareClassMember unit test shows the Names property in the interpreter having ["self", "self"] while
+ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up with that.
+
+
 * Strings (part 1)
   * [DONE] Parse strings
   * [DONE] Single quote

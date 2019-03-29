@@ -333,6 +333,19 @@ namespace CloacaInterpreter
                             Cursor += 2;
                             break;
                         }
+                    case ByteCodes.STORE_ATTR:
+                        {
+                            Cursor += 1;
+                            var nameIdx = CodeBytes.GetUShort(Cursor);
+                            var attrName = Program.Names[nameIdx];
+
+                            var obj = (PyObject) DataStack.Pop();
+                            var val = DataStack.Pop();
+
+                            obj.__setattr__(attrName, val);
+                        }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.LOAD_NAME:
                         {
                             throw new NotImplementedException("LOAD_NAME is unsupported; we're still trying to figure out what it does");

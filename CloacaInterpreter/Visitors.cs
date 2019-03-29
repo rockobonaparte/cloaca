@@ -339,7 +339,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 generateLoadForVariable(variableName);
 
                 var attrName = maybeAtom.trailer()[0].NAME().GetText();
-                var attrIdx = ActiveProgram.Names.IndexOf(attrName);
+                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
                 if (attrIdx >= 0)
                 {
                     AddInstruction(ByteCodes.STORE_ATTR, attrIdx);

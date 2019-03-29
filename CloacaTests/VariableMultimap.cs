@@ -70,7 +70,7 @@ namespace CloacaTests
             var firstLevel = map[name];
             if(firstLevel.Count == 1)
             {
-                return firstLevel.First();
+                return firstLevel.First().Value;
             }
             else
             {

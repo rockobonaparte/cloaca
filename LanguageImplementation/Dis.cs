@@ -83,6 +83,11 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(null, cursor, "STORE_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
+                    case ByteCodes.STORE_ATTR:
+                        cursor += 1;
+                        disassembly += disassembleLine(null, cursor, "STORE_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        cursor += 2;
+                        break;
                     case ByteCodes.STORE_GLOBAL:
                         cursor += 1;
                         disassembly += disassembleLine(null, cursor, "STORE_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));

@@ -89,7 +89,7 @@ namespace LanguageImplementation
         public string __doc__;
         public CodeObject __new__;
         public BigInteger __sizeof__;
-        public Dictionary<string, PyObject> __dict__;
+        public Dictionary<string, object> __dict__;
         public List<PyClass> __bases__;
         public List<PyClass> __subclasses__()
         {
@@ -106,9 +106,21 @@ namespace LanguageImplementation
             throw new NotImplementedException();
         }
 
-        public void __setattr__(string name, PyObject value)
+        public void __setattr__(string name, object value)
         {
-            throw new NotImplementedException();
+            if(__dict__.ContainsKey(name))
+            {
+                __dict__[name] = value;
+            }
+            else
+            {
+                __dict__.Add(name, value);
+            }
+        }
+
+        public PyObject()
+        {
+            __dict__ = new Dictionary<string, object>();
         }
     }
 }
