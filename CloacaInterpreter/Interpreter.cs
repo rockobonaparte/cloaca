@@ -394,6 +394,19 @@ namespace CloacaInterpreter
                             Cursor += 2;
                             break;
                         }
+                    case ByteCodes.LOAD_ATTR:
+                        {
+                            Cursor += 1;
+                            var nameIdx = CodeBytes.GetUShort(Cursor);
+                            var attrName = Program.Names[nameIdx];
+
+                            var obj = (PyObject)DataStack.Pop();
+                            var val = obj.__getattribute__(attrName);
+
+                            DataStack.Push(val);
+                        }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.WAIT:
                         {
                             keepRunning = false;

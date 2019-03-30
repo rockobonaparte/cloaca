@@ -51,8 +51,8 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * Imaginary
   * Longs
 * Classes
-  * Constructor
-  * Access members
+  * [DONE] Constructor
+  * [DONE] Access members
   * Call functions
   * Inheritance
   * Start to wrap data types as classes

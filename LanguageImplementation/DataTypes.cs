@@ -83,6 +83,14 @@ namespace LanguageImplementation
         }
     }
 
+    public class AttributeError : Exception
+    {
+        public AttributeError(string msg) : base(msg)
+        {
+
+        }
+    }
+
     public class PyObject
     {
         public PyClass __class__;
@@ -101,9 +109,20 @@ namespace LanguageImplementation
             throw new NotImplementedException();
         }
 
-        public void __getattribute__(string name)
+        // I don't fully understand the difference between __getattribute__ and __getattr__
+        // yet, but I believe I default to __getattribute__
+        public object __getattr__(string name)
         {
             throw new NotImplementedException();
+        }
+
+        public object __getattribute__(string name)
+        {
+            if(!__dict__.ContainsKey(name))
+            {
+                throw new AttributeError("'" + __class__.Name + "' object has no attribute named '" + name + "'");
+            }
+            return __dict__[name];
         }
 
         public void __setattr__(string name, object value)

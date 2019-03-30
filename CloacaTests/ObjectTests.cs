@@ -72,7 +72,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Class members have not been enabled yet")]
         public void AccessClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
@@ -82,7 +81,9 @@ namespace CloacaTests
                                          "bar = Foo()\n" + 
                                          "b = bar.a\n" +
                                          "bar.a = 2\n", new Dictionary<string, object>(), 1);
-            // TODO: Figure out how to extract "a"
+            var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject)variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
         }
 
         [Test]

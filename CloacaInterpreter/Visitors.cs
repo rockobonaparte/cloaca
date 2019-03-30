@@ -593,6 +593,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // pass it along to the atom visitor.
         if (context.trailer().Length > 0)
         {
+            // If it has NAME, then we're treating it like an object attribute.
+            // Otherwise, we treat it like a function. What could go wrong?
+            if(context.trailer(0).NAME() != null)
+            {
+                var variableName = context.atom().GetText();
+                generateLoadForVariable(variableName);
+
+                var attrName = context.trailer()[0].NAME().GetText();
+                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
+                if (attrIdx >= 0)
+                {
+                    AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
+                    return null;
+                }
+                else
+                {
+                    ActiveProgram.Names.Add(attrName);
+                    AddInstruction(ByteCodes.LOAD_ATTR, ActiveProgram.Names.Count - 1);
+                    return null;
+                }
+            }
+            
             // Get the function name loaded on the stack first!
             Visit(context.atom());
 
