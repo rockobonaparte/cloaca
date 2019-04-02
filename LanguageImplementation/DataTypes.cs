@@ -77,9 +77,12 @@ namespace LanguageImplementation
 
     public class PyClass : PyTypeObject
     {
+        public Dictionary<string, object> __dict__;
+
         public PyClass(string name, CodeObject __init__, IInterpreter interpreter) :
             base(name, __init__, interpreter)
         {
+            __dict__ = new Dictionary<string, object>();
         }
     }
 
@@ -93,11 +96,11 @@ namespace LanguageImplementation
 
     public class PyObject
     {
+        public Dictionary<string, object> __dict__;
         public PyClass __class__;
         public string __doc__;
         public CodeObject __new__;
         public BigInteger __sizeof__;
-        public Dictionary<string, object> __dict__;
         public List<PyClass> __bases__;
         public List<PyClass> __subclasses__()
         {

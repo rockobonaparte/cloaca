@@ -7,6 +7,7 @@ using Antlr4.Runtime;
 using Language;
 using LanguageImplementation;
 using CloacaInterpreter;
+using Antlr4.Runtime.Tree;
 
 /// <summary>
 /// Use to raise parsing issues while we figure out a better way to do this.
@@ -738,6 +739,47 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // We don't recognize the arglist yet (inheritance) for the class
         ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
 
+        // TODO: We have to create a PyClass here and start populating with what we find inside.
+
+        // MAKE_FUNCTION will be added to the program for the class constructor, but
+        // all the other class methods are just casually tucked into the class.
+        void _traverseClassMethods(ITree subctx)
+        {
+            // Traversing to funcdefs
+            if(!(subctx is CloacaParser.FuncdefContext))
+            {
+                for(int child_i = 0; child_i < subctx.ChildCount; ++child_i)
+                {
+                    var child = subctx.GetChild(child_i);
+                    _traverseClassMethods((ITree)child);
+                }
+            }
+            else
+            {
+                var funcCtx = (CloacaParser.FuncdefContext)subctx;
+                // Copypasta of VisitFuncDef with names slightly changed to protect the innocent.
+                // TODO: Reconcile with VisitFuncDef
+                var funcName = funcCtx.NAME().GetText();        // TODO: This isn't the fully-qualified name and will need to be improved.
+                var newFunctionCode = new CodeObjectBuilder();
+                newFunctionCode.Name = funcName;
+
+                ProgramStack.Push(ActiveProgram);
+                // This should fill into newFunctionCode.
+                ActiveProgram = newFunctionCode;
+
+                // Let's have our parameters set first. This should go to VisitTfpdef in particular.
+                base.Visit(funcCtx.parameters());
+
+                base.VisitSuite(context.suite());
+                AddInstruction(ByteCodes.RETURN_VALUE);      // Return statement from generated function
+
+                // This should restore us back to the original function with which we started.
+                ActiveProgram = ProgramStack.Pop();
+            }
+        }
+
+        _traverseClassMethods(context);
+  
         // TODO: Need a way to associate the methods with the class.
         // This method of plucking out the constructor is ... not quite it.
         if (context.suite() != null)
