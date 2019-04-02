@@ -1,9 +1,13 @@
 ﻿Cloaca TODO
 ===========
 
+Need to implement LOAD_NAME/STORE_NAME
+
+Good stuff about LOAD_NAME and reference ordering
+https://stackoverflow.com/questions/20246523/how-references-to-variables-are-resolved-in-python_
+
 DeclareClassMember unit test shows the Names property in the interpreter having ["self", "self"] while
 ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up with that.
-
 
 * Strings (part 1)
   * [DONE] Parse strings
@@ -53,7 +57,7 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
 * Classes
   * [DONE] Constructor
   * [DONE] Access members
-  * Call functions
+  * [DONE] Call functions
   * Inheritance
   * Start to wrap data types as classes
 * Scheduler controlling interpreter to switch programs when one waits
@@ -71,7 +75,6 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
 * Imports
   * clr library for .NET stuff
   * Import Unity stuff?
-* Exception
 * Exceptions
   * AssertionError
   * try-catch-finally (else?)
@@ -146,3 +149,10 @@ Tech debt:
 * Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
   Look at how CPython is managing them and try to reconcile
 * Reimplement WAIT--probably using async-await.  
+* Reconcile CodeObject and WrappedCodeObject
+  * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
+
+Useful bits:
+Dump a code object that comes up in a disassembly
+>>> import ctypes
+>>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value

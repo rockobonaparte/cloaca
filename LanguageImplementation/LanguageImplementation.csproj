@@ -70,11 +70,13 @@
     <Compile Include="CodeObject.cs" />
     <Compile Include="DataTypes.cs" />
     <Compile Include="Dis.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="OpCodes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="notes.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

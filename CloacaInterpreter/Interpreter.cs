@@ -62,6 +62,20 @@ namespace CloacaInterpreter
             Program = program;
             Locals = new List<object>();
         }
+
+        public List<string> Names
+        {
+            get
+            {
+                return Program.Names;
+            }            
+        }          
+        
+        public void AddLocal(string name, object value)
+        {
+            LocalNames.Add(name);
+            Locals.Add(value);
+        }
     }
 
     public class Interpreter: IInterpreter
@@ -74,7 +88,68 @@ namespace CloacaInterpreter
         // TODO: Add params type to handle one or more base classes (inheritance test)
         public PyClass builtins__build_class(CodeObject func, string name)
         {
-            return new PyClass(name, func, this);
+            Frame classFrame = new Frame(func);
+            classFrame.AddLocal("__name__", name);
+            classFrame.AddLocal("__module__", null);
+            classFrame.AddLocal("__qualname__", null);
+            CallInto(classFrame, new object[0]);
+
+            var initIdx = classFrame.LocalNames.IndexOf("__init__");
+            CodeObject __init__ = null;
+            if(initIdx < 0)
+            {
+                // Insert a default constructor. This comes up as a "slot wrapper" at least in Python 3.6. For us, we're
+                // just making our own no-op __init__ for now.
+                // TODO: Replace with a wrapped default when WrappedCodeObject is freely interchangable with CodeObject
+                var initBuilder = new CodeObjectBuilder();
+                initBuilder.AddInstruction(ByteCodes.LOAD_CONST, 0);
+                initBuilder.Constants.Add(null);
+                initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
+                initBuilder.Name = "__init__";
+                initBuilder.ArgVarNames.Add("self");
+                __init__ = initBuilder.Build();
+            }
+            else
+            {
+                __init__ = (CodeObject)classFrame.Locals[initIdx];
+            }
+
+            var pyclass = new PyClass(name, __init__, this);
+
+            foreach(var classMemberName in classFrame.Names)
+            {
+                var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
+                if (nameIdx >= 0)
+                {                    
+                    pyclass.__dict__.Add(classMemberName, classFrame.Locals[nameIdx]);
+                }
+                else
+                {
+                    pyclass.__dict__.Add(classMemberName, GetVariable(classMemberName));
+                }
+            }
+            
+            return pyclass;
+        }
+
+        // This is like doing a LOAD_NAME without pushing it on the stack.
+        public object GetVariable(string name)
+        {
+            object loadedFromName = null;
+            bool foundVar = false;
+
+            // Try to resolve locally, then globally, and then in our built-in namespace
+            foreach (var stackFrame in callStack)
+            {
+                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                if (nameIdx >= 0)
+                {
+                    return stackFrame.Locals[nameIdx];
+                }
+            }
+
+            throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
         }
 
         public Frame CurrentFrame
@@ -149,6 +224,14 @@ namespace CloacaInterpreter
         {
             get
             {
+                return callStack.Peek().Names;
+            }
+        }
+
+        public List<string> LocalNames
+        {
+            get
+            {
                 return callStack.Peek().LocalNames;
             }
         }
@@ -156,9 +239,9 @@ namespace CloacaInterpreter
         public Dictionary<string, object> DumpVariables()
         {
             var variables = new Dictionary<string, object>();
-            for (int i = 0; i < Names.Count; ++i)
+            for (int i = 0; i < LocalNames.Count; ++i)
             {
-                variables.Add(Names[i], Locals[i]);
+                variables.Add(LocalNames[i], Locals[i]);
             }
             return variables;
         }
@@ -183,29 +266,42 @@ namespace CloacaInterpreter
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
+            return CallInto(nextFrame, args);
+        }
+
+        /// <summary>
+        /// Retains the current frame state but enters the next frame. This is equivalent to
+        /// using a CALL_FUNCTION opcode to descene into a subroutine or similar, but can be invoked
+        /// external into the interpreter. It is used for inner, coordinating code to call back into
+        /// the interpreter to get results. 
+        /// </summary>
+        /// <param name="nextFrame">The frame to run through</param>
+        /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
+        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
+        public object CallInto(Frame frame, object[] args)
+        {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                nextFrame.LocalNames.Add(nextFrame.Program.ArgVarNames[argIdx]);
-                nextFrame.Locals.Add(args[argIdx]);
+                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
             }
-            for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
+            for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
-                nextFrame.LocalNames.Add(nextFrame.Program.VarNames[varIndex]);
-                nextFrame.Locals.Add(null);
+                frame.AddLocal(frame.Program.VarNames[varIndex], null);
             }
 
-            callStack.Push(nextFrame);      // nextFrame is now the active frame.
+            callStack.Push(frame);      // nextFrame is now the active frame.
             Run();
-            if(DataStack.Count > 0)
+            if (DataStack.Count > 0)
             {
                 return DataStack.Pop();
             }
             else
             {
                 return null;
-            }            
+            }
         }
+
 
         public Interpreter(CodeObject program)
         {
@@ -215,7 +311,7 @@ namespace CloacaInterpreter
 
         public void SetVariable(string name, object value)
         {
-            int varIdx = Names.IndexOf(name);
+            int varIdx = LocalNames.IndexOf(name);
             if(varIdx < 0)
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);
@@ -231,8 +327,7 @@ namespace CloacaInterpreter
 
             foreach (string name in rootProgram.VarNames)
             {
-                Names.Add(name);
-                Locals.Add(null);
+                CurrentFrame.AddLocal(name, null);
             }
         }
 
@@ -290,8 +385,32 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.STORE_NAME:
                         {
-                            throw new NotImplementedException("STORE_NAME is unsupported; we're still trying to figure out what it does");
+                            Cursor += 1;
+                            string name = Names[CodeBytes.GetUShort(Cursor)];
+
+                            bool foundVar = false;
+
+                            // Try to resolve locally, then globally, and then in our built-in namespace
+                            foreach (var stackFrame in callStack)
+                            {
+                                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                                if (nameIdx >= 0)
+                                {
+                                    stackFrame.Locals[nameIdx] = DataStack.Pop();
+                                    foundVar = true;
+                                    break;
+                                }
+                            }
+
+                            // If we don't find it, then we'll make it local!
+                            if (!foundVar)
+                            {
+                                CurrentFrame.AddLocal(name, DataStack.Pop());
+                            }
                         }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.STORE_FAST:
                         {
                             Cursor += 1;
@@ -348,8 +467,12 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.LOAD_NAME:
                         {
-                            throw new NotImplementedException("LOAD_NAME is unsupported; we're still trying to figure out what it does");
+                            Cursor += 1;
+                            string name = Names[CodeBytes.GetUShort(Cursor)];
+                            DataStack.Push(GetVariable(name));
                         }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.LOAD_FAST:
                         {
                             Cursor += 1;

@@ -32,9 +32,9 @@ namespace CloacaTests
         {
             map = new Dictionary<string, Dictionary<Type, object>>();
 
-            for(int i = 0; i < interpreter.Names.Count; ++i)
+            for(int i = 0; i < interpreter.LocalNames.Count; ++i)
             {
-                var name = interpreter.Names[i];
+                var name = interpreter.LocalNames[i];
                 var variable = interpreter.Locals[i];
                 Add(name, variable);
             }

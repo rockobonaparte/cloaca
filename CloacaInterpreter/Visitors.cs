@@ -7,6 +7,7 @@ using Antlr4.Runtime;
 using Language;
 using LanguageImplementation;
 using CloacaInterpreter;
+using Antlr4.Runtime.Tree;
 
 /// <summary>
 /// Use to raise parsing issues while we figure out a better way to do this.
@@ -333,24 +334,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 AddInstruction(ByteCodes.STORE_SUBSCR);
             }
             // Object subscript (self.x)
-            else if(maybeAtom.trailer()[0].NAME() != null)
+            else if(maybeAtom.trailer().Length == 1 && maybeAtom.trailer()[0].NAME() != null)
             {
                 variableName = maybeAtom.atom().GetText();
                 generateLoadForVariable(variableName);
 
                 var attrName = maybeAtom.trailer()[0].NAME().GetText();
-                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
-                if (attrIdx >= 0)
-                {
-                    AddInstruction(ByteCodes.STORE_ATTR, attrIdx);
-                    return null;
-                }
-                else
-                {
-                    ActiveProgram.Names.Add(attrName);
-                    AddInstruction(ByteCodes.STORE_ATTR, ActiveProgram.Names.Count - 1);
-                    return null;
-                }
+                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
+                AddInstruction(ByteCodes.STORE_ATTR, attrIdx);
+                return null;
             }
             else
             {
@@ -531,8 +523,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
         AddInstruction(ByteCodes.MAKE_FUNCTION, 0);
 
-        ActiveProgram.VarNames.Add(funcName);
-        AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count-1);
+        // TODO: Apparently sometimes (class methods) we need to store this using STORE_NAME. Why?
+        // Class declarations need all their functions declared using STORE_NAME. I'm not sure why yet. I am speculating that it's 
+        // more proper to say that *everything* needs STORE_NAME by default but we're able to optimize it in just about every other
+        // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
+        // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
+        if(context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
+        {
+            var nameIdx = ActiveProgram.Names.AddReplaceGetIndex(funcName);
+            AddInstruction(ByteCodes.STORE_NAME, nameIdx);
+        }
+        else
+        {
+            ActiveProgram.VarNames.Add(funcName);
+            AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1);
+        }
         return null;
     }
 
@@ -588,6 +593,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
+        // TODO: It looks like trailers should be delegated at this point. This is too rigid and probably will fail if we call a function that returns a function that we call ie "x = foo(x)(y)"
+
+        // We are looking at function calls with possibly multiple trailers. So we need to determine
+        // how far we are along in parsing them.
+        int trailersConsumed = 0;
+
         // This is a little rough, but we'll assume for now that if there are any trailers
         // defined that we're working with a function. If no trailer is defined, then we'll
         // pass it along to the atom visitor.
@@ -601,35 +612,53 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 generateLoadForVariable(variableName);
 
                 var attrName = context.trailer()[0].NAME().GetText();
-                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
-                if (attrIdx >= 0)
+
+                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
+                AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
+
+                // ...what can go wrong is a method invocation. So we stopped returning and let ourselves
+                // continue if we have more than one trailer.
+                ++trailersConsumed;
+                if (context.trailer().Length == 1)
                 {
-                    AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
-                    return null;
-                }
-                else
-                {
-                    ActiveProgram.Names.Add(attrName);
-                    AddInstruction(ByteCodes.LOAD_ATTR, ActiveProgram.Names.Count - 1);
                     return null;
                 }
             }
-            
-            // Get the function name loaded on the stack first!
-            Visit(context.atom());
+
+            if (trailersConsumed == 0)
+            {
+                // Get the function name loaded on the stack first!
+                Visit(context.atom());
+            }
+
+            // If it's a class method, we have to load up the self reference
+            int numArgs = 0;
+            if(context.trailer(0).GetText().StartsWith("."))
+            {
+                var variableName = context.atom().GetText();
+                var selfIdx = ActiveProgram.VarNames.IndexOf(variableName);
+                if(selfIdx < 0)
+                {
+                    throw new IndexOutOfRangeException("Could not find self reference for class instance '" 
+                        + variableName + "'");
+                }
+                AddInstruction(ByteCodes.LOAD_FAST, selfIdx);
+                ++numArgs;
+            }
 
             // A function that doesn't take any arguments doesn't have an arglist, but that is what 
             // got triggered. The only way I know to make sure we trigger on it is to see if we match
             // parentheses. There has to be a better way...
-            if (context.trailer(0).arglist() != null || context.trailer(0).GetText() == "()")
+            if (context.trailer(trailersConsumed).arglist() != null || context.trailer(trailersConsumed).GetText() == "()")
             {
                 int argIdx = 0;
-                for (argIdx = 0; context.trailer(0).arglist() != null &&
-                    context.trailer(0).arglist().argument(argIdx) != null; ++argIdx)
+                for (argIdx = 0; context.trailer(trailersConsumed).arglist() != null &&
+                    context.trailer(trailersConsumed).arglist().argument(argIdx) != null; ++argIdx)
                 {
-                    base.Visit(context.trailer(0).arglist().argument(argIdx));
+                    base.Visit(context.trailer(trailersConsumed).arglist().argument(argIdx));
+                    ++numArgs;
                 }
-                AddInstruction(ByteCodes.CALL_FUNCTION, argIdx);
+                AddInstruction(ByteCodes.CALL_FUNCTION, numArgs);
             }
             else
             {
@@ -732,54 +761,97 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     }
 
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
-    {                
+    {
+        // TODO: We don't recognize the arglist yet (inheritance) for the class
+
         var className = context.NAME().GetText();
+        var newFunctionCode = new CodeObjectBuilder();
+        newFunctionCode.Name = className;
 
-        // We don't recognize the arglist yet (inheritance) for the class
-        ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
+        // Descend into the constructor's body as its own program
+        ProgramStack.Push(ActiveProgram);
+        ActiveProgram = newFunctionCode;
 
-        // TODO: Need a way to associate the methods with the class.
-        // This method of plucking out the constructor is ... not quite it.
-        if (context.suite() != null)
+        // This is what happens in a class code object that just passes __init__
+        //
+        // class Foo:
+        //   def __init__(self):
+        //     pass
+        //
+        //      2           0 LOAD_NAME                0 (__name__)
+        //                  2 STORE_NAME               1 (__module__)
+        //                  4 LOAD_CONST               0 ('def_constructor.<locals>.Foo')
+        //                  6 STORE_NAME               2 (__qualname__)
+        //
+        //      3           8 LOAD_CONST               1 (<code object __init__ at 0x0000021BD5908C00, file "<stdin>", line 3>)
+        //                 10 LOAD_CONST               2 ('def_constructor.<locals>.Foo.__init__')
+        //                 12 MAKE_FUNCTION            0
+        //                 14 STORE_NAME               3 (__init__)
+        //                 16 LOAD_CONST               3 (None)
+        //                 18 RETURN_VALUE
+        //
+        // We'll do some of this on our own for now until we figure out another convention.
+        var __name__idx = ActiveProgram.Names.AddGetIndex("__name__");
+        var __module__idx = ActiveProgram.Names.AddGetIndex("__module__");
+        var __qualname__idx = ActiveProgram.Names.AddGetIndex("__qualname__");
+        var qual_const_idx = ActiveProgram.Constants.AddGetIndex(className);
+
+        AddInstruction(ByteCodes.LOAD_NAME, __name__idx);
+        AddInstruction(ByteCodes.STORE_NAME, __module__idx);
+        AddInstruction(ByteCodes.LOAD_CONST, qual_const_idx);
+        AddInstruction(ByteCodes.STORE_NAME, __qualname__idx);
+
+        // Okay, now set ourselves loose on the user-specified class body!
+        base.VisitSuite(context.suite());
+
+        // Self-insert returning None to be consistent with Python
+        var return_none_idx = ActiveProgram.Constants.AddGetIndex(null);
+        AddInstruction(ByteCodes.LOAD_CONST, return_none_idx);
+        AddInstruction(ByteCodes.RETURN_VALUE);      // Return statement from generated function
+        ActiveProgram = ProgramStack.Pop();
+
+        // We'll replace an existing name if we have one because assholes may overwrite a function.
+        int funcIndex = findFunctionIndex(className);
+        if (funcIndex < 0)
         {
-            Visit(context.suite());
-        }
-
-        CodeObject constructor = null;
-        int constructorIdx = findFunctionIndex("__init__");
-        if (constructorIdx >= 0)
-        {
-            // We reference it in code as Foo() but the method itself is called __init__
-            constructor = (CodeObject) ActiveProgram.Constants[constructorIdx];
-            constructor.Name = "__init__";
+            funcIndex = ActiveProgram.Constants.AddGetIndex(newFunctionCode);
         }
         else
         {
-            // Default, dummy constructor.
-            var constructorBuilder = new CodeBuilder();
-            AddInstruction(constructorBuilder, ByteCodes.RETURN_VALUE);
-
-            constructor = new CodeObject(constructorBuilder.ToArray());
-            constructor.Name = className;
-            constructor.ArgVarNames.Add("self");
+            ActiveProgram.Constants[funcIndex] = newFunctionCode;
         }
 
-        ActiveProgram.Constants.Add(constructor);
-        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
+        int nameIndex = findIndex<string>(className);
+        if (nameIndex < 0)
+        {
+            nameIndex = ActiveProgram.Constants.AddGetIndex(className);
+        }
 
-        ActiveProgram.Constants.Add(className);
-        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
-
+        //      >>> def def_constructor():
+        //      ...   class Foo:
+        //      ...     def __init__(self):
+        //      ...       pass
+        //      ...
+        //      >>> dis(def_constructor)
+        // 2     0 LOAD_BUILD_CLASS
+        //       2 LOAD_CONST               1 (<code object Foo at 0x0000021BD59175D0, file "<stdin>", line 2>)
+        //       4 LOAD_CONST               2 ('Foo')
+        //       6 MAKE_FUNCTION            0
+        //       8 LOAD_CONST               2 ('Foo')
+        //      10 CALL_FUNCTION            2
+        //      12 STORE_FAST               0 (Foo)
+        //      14 LOAD_CONST               0 (None)
+        //      16 RETURN_VALUE
+        ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
+        AddInstruction(ByteCodes.LOAD_CONST, funcIndex);
+        AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
         AddInstruction(ByteCodes.MAKE_FUNCTION, 0);
-
-        AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1);
+        AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
         AddInstruction(ByteCodes.CALL_FUNCTION, 2);
 
         ActiveProgram.VarNames.Add(className);
         AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1);
-
         return null;
     }
-
 }
 

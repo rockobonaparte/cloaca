@@ -44,17 +44,23 @@ namespace LanguageImplementation
     public class PyTypeObject
     {
         public string Name;
+        public Dictionary<string, object> __dict__;
         public WrappedCodeObject __new__;
         public CodeObject __init__;
         private IInterpreter interpreter;
 
         private PyObject DefaultNew(PyTypeObject typeObj)
         {
-            return new PyObject();
+            var newObject = new PyObject();
+
+            // Shallow copy __dict__
+            newObject.__dict__ = new Dictionary<string, object>(__dict__);
+            return newObject;
         }
 
         public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter)
         {
+            __dict__ = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
 
@@ -80,6 +86,7 @@ namespace LanguageImplementation
         public PyClass(string name, CodeObject __init__, IInterpreter interpreter) :
             base(name, __init__, interpreter)
         {
+            // __dict__ used to be set here but was moved upstream
         }
     }
 
@@ -93,11 +100,11 @@ namespace LanguageImplementation
 
     public class PyObject
     {
+        public Dictionary<string, object> __dict__;
         public PyClass __class__;
         public string __doc__;
         public CodeObject __new__;
         public BigInteger __sizeof__;
-        public Dictionary<string, object> __dict__;
         public List<PyClass> __bases__;
         public List<PyClass> __subclasses__()
         {

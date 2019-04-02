@@ -87,20 +87,37 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Class methods have not been enabled yet")]
         public void AccessClassMethod()
         {
+            //>>> def make_foo():
+            //...   class Foo:
+            //...     def __init__(self):
+            //...       self.a = 1
+            //...     def change_a(self, new_a):
+            //...       self.a = new_a
+            //...
+            //>>> dis(make_foo)
+            //  2           0 LOAD_BUILD_CLASS
+            //              2 LOAD_CONST               1 (<code object Foo at 0x0000021BD5908D20, file "<stdin>", line 2>)
+            //              4 LOAD_CONST               2 ('Foo')
+            //              6 MAKE_FUNCTION            0
+            //              8 LOAD_CONST               2 ('Foo')
+            //             10 CALL_FUNCTION            2
+            //             12 STORE_FAST               0 (Foo)
+            //             14 LOAD_CONST               0 (None)
+            //             16 RETURN_VALUE
             var interpreter = runProgram("class Foo:\n" +
                                          "   def __init__(self):\n" +
                                          "      self.a = 1\n" +
                                          "\n" +
-                                         "   def change_a(new_a):\n"+
+                                         "   def change_a(self, new_a):\n"+
                                          "      self.a = new_a\n" +
                                          "\n" +
                                          "bar = Foo()\n" +
-                                         "b = bar.a\n" +
                                          "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
-            // TODO: Figure out how to extract "a"
+            var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject)variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
         }
     }
 }
