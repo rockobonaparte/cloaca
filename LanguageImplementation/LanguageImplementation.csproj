@@ -70,6 +70,7 @@
     <Compile Include="CodeObject.cs" />
     <Compile Include="DataTypes.cs" />
     <Compile Include="Dis.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="OpCodes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
