@@ -763,9 +763,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //                 18 RETURN_VALUE
         //
         // We'll do some of this on our own for now until we figure out another convention.
-        var __name__idx = ActiveProgram.VarNames.AddGetIndex("__name__");
-        var __module__idx = ActiveProgram.VarNames.AddGetIndex("__module__");
-        var __qualname__idx = ActiveProgram.VarNames.AddGetIndex("__qualname__");
+        var __name__idx = ActiveProgram.Names.AddGetIndex("__name__");
+        var __module__idx = ActiveProgram.Names.AddGetIndex("__module__");
+        var __qualname__idx = ActiveProgram.Names.AddGetIndex("__qualname__");
         var qual_const_idx = ActiveProgram.Constants.AddGetIndex(className);
 
         AddInstruction(ByteCodes.LOAD_NAME, __name__idx);

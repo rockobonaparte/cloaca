@@ -60,7 +60,7 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.LOAD_NAME:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor, "LOAD_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.LOAD_FAST:
@@ -80,7 +80,7 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.STORE_NAME:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "STORE_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor, "STORE_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.STORE_FAST:

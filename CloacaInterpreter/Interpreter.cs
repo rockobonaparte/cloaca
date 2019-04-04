@@ -62,6 +62,14 @@ namespace CloacaInterpreter
             Program = program;
             Locals = new List<object>();
         }
+
+        public List<string> Names
+        {
+            get
+            {
+                return Program.Names;
+            }            
+        }                    
     }
 
     public class Interpreter: IInterpreter
@@ -74,7 +82,9 @@ namespace CloacaInterpreter
         // TODO: Add params type to handle one or more base classes (inheritance test)
         public PyClass builtins__build_class(CodeObject func, string name)
         {
-            return new PyClass(name, func, this);
+            CallInto(func, new object[0]);
+            var pyclass = new PyClass(name, func, this);
+            return pyclass;
         }
 
         public Frame CurrentFrame
@@ -149,6 +159,14 @@ namespace CloacaInterpreter
         {
             get
             {
+                return callStack.Peek().Names;
+            }
+        }
+
+        public List<string> LocalNames
+        {
+            get
+            {
                 return callStack.Peek().LocalNames;
             }
         }
@@ -156,9 +174,9 @@ namespace CloacaInterpreter
         public Dictionary<string, object> DumpVariables()
         {
             var variables = new Dictionary<string, object>();
-            for (int i = 0; i < Names.Count; ++i)
+            for (int i = 0; i < LocalNames.Count; ++i)
             {
-                variables.Add(Names[i], Locals[i]);
+                variables.Add(LocalNames[i], Locals[i]);
             }
             return variables;
         }
@@ -215,7 +233,7 @@ namespace CloacaInterpreter
 
         public void SetVariable(string name, object value)
         {
-            int varIdx = Names.IndexOf(name);
+            int varIdx = LocalNames.IndexOf(name);
             if(varIdx < 0)
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);
@@ -231,7 +249,7 @@ namespace CloacaInterpreter
 
             foreach (string name in rootProgram.VarNames)
             {
-                Names.Add(name);
+                LocalNames.Add(name);
                 Locals.Add(null);
             }
         }
@@ -290,8 +308,31 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.STORE_NAME:
                         {
-                            throw new NotImplementedException("STORE_NAME is unsupported; we're still trying to figure out what it does");
+                            Cursor += 1;
+                            string name = Names[CodeBytes.GetUShort(Cursor)];
+
+                            bool foundVar = false;
+
+                            // Try to resolve locally, then globally, and then in our built-in namespace
+                            foreach (var stackFrame in callStack)
+                            {
+                                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                                if (nameIdx >= 0)
+                                {
+                                    stackFrame.Locals[nameIdx] = DataStack.Pop();
+                                    foundVar = true;
+                                    break;
+                                }
+                            }
+
+                            if (!foundVar)
+                            {
+                                throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
+                            }
                         }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.STORE_FAST:
                         {
                             Cursor += 1;
@@ -348,8 +389,34 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.LOAD_NAME:
                         {
-                            throw new NotImplementedException("LOAD_NAME is unsupported; we're still trying to figure out what it does");
+                            Cursor += 1;
+                            string name = Names[CodeBytes.GetUShort(Cursor)];
+
+                            object foundVar = null;
+
+                            // Try to resolve locally, then globally, and then in our built-in namespace
+                            foreach (var stackFrame in callStack)
+                            {
+                                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                                if (nameIdx >= 0)
+                                {
+                                    foundVar = stackFrame.Locals[nameIdx];
+                                    break;
+                                }
+                            }
+
+                            if (foundVar != null)
+                            {
+                                DataStack.Push(foundVar);
+                            }
+                            else
+                            {
+                                throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
+                            }
                         }
+                        Cursor += 2;
+                        break;
                     case ByteCodes.LOAD_FAST:
                         {
                             Cursor += 1;

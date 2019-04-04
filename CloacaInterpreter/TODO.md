@@ -1,6 +1,11 @@
 ﻿Cloaca TODO
 ===========
 
+Need to implement LOAD_NAME/STORE_NAME
+
+Good stuff about LOAD_NAME and reference ordering
+https://stackoverflow.com/questions/20246523/how-references-to-variables-are-resolved-in-python_
+
 DeclareClassMember unit test shows the Names property in the interpreter having ["self", "self"] while
 ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up with that.
 
