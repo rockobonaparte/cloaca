@@ -150,6 +150,8 @@ Tech debt:
 * Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
   Look at how CPython is managing them and try to reconcile
 * Reimplement WAIT--probably using async-await.  
+* Reconcile CodeObject and WrappedCodeObject
+  * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
 
 Useful bits:
 Dump a code object that comes up in a disassembly

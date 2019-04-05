@@ -49,3 +49,84 @@ Construction for Foo is not calling __init__, it's doing an _instantiation opera
                  16 LOAD_CONST               3 (None)
                  18 RETURN_VALUE
 ```
+
+
+
+def fasts_vs_names():
+  class Foo:
+    def __init__(self, a):
+      self.a = a
+    def some_method(self, b):
+      self.a = b
+  def inner_func(a):
+    d = a+1
+    return Foo(d)
+
+
+fasts_vs_names root
+  2           0 LOAD_BUILD_CLASS
+              2 LOAD_CONST               1 (<code object Foo at 0x000002CE01F964B0, file "<stdin>", line 2>)
+              4 LOAD_CONST               2 ('Foo')
+              6 MAKE_FUNCTION            0
+              8 LOAD_CONST               2 ('Foo')
+             10 CALL_FUNCTION            2
+             12 STORE_DEREF              0 (Foo)
+
+  7          14 LOAD_CLOSURE             0 (Foo)
+             16 BUILD_TUPLE              1
+             18 LOAD_CONST               3 (<code object inner_func at 0x000002CE01F96390, file "<stdin>", line 7>)
+             20 LOAD_CONST               4 ('fasts_vs_names.<locals>.inner_func')
+             22 MAKE_FUNCTION            8
+             24 STORE_FAST               0 (inner_func)
+             26 LOAD_CONST               0 (None)
+             28 RETURN_VALUE
+
+Foo root
+  2           0 LOAD_NAME                0 (__name__)
+              2 STORE_NAME               1 (__module__)
+              4 LOAD_CONST               0 ('fasts_vs_names.<locals>.Foo')
+              6 STORE_NAME               2 (__qualname__)
+
+  3           8 LOAD_CONST               1 (<code object __init__ at 0x000002CE01C93930, file "<stdin>", line 3>)
+             10 LOAD_CONST               2 ('fasts_vs_names.<locals>.Foo.__init__')
+             12 MAKE_FUNCTION            0
+             14 STORE_NAME               3 (__init__)
+
+  5          16 LOAD_CONST               3 (<code object some_method at 0x000002CE01F811E0, file "<stdin>", line 5>)
+             18 LOAD_CONST               4 ('fasts_vs_names.<locals>.Foo.some_method')
+             20 MAKE_FUNCTION            0
+             22 STORE_NAME               4 (some_method)
+             24 LOAD_CONST               5 (None)
+             26 RETURN_VALUE
+
+Foo.__init__
+  4           0 LOAD_FAST                1 (a)
+              2 LOAD_FAST                0 (self)
+              4 STORE_ATTR               0 (a)
+              6 LOAD_CONST               0 (None)
+              8 RETURN_VALUE
+
+Foo.some_method
+>>> dis.dis(fasts_vs_names.__code__.co_consts[1].co_consts[3])
+  6           0 LOAD_FAST                1 (b)
+              2 LOAD_FAST                0 (self)
+              4 STORE_ATTR               0 (a)
+              6 LOAD_CONST               0 (None)
+              8 RETURN_VALUE
+
+inner_func
+>>> dis.dis(fasts_vs_names.__code__.co_consts[3])
+  8           0 LOAD_FAST                0 (a)
+              2 LOAD_CONST               1 (1)
+              4 BINARY_ADD
+              6 STORE_FAST               1 (d)
+
+  9           8 LOAD_DEREF               0 (Foo)
+             10 LOAD_FAST                1 (d)
+             12 CALL_FUNCTION            1
+             14 RETURN_VALUE
+
+
+
+
+    

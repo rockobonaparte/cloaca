@@ -95,12 +95,26 @@ namespace CloacaInterpreter
             CallInto(classFrame, new object[0]);
 
             var initIdx = classFrame.LocalNames.IndexOf("__init__");
+            CodeObject __init__ = null;
             if(initIdx < 0)
             {
-                throw new NotImplementedException("Default constructor not supported in builtins__build_class yet!");
+                // Insert a default constructor. This comes up as a "slot wrapper" at least in Python 3.6. For us, we're
+                // just making our own no-op __init__ for now.
+                // TODO: Replace with a wrapped default when WrappedCodeObject is freely interchangable with CodeObject
+                var initBuilder = new CodeObjectBuilder();
+                initBuilder.AddInstruction(ByteCodes.LOAD_CONST, 0);
+                initBuilder.Constants.Add(null);
+                initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
+                initBuilder.Name = "__init__";
+                initBuilder.ArgVarNames.Add("self");
+                __init__ = initBuilder.Build();
+            }
+            else
+            {
+                __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
-            var pyclass = new PyClass(name, (CodeObject) classFrame.Locals[initIdx], this);
+            var pyclass = new PyClass(name, __init__, this);
             return pyclass;
         }
 
@@ -355,9 +369,10 @@ namespace CloacaInterpreter
                                 }
                             }
 
+                            // If we don't find it, then we'll make it local!
                             if (!foundVar)
                             {
-                                throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
+                                CurrentFrame.AddLocal(name, DataStack.Pop());
                             }
                         }
                         Cursor += 2;

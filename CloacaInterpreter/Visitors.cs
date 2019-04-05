@@ -532,8 +532,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
         AddInstruction(ByteCodes.MAKE_FUNCTION, 0);
 
-        ActiveProgram.VarNames.Add(funcName);
-        AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count-1);
+        // TODO: Apparently sometimes (class methods) we need to store this using STORE_NAME. Why?
+        // Class declarations need all their functions declared using STORE_NAME. I'm not sure why yet. I am speculating that it's 
+        // more proper to say that *everything* needs STORE_NAME by default but we're able to optimize it in just about every other
+        // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
+        // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
+        if(context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
+        {
+            var nameIdx = ActiveProgram.Names.AddReplaceGetIndex(funcName);
+            AddInstruction(ByteCodes.STORE_NAME, nameIdx);
+        }
+        else
+        {
+            ActiveProgram.VarNames.Add(funcName);
+            AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1);
+        }
         return null;
     }
 
