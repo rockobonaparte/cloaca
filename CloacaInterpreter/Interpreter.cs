@@ -115,7 +115,41 @@ namespace CloacaInterpreter
             }
 
             var pyclass = new PyClass(name, __init__, this);
+
+            foreach(var classMemberName in classFrame.Names)
+            {
+                var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
+                if (nameIdx >= 0)
+                {                    
+                    pyclass.__dict__.Add(classMemberName, classFrame.Locals[nameIdx]);
+                }
+                else
+                {
+                    pyclass.__dict__.Add(classMemberName, GetVariable(classMemberName));
+                }
+            }
+            
             return pyclass;
+        }
+
+        // This is like doing a LOAD_NAME without pushing it on the stack.
+        public object GetVariable(string name)
+        {
+            object loadedFromName = null;
+            bool foundVar = false;
+
+            // Try to resolve locally, then globally, and then in our built-in namespace
+            foreach (var stackFrame in callStack)
+            {
+                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                if (nameIdx >= 0)
+                {
+                    return stackFrame.Locals[nameIdx];
+                }
+            }
+
+            throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
         }
 
         public Frame CurrentFrame
@@ -435,31 +469,7 @@ namespace CloacaInterpreter
                         {
                             Cursor += 1;
                             string name = Names[CodeBytes.GetUShort(Cursor)];
-
-                            object loadedFromName = null;
-                            bool foundVar = false;
-
-                            // Try to resolve locally, then globally, and then in our built-in namespace
-                            foreach (var stackFrame in callStack)
-                            {
-                                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                                var nameIdx = stackFrame.LocalNames.IndexOf(name);
-                                if (nameIdx >= 0)
-                                {
-                                    loadedFromName = stackFrame.Locals[nameIdx];
-                                    foundVar = true;
-                                    break;
-                                }
-                            }
-
-                            if (foundVar)
-                            {
-                                DataStack.Push(loadedFromName);
-                            }
-                            else
-                            {
-                                throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
-                            }
+                            DataStack.Push(GetVariable(name));
                         }
                         Cursor += 2;
                         break;

@@ -87,7 +87,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Currently elaborating on how classes are really represented before delving into method invocations")]
         public void AccessClassMethod()
         {
             //>>> def make_foo():

@@ -334,7 +334,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 AddInstruction(ByteCodes.STORE_SUBSCR);
             }
             // Object subscript (self.x)
-            else if(maybeAtom.trailer()[0].NAME() != null)
+            else if(maybeAtom.trailer().Length == 1 && maybeAtom.trailer()[0].NAME() != null)
             {
                 variableName = maybeAtom.atom().GetText();
                 generateLoadForVariable(variableName);
