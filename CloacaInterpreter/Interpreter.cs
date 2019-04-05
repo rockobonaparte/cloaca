@@ -69,7 +69,13 @@ namespace CloacaInterpreter
             {
                 return Program.Names;
             }            
-        }                    
+        }          
+        
+        public void AddLocal(string name, object value)
+        {
+            LocalNames.Add(name);
+            Locals.Add(value);
+        }
     }
 
     public class Interpreter: IInterpreter
@@ -82,8 +88,19 @@ namespace CloacaInterpreter
         // TODO: Add params type to handle one or more base classes (inheritance test)
         public PyClass builtins__build_class(CodeObject func, string name)
         {
-            CallInto(func, new object[0]);
-            var pyclass = new PyClass(name, func, this);
+            Frame classFrame = new Frame(func);
+            classFrame.AddLocal("__name__", name);
+            classFrame.AddLocal("__module__", null);
+            classFrame.AddLocal("__qualname__", null);
+            CallInto(classFrame, new object[0]);
+
+            var initIdx = classFrame.LocalNames.IndexOf("__init__");
+            if(initIdx < 0)
+            {
+                throw new NotImplementedException("Default constructor not supported in builtins__build_class yet!");
+            }
+
+            var pyclass = new PyClass(name, (CodeObject) classFrame.Locals[initIdx], this);
             return pyclass;
         }
 
@@ -201,29 +218,42 @@ namespace CloacaInterpreter
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
+            return CallInto(nextFrame, args);
+        }
+
+        /// <summary>
+        /// Retains the current frame state but enters the next frame. This is equivalent to
+        /// using a CALL_FUNCTION opcode to descene into a subroutine or similar, but can be invoked
+        /// external into the interpreter. It is used for inner, coordinating code to call back into
+        /// the interpreter to get results. 
+        /// </summary>
+        /// <param name="nextFrame">The frame to run through</param>
+        /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
+        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
+        public object CallInto(Frame frame, object[] args)
+        {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                nextFrame.LocalNames.Add(nextFrame.Program.ArgVarNames[argIdx]);
-                nextFrame.Locals.Add(args[argIdx]);
+                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
             }
-            for (int varIndex = 0; varIndex < nextFrame.Program.VarNames.Count; ++varIndex)
+            for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
-                nextFrame.LocalNames.Add(nextFrame.Program.VarNames[varIndex]);
-                nextFrame.Locals.Add(null);
+                frame.AddLocal(frame.Program.VarNames[varIndex], null);
             }
 
-            callStack.Push(nextFrame);      // nextFrame is now the active frame.
+            callStack.Push(frame);      // nextFrame is now the active frame.
             Run();
-            if(DataStack.Count > 0)
+            if (DataStack.Count > 0)
             {
                 return DataStack.Pop();
             }
             else
             {
                 return null;
-            }            
+            }
         }
+
 
         public Interpreter(CodeObject program)
         {
@@ -249,8 +279,7 @@ namespace CloacaInterpreter
 
             foreach (string name in rootProgram.VarNames)
             {
-                LocalNames.Add(name);
-                Locals.Add(null);
+                CurrentFrame.AddLocal(name, null);
             }
         }
 
@@ -392,7 +421,8 @@ namespace CloacaInterpreter
                             Cursor += 1;
                             string name = Names[CodeBytes.GetUShort(Cursor)];
 
-                            object foundVar = null;
+                            object loadedFromName = null;
+                            bool foundVar = false;
 
                             // Try to resolve locally, then globally, and then in our built-in namespace
                             foreach (var stackFrame in callStack)
@@ -401,14 +431,15 @@ namespace CloacaInterpreter
                                 var nameIdx = stackFrame.LocalNames.IndexOf(name);
                                 if (nameIdx >= 0)
                                 {
-                                    foundVar = stackFrame.Locals[nameIdx];
+                                    loadedFromName = stackFrame.Locals[nameIdx];
+                                    foundVar = true;
                                     break;
                                 }
                             }
 
-                            if (foundVar != null)
+                            if (foundVar)
                             {
-                                DataStack.Push(foundVar);
+                                DataStack.Push(loadedFromName);
                             }
                             else
                             {
