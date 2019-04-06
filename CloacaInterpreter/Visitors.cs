@@ -340,18 +340,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 generateLoadForVariable(variableName);
 
                 var attrName = maybeAtom.trailer()[0].NAME().GetText();
-                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
-                if (attrIdx >= 0)
-                {
-                    AddInstruction(ByteCodes.STORE_ATTR, attrIdx);
-                    return null;
-                }
-                else
-                {
-                    ActiveProgram.Names.Add(attrName);
-                    AddInstruction(ByteCodes.STORE_ATTR, ActiveProgram.Names.Count - 1);
-                    return null;
-                }
+                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
+                AddInstruction(ByteCodes.STORE_ATTR, attrIdx);
+                return null;
             }
             else
             {
@@ -602,6 +593,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
+        // TODO: It looks like trailers should be delegated at this point. This is too rigid and probably will fail if we call a function that returns a function that we call ie "x = foo(x)(y)"
+
+        // We are looking at function calls with possibly multiple trailers. So we need to determine
+        // how far we are along in parsing them.
+        int trailersConsumed = 0;
+
         // This is a little rough, but we'll assume for now that if there are any trailers
         // defined that we're working with a function. If no trailer is defined, then we'll
         // pass it along to the atom visitor.
@@ -615,35 +612,53 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 generateLoadForVariable(variableName);
 
                 var attrName = context.trailer()[0].NAME().GetText();
-                var attrIdx = ActiveProgram.Name.IndexOf(attrName);
-                if (attrIdx >= 0)
+
+                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
+                AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
+
+                // ...what can go wrong is a method invocation. So we stopped returning and let ourselves
+                // continue if we have more than one trailer.
+                ++trailersConsumed;
+                if (context.trailer().Length == 1)
                 {
-                    AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
-                    return null;
-                }
-                else
-                {
-                    ActiveProgram.Names.Add(attrName);
-                    AddInstruction(ByteCodes.LOAD_ATTR, ActiveProgram.Names.Count - 1);
                     return null;
                 }
             }
-            
-            // Get the function name loaded on the stack first!
-            Visit(context.atom());
+
+            if (trailersConsumed == 0)
+            {
+                // Get the function name loaded on the stack first!
+                Visit(context.atom());
+            }
+
+            // If it's a class method, we have to load up the self reference
+            int numArgs = 0;
+            if(context.trailer(0).GetText().StartsWith("."))
+            {
+                var variableName = context.atom().GetText();
+                var selfIdx = ActiveProgram.VarNames.IndexOf(variableName);
+                if(selfIdx < 0)
+                {
+                    throw new IndexOutOfRangeException("Could not find self reference for class instance '" 
+                        + variableName + "'");
+                }
+                AddInstruction(ByteCodes.LOAD_FAST, selfIdx);
+                ++numArgs;
+            }
 
             // A function that doesn't take any arguments doesn't have an arglist, but that is what 
             // got triggered. The only way I know to make sure we trigger on it is to see if we match
             // parentheses. There has to be a better way...
-            if (context.trailer(0).arglist() != null || context.trailer(0).GetText() == "()")
+            if (context.trailer(trailersConsumed).arglist() != null || context.trailer(trailersConsumed).GetText() == "()")
             {
                 int argIdx = 0;
-                for (argIdx = 0; context.trailer(0).arglist() != null &&
-                    context.trailer(0).arglist().argument(argIdx) != null; ++argIdx)
+                for (argIdx = 0; context.trailer(trailersConsumed).arglist() != null &&
+                    context.trailer(trailersConsumed).arglist().argument(argIdx) != null; ++argIdx)
                 {
-                    base.Visit(context.trailer(0).arglist().argument(argIdx));
+                    base.Visit(context.trailer(trailersConsumed).arglist().argument(argIdx));
+                    ++numArgs;
                 }
-                AddInstruction(ByteCodes.CALL_FUNCTION, argIdx);
+                AddInstruction(ByteCodes.CALL_FUNCTION, numArgs);
             }
             else
             {

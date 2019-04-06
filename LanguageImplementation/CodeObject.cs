@@ -101,8 +101,8 @@ namespace LanguageImplementation
         //
         public int ArgCount;            // co_argcount
         public List<string> VarNames;   // co_varnames (not really; this should be a tuple used by LOAD_FAST/STORE_FAST
-        public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LAOD_FAST/STORE_FAST
-        public List<string> Names;      // co_names. Referenced by LOAD/STORE_NAME and globals.
+        public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LOAD_FAST/STORE_FAST
+        public List<string> Names;      // co_names. Referenced by LOAD/STORE_NAME, LOAD/STORE_ATTR and globals.
 
         public CodeByteArray Code;      // co_code
         public string Filename;         // co_filename

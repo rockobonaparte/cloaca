@@ -57,7 +57,7 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
 * Classes
   * [DONE] Constructor
   * [DONE] Access members
-  * Call functions
+  * [DONE] Call functions
   * Inheritance
   * Start to wrap data types as classes
 * Scheduler controlling interpreter to switch programs when one waits
@@ -75,7 +75,6 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
 * Imports
   * clr library for .NET stuff
   * Import Unity stuff?
-* Exception
 * Exceptions
   * AssertionError
   * try-catch-finally (else?)
