@@ -73,7 +73,7 @@ namespace CloacaTests
             var variables = new VariableMultimap(interpreter);
             try
             {
-                expectedVariables.AssertSubsetEquals(variables);
+                variables.AssertSubsetEquals(expectedVariables);
             }
             catch(Exception e)
             {

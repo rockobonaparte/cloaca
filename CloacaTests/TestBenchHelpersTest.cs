@@ -32,6 +32,26 @@ namespace CloacaTests
         }
 
         [Test]
+        public void ThreeVariablesMatch()
+        {
+            VariableMultimap a = new VariableMultimap(new TupleList<string, object>
+            {
+                { "foo", "bar" },
+                { "a", "b" },
+                { "x", "y" }
+            });
+
+            try
+            {
+                a.AssertSubsetEquals(a);
+            }
+            catch (Exception e)
+            {
+                Assert.Fail(e.Message);
+            }
+        }
+
+        [Test]
         public void BasicVariableMismatch()
         {
             VariableMultimap a = new VariableMultimap(new TupleList<string, object>
