@@ -130,3 +130,125 @@ inner_func
 
 
     
+
+
+```
+    >>> def big_try():
+    ...   try:
+    ...     a = 1
+    ...     raise Exception()
+    ...   except Exception as e:
+    ...     a = a + 10
+    ...   else:
+    ...     a = a + 100
+    ...   finally:
+    ...     a = a + 1000
+    ...
+
+    >>> dis.dis(big_try)
+      2           0 SETUP_FINALLY           70 (to 72)
+                  2 SETUP_EXCEPT            14 (to 18)
+
+      3           4 LOAD_CONST               1 (1)
+                  6 STORE_FAST               0 (a)
+
+      4           8 LOAD_GLOBAL              0 (Exception)
+                 10 CALL_FUNCTION            0
+                 12 RAISE_VARARGS            1
+                 14 POP_BLOCK
+                 16 JUMP_FORWARD            42 (to 60)
+
+      5     >>   18 DUP_TOP
+                 20 LOAD_GLOBAL              0 (Exception)
+                 22 COMPARE_OP              10 (exception match)
+                 24 POP_JUMP_IF_FALSE       58
+                 26 POP_TOP
+                 28 STORE_FAST               1 (e)
+                 30 POP_TOP
+                 32 SETUP_FINALLY           14 (to 48)
+
+      6          34 LOAD_FAST                0 (a)
+                 36 LOAD_CONST               2 (10)
+                 38 BINARY_ADD
+                 40 STORE_FAST               0 (a)
+                 42 POP_BLOCK
+                 44 POP_EXCEPT
+                 46 LOAD_CONST               0 (None)
+            >>   48 LOAD_CONST               0 (None)
+                 50 STORE_FAST               1 (e)
+                 52 DELETE_FAST              1 (e)
+                 54 END_FINALLY
+                 56 JUMP_FORWARD            10 (to 68)
+            >>   58 END_FINALLY
+
+      8     >>   60 LOAD_FAST                0 (a)
+                 62 LOAD_CONST               3 (100)
+                 64 BINARY_ADD
+                 66 STORE_FAST               0 (a)
+            >>   68 POP_BLOCK
+                 70 LOAD_CONST               0 (None)
+
+     10     >>   72 LOAD_FAST                0 (a)
+                 74 LOAD_CONST               4 (1000)
+                 76 BINARY_ADD
+                 78 STORE_FAST               0 (a)
+                 80 END_FINALLY
+                 82 LOAD_CONST               0 (None)
+                 84 RETURN_VALUE
+
+New opcodes:
+ * DUP_TOP
+ * POP_TOP
+ * RAISE_VARARGS
+ * SETUP_FINALLY
+ * SETUP_EXCEPT
+ * POP_EXCEPT
+ * DELETE_FAST
+ * END_FINALLY
+
+
+
+```
+    >>> def raises():
+    ...   raise Exception("Hello, world!")
+    ...
+    >>> dis.dis(raises)
+      2           0 LOAD_GLOBAL              0 (Exception)
+                  2 LOAD_CONST               1 ('Hello, world!')
+                  4 CALL_FUNCTION            1
+                  6 RAISE_VARARGS            1
+                  8 LOAD_CONST               0 (None)
+                 10 RETURN_VALUE
+```
+
+
+
+```
+    >>> def try_except():
+    ...   try:
+    ...     raise Exception("Hello, World!")
+    ...   except:
+    ...     return 10
+    ...   return 1
+    ...
+    >>> dis.dis(try_except)
+      2           0 SETUP_EXCEPT            12 (to 14)
+
+      3           2 LOAD_GLOBAL              0 (Exception)
+                  4 LOAD_CONST               1 ('Hello, World!')
+                  6 CALL_FUNCTION            1
+                  8 RAISE_VARARGS            1
+                 10 POP_BLOCK
+                 12 JUMP_FORWARD            10 (to 24)
+
+      4     >>   14 POP_TOP
+                 16 POP_TOP
+                 18 POP_TOP
+
+      5          20 LOAD_CONST               2 (10)
+                 22 RETURN_VALUE
+
+      6     >>   24 LOAD_CONST               3 (1)
+                 26 RETURN_VALUE
+```
+

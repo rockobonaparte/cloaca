@@ -26,7 +26,7 @@ namespace CloacaTests
                 "a = 0\n" +
                 "try:\n" +
                 "  raise Exception('Hello, World!')\n" +
-                "except\n" +
+                "except:\n" +
                 "  a = a + 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
@@ -61,12 +61,12 @@ namespace CloacaTests
                 "except Exception as e:\n" +
                 "  a = a + 10\n" +
                 "else: \n" +
-                "  a = a + 1000\n" +
+                "  a = a + 100\n" +
                 "finally:\n" +
-                "  a = a + 10000\n", new Dictionary<string, object>(), 1);
+                "  a = a + 1000\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1101)));
+            Assert.That(a, Is.EqualTo(new BigInteger(1111)));
         }
 
         [Test]
