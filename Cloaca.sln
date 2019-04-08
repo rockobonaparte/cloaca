@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloacaInterpreter", "Cloaca
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloacaTests", "CloacaTests\CloacaTests.csproj", "{8EDF4429-251A-416D-BB68-93F227191BCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterWaiting", "InterpreterWaiting\InterpreterWaiting.csproj", "{7449273B-70F1-42D3-9623-BD2DDAC0F717}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{8EDF4429-251A-416D-BB68-93F227191BCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EDF4429-251A-416D-BB68-93F227191BCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EDF4429-251A-416D-BB68-93F227191BCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7449273B-70F1-42D3-9623-BD2DDAC0F717}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7449273B-70F1-42D3-9623-BD2DDAC0F717}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7449273B-70F1-42D3-9623-BD2DDAC0F717}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7449273B-70F1-42D3-9623-BD2DDAC0F717}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
