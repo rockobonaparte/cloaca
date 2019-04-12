@@ -331,7 +331,7 @@ namespace CloacaInterpreter
             }
         }
 
-        public void Run()
+        public async void Run()
         {
             bool keepRunning = true;
             while(Cursor < Code.Length && keepRunning)

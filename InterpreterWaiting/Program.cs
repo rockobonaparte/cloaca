@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
@@ -63,15 +65,50 @@ namespace InterpreterWaiting
         }
     }
 
+    public class Scheduler
+    {
+        public bool ready;
+        public Scheduler()
+        {
+            ready = false;
+        }
+    }
+
+    public class WaitOnce : INotifyCompletion
+    {
+        private Scheduler scheduler;
+        public WaitOnce(Scheduler scheduler)
+        {
+            this.scheduler = scheduler;
+            IsCompleted = false;
+        }
+
+        public bool IsCompleted
+        {
+            get;
+            private set;
+        }
+
+        void GetResult()
+        {
+
+        }
+
+        public void OnCompleted(Action continuation)
+        {
+            scheduler.ready = true;
+        }
+    }
+
+
 
     class Program
     {
         // TODO:
-        // 1. Get wait to properly parse in class body. Seriously, WTF. I don't expect the result to work correctly (see #4)
-        // 2. Change Terminated to reflect upon the RootProgram.
-        // 3. Get wait to work again in unit tests.
-        // 4. Finally get the wait in the class body to work correctly.
-        static void Main(string[] args)
+        // 1. Change Terminated to reflect upon the RootProgram.
+        // 2. Get wait to work again in unit tests.
+        // 3. Finally get the wait in the class body to work correctly.
+        static void RunInterpreterTest()
         {
             // This still runs fine, apparently.
             string program1 =
@@ -87,7 +124,7 @@ namespace InterpreterWaiting
                 "  wait\n" +
                 "  a = 2\n";
 
-            var inputStream = new AntlrInputStream(program2);
+            var inputStream = new AntlrInputStream(program1);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
             var errorListener = new ParseErrorListener();
@@ -117,16 +154,25 @@ namespace InterpreterWaiting
             //    Console.WriteLine("Interpreter pass #" + runCount);
             //}
 
-            for(int runCount = 1; runCount <= 2; ++runCount)
+            for (int runCount = 1; runCount <= 2; ++runCount)
             {
                 interpreter.Run();
                 Console.WriteLine("Interpreter pass #" + runCount);
-//                var a = interpreter.GetVariable("a");
-//                Console.WriteLine("  a = " + a);
+                //                var a = interpreter.GetVariable("a");
+                //                Console.WriteLine("  a = " + a);
             }
 
             Console.WriteLine("All done. Press any key.");
             Console.ReadKey();
+        }
+
+        static void Main(string[] args)
+        {
+            // Async-await-task-IEnumerator-whatever problem here:
+            // 1. Run some code
+            // 2. Call something that wants to run some more code with a pause in between
+            // 3. Make sure we come back to the top when the pause shows up
+            // 4. Make sure we can resume at #2 to finish it right afterwards
         }
     }
 }
