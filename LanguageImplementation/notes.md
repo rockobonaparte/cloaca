@@ -1,4 +1,25 @@
-﻿https://docs.python.org/3/tutorial/classes.html
+﻿Notes on green thread selection
+
+Currently using IEnumerable yields to pre-empt. My constraints:
+1. Needs to work in Mono and .NET
+2. Needs to work in Unity
+3. Should not get into running in other, multiple threads
+
+Considered strategies:
+* Async-await by itself is insufficient. I can trigger the scheduler in a custom awaiter but that doesn't shift to another
+  frame. So the call stack would just keep growing and growing as I context switch until it explodes.
+* Mono has a tasklet implementation, but it doesn't work in .NET
+* I could write a custom SynchronizationContext, but it would probably kill Unity
+* I could try to hijack the custom SynchronizationContext, but I feel like I'm pushing my luck at that point. It also means
+  it would be bumping into a lot of stuff it has to pass-forward that I don't own.
+
+IEnumerables are so last-decade and they hog the return value, but they're the most common superset that precedes all the
+other methods.
+
+
+
+
+https://docs.python.org/3/tutorial/classes.html
 
 When a class definition is entered, a new namespace is created, and used as the local scope — thus, all assignments to local variables go into this new namespace. In particular, function definitions bind the name of the new function here.
 

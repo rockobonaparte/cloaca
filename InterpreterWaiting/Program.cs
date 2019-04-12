@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
@@ -63,31 +60,11 @@ namespace InterpreterWaiting
         }
     }
 
-
     class Program
     {
-        // TODO:
-        // 1. Get wait to properly parse in class body. Seriously, WTF. I don't expect the result to work correctly (see #4)
-        // 2. Change Terminated to reflect upon the RootProgram.
-        // 3. Get wait to work again in unit tests.
-        // 4. Finally get the wait in the class body to work correctly.
-        static void Main(string[] args)
+        static CodeObject compileCode(string program, Dictionary<string, object> variablesIn)
         {
-            // This still runs fine, apparently.
-            string program1 =
-                "a = 1\n" +
-                "wait\n" +
-                "a = 2\n";
-
-            // This should be more troublesome since it has to call __build_class__, which causes us to transition
-            // Python -> C# (__build_class__) -> Python (class body).
-            // Currently it just screws up during parsing...
-            string program2 =
-                "class Foo:\n" +
-                "  wait\n" +
-                "  a = 2\n";
-
-            var inputStream = new AntlrInputStream(program2);
+            var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
             var errorListener = new ParseErrorListener();
@@ -96,36 +73,51 @@ namespace InterpreterWaiting
 
             var context = parser.program();
 
-            var visitor = new CloacaBytecodeVisitor();
+            var visitor = new CloacaBytecodeVisitor(variablesIn);
             visitor.Visit(context);
 
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            Dis.dis(compiledProgram);
+            return compiledProgram;
+        }
 
-            var interpreter = new Interpreter(compiledProgram);
+        static void Main(string[] args)
+        {
+            // Async-await-task-IEnumerator-whatever problem here:
+            // 1. Run some code
+            // 2. Call something that wants to run some more code with a pause in between
+            // 3. Make sure we come back to the top when the pause shows up
+            // 4. Make sure we can resume at #2 to finish it right afterwards
+            var program1 = "a = 10 * (2 + 4) / 3\n" +
+                           "wait\n" +
+                           "b = a + 3\n";
+            var program2 = "c = 2\n" +
+                           "wait\n" +
+                           "d = c + 3\n";
+            var program3 = "e = 7\n" +
+                           "wait\n" +
+                           "f = e + 2\n";
+            var variablesIn = new Dictionary<string, object>();
 
-            // Terminated doesn't get set any more since the interpreter can have the active program pulled out from
-            // under it. So we need to come up with a better mechanism. Probably root program being terminated.
-            //
-            //int runCount = 0;
-            //while (!interpreter.Terminated)
-            //{
-            //    interpreter.Run();
-            //    runCount += 1;
-            //    Console.WriteLine("Interpreter pass #" + runCount);
-            //}
+            CodeObject compiledProgram1 = compileCode(program1, variablesIn);
+            CodeObject compiledProgram2 = compileCode(program2, variablesIn);
+            CodeObject compiledProgram3 = compileCode(program3, variablesIn);
 
-            for(int runCount = 1; runCount <= 2; ++runCount)
+            var interpreter = new Interpreter();
+            interpreter.DumpState = true;
+
+            var scheduler = new Scheduler(interpreter);
+
+            scheduler.Schedule(compiledProgram1);
+            scheduler.Schedule(compiledProgram2);
+            scheduler.Schedule(compiledProgram3);
+
+            while(!scheduler.Done)
             {
-                interpreter.Run();
-                Console.WriteLine("Interpreter pass #" + runCount);
-//                var a = interpreter.GetVariable("a");
-//                Console.WriteLine("  a = " + a);
+                scheduler.Tick();
             }
 
-            Console.WriteLine("All done. Press any key.");
             Console.ReadKey();
         }
     }

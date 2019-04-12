@@ -48,6 +48,7 @@ namespace LanguageImplementation
         public WrappedCodeObject __new__;
         public CodeObject __init__;
         private IInterpreter interpreter;
+        private FrameContext context;
 
         private PyObject DefaultNew(PyTypeObject typeObj)
         {
@@ -58,12 +59,13 @@ namespace LanguageImplementation
             return newObject;
         }
 
-        public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter)
+        public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context)
         {
             __dict__ = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
 
+            // DefaultNew doesn't invoking any yielding code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
@@ -76,15 +78,15 @@ namespace LanguageImplementation
         public PyObject type_call()
         {
             var newObj = (PyObject) __new__.Call(new object[] { this });
-            interpreter.CallInto(this.__init__, new object[] { newObj });
+            interpreter.CallInto(context, this.__init__, new object[] { newObj });
             return newObj;
         }
     }
 
     public class PyClass : PyTypeObject
     {
-        public PyClass(string name, CodeObject __init__, IInterpreter interpreter) :
-            base(name, __init__, interpreter)
+        public PyClass(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context) :
+            base(name, __init__, interpreter, context)
         {
             // __dict__ used to be set here but was moved upstream
         }

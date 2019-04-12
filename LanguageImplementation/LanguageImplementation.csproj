@@ -74,6 +74,7 @@
     <Compile Include="Interfaces.cs" />
     <Compile Include="OpCodes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SchedulingInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="notes.md" />

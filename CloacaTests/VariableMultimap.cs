@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using CloacaInterpreter;
+using LanguageImplementation;
 
 namespace CloacaTests
 {
@@ -28,14 +28,14 @@ namespace CloacaTests
     {
         private Dictionary<string, Dictionary<Type, object>> map;
 
-        public VariableMultimap(Interpreter interpreter)
+        public VariableMultimap(FrameContext context)
         {
             map = new Dictionary<string, Dictionary<Type, object>>();
 
-            for(int i = 0; i < interpreter.LocalNames.Count; ++i)
+            for(int i = 0; i < context.LocalNames.Count; ++i)
             {
-                var name = interpreter.LocalNames[i];
-                var variable = interpreter.Locals[i];
+                var name = context.LocalNames[i];
+                var variable = context.Locals[i];
                 Add(name, variable);
             }
         }
