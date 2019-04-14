@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Threading;
 
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
@@ -173,6 +172,54 @@ namespace InterpreterWaiting
             // 2. Call something that wants to run some more code with a pause in between
             // 3. Make sure we come back to the top when the pause shows up
             // 4. Make sure we can resume at #2 to finish it right afterwards
+            var program =   "a = 10 * (2 + 4) / 3\n" +
+                            "wait\n" +
+                            "b = a + 3\n";
+            var variablesIn = new Dictionary<string, object>();
+
+            var inputStream = new AntlrInputStream(program);
+            var lexer = new CloacaLexer(inputStream);
+            CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
+            var errorListener = new ParseErrorListener();
+            var parser = new CloacaParser(commonTokenStream);
+            parser.AddErrorListener(errorListener);
+
+            var context = parser.program();
+
+            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            visitor.Visit(context);
+
+            // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
+            CodeObject compiledProgram = visitor.RootProgram.Build();
+
+            Dis.dis(compiledProgram);
+
+            var interpreter = new Interpreter(compiledProgram);
+            interpreter.DumpState = true;
+            foreach (string varName in variablesIn.Keys)
+            {
+                interpreter.SetVariable(varName, variablesIn[varName]);
+            }
+
+            int runCount = 0;
+
+
+            // This is will become our scheduling logic.
+            var interpreterResult = interpreter.Run();
+            var interpreterEnumer = interpreterResult.GetEnumerator();
+
+            while(interpreterEnumer.MoveNext())
+            {
+                var scheduleInfo = interpreterEnumer.Current;
+                runCount += 1;
+            }
+
+            var variables = interpreter.DumpVariables();
+            foreach(var k in variables.Keys)
+            {
+                Console.WriteLine(k + " = " + variables[k]);
+            }
+            Console.ReadKey();
         }
     }
 }

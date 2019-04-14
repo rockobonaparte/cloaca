@@ -86,13 +86,18 @@ namespace CloacaInterpreter
         
         // Implementation of builtins.__build_class__
         // TODO: Add params type to handle one or more base classes (inheritance test)
-        public PyClass builtins__build_class(CodeObject func, string name)
+        // Returns PyClass
+        public IEnumerable<SchedulingInfo> builtins__build_class(CodeObject func, string name)
         {
             Frame classFrame = new Frame(func);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
-            CallInto(classFrame, new object[0]);
+
+            foreach(var yielding in CallInto(classFrame, new object[0]))
+            {
+                yield return yielding;
+            }
 
             var initIdx = classFrame.LocalNames.IndexOf("__init__");
             CodeObject __init__ = null;
@@ -129,7 +134,7 @@ namespace CloacaInterpreter
                 }
             }
             
-            return pyclass;
+            yield return new ReturnValue(pyclass);
         }
 
         // This is like doing a LOAD_NAME without pushing it on the stack.
@@ -261,12 +266,15 @@ namespace CloacaInterpreter
         /// <param name="functionToRun">The code object to call into</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
-        public object CallInto(CodeObject functionToRun, object[] args)
+        public IEnumerable<SchedulingInfo> CallInto(CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
-            return CallInto(nextFrame, args);
+            foreach(var yielding in CallInto(nextFrame, args))
+            {
+                yield return yielding;
+            }
         }
 
         /// <summary>
@@ -278,7 +286,7 @@ namespace CloacaInterpreter
         /// <param name="nextFrame">The frame to run through</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
-        public object CallInto(Frame frame, object[] args)
+        public IEnumerable<SchedulingInfo> CallInto(Frame frame, object[] args)
         {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
@@ -291,14 +299,19 @@ namespace CloacaInterpreter
             }
 
             callStack.Push(frame);      // nextFrame is now the active frame.
-            Run();
+
+            foreach(var yielding in Run())
+            {
+                yield return yielding;
+            }
+
             if (DataStack.Count > 0)
             {
-                return DataStack.Pop();
+                yield return new ReturnValue(DataStack.Pop());
             }
             else
             {
-                return null;
+                yield return new ReturnValue(DataStack.Pop());
             }
         }
 
@@ -331,7 +344,7 @@ namespace CloacaInterpreter
             }
         }
 
-        public async void Run()
+        public IEnumerable<SchedulingInfo> Run()
         {
             bool keepRunning = true;
             while(Cursor < Code.Length && keepRunning)
@@ -532,7 +545,7 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.WAIT:
                         {
-                            keepRunning = false;
+                            yield return new YieldOnePass();
                         }
                         Cursor += 1;
                         break;
@@ -750,7 +763,7 @@ namespace CloacaInterpreter
                             // That's because I don't have a more obvious way to have Python code call a built-in that itself needs
                             // to resolve some Python code. That latter code will return. At that point, we'll lose sync with the
                             // frames.
-                            return;
+                            yield break;
                         }
                     case ByteCodes.BUILD_TUPLE:
                         {
