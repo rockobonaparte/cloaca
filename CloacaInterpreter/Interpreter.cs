@@ -372,6 +372,13 @@ namespace CloacaInterpreter
             return Run();
         }
 
+        // A hack for right now to see if this helps us switch between tasklets.
+        public void SetContext(Stack<Frame> frame, int cursor)
+        {
+            callStack = frame;
+            Cursor = cursor;
+        }
+
         // TODO: Make this private.
         public IEnumerable<SchedulingInfo> Run()
         {

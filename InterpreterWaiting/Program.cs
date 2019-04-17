@@ -176,6 +176,8 @@ namespace InterpreterWaiting
                     var cursor = cursors[taskIdx];
                     var interpreterEnumer = contexts[taskIdx].GetEnumerator();
 
+                    interpreter.SetContext(tasklet, cursor);
+
                     // This doesn't work as intended because the Cursor resets when we change tasklets.
                     // We need to encapsulate the cursor in our task state in some way.
                     if (!interpreterEnumer.MoveNext())
