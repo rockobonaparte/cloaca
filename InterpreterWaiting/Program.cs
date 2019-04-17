@@ -133,13 +133,20 @@ namespace InterpreterWaiting
             var program2 = "c = 2\n" +
                            "wait\n" +
                            "d = c + 3\n";
+            var program3 = "e = 7\n" +
+                           "wait\n" +
+                           "f = e + 2\n";
             var variablesIn = new Dictionary<string, object>();
 
             CodeObject compiledProgram1 = compileCode(program1, variablesIn);
             CodeObject compiledProgram2 = compileCode(program2, variablesIn);
+            CodeObject compiledProgram3 = compileCode(program3, variablesIn);
 
             var interpreter = new Interpreter();
             interpreter.DumpState = true;
+
+            // TODO: Set per-frame instead of using the interpreter
+            // Currently, this is a no-op since we don't have any variables in variablesIn.
             foreach (string varName in variablesIn.Keys)
             {
                 interpreter.SetVariable(varName, variablesIn[varName]);
@@ -151,11 +158,14 @@ namespace InterpreterWaiting
             var cursors = new List<int>();
             var contexts = new List<IEnumerable<SchedulingInfo>>();
             tasklets.Add(interpreter.PrepareFrameStack(compiledProgram1));
-//            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram2));
+            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram2));
+            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram3));
             cursors.Add(0);
-//            cursors.Add(0);
+            cursors.Add(0);
+            cursors.Add(0);
             contexts.Add(interpreter.Run(tasklets[0], 0));
-//            contexts.Add(interpreter.Run(tasklets[1], 0));
+            contexts.Add(interpreter.Run(tasklets[1], 0));
+            contexts.Add(interpreter.Run(tasklets[2], 0));
 
             while (tasklets.Count > 0)
             {

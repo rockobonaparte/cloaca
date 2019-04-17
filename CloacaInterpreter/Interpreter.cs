@@ -375,8 +375,7 @@ namespace CloacaInterpreter
         // TODO: Make this private.
         public IEnumerable<SchedulingInfo> Run()
         {
-            bool keepRunning = true;
-            while(Cursor < Code.Length && keepRunning)
+            while(Cursor < Code.Length)
             {
                 //if(DumpState)
                 //{
