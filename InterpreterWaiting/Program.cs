@@ -130,9 +130,9 @@ namespace InterpreterWaiting
             var program1 = "a = 10 * (2 + 4) / 3\n" +
                            "wait\n" +
                            "b = a + 3\n";
-            var program2 = "a = 2\n" +
+            var program2 = "c = 2\n" +
                            "wait\n" +
-                           "b = a + 3\n";
+                           "d = c + 3\n";
             var variablesIn = new Dictionary<string, object>();
 
             CodeObject compiledProgram1 = compileCode(program1, variablesIn);
@@ -170,6 +170,12 @@ namespace InterpreterWaiting
                     // We need to encapsulate the cursor in our task state in some way.
                     if (!interpreterEnumer.MoveNext())
                     {
+                        var topFrame = tasklets[taskIdx].Peek();
+                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Peek().Locals.Count; ++varIdx)
+                        {
+                            Console.WriteLine(topFrame.LocalNames[varIdx] + " = " + topFrame.Locals[varIdx]);
+                        }
+
                         tasklets.RemoveAt(taskIdx);
                         cursors.RemoveAt(taskIdx);
                         contexts.RemoveAt(taskIdx);
@@ -180,11 +186,10 @@ namespace InterpreterWaiting
                         var scheduleInfo = interpreterEnumer.Current;
                         runCount += 1;
 
-                        // This is probably the wrong way to extract the variables. Get them from the frame.
-                        var variables = interpreter.DumpVariables();
-                        foreach (var k in variables.Keys)
+                        var topFrame = tasklets[taskIdx].Peek();
+                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Peek().Locals.Count; ++varIdx)
                         {
-                            Console.WriteLine(k + " = " + variables[k]);
+                            Console.WriteLine(topFrame.LocalNames[varIdx] + " = " + topFrame.Locals[varIdx]);
                         }
 
                         cursors[taskIdx] = interpreter.Cursor;
