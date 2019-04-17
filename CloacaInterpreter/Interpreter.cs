@@ -7,94 +7,21 @@ using LanguageImplementation;
 
 namespace CloacaInterpreter
 {
-    // Traditional block in Python has: frame, opcode, handler (pointer to next instruction outside of the loop), value stack size
-    // We don't have frames yet, we'll just BS our way through others for now.
-    public class Block
-    {
-        public ByteCodes Opcode
-        {
-            get; private set;
-        }
-
-        public int HandlerAddress
-        {
-            get; private set;
-        }
-
-        public int StackSize
-        {
-            get; private set;
-        }
-
-        public Block(ByteCodes opcode, int handlerAddress, int stackSize)
-        {
-            this.Opcode = opcode;
-            this.HandlerAddress = handlerAddress;
-            this.StackSize = stackSize;
-        }
-    }
-
-    public class Frame
-    {
-        public int Cursor;
-        public Stack<Block> BlockStack;
-        public Stack<object> DataStack;
-        public CodeObject Program;
-        public List<string> LocalNames;
-        public List<object> Locals;
-
-        public Frame()
-        {
-            Cursor = 0;
-            BlockStack = new Stack<Block>();
-            DataStack = new Stack<object>();
-            Program = null;
-            LocalNames = new List<string>();
-            Locals = new List<object>();
-        }
-
-        public Frame(CodeObject program)
-        {
-            Cursor = 0;
-            BlockStack = new Stack<Block>();
-            DataStack = new Stack<object>();
-            LocalNames = new List<string>();
-            Program = program;
-            Locals = new List<object>();
-        }
-
-        public List<string> Names
-        {
-            get
-            {
-                return Program.Names;
-            }            
-        }          
-        
-        public void AddLocal(string name, object value)
-        {
-            LocalNames.Add(name);
-            Locals.Add(value);
-        }
-    }
-
     public class Interpreter: IInterpreter
     {
-        private CodeObject rootProgram;
-        private Stack<Frame> callStack;
         public bool DumpState;
         
         // Implementation of builtins.__build_class__
         // TODO: Add params type to handle one or more base classes (inheritance test)
         // Returns PyClass
-        public IEnumerable<SchedulingInfo> builtins__build_class(CodeObject func, string name)
+        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name)
         {
             Frame classFrame = new Frame(func);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            foreach(var yielding in CallInto(classFrame, new object[0]))
+            foreach(var yielding in CallInto(context, classFrame, new object[0]))
             {
                 yield return yielding;
             }
@@ -119,7 +46,7 @@ namespace CloacaInterpreter
                 __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
-            var pyclass = new PyClass(name, __init__, this);
+            var pyclass = new PyClass(name, __init__, this, context);
 
             foreach(var classMemberName in classFrame.Names)
             {
@@ -130,130 +57,11 @@ namespace CloacaInterpreter
                 }
                 else
                 {
-                    pyclass.__dict__.Add(classMemberName, GetVariable(classMemberName));
+                    pyclass.__dict__.Add(classMemberName, context.GetVariable(classMemberName));
                 }
             }
             
             yield return new ReturnValue(pyclass);
-        }
-
-        // This is like doing a LOAD_NAME without pushing it on the stack.
-        public object GetVariable(string name)
-        {
-            object loadedFromName = null;
-            bool foundVar = false;
-
-            // Try to resolve locally, then globally, and then in our built-in namespace
-            foreach (var stackFrame in callStack)
-            {
-                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                var nameIdx = stackFrame.LocalNames.IndexOf(name);
-                if (nameIdx >= 0)
-                {
-                    return stackFrame.Locals[nameIdx];
-                }
-            }
-
-            throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
-        }
-
-        public Frame CurrentFrame
-        {
-            get
-            {
-                return callStack.Peek();
-            }            
-        }
-
-        public int Cursor
-        {
-            get
-            {
-                return callStack.Peek().Cursor;
-            }
-            set
-            {
-                callStack.Peek().Cursor = value;
-            }
-        }
-
-        public Stack<Object> DataStack
-        {
-            get
-            {
-                return callStack.Peek().DataStack;
-            }
-        }
-
-        public Stack<Block> BlockStack
-        {
-            get
-            {
-                return callStack.Peek().BlockStack;
-            }
-        }
-
-        public CodeObject Program
-        {
-            get
-            {
-                return callStack.Peek().Program;
-            }
-        }
-
-        public byte[] Code
-        {
-            get
-            {
-                return callStack.Peek().Program.Code.Bytes;
-            }
-        }
-
-        public CodeByteArray CodeBytes
-        {
-            get
-            {
-                return callStack.Peek().Program.Code;
-            }
-        }
-
-        public List<object> Locals
-        {
-            get
-            {
-                return callStack.Peek().Locals;
-            }
-        }
-
-        public List<string> Names
-        {
-            get
-            {
-                return callStack.Peek().Names;
-            }
-        }
-
-        public List<string> LocalNames
-        {
-            get
-            {
-                return callStack.Peek().LocalNames;
-            }
-        }
-
-        public Dictionary<string, object> DumpVariables()
-        {
-            var variables = new Dictionary<string, object>();
-            for (int i = 0; i < LocalNames.Count; ++i)
-            {
-                variables.Add(LocalNames[i], Locals[i]);
-            }
-            return variables;
-        }
-
-        public bool Terminated
-        {
-            get; private set;
         }
 
         /// <summary>
@@ -266,12 +74,12 @@ namespace CloacaInterpreter
         /// <param name="functionToRun">The code object to call into</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
-        public IEnumerable<SchedulingInfo> CallInto(CodeObject functionToRun, object[] args)
+        public IEnumerable<SchedulingInfo> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
-            foreach(var yielding in CallInto(nextFrame, args))
+            foreach(var yielding in CallInto(context, nextFrame, args))
             {
                 yield return yielding;
             }
@@ -286,7 +94,7 @@ namespace CloacaInterpreter
         /// <param name="nextFrame">The frame to run through</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
-        public IEnumerable<SchedulingInfo> CallInto(Frame frame, object[] args)
+        public IEnumerable<SchedulingInfo> CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
@@ -298,20 +106,20 @@ namespace CloacaInterpreter
                 frame.AddLocal(frame.Program.VarNames[varIndex], null);
             }
 
-            callStack.Push(frame);      // nextFrame is now the active frame.
+            context.callStack.Push(frame);      // nextFrame is now the active frame.
 
-            foreach(var yielding in Run())
+            foreach(var yielding in Run(context))
             {
                 yield return yielding;
             }
 
-            if (DataStack.Count > 0)
+            if (context.DataStack.Count > 0)
             {
-                yield return new ReturnValue(DataStack.Pop());
+                yield return new ReturnValue(context.DataStack.Pop());
             }
             else
             {
-                yield return new ReturnValue(DataStack.Pop());
+                yield return new ReturnValue(context.DataStack.Pop());
             }
         }
 
@@ -320,24 +128,7 @@ namespace CloacaInterpreter
             // We'll switch to a default constructor in time.
         }
 
-        // TODO: Stop requiring a program on construction
-        public Interpreter(CodeObject program)
-        {
-            this.rootProgram = program;
-            Reset();
-        }
-
-        public void SetVariable(string name, object value)
-        {
-            int varIdx = LocalNames.IndexOf(name);
-            if(varIdx < 0)
-            {
-                throw new KeyNotFoundException("Could not find variable in locals named " + name);
-            }
-            Locals[varIdx] = value;
-        }
-
-        public Stack<Frame> PrepareFrameStack(CodeObject newProgram)
+        public FrameContext PrepareFrameContext(CodeObject newProgram)
         {
             var newFrameStack = new Stack<Frame>();
             var rootFrame = new Frame(newProgram);
@@ -348,104 +139,76 @@ namespace CloacaInterpreter
             }
 
             newFrameStack.Push(rootFrame);
-            return newFrameStack;
-        }
-
-        public void Reset()
-        {
-            Terminated = false;
-            callStack = PrepareFrameStack(rootProgram);
-        }
-
-        public IEnumerable<SchedulingInfo> Run(CodeObject newProgram)
-        {
-            this.rootProgram = newProgram;
-            Reset();
-            return Run();
-        }
-
-        // TODO: Consolidate so we don't have to pass in the cursor ourselves.
-        public IEnumerable<SchedulingInfo> Run(Stack<Frame> frame, int cursor)
-        {
-            callStack = frame;
-            Cursor = cursor;
-            return Run();
-        }
-
-        // A hack for right now to see if this helps us switch between tasklets.
-        public void SetContext(Stack<Frame> frame, int cursor)
-        {
-            callStack = frame;
-            Cursor = cursor;
+            return new FrameContext(newFrameStack);
         }
 
         // TODO: Make this private.
-        public IEnumerable<SchedulingInfo> Run()
+        public IEnumerable<SchedulingInfo> Run(FrameContext context)
         {
-            while(Cursor < Code.Length)
+            while(context.Cursor < context.Code.Length)
             {
                 //if(DumpState)
                 //{
                 //    Console.WriteLine(Dis.dis(callStack.Peek().Program, Cursor, 1));
                 //}
 
-                var opcode = (ByteCodes)Code[Cursor];
+                var opcode = (ByteCodes)context.Code[context.Cursor];
                 switch(opcode)
                 {
                     case ByteCodes.BINARY_ADD:
                         {
-                            dynamic right = DataStack.Pop();
-                            dynamic left = DataStack.Pop();
-                            DataStack.Push(left + right);
+                            dynamic right = context.DataStack.Pop();
+                            dynamic left = context.DataStack.Pop();
+                            context.DataStack.Push(left + right);
                         }
-                        Cursor += 1;
+                        context.Cursor += 1;
                         break;
                     case ByteCodes.BINARY_SUBTRACT:
                         {
-                            dynamic right = DataStack.Pop();
-                            dynamic left = DataStack.Pop();
-                            DataStack.Push(left - right);
+                            dynamic right = context.DataStack.Pop();
+                            dynamic left = context.DataStack.Pop();
+                            context.DataStack.Push(left - right);
                         }
-                        Cursor += 1;
+                        context.Cursor += 1;
                         break;
                     case ByteCodes.BINARY_MULTIPLY:
                         {
-                            dynamic right = DataStack.Pop();
-                            dynamic left = DataStack.Pop();
-                            DataStack.Push(left * right);
+                            dynamic right = context.DataStack.Pop();
+                            dynamic left = context.DataStack.Pop();
+                            context.DataStack.Push(left * right);
                         }
-                        Cursor += 1;
+                        context.Cursor += 1;
                         break;
                     case ByteCodes.BINARY_DIVIDE:
                         {
-                            dynamic right = DataStack.Pop();
-                            dynamic left = DataStack.Pop();
-                            DataStack.Push(left / right);
+                            dynamic right = context.DataStack.Pop();
+                            dynamic left = context.DataStack.Pop();
+                            context.DataStack.Push(left / right);
                         }
-                        Cursor += 1;
+                        context.Cursor += 1;
                         break;
                     case ByteCodes.LOAD_CONST:
                         {
-                            Cursor += 1;
-                            DataStack.Push(Program.Constants[CodeBytes.GetUShort(Cursor)]);
+                            context.Cursor += 1;
+                            context.DataStack.Push(context.Program.Constants[context.CodeBytes.GetUShort(context.Cursor)]);
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.STORE_NAME:
                         {
-                            Cursor += 1;
-                            string name = Names[CodeBytes.GetUShort(Cursor)];
+                            context.Cursor += 1;
+                            string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
 
                             bool foundVar = false;
 
                             // Try to resolve locally, then globally, and then in our built-in namespace
-                            foreach (var stackFrame in callStack)
+                            foreach (var stackFrame in context.callStack)
                             {
                                 // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
                                 var nameIdx = stackFrame.LocalNames.IndexOf(name);
                                 if (nameIdx >= 0)
                                 {
-                                    stackFrame.Locals[nameIdx] = DataStack.Pop();
+                                    stackFrame.Locals[nameIdx] = context.DataStack.Pop();
                                     foundVar = true;
                                     break;
                                 }
@@ -454,32 +217,32 @@ namespace CloacaInterpreter
                             // If we don't find it, then we'll make it local!
                             if (!foundVar)
                             {
-                                CurrentFrame.AddLocal(name, DataStack.Pop());
+                                context.callStack.Peek().AddLocal(name, context.DataStack.Pop());
                             }
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.STORE_FAST:
                         {
-                            Cursor += 1;
-                            var localIdx = CodeBytes.GetUShort(Cursor);
-                            Locals[localIdx] = DataStack.Pop();
+                            context.Cursor += 1;
+                            var localIdx = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Locals[localIdx] = context.DataStack.Pop();
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.STORE_GLOBAL:
                         {
                             {
-                                Cursor += 1;
-                                var globalIdx = CodeBytes.GetUShort(Cursor);
-                                var globalName = Program.Names[globalIdx];
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Program.Names[globalIdx];
 
                                 bool foundVar = false;
 
-                                foreach (var stackFrame in callStack)
+                                foreach (var stackFrame in context.callStack)
                                 {
                                     // Skip current stack
-                                    if (stackFrame == CurrentFrame)
+                                    if (stackFrame == context.callStack.Peek())
                                     {
                                         continue;
                                     }
@@ -487,7 +250,7 @@ namespace CloacaInterpreter
                                     var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
                                     if (nameIdx >= 0)
                                     {
-                                        stackFrame.Locals[nameIdx] = DataStack.Pop();
+                                        stackFrame.Locals[nameIdx] = context.DataStack.Pop();
                                         foundVar = true;
                                     }
                                 }
@@ -497,50 +260,50 @@ namespace CloacaInterpreter
                                     throw new Exception("Global '" + globalName + "' was not found!");
                                 }
                             }
-                            Cursor += 2;
+                            context.Cursor += 2;
                             break;
                         }
                     case ByteCodes.STORE_ATTR:
                         {
-                            Cursor += 1;
-                            var nameIdx = CodeBytes.GetUShort(Cursor);
-                            var attrName = Program.Names[nameIdx];
+                            context.Cursor += 1;
+                            var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
+                            var attrName = context.Program.Names[nameIdx];
 
-                            var obj = (PyObject) DataStack.Pop();
-                            var val = DataStack.Pop();
+                            var obj = (PyObject)context.DataStack.Pop();
+                            var val = context.DataStack.Pop();
 
                             obj.__setattr__(attrName, val);
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.LOAD_NAME:
                         {
-                            Cursor += 1;
-                            string name = Names[CodeBytes.GetUShort(Cursor)];
-                            DataStack.Push(GetVariable(name));
+                            context.Cursor += 1;
+                            string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
+                            context.DataStack.Push(context.GetVariable(name));
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.LOAD_FAST:
                         {
-                            Cursor += 1;
-                            DataStack.Push(Locals[CodeBytes.GetUShort(Cursor)]);
+                            context.Cursor += 1;
+                            context.DataStack.Push(context.Locals[context.CodeBytes.GetUShort(context.Cursor)]);
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.LOAD_GLOBAL:
                         {
                             {
-                                Cursor += 1;
-                                var globalIdx = CodeBytes.GetUShort(Cursor);
-                                var globalName = Program.Names[globalIdx];
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Program.Names[globalIdx];
 
                                 object foundVar = null;
 
-                                foreach(var stackFrame in callStack)
+                                foreach(var stackFrame in context.callStack)
                                 {
                                     // Skip current stack
-                                    if(stackFrame == CurrentFrame)
+                                    if(stackFrame == context.callStack.Peek())
                                     {
                                         continue;
                                     }
@@ -555,160 +318,160 @@ namespace CloacaInterpreter
 
                                 if(foundVar != null)
                                 {
-                                    DataStack.Push(foundVar);
+                                    context.DataStack.Push(foundVar);
                                 }
                                 else
                                 {
                                     throw new Exception("Global '" + globalName + "' was not found!");
                                 }
                             }
-                            Cursor += 2;
+                            context.Cursor += 2;
                             break;
                         }
                     case ByteCodes.LOAD_ATTR:
                         {
-                            Cursor += 1;
-                            var nameIdx = CodeBytes.GetUShort(Cursor);
-                            var attrName = Program.Names[nameIdx];
+                            context.Cursor += 1;
+                            var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
+                            var attrName = context.Program.Names[nameIdx];
 
-                            var obj = (PyObject)DataStack.Pop();
+                            var obj = (PyObject)context.DataStack.Pop();
                             var val = obj.__getattribute__(attrName);
 
-                            DataStack.Push(val);
+                            context.DataStack.Push(val);
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.WAIT:
                         {
                             // *very important!* advance the cursor first! Otherwise, we come right back to this wait
                             // instruction!
-                            Cursor += 1;
+                            context.Cursor += 1;
                             yield return new YieldOnePass();
                         }
                         break;
                     case ByteCodes.COMPARE_OP:
                         {
-                            Cursor += 1;
-                            var compare_op = (CompareOps)Program.Code.GetUShort(Cursor);
-                            dynamic right = DataStack.Pop();
-                            dynamic left = DataStack.Pop();
+                            context.Cursor += 1;
+                            var compare_op = (CompareOps)context.Program.Code.GetUShort(context.Cursor);
+                            dynamic right = context.DataStack.Pop();
+                            dynamic left = context.DataStack.Pop();
                             switch (compare_op)
                             {
                                 case CompareOps.Lt:
-                                    DataStack.Push(left < right);
+                                    context.DataStack.Push(left < right);
                                     break;
                                 case CompareOps.Gt:
-                                    DataStack.Push(left > right);
+                                    context.DataStack.Push(left > right);
                                     break;
                                 case CompareOps.Eq:
-                                    DataStack.Push(left == right);
+                                    context.DataStack.Push(left == right);
                                     break;
                                 case CompareOps.Gte:
-                                    DataStack.Push(left >= right);
+                                    context.DataStack.Push(left >= right);
                                     break;
                                 case CompareOps.Lte:
-                                    DataStack.Push(left <= right);
+                                    context.DataStack.Push(left <= right);
                                     break;
                                 case CompareOps.LtGt:
-                                    DataStack.Push(left < right || left > right);
+                                    context.DataStack.Push(left < right || left > right);
                                     break;
                                 case CompareOps.Ne:
-                                    DataStack.Push(left != right);
+                                    context.DataStack.Push(left != right);
                                     break;
                                 case CompareOps.In:
                                     throw new NotImplementedException("'In' comparison operation");
                                 case CompareOps.NotIn:
                                     throw new NotImplementedException("'Not In' comparison operation");
                                 case CompareOps.Is:
-                                    DataStack.Push(left.GetType() == right.GetType() && left == right);
+                                    context.DataStack.Push(left.GetType() == right.GetType() && left == right);
                                     break;
                                 case CompareOps.IsNot:
-                                    DataStack.Push(left.GetType() != right.GetType() || left != right);
+                                    context.DataStack.Push(left.GetType() != right.GetType() || left != right);
                                     break;
                                 default:
                                     throw new Exception("Unexpected comparision operation opcode: " + compare_op);
                             }
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_TRUE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
-                            var conditional = (bool)DataStack.Pop();
+                            context.Cursor += 1;
+                            var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                            var conditional = (bool)context.DataStack.Pop();
                             if (conditional)
                             {
-                                Cursor = jumpPosition;
+                                context.Cursor = jumpPosition;
                                 continue;
                             }
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_FALSE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
-                            var conditional = (bool)DataStack.Pop();
+                            context.Cursor += 1;
+                            var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                            var conditional = (bool)context.DataStack.Pop();
                             if(!conditional)
                             {
-                                Cursor = jumpPosition;
+                                context.Cursor = jumpPosition;
                                 continue;
                             }
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.SETUP_LOOP:
                         {
-                            Cursor += 1;
-                            var loopResumptionPoint = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
-                            BlockStack.Push(new Block(ByteCodes.SETUP_LOOP, loopResumptionPoint, DataStack.Count));
+                            context.Cursor += 1;
+                            var loopResumptionPoint = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_LOOP, loopResumptionPoint, context.DataStack.Count));
                         }
                         break;
                     case ByteCodes.POP_BLOCK:
                         {
-                            var block = BlockStack.Pop();
+                            var block = context.BlockStack.Pop();
 
                             // Restore the stack.
-                            while(DataStack.Count > block.StackSize)
+                            while(context.DataStack.Count > block.StackSize)
                             {
-                                DataStack.Pop();
+                                context.DataStack.Pop();
                             }
                         }
-                        Cursor += 1;
+                        context.Cursor += 1;
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
                         {
-                            Cursor += 1;
-                            var jumpPosition = CodeBytes.GetUShort(Cursor);
-                            Cursor = jumpPosition;
+                            context.Cursor += 1;
+                            var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor = jumpPosition;
                             continue;
                         }
                     case ByteCodes.JUMP_FORWARD:
                         {
-                            Cursor += 1;
-                            var jumpOffset = CodeBytes.GetUShort(Cursor);
-                            
+                            context.Cursor += 1;
+                            var jumpOffset = context.CodeBytes.GetUShort(context.Cursor);
+
                             // Offset is based off of the NEXT instruction so add one.
-                            Cursor += jumpOffset + 2;
+                            context.Cursor += jumpOffset + 2;
                             continue;
                         }
                     case ByteCodes.MAKE_FUNCTION:
                         {
                             // TOS-1 is the code object
                             // TOS is the function's qualified name
-                            Cursor += 1;
-                            var functionOpcode = CodeBytes.GetUShort(Cursor);             // Currently not using.
-                            string qualifiedName = (string)DataStack.Pop();
-                            CodeObject functionCode = (CodeObject)DataStack.Pop();
-                            DataStack.Push(functionCode);
+                            context.Cursor += 1;
+                            var functionOpcode = context.CodeBytes.GetUShort(context.Cursor);             // Currently not using.
+                            string qualifiedName = (string)context.DataStack.Pop();
+                            CodeObject functionCode = (CodeObject)context.DataStack.Pop();
+                            context.DataStack.Push(functionCode);
                         }
-                        Cursor += 2;
+                        context.Cursor += 2;
                         break;
                     case ByteCodes.CALL_FUNCTION:
                         {
-                            Cursor += 1;
-                            var argCount = CodeBytes.GetUShort(Cursor);             // Currently not using.
+                            context.Cursor += 1;
+                            var argCount = context.CodeBytes.GetUShort(context.Cursor);             // Currently not using.
 
                             // This is annoying. The arguments are at the top of the stack while
                             // the function is under them, but we need the function to assign the
@@ -717,10 +480,10 @@ namespace CloacaInterpreter
                             var args = new List<object>();
                             for (int argIdx = 0; argIdx < argCount; ++argIdx)
                             {
-                                args.Insert(0, DataStack.Pop());
+                                args.Insert(0, context.DataStack.Pop());
                             }
 
-                            object abstractFunctionToRun = DataStack.Pop();
+                            object abstractFunctionToRun = context.DataStack.Pop();
                             if (abstractFunctionToRun is WrappedCodeObject)
                             {
                                 // This is currently done very naively. No conversion of types between
@@ -730,9 +493,9 @@ namespace CloacaInterpreter
                                 object retVal = functionToRun.Call(args.ToArray());
                                 if(functionToRun.MethodInfo.ReturnType != typeof(void))
                                 {
-                                    DataStack.Push(retVal);
+                                    context.DataStack.Push(retVal);
                                 }
-                                Cursor += 2;
+                                context.Cursor += 2;
                             }
                             else
                             {
@@ -748,8 +511,8 @@ namespace CloacaInterpreter
                                     // Right now, __new__ is hard-coded because we don't have abstraction to 
                                     // call either Python code or built-in code.
                                     var self = asClass.__new__.Call(new object[] { asClass });
-                                    CallInto(asClass.__init__, new object[] { self });
-                                    DataStack.Push(self);
+                                    CallInto(context, asClass.__init__, new object[] { self });
+                                    context.DataStack.Push(self);
                                 }
                                 else
                                 {
@@ -763,24 +526,24 @@ namespace CloacaInterpreter
                                         // TODO: Reconcile this with stubbed __new__. This is such a mess.
                                         var self = new PyObject();      // This is the default __new__ for now.
                                         args.Insert(0, self);
-                                        CallInto(functionToRun, args.ToArray());
-                                        DataStack.Push(self);
+                                        CallInto(context, functionToRun, args.ToArray());
+                                        context.DataStack.Push(self);
                                     }
 
                                     // We're assuming it's a good-old-fashioned CodeObject
-                                    var retVal = CallInto(functionToRun, args.ToArray());
+                                    var retVal = CallInto(context, functionToRun, args.ToArray());
                                     if (retVal != null)
                                     {
-                                        DataStack.Push(retVal);
+                                        context.DataStack.Push(retVal);
                                     }
                                 }
-                                Cursor += 2;                    // Resume at next instruction in this program.                                
+                                context.Cursor += 2;                    // Resume at next instruction in this program.                                
                             }
                             continue;
                         }
                     case ByteCodes.RETURN_VALUE:
                         {
-                            Frame returningFrame = callStack.Pop();
+                            Frame returningFrame = context.callStack.Pop();
 
                             // The calling frame is now active.
                             // Apparently the return value is the topmost element of the stack
@@ -790,7 +553,7 @@ namespace CloacaInterpreter
                             // return NoneType.
                             if (returningFrame.DataStack.Count > 0)
                             {
-                                DataStack.Push(returningFrame.DataStack.Pop());
+                                context.DataStack.Push(returningFrame.DataStack.Pop());
                             }
 
                             // VERY BIG DEAL: We return from RETURN_VALUE. This is kind of tricky! The problem right now is 
@@ -804,30 +567,30 @@ namespace CloacaInterpreter
                         }
                     case ByteCodes.BUILD_TUPLE:
                         {
-                            Cursor += 1;
-                            var tupleCount = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            context.Cursor += 1;
+                            var tupleCount = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
                             object[] tuple = new object[tupleCount];
                             for(int i = tupleCount-1; i >= 0; --i)
                             {
-                                tuple[i] = DataStack.Pop();
+                                tuple[i] = context.DataStack.Pop();
                             }
-                            DataStack.Push(new PyTuple(tuple));
+                            context.DataStack.Push(new PyTuple(tuple));
                         }
                         break;
                     case ByteCodes.BUILD_MAP:
                         {
-                            Cursor += 1;
-                            var dictSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            context.Cursor += 1;
+                            var dictSize = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
                             var dict = new Dictionary<object, object>();
                             for(int i = 0; i < dictSize; ++i)
                             {
-                                var value = DataStack.Pop();
-                                var key = DataStack.Pop();
+                                var value = context.DataStack.Pop();
+                                var key = context.DataStack.Pop();
                                 dict.Add(key, value);
                             }
-                            DataStack.Push(dict);
+                            context.DataStack.Push(dict);
                         }
                         break;
                     case ByteCodes.BUILD_CONST_KEY_MAP:
@@ -835,23 +598,23 @@ namespace CloacaInterpreter
                             // NOTE: Our code visitor doesn't generate this opcode.
                             // Top of a stack is the tuple for keys. Operand is how many values to pop off of the
                             // stack, which is kind of interesting since the tuple length should imply that...
-                            Cursor += 1;
-                            var dictSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            context.Cursor += 1;
+                            var dictSize = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
                             var dict = new Dictionary<object, object>();
-                            var keyTuple = (PyTuple)DataStack.Pop();
+                            var keyTuple = (PyTuple)context.DataStack.Pop();
                             for(int i = keyTuple.values.Length-1; i >= 0; --i)
                             {
-                                dict[keyTuple.values[i]] = DataStack.Pop();
+                                dict[keyTuple.values[i]] = context.DataStack.Pop();
                             }
-                            DataStack.Push(dict);
+                            context.DataStack.Push(dict);
                         }
                         break;
                     case ByteCodes.BUILD_LIST:
                         {
-                            Cursor += 1;
-                            var listSize = CodeBytes.GetUShort(Cursor);
-                            Cursor += 2;
+                            context.Cursor += 1;
+                            var listSize = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
                             var list = new List<object>();
                             for (int i = listSize - 1; i >= 0; --i)
                             {
@@ -859,32 +622,32 @@ namespace CloacaInterpreter
                             }
                             for (int i = listSize - 1; i >= 0; --i)
                             {
-                                list[i] = DataStack.Pop();
+                                list[i] = context.DataStack.Pop();
                             }
-                            DataStack.Push(list);
+                            context.DataStack.Push(list);
                         }
                         break;
                     case ByteCodes.BINARY_SUBSCR:
                         {
-                            Cursor += 1;
-                            var index = DataStack.Pop();
-                            var container = DataStack.Pop();
+                            context.Cursor += 1;
+                            var index = context.DataStack.Pop();
+                            var container = context.DataStack.Pop();
                             if(container is Dictionary<object, object>)
                             {
                                 var asDict = (Dictionary<object, object>)container;
-                                DataStack.Push(asDict[index]);
+                                context.DataStack.Push(asDict[index]);
                             }
                             else if(container is List<object>)
                             {
                                 var asList = (List<object>)container;
                                 var indexAsBigInt = (BigInteger)index;
-                                DataStack.Push(asList[(int) indexAsBigInt]);
+                                context.DataStack.Push(asList[(int) indexAsBigInt]);
                             }
                             else if(container is PyTuple)
                             {
                                 var asTuple = (PyTuple)container;
                                 var indexAsBigInt = (BigInteger)index;
-                                DataStack.Push(asTuple.values[(int) indexAsBigInt]);
+                                context.DataStack.Push(asTuple.values[(int) indexAsBigInt]);
                             }
                             else
                             {
@@ -894,10 +657,10 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.STORE_SUBSCR:
                         {
-                            Cursor += 1;
-                            var rawIndex = DataStack.Pop();
-                            var rawContainer = DataStack.Pop();
-                            var toStore = DataStack.Pop();
+                            context.Cursor += 1;
+                            var rawIndex = context.DataStack.Pop();
+                            var rawContainer = context.DataStack.Pop();
+                            var toStore = context.DataStack.Pop();
 
                             if (rawContainer is Dictionary<object, object>)
                             {
@@ -929,13 +692,13 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.BUILD_CLASS:
                         {
-                            Cursor += 1;
+                            context.Cursor += 1;
                             // Push builtins.__build_class__ on to the datastack
                             // TODO: Build and register these built-ins just once.
-                            Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null);
+                            Expression<Action<Interpreter>> expr = instance => builtins__build_class(context, null, null);
                             var methodInfo = ((MethodCallExpression)expr.Body).Method;
                             var class_builder = new WrappedCodeObject("__build_class__", methodInfo, this);
-                            DataStack.Push(class_builder);
+                            context.DataStack.Push(class_builder);
                         }
                         break;
                     default:

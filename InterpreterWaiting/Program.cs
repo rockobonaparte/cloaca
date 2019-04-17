@@ -145,27 +145,16 @@ namespace InterpreterWaiting
             var interpreter = new Interpreter();
             interpreter.DumpState = true;
 
-            // TODO: Set per-frame instead of using the interpreter
-            // Currently, this is a no-op since we don't have any variables in variablesIn.
-            foreach (string varName in variablesIn.Keys)
-            {
-                interpreter.SetVariable(varName, variablesIn[varName]);
-            }
-
             int runCount = 0;
 
-            var tasklets = new List<Stack<Frame>>();
-            var cursors = new List<int>();
+            var tasklets = new List<FrameContext>();
             var contexts = new List<IEnumerable<SchedulingInfo>>();
-            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram1));
-            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram2));
-            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram3));
-            cursors.Add(0);
-            cursors.Add(0);
-            cursors.Add(0);
-            contexts.Add(interpreter.Run(tasklets[0], 0));
-            contexts.Add(interpreter.Run(tasklets[1], 0));
-            contexts.Add(interpreter.Run(tasklets[2], 0));
+            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram1));
+            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram2));
+            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram3));
+            contexts.Add(interpreter.Run(tasklets[0]));
+            contexts.Add(interpreter.Run(tasklets[1]));
+            contexts.Add(interpreter.Run(tasklets[2]));
 
             while (tasklets.Count > 0)
             {
@@ -173,23 +162,18 @@ namespace InterpreterWaiting
                 while(taskIdx < tasklets.Count)
                 {
                     var tasklet = tasklets[taskIdx];
-                    var cursor = cursors[taskIdx];
                     var interpreterEnumer = contexts[taskIdx].GetEnumerator();
-
-                    interpreter.SetContext(tasklet, cursor);
 
                     // This doesn't work as intended because the Cursor resets when we change tasklets.
                     // We need to encapsulate the cursor in our task state in some way.
                     if (!interpreterEnumer.MoveNext())
                     {
-                        var topFrame = tasklets[taskIdx].Peek();
-                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Peek().Locals.Count; ++varIdx)
+                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Locals.Count; ++varIdx)
                         {
-                            Console.WriteLine(topFrame.LocalNames[varIdx] + " = " + topFrame.Locals[varIdx]);
+                            Console.WriteLine(tasklets[taskIdx].LocalNames[varIdx] + " = " + tasklets[taskIdx].Locals[varIdx]);
                         }
 
                         tasklets.RemoveAt(taskIdx);
-                        cursors.RemoveAt(taskIdx);
                         contexts.RemoveAt(taskIdx);
                         // Don't advance taskIdx
                     }
@@ -198,13 +182,11 @@ namespace InterpreterWaiting
                         var scheduleInfo = interpreterEnumer.Current;
                         runCount += 1;
 
-                        var topFrame = tasklets[taskIdx].Peek();
-                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Peek().Locals.Count; ++varIdx)
+                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Locals.Count; ++varIdx)
                         {
-                            Console.WriteLine(topFrame.LocalNames[varIdx] + " = " + topFrame.Locals[varIdx]);
+                            Console.WriteLine(tasklets[taskIdx].LocalNames[varIdx] + " = " + tasklets[taskIdx].Locals[varIdx]);
                         }
 
-                        cursors[taskIdx] = interpreter.Cursor;
                         ++taskIdx;
                     }
                 }

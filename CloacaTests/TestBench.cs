@@ -18,7 +18,7 @@ namespace CloacaTests
     [TestFixture]
     public class RunCodeTest
     {
-        protected Interpreter runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
+        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -27,50 +27,44 @@ namespace CloacaTests
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
 
-            var context = parser.program();
+            var antlrVisitorContext = parser.program();
 
             Assert.That(errorListener.Errors.Count, Is.Zero, "There were parse errors:\n" + errorListener.Report());
 
             var visitor = new CloacaBytecodeVisitor(variablesIn);
-            visitor.Visit(context);
+            visitor.Visit(antlrVisitorContext);
 
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
             Dis.dis(compiledProgram);
 
-            var interpreter = new Interpreter(compiledProgram);
+            var interpreter = new Interpreter();
             interpreter.DumpState = true;
+
+            var context = interpreter.PrepareFrameContext(compiledProgram);
             foreach (string varName in variablesIn.Keys)
             {
-                interpreter.SetVariable(varName, variablesIn[varName]);
+                context.SetVariable(varName, variablesIn[varName]);
             }
 
             int runCount = 0;
+            foreach(var ignoredScheduledInfo in interpreter.Run(context))
+            {
+                runCount += 1;
+            }
 
-            // This was busted apart when the interpreter was exposed to injected calls.
-            // TODO: Re-enable to get those juicy coroutines!
-            //while (!interpreter.Terminated)
-            //{
-            //    interpreter.Run();
-            //    runCount += 1;
-            //}
-
-            // Fallback code
-            interpreter.Run();
-            runCount += 1;
-
-            var variables = new VariableMultimap(interpreter);
+            var variables = new VariableMultimap(context);
 
             Assert.That(runCount, Is.EqualTo(expectedIterations));
-            return interpreter;
+            return context;
         }
 
         protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
             string[] ignoreVariables)
         {
-            var interpreter = runProgram(program, variablesIn, expectedIterations);
-            var variables = new VariableMultimap(interpreter);
+            var context = runProgram(program, variablesIn, expectedIterations);
+            var variables = new VariableMultimap(context);
             try
             {
                 variables.AssertSubsetEquals(expectedVariables);
