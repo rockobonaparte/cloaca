@@ -315,7 +315,12 @@ namespace CloacaInterpreter
             }
         }
 
+        public Interpreter()
+        {
+            // We'll switch to a default constructor in time.
+        }
 
+        // TODO: Stop requiring a program on construction
         public Interpreter(CodeObject program)
         {
             this.rootProgram = program;
@@ -332,18 +337,42 @@ namespace CloacaInterpreter
             Locals[varIdx] = value;
         }
 
+        public Stack<Frame> PrepareFrameStack(CodeObject newProgram)
+        {
+            var newFrameStack = new Stack<Frame>();
+            var rootFrame = new Frame(newProgram);
+
+            foreach (string name in newProgram.VarNames)
+            {
+                rootFrame.AddLocal(name, null);
+            }
+
+            newFrameStack.Push(rootFrame);
+            return newFrameStack;
+        }
+
         public void Reset()
         {
             Terminated = false;
-            callStack = new Stack<Frame>();
-            callStack.Push(new Frame(rootProgram));
-
-            foreach (string name in rootProgram.VarNames)
-            {
-                CurrentFrame.AddLocal(name, null);
-            }
+            callStack = PrepareFrameStack(rootProgram);
         }
 
+        public IEnumerable<SchedulingInfo> Run(CodeObject newProgram)
+        {
+            this.rootProgram = newProgram;
+            Reset();
+            return Run();
+        }
+
+        // TODO: Consolidate so we don't have to pass in the cursor ourselves.
+        public IEnumerable<SchedulingInfo> Run(Stack<Frame> frame, int cursor)
+        {
+            callStack = frame;
+            Cursor = cursor;
+            return Run();
+        }
+
+        // TODO: Make this private.
         public IEnumerable<SchedulingInfo> Run()
         {
             bool keepRunning = true;
@@ -545,9 +574,11 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.WAIT:
                         {
+                            // *very important!* advance the cursor first! Otherwise, we come right back to this wait
+                            // instruction!
+                            Cursor += 1;
                             yield return new YieldOnePass();
                         }
-                        Cursor += 1;
                         break;
                     case ByteCodes.COMPARE_OP:
                         {

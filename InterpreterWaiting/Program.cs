@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
@@ -103,80 +100,8 @@ namespace InterpreterWaiting
 
     class Program
     {
-        // TODO:
-        // 1. Change Terminated to reflect upon the RootProgram.
-        // 2. Get wait to work again in unit tests.
-        // 3. Finally get the wait in the class body to work correctly.
-        static void RunInterpreterTest()
+        static CodeObject compileCode(string program, Dictionary<string, object> variablesIn)
         {
-            // This still runs fine, apparently.
-            string program1 =
-                "a = 1\n" +
-                "wait\n" +
-                "a = 2\n";
-
-            // This should be more troublesome since it has to call __build_class__, which causes us to transition
-            // Python -> C# (__build_class__) -> Python (class body).
-            // Currently it just screws up during parsing...
-            string program2 =
-                "class Foo:\n" +
-                "  wait\n" +
-                "  a = 2\n";
-
-            var inputStream = new AntlrInputStream(program1);
-            var lexer = new CloacaLexer(inputStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-            var errorListener = new ParseErrorListener();
-            var parser = new CloacaParser(commonTokenStream);
-            parser.AddErrorListener(errorListener);
-
-            var context = parser.program();
-
-            var visitor = new CloacaBytecodeVisitor();
-            visitor.Visit(context);
-
-            // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
-            CodeObject compiledProgram = visitor.RootProgram.Build();
-
-            Dis.dis(compiledProgram);
-
-            var interpreter = new Interpreter(compiledProgram);
-
-            // Terminated doesn't get set any more since the interpreter can have the active program pulled out from
-            // under it. So we need to come up with a better mechanism. Probably root program being terminated.
-            //
-            //int runCount = 0;
-            //while (!interpreter.Terminated)
-            //{
-            //    interpreter.Run();
-            //    runCount += 1;
-            //    Console.WriteLine("Interpreter pass #" + runCount);
-            //}
-
-            for (int runCount = 1; runCount <= 2; ++runCount)
-            {
-                interpreter.Run();
-                Console.WriteLine("Interpreter pass #" + runCount);
-                //                var a = interpreter.GetVariable("a");
-                //                Console.WriteLine("  a = " + a);
-            }
-
-            Console.WriteLine("All done. Press any key.");
-            Console.ReadKey();
-        }
-
-        static void Main(string[] args)
-        {
-            // Async-await-task-IEnumerator-whatever problem here:
-            // 1. Run some code
-            // 2. Call something that wants to run some more code with a pause in between
-            // 3. Make sure we come back to the top when the pause shows up
-            // 4. Make sure we can resume at #2 to finish it right afterwards
-            var program =   "a = 10 * (2 + 4) / 3\n" +
-                            "wait\n" +
-                            "b = a + 3\n";
-            var variablesIn = new Dictionary<string, object>();
-
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
@@ -192,9 +117,28 @@ namespace InterpreterWaiting
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            Dis.dis(compiledProgram);
+            return compiledProgram;
+        }
 
-            var interpreter = new Interpreter(compiledProgram);
+        static void Main(string[] args)
+        {
+            // Async-await-task-IEnumerator-whatever problem here:
+            // 1. Run some code
+            // 2. Call something that wants to run some more code with a pause in between
+            // 3. Make sure we come back to the top when the pause shows up
+            // 4. Make sure we can resume at #2 to finish it right afterwards
+            var program1 = "a = 10 * (2 + 4) / 3\n" +
+                           "wait\n" +
+                           "b = a + 3\n";
+            var program2 = "a = 2\n" +
+                           "wait\n" +
+                           "b = a + 3\n";
+            var variablesIn = new Dictionary<string, object>();
+
+            CodeObject compiledProgram1 = compileCode(program1, variablesIn);
+            CodeObject compiledProgram2 = compileCode(program2, variablesIn);
+
+            var interpreter = new Interpreter();
             interpreter.DumpState = true;
             foreach (string varName in variablesIn.Keys)
             {
@@ -203,22 +147,52 @@ namespace InterpreterWaiting
 
             int runCount = 0;
 
+            var tasklets = new List<Stack<Frame>>();
+            var cursors = new List<int>();
+            var contexts = new List<IEnumerable<SchedulingInfo>>();
+            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram1));
+//            tasklets.Add(interpreter.PrepareFrameStack(compiledProgram2));
+            cursors.Add(0);
+//            cursors.Add(0);
+            contexts.Add(interpreter.Run(tasklets[0], 0));
+//            contexts.Add(interpreter.Run(tasklets[1], 0));
 
-            // This is will become our scheduling logic.
-            var interpreterResult = interpreter.Run();
-            var interpreterEnumer = interpreterResult.GetEnumerator();
-
-            while(interpreterEnumer.MoveNext())
+            while (tasklets.Count > 0)
             {
-                var scheduleInfo = interpreterEnumer.Current;
-                runCount += 1;
+                int taskIdx = 0;
+                while(taskIdx < tasklets.Count)
+                {
+                    var tasklet = tasklets[taskIdx];
+                    var cursor = cursors[taskIdx];
+                    var interpreterEnumer = contexts[taskIdx].GetEnumerator();
+
+                    // This doesn't work as intended because the Cursor resets when we change tasklets.
+                    // We need to encapsulate the cursor in our task state in some way.
+                    if (!interpreterEnumer.MoveNext())
+                    {
+                        tasklets.RemoveAt(taskIdx);
+                        cursors.RemoveAt(taskIdx);
+                        contexts.RemoveAt(taskIdx);
+                        // Don't advance taskIdx
+                    }
+                    else
+                    {
+                        var scheduleInfo = interpreterEnumer.Current;
+                        runCount += 1;
+
+                        // This is probably the wrong way to extract the variables. Get them from the frame.
+                        var variables = interpreter.DumpVariables();
+                        foreach (var k in variables.Keys)
+                        {
+                            Console.WriteLine(k + " = " + variables[k]);
+                        }
+
+                        cursors[taskIdx] = interpreter.Cursor;
+                        ++taskIdx;
+                    }
+                }
             }
 
-            var variables = interpreter.DumpVariables();
-            foreach(var k in variables.Keys)
-            {
-                Console.WriteLine(k + " = " + variables[k]);
-            }
             Console.ReadKey();
         }
     }
