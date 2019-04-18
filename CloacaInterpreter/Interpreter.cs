@@ -92,8 +92,8 @@ namespace CloacaInterpreter
 
         /// <summary>
         /// Retains the current frame state but enters the next frame. This is equivalent to
-        /// using a CALL_FUNCTION opcode to descene into a subroutine or similar, but can be invoked
-        /// external into the interpreter. It is used for inner, coordinating code to call back into
+        /// using a CALL_FUNCTION opcode to descend into a subroutine or similar, but can be invoked
+        /// externally into the interpreter. It is used for inner, coordinating code to call back into
         /// the interpreter to get results. 
         /// </summary>
         /// <param name="nextFrame">The frame to run through</param>
@@ -111,9 +111,6 @@ namespace CloacaInterpreter
                 frame.AddLocal(frame.Program.VarNames[varIndex], null);
             }
 
-
-            // BOOKMARK, adding something to the current frame isn't quite enough to launch this code anymore. You need to manage the IEnumerable.
-            FAIL TO COMPILE HERE BECAUSE YOU HAVE STUFF TO DO
             context.callStack.Push(frame);      // nextFrame is now the active frame.
 
             foreach(var yielding in Run(context))
@@ -127,7 +124,7 @@ namespace CloacaInterpreter
             }
             else
             {
-                yield return null;
+                yield break;
             }
         }
 
