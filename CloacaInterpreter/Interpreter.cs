@@ -525,11 +525,36 @@ namespace CloacaInterpreter
 
                                     // Right now, __new__ is hard-coded because we don't have abstraction to 
                                     // call either Python code or built-in code.
-                                    var self = asClass.__new__.Call(new object[] { asClass });
+                                    PyObject self = null;
+                                    foreach(var continuation in asClass.__new__.Call(new object[] { asClass })) 
+                                    {
+                                        if(continuation is ReturnValue)
+                                        {
+                                            var asReturnValue = continuation as ReturnValue;
+                                            self = asReturnValue.Returned as PyObject;
+                                        }
+                                        else
+                                        {
+                                            yield return continuation;
+                                        }
+                                    }
+                                    if(self == null)
+                                    {
+                                        throw new Exception("__new__ invocation did not return a PyObject");
+                                    }
 
                                     foreach(var continuation in CallInto(context, asClass.__init__, new object[] { self }))
                                     {
-                                        yield return continuation;
+                                        // Suppress the self reference that gets returned since, well, we already have it.
+                                        // We don't need it to escape upwards for cause reschedules.
+                                        if (continuation is ReturnValue)
+                                        {
+                                            continue;
+                                        }
+                                        else
+                                        {
+                                            yield return continuation;
+                                        }
                                     }
                                     context.DataStack.Push(self);
                                 }
