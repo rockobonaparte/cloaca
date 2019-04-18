@@ -83,6 +83,11 @@ namespace CloacaInterpreter
             {
                 yield return yielding;
             }
+
+            if(context.DataStack.Count > 0)
+            {
+                yield return new ReturnValue(context.DataStack.Pop());
+            }
         }
 
         /// <summary>
@@ -106,6 +111,9 @@ namespace CloacaInterpreter
                 frame.AddLocal(frame.Program.VarNames[varIndex], null);
             }
 
+
+            // BOOKMARK, adding something to the current frame isn't quite enough to launch this code anymore. You need to manage the IEnumerable.
+            FAIL TO COMPILE HERE BECAUSE YOU HAVE STUFF TO DO
             context.callStack.Push(frame);      // nextFrame is now the active frame.
 
             foreach(var yielding in Run(context))
@@ -119,7 +127,7 @@ namespace CloacaInterpreter
             }
             else
             {
-                yield return new ReturnValue(context.DataStack.Pop());
+                yield return null;
             }
         }
 
@@ -490,10 +498,20 @@ namespace CloacaInterpreter
                                 // Python and .NET. We're just starting to enable the plumbing before stepping
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
-                                object retVal = functionToRun.Call(args.ToArray());
-                                if(functionToRun.MethodInfo.ReturnType != typeof(void))
+                                foreach(var continuation in functionToRun.Call(args.ToArray()))
                                 {
-                                    context.DataStack.Push(retVal);
+                                    if(continuation is ReturnValue)
+                                    {
+                                        var asReturnValue = continuation as ReturnValue;
+                                        if (asReturnValue.Returned != null)
+                                        {
+                                            context.DataStack.Push(asReturnValue.Returned);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        yield return continuation;
+                                    }
                                 }
                                 context.Cursor += 2;
                             }
@@ -511,7 +529,11 @@ namespace CloacaInterpreter
                                     // Right now, __new__ is hard-coded because we don't have abstraction to 
                                     // call either Python code or built-in code.
                                     var self = asClass.__new__.Call(new object[] { asClass });
-                                    CallInto(context, asClass.__init__, new object[] { self });
+
+                                    foreach(var continuation in CallInto(context, asClass.__init__, new object[] { self }))
+                                    {
+                                        yield return continuation;
+                                    }
                                     context.DataStack.Push(self);
                                 }
                                 else
@@ -531,10 +553,17 @@ namespace CloacaInterpreter
                                     }
 
                                     // We're assuming it's a good-old-fashioned CodeObject
-                                    var retVal = CallInto(context, functionToRun, args.ToArray());
-                                    if (retVal != null)
+                                    foreach (var continuation in CallInto(context, functionToRun, args.ToArray()))
                                     {
-                                        context.DataStack.Push(retVal);
+                                        if (continuation is ReturnValue)
+                                        {
+                                            var asReturnValue = continuation as ReturnValue;
+                                            context.DataStack.Push(asReturnValue.Returned);
+                                        }
+                                        else
+                                        {
+                                            yield return continuation;
+                                        }
                                     }
                                 }
                                 context.Cursor += 2;                    // Resume at next instruction in this program.                                
@@ -695,9 +724,9 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             // Push builtins.__build_class__ on to the datastack
                             // TODO: Build and register these built-ins just once.
-                            Expression<Action<Interpreter>> expr = instance => builtins__build_class(context, null, null);
+                            Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null, null);
                             var methodInfo = ((MethodCallExpression)expr.Body).Method;
-                            var class_builder = new WrappedCodeObject("__build_class__", methodInfo, this);
+                            var class_builder = new WrappedCodeObject(context, "__build_class__", methodInfo, this);
                             context.DataStack.Push(class_builder);
                         }
                         break;

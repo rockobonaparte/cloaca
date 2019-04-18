@@ -48,7 +48,9 @@ namespace CloacaTests
                 context.SetVariable(varName, variablesIn[varName]);
             }
 
-            int runCount = 0;
+            // Start with one-based count since foreach doesn't enter loop body
+            // unless we actually do wait once.
+            int runCount = 1;
             foreach(var ignoredScheduledInfo in interpreter.Run(context))
             {
                 runCount += 1;

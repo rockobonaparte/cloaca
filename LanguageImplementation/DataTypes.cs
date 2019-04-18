@@ -67,7 +67,7 @@ namespace LanguageImplementation
 
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
-            this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
+            this.__new__ = new WrappedCodeObject(context, "__new__", methodInfo, this);
         }
 
         // Python internal calling process for constructing an object

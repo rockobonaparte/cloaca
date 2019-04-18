@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace LanguageImplementation
@@ -15,6 +16,7 @@ namespace LanguageImplementation
         }
 
         private object instance;
+        private FrameContext context;
 
         public int ArgCount
         {
@@ -42,16 +44,55 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public object Call(object[] args)
+        public IEnumerable<SchedulingInfo> Call(object[] args)
         {
-            return MethodInfo.Invoke(instance, args);
+            object[] finalArgs;
+         
+            // Auto-curry the FrameContext if we were given one (non-null) when this WrappedCodeObject was created.
+            // We have to do this so we don't publish a function to the interpreter that is asking for this zany 
+            // FrameContext object thing.
+            if(context != null)
+            {
+                finalArgs = new object[args.Length + 1];
+                finalArgs[0] = context;
+                Array.Copy(args, 0, finalArgs, 1, args.Length);
+            }
+            else
+            {
+                finalArgs = args;
+            }
+
+            if(MethodInfo.ReturnType == typeof(IEnumerable<SchedulingInfo>))
+            {
+                foreach(var continuation in MethodInfo.Invoke(instance, finalArgs) as IEnumerable<SchedulingInfo>)
+                {
+                    yield return continuation;
+                }
+            }
+            else
+            {
+                yield return new ReturnValue(MethodInfo.Invoke(instance, finalArgs));
+            }
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo)
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo)
         {
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             instance = null;
+            this.context = context;
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo) : this(null, nameInsideInterpreter, methodInfo)
+        {
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodInfo methodInfo)
+        {
+            this.MethodInfo = methodInfo;
+            Name = methodInfo.Name;
+            instance = null;
+            this.context = context;
         }
 
         public WrappedCodeObject(MethodInfo methodInfo)
@@ -59,13 +100,27 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             instance = null;
+            this.context = null;
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance)
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo, object instance)
         {
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             this.instance = instance;
+            this.context = context;
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance) : this(null, nameInsideInterpreter, methodInfo, instance)
+        {
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodInfo methodInfo, object instance)
+        {
+            this.MethodInfo = methodInfo;
+            Name = methodInfo.Name;
+            this.instance = instance;
+            this.context = context;
         }
 
         public WrappedCodeObject(MethodInfo methodInfo, object instance)
@@ -73,6 +128,7 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             this.instance = instance;
+            this.context = null;
         }
     }
 
