@@ -10,12 +10,18 @@ namespace CloacaInterpreter
     public class Interpreter: IInterpreter
     {
         public bool DumpState;
-        
-        // Implementation of builtins.__build_class__
-        // TODO: Add params type to handle one or more base classes (inheritance test)
-        // Returns PyClass
+
+        /// <summary>
+        /// Implementation of builtins.__build_class__. This create a class as a PyClass.
+        /// </summary>
+        /// <param name="context">The context of script code that wants to make a class.</param>
+        /// <param name="func">The class body as interpretable code.</param>
+        /// <param name="name">The name of the class.</param>
+        /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
+        /// ReturnValue object containing the PyClass of the built class.</returns>
         public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name)
         {
+            // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
@@ -71,9 +77,12 @@ namespace CloacaInterpreter
         /// the interpreter to get results. For example, this is used in object creation to invoke
         /// __new__ and __init__.
         /// </summary>
+        /// <param name="context">The context of script code that is makin the call.</param>
         /// <param name="functionToRun">The code object to call into</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
-        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
+        /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
+        /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
+        /// anything at the end of the call.</returns>
         public IEnumerable<SchedulingInfo> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
@@ -88,6 +97,10 @@ namespace CloacaInterpreter
             {
                 yield return new ReturnValue(context.DataStack.Pop());
             }
+            else
+            {
+                yield break;
+            }
         }
 
         /// <summary>
@@ -96,9 +109,12 @@ namespace CloacaInterpreter
         /// externally into the interpreter. It is used for inner, coordinating code to call back into
         /// the interpreter to get results. 
         /// </summary>
-        /// <param name="nextFrame">The frame to run through</param>
+        /// <param name="context">The context of script code that is making the call.</param>
+        /// <param name="nextFrame">The frame to run through,</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
-        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program</returns>
+        /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
+        /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
+        /// anything at the end of the call.</returns>
         public IEnumerable<SchedulingInfo> CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.
@@ -128,11 +144,11 @@ namespace CloacaInterpreter
             }
         }
 
-        public Interpreter()
-        {
-            // We'll switch to a default constructor in time.
-        }
-
+        /// <summary>
+        /// Prepare a fresh frame context to run the given CodeObject.
+        /// </summary>
+        /// <param name="newProgram">The code to prepare to run.</param>
+        /// <returns>The context that the interpreter can use to run the program.</returns>
         public FrameContext PrepareFrameContext(CodeObject newProgram)
         {
             var newFrameStack = new Stack<Frame>();
@@ -147,7 +163,16 @@ namespace CloacaInterpreter
             return new FrameContext(newFrameStack);
         }
 
-        // TODO: Make this private.
+        /// <summary>
+        /// Runs the given frame context until it either finishes normally or yields. This actually intrepts
+        /// our Python(ish) code!
+        /// 
+        /// This call is stateless; all the state changes mae happen in the FrameContext passed into Run().
+        /// </summary>
+        /// <param name="context">The current state of the frame and stacks to run</param>
+        /// <returns>The underlying code may yield so this will return various SchedulingInfo. It will not
+        /// return a ReturnValue variant of ScheduleInfo. The ScheduleInfo is supposed to provide context
+        /// to the scheduler or parent code that invoked the context.</returns>
         public IEnumerable<SchedulingInfo> Run(FrameContext context)
         {
             while(context.Cursor < context.Code.Length)

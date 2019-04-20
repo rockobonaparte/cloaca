@@ -61,43 +61,6 @@ namespace InterpreterWaiting
         }
     }
 
-    public class Scheduler
-    {
-        public bool ready;
-        public Scheduler()
-        {
-            ready = false;
-        }
-    }
-
-    public class WaitOnce : INotifyCompletion
-    {
-        private Scheduler scheduler;
-        public WaitOnce(Scheduler scheduler)
-        {
-            this.scheduler = scheduler;
-            IsCompleted = false;
-        }
-
-        public bool IsCompleted
-        {
-            get;
-            private set;
-        }
-
-        void GetResult()
-        {
-
-        }
-
-        public void OnCompleted(Action continuation)
-        {
-            scheduler.ready = true;
-        }
-    }
-
-
-
     class Program
     {
         static CodeObject compileCode(string program, Dictionary<string, object> variablesIn)
