@@ -61,6 +61,73 @@ namespace InterpreterWaiting
         }
     }
 
+    /// <summary>
+    /// Manages all tasklets and how they're alternated through the interpreter.
+    /// </summary>
+    public class Scheduler
+    {
+        private Interpreter interpreter;
+        private List<FrameContext> tasklets;
+        private List<IEnumerable<SchedulingInfo>> contexts;
+        private int currentTaskIndex;
+
+        public Scheduler(Interpreter interpreter)
+        {
+            this.interpreter = interpreter;
+            this.tasklets = new List<FrameContext>();
+            this.contexts = new List<IEnumerable<SchedulingInfo>>();
+            currentTaskIndex = -1;
+        }
+
+        public void Schedule(CodeObject program)
+        {
+            var tasklet = interpreter.PrepareFrameContext(program);
+            tasklets.Add(tasklet);
+            contexts.Add(null);            
+        }
+
+        /// <summary>
+        /// Run until next yield, program termination, or completion of scheduled tasklets.
+        /// </summary>
+        public void Tick()
+        {
+            if(tasklets.Count == 0)
+            {
+                currentTaskIndex = -1;
+                return;
+            }
+
+            ++currentTaskIndex;
+            if(currentTaskIndex >= tasklets.Count)
+            {
+                currentTaskIndex = 0;
+            }
+
+            if(contexts[currentTaskIndex] == null)
+            {
+                contexts[currentTaskIndex] = interpreter.Run(tasklets[currentTaskIndex]);
+            }
+
+            var taskEnumerator = contexts[currentTaskIndex].GetEnumerator();
+            if (!taskEnumerator.MoveNext())
+            {
+                // Done. Rewind the taskindex since it'll move up on the next tick.
+                contexts.RemoveAt(currentTaskIndex);
+                tasklets.RemoveAt(currentTaskIndex);
+                --currentTaskIndex;
+            }
+        }
+
+        public bool Done
+        {
+            get
+            {
+                return tasklets.Count == 0;
+            }            
+        }
+
+    }
+
     class Program
     {
         static CodeObject compileCode(string program, Dictionary<string, object> variablesIn)
@@ -108,51 +175,15 @@ namespace InterpreterWaiting
             var interpreter = new Interpreter();
             interpreter.DumpState = true;
 
-            int runCount = 0;
+            var scheduler = new Scheduler(interpreter);
 
-            var tasklets = new List<FrameContext>();
-            var contexts = new List<IEnumerable<SchedulingInfo>>();
-            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram1));
-            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram2));
-            tasklets.Add(interpreter.PrepareFrameContext(compiledProgram3));
-            contexts.Add(interpreter.Run(tasklets[0]));
-            contexts.Add(interpreter.Run(tasklets[1]));
-            contexts.Add(interpreter.Run(tasklets[2]));
+            scheduler.Schedule(compiledProgram1);
+            scheduler.Schedule(compiledProgram2);
+            scheduler.Schedule(compiledProgram3);
 
-            while (tasklets.Count > 0)
+            while(!scheduler.Done)
             {
-                int taskIdx = 0;
-                while(taskIdx < tasklets.Count)
-                {
-                    var tasklet = tasklets[taskIdx];
-                    var interpreterEnumer = contexts[taskIdx].GetEnumerator();
-
-                    // This doesn't work as intended because the Cursor resets when we change tasklets.
-                    // We need to encapsulate the cursor in our task state in some way.
-                    if (!interpreterEnumer.MoveNext())
-                    {
-                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Locals.Count; ++varIdx)
-                        {
-                            Console.WriteLine(tasklets[taskIdx].LocalNames[varIdx] + " = " + tasklets[taskIdx].Locals[varIdx]);
-                        }
-
-                        tasklets.RemoveAt(taskIdx);
-                        contexts.RemoveAt(taskIdx);
-                        // Don't advance taskIdx
-                    }
-                    else
-                    {
-                        var scheduleInfo = interpreterEnumer.Current;
-                        runCount += 1;
-
-                        for (int varIdx = 0; varIdx < tasklets[taskIdx].Locals.Count; ++varIdx)
-                        {
-                            Console.WriteLine(tasklets[taskIdx].LocalNames[varIdx] + " = " + tasklets[taskIdx].Locals[varIdx]);
-                        }
-
-                        ++taskIdx;
-                    }
-                }
+                scheduler.Tick();
             }
 
             Console.ReadKey();
