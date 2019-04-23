@@ -5,7 +5,6 @@ using LanguageImplementation;
 
 using NUnit.Framework;
 
-
 namespace CloacaTests
 {
     [TestFixture]
