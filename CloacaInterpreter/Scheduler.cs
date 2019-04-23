@@ -24,6 +24,12 @@ namespace CloacaInterpreter
             TickCount = 0;
         }
 
+        /// <summary>
+        /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
+        /// in order to do any other housekeeping like inject variables into it.
+        /// </summary>
+        /// <param name="program">The code to schedule.</param>
+        /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         public FrameContext Schedule(CodeObject program)
         {
             var tasklet = interpreter.PrepareFrameContext(program);

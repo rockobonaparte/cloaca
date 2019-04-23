@@ -12,7 +12,7 @@
 
     /// <summary>
     /// Used to specifically signify to all schedulers to perform just a simple, single pass
-    /// yield on this re-entrant code.
+    /// yield on this re-entrant code. It is just a sentinel w/o internal state.
     /// </summary>
     public class YieldOnePass : SchedulingInfo
     {

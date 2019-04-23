@@ -60,7 +60,7 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * [DONE] Call functions
   * Inheritance
   * Start to wrap data types as classes
-* Scheduler controlling interpreter to switch programs when one waits
+* [DONE] Scheduler controlling interpreter to switch programs when one waits
 * Integration with parent runtime
   * [DONE] Call embedded C# function from script
   * Call Python function through interpreter
