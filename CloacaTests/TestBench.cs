@@ -41,24 +41,19 @@ namespace CloacaTests
 
             var interpreter = new Interpreter();
             interpreter.DumpState = true;
+            var scheduler = new Scheduler(interpreter);
 
-            var context = interpreter.PrepareFrameContext(compiledProgram);
+            var context = scheduler.Schedule(compiledProgram);
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
             }
 
-            // Start with one-based count since foreach doesn't enter loop body
-            // unless we actually do wait once.
-            int runCount = 1;
-            foreach(var ignoredScheduledInfo in interpreter.Run(context))
-            {
-                runCount += 1;
-            }
+            scheduler.RunUntilDone();
 
             var variables = new VariableMultimap(context);
 
-            Assert.That(runCount, Is.EqualTo(expectedIterations));
+            Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
             return context;
         }
 
