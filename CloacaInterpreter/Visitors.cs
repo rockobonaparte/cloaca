@@ -272,6 +272,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitRaise_stmt([NotNull] CloacaParser.Raise_stmtContext context)
+    {
+        // This will build up the exception and put it on the stack.
+        base.Visit(context);
+
+        // For now, we only support one argument for exceptions, which will be the exception
+        // created from visit the parent context.
+        AddInstruction(ByteCodes.RAISE_VARARGS, 1);
+
+        return null;
+    }
+
     public override object VisitGlobal_stmt([NotNull] CloacaParser.Global_stmtContext context)
     {
         for(int name_i = 0; name_i < context.NAME().Length; ++name_i)
