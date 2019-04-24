@@ -29,11 +29,38 @@ Looking at my options:
 
 So somehow this seemed like the smart--I mean "least dumb" idea.
 
+### Why the name?
+
+Cloaca is part of a snake's butt. Yes, I know Python is named from Monty Python, not snakes. I think that makes it even
+more horrible. This is my own self-deprecation at work. "This is probably a horrible idea in reality but I'm doing this
+in my free time so nyaaaah" doesn't really collapse into a better name.
+
+### How are you implementing re-entrant code?
+I am using IEnumerables that run various invocations of Python code objects against an interpreter. I understand that
+using IEnumerables this was is soooo 2000s, but I have certain constraints:
+1. Needs to work in Mono and .NET
+2. Needs to work in Unity
+3. Should not get into running in other, multiple threads
+4. Shouldn't hog the thread in which it's started
+5. Shouldn't fight against any other schedulers that could be running
+
+I have considered some other strategies:
+* Async-await by itself is insufficient. I can trigger the scheduler in a custom awaiter but that doesn't shift to another
+  frame. If my awaiter was used to task switch, it would be calling deeper and deeper instead of calling "across." The call
+  stack would just keep growing and growing as I context switch until it explodes.
+* I could write a custom SynchronizationContext to try to use asyn-await, but it would probably kill Unity.
+   * Even if I did, it would probably mostly be a traffic copy passing through God-knows-what awaiters.
+* Mono has a tasklet implementation, but it doesn't work in .NET
+   * It also likes to use the "I'm a scheduler that steals this thread, thank you very much" model.
+* I could try to hijack the custom SynchronizationContext, but I feel like I'm pushing my luck at that point. It also means
+  it would be bumping into a lot of stuff it has to pass-forward that I don't own.
+
 ## Contributing
 
 This is still a personal project in its youth so I don't really expect much attention. I will gladly accept
 pull requests, but you will probably have to explain what trauma caused you to want to contribute in the first
-place. You can open an issue if you're want to ask about general vision and whatnot.
+place. You can open an issue if you're want to ask about general vision and whatnot. If you actually found an
+issue and filed over it then I will be very amused that you spent the effort to have said so.
 
 ## Authors
 
