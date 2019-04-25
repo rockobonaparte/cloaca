@@ -7,7 +7,7 @@ namespace LanguageImplementation
     /// <summary>
     /// Represents callable code outside of the scope of the interpreter.
     /// </summary>
-    public class WrappedCodeObject
+    public class WrappedCodeObject : IPyCallable
     {
         public MethodInfo MethodInfo
         {
@@ -44,7 +44,15 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public IEnumerable<SchedulingInfo> Call(object[] args)
+        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        {
+            foreach (var continuation in Call(args))
+            {
+                yield return continuation;
+            }
+        }
+
+        private IEnumerable<SchedulingInfo> Call(object[] args)
         {
             object[] finalArgs;
          
@@ -132,7 +140,7 @@ namespace LanguageImplementation
         }
     }
 
-    public class CodeObject
+    public class CodeObject : IPyCallable
     {
         //'co_argcount', 'co_cellvars', 'co_code', 'co_consts', 'co_filename',
         // 'co_firstlineno', 'co_flags', 'co_freevars', 'co_lnotab', 'co_name',
@@ -176,6 +184,14 @@ namespace LanguageImplementation
             Constants = new List<object>();
             ArgVarNames = new List<string>();
             Names = new List<string>();
+        }
+
+        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        {
+            foreach(var continuation in interpreter.CallInto(context, this, args))
+            {
+                yield return continuation;
+            }
         }
     }
 

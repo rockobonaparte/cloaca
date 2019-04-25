@@ -213,4 +213,9 @@ namespace LanguageImplementation
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
         IEnumerable<SchedulingInfo> CallInto(FrameContext context, CodeObject program, object[] args);
     }
+
+    public interface IPyCallable
+    {
+        IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args);
+    }
 }

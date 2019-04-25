@@ -520,9 +520,9 @@ namespace CloacaInterpreter
                                 // Python and .NET. We're just starting to enable the plumbing before stepping
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
-                                foreach(var continuation in functionToRun.Call(args.ToArray()))
+                                foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {
-                                    if(continuation is ReturnValue)
+                                    if (continuation is ReturnValue)
                                     {
                                         var asReturnValue = continuation as ReturnValue;
                                         if (asReturnValue.Returned != null)
@@ -535,6 +535,22 @@ namespace CloacaInterpreter
                                         yield return continuation;
                                     }
                                 }
+
+                                //foreach (var continuation in functionToRun.Call(args.ToArray()))
+                                //{
+                                //    if(continuation is ReturnValue)
+                                //    {
+                                //        var asReturnValue = continuation as ReturnValue;
+                                //        if (asReturnValue.Returned != null)
+                                //        {
+                                //            context.DataStack.Push(asReturnValue.Returned);
+                                //        }
+                                //    }
+                                //    else
+                                //    {
+                                //        yield return continuation;
+                                //    }
+                                //}
                                 context.Cursor += 2;
                             }
                             else
@@ -547,13 +563,10 @@ namespace CloacaInterpreter
                                     // 2. Pass it to __init__
                                     // 3. Return the self reference                                    
                                     var asClass = (PyClass)abstractFunctionToRun;
-
-                                    // Right now, __new__ is hard-coded because we don't have abstraction to 
-                                    // call either Python code or built-in code.
                                     PyObject self = null;
-                                    foreach(var continuation in asClass.__new__.Call(new object[] { asClass })) 
+                                    foreach (var continuation in asClass.__new__.Call(this, context, new object[] { asClass }))
                                     {
-                                        if(continuation is ReturnValue)
+                                        if (continuation is ReturnValue)
                                         {
                                             var asReturnValue = continuation as ReturnValue;
                                             self = asReturnValue.Returned as PyObject;
@@ -563,12 +576,28 @@ namespace CloacaInterpreter
                                             yield return continuation;
                                         }
                                     }
-                                    if(self == null)
-                                    {
-                                        throw new Exception("__new__ invocation did not return a PyObject");
-                                    }
 
-                                    foreach(var continuation in CallInto(context, asClass.__init__, new object[] { self }))
+                                    //// Right now, __new__ is hard-coded because we don't have abstraction to 
+                                    //// call either Python code or built-in code.
+                                    //PyObject self = null;
+                                    //foreach(var continuation in asClass.__new__.Call(new object[] { asClass })) 
+                                    //{
+                                    //    if(continuation is ReturnValue)
+                                    //    {
+                                    //        var asReturnValue = continuation as ReturnValue;
+                                    //        self = asReturnValue.Returned as PyObject;
+                                    //    }
+                                    //    else
+                                    //    {
+                                    //        yield return continuation;
+                                    //    }
+                                    //}
+                                    //if(self == null)
+                                    //{
+                                    //    throw new Exception("__new__ invocation did not return a PyObject");
+                                    //}
+
+                                    foreach(var continuation in asClass.__init__.Call(this, context, new object[] { self }))
                                     {
                                         // Suppress the self reference that gets returned since, well, we already have it.
                                         // We don't need it to escape upwards for cause reschedules.
@@ -595,7 +624,10 @@ namespace CloacaInterpreter
                                         // TODO: Reconcile this with stubbed __new__. This is such a mess.
                                         var self = new PyObject();      // This is the default __new__ for now.
                                         args.Insert(0, self);
-                                        CallInto(context, functionToRun, args.ToArray());
+                                        foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
+                                        {
+                                            yield return continuation;
+                                        }
                                         context.DataStack.Push(self);
                                     }
 
