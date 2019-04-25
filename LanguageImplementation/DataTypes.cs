@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace LanguageImplementation
 {
@@ -89,6 +90,31 @@ namespace LanguageImplementation
             base(name, __init__, interpreter, context)
         {
             // __dict__ used to be set here but was moved upstream
+        }
+    }
+
+    public class PyException : PyObject
+    {
+        private string message;
+
+        public PyException(string message)
+        {
+            this.message = message;
+        }
+    }
+
+    public class PyExceptionClass : PyClass
+    {
+        private PyObject __init__impl(string message)
+        {
+            return new PyException(message);
+        }
+
+        public PyExceptionClass() : base("Exception", null, null, null)
+        {
+            Expression<Action<PyTypeObject>> expr = instance => __init__impl(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            this.__init__ = new WrappedCodeObject("__init__", methodInfo, this);
         }
     }
 
