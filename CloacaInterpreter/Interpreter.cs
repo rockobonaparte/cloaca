@@ -568,7 +568,8 @@ namespace CloacaInterpreter
                                         throw new Exception("__new__ invocation did not return a PyObject");
                                     }
 
-                                    foreach(var continuation in CallInto(context, asClass.__init__, new object[] { self }))
+                                    args.Insert(0, self);
+                                    foreach(var continuation in asClass.__init__.Call(this, context, args.ToArray()))
                                     {
                                         // Suppress the self reference that gets returned since, well, we already have it.
                                         // We don't need it to escape upwards for cause reschedules.
