@@ -58,6 +58,19 @@ namespace CloacaTests
         }
 
         [Test]
+        public void DeclareConstructorArgument()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   def __init__(self, new_a):\n" +
+                                         "      self.a = new_a\n" +
+                                         "\n" +
+                                         "bar = Foo(2)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject)variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
+        }
+
+        [Test]
         public void DeclareClassMember()
         {
             var interpreter = runProgram("class Foo:\n" +
