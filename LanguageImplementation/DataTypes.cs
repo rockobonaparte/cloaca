@@ -56,8 +56,13 @@ namespace LanguageImplementation
             var newObject = new PyObject();
 
             // Shallow copy __dict__
-            newObject.__dict__ = new Dictionary<string, object>(__dict__);
+            DefaultNewPyObject(newObject);
             return newObject;
+        }
+
+        protected void DefaultNewPyObject(PyObject toNew)
+        {
+            toNew.__dict__ = new Dictionary<string, object>(__dict__);
         }
 
         public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context)
@@ -136,7 +141,17 @@ namespace LanguageImplementation
     {
         private string message;
 
-        public PyException(string message)
+        public PyException()
+        {
+
+        }
+
+        public PyException(PyException self, string message)
+        {
+            PythonPyExceptionConstructor(self, message);
+        }
+
+        public void PythonPyExceptionConstructor(PyException self, string message)
         {
             this.message = message;
         }
@@ -144,16 +159,32 @@ namespace LanguageImplementation
 
     public class PyExceptionClass : PyClass
     {
-        private PyObject __init__impl(string message)
+        private PyObject __init__impl(PyException self, string message)
         {
-            return new PyException(message);
+            self.PythonPyExceptionConstructor(self, message);
+            return self;
+        }
+
+        // Keeping signature of DefaultNew for consistency even though we don't need it.
+        private PyObject exceptionNew(PyTypeObject typeObjIgnored)
+        {
+            var newObject = new PyException();
+
+            // Shallow copy __dict__
+            DefaultNewPyObject(newObject);
+            return newObject;
+
         }
 
         public PyExceptionClass() : base("Exception", null, null, null)
         {
-            Expression<Action<PyTypeObject>> expr = instance => __init__impl(null);
-            var methodInfo = ((MethodCallExpression)expr.Body).Method;
-            this.__init__ = new WrappedCodeObject("__init__", methodInfo, this);
+            Expression<Action<PyTypeObject>> __new__expr = instance => exceptionNew(null);
+            var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;
+            this.__new__ = new WrappedCodeObject("__init__", __new__methodInfo, this);
+
+            Expression<Action<PyTypeObject>> __init__expr = instance => __init__impl(null, null);
+            var __init__methodInfo = ((MethodCallExpression)__init__expr.Body).Method;
+            this.__init__ = new WrappedCodeObject("__init__", __init__methodInfo, this);
         }
     }
 

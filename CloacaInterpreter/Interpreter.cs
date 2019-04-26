@@ -9,6 +9,16 @@ namespace CloacaInterpreter
 {
     public class Interpreter: IInterpreter
     {
+        private Dictionary<string, object> builtins;
+
+        public Interpreter()
+        {
+            builtins = new Dictionary<string, object>
+            {
+                { "Exception", new PyExceptionClass() }
+            };
+        }
+
         public bool DumpState;
 
         /// <summary>
@@ -349,6 +359,10 @@ namespace CloacaInterpreter
                                 if(foundVar != null)
                                 {
                                     context.DataStack.Push(foundVar);
+                                }
+                                else if(builtins.ContainsKey(globalName))
+                                {
+                                    context.DataStack.Push(builtins[globalName]);
                                 }
                                 else
                                 {
@@ -775,6 +789,11 @@ namespace CloacaInterpreter
                             context.DataStack.Push(class_builder);
                         }
                         break;
+                    case ByteCodes.RAISE_VARARGS:
+                        {
+                            context.Cursor += 1;
+                            throw new NotImplementedException("RAISE_VARARGS not implemented yet");
+                        }
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);
                 }

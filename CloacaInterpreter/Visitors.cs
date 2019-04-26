@@ -275,7 +275,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitRaise_stmt([NotNull] CloacaParser.Raise_stmtContext context)
     {
         // This will build up the exception and put it on the stack.
-        base.Visit(context);
+        // TODO: Support 'from' statement by expanding to test(1) as well--if defined.
+        base.VisitTest(context.test(0));
 
         // For now, we only support one argument for exceptions, which will be the exception
         // created from visit the parent context.

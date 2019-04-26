@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 
 using NUnit.Framework;
@@ -9,10 +10,13 @@ namespace CloacaTests
     public class ExceptionTests : RunCodeTest
     {
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void RaiseException()
         {
-            var interpreter = runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            // "RAISE_VARARGS not implemented yet"
+            Assert.Throws(typeof(NotImplementedException), () =>
+            {
+                var interpreter = runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            }, "RAISE_VARARGS not implemented yet");
         }
 
         [Test]

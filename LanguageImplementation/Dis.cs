@@ -210,6 +210,14 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(null, cursor, "LOAD_BUILD_CLASS", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.RAISE_VARARGS:
+                        {
+                            cursor += 1;
+                            var opcode = code.GetUShort(cursor);
+                            disassembly += disassembleLine(null, cursor, "RAISE_VARARGS", opcode, null);
+                            cursor += 2;
+                        }
+                        break;
                     default:
                         throw new Exception("Unexpected opcode to disassemble: " + code[cursor]);
                 }
