@@ -536,21 +536,6 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                //foreach (var continuation in functionToRun.Call(args.ToArray()))
-                                //{
-                                //    if(continuation is ReturnValue)
-                                //    {
-                                //        var asReturnValue = continuation as ReturnValue;
-                                //        if (asReturnValue.Returned != null)
-                                //        {
-                                //            context.DataStack.Push(asReturnValue.Returned);
-                                //        }
-                                //    }
-                                //    else
-                                //    {
-                                //        yield return continuation;
-                                //    }
-                                //}
                                 context.Cursor += 2;
                             }
                             else
@@ -576,26 +561,6 @@ namespace CloacaInterpreter
                                             yield return continuation;
                                         }
                                     }
-
-                                    //// Right now, __new__ is hard-coded because we don't have abstraction to 
-                                    //// call either Python code or built-in code.
-                                    //PyObject self = null;
-                                    //foreach(var continuation in asClass.__new__.Call(new object[] { asClass })) 
-                                    //{
-                                    //    if(continuation is ReturnValue)
-                                    //    {
-                                    //        var asReturnValue = continuation as ReturnValue;
-                                    //        self = asReturnValue.Returned as PyObject;
-                                    //    }
-                                    //    else
-                                    //    {
-                                    //        yield return continuation;
-                                    //    }
-                                    //}
-                                    //if(self == null)
-                                    //{
-                                    //    throw new Exception("__new__ invocation did not return a PyObject");
-                                    //}
 
                                     foreach(var continuation in asClass.__init__.Call(this, context, new object[] { self }))
                                     {
