@@ -51,18 +51,18 @@ namespace LanguageImplementation
         private IInterpreter interpreter;
         private FrameContext context;
 
-        private PyObject DefaultNew(PyTypeObject typeObj)
+        public static PyObject DefaultNew(PyTypeObject typeObj)
         {
             var newObject = new PyObject();
 
             // Shallow copy __dict__
-            DefaultNewPyObject(newObject);
+            DefaultNewPyObject(newObject, typeObj);
             return newObject;
         }
 
-        protected void DefaultNewPyObject(PyObject toNew)
+        public static void DefaultNewPyObject(PyObject toNew, PyTypeObject classObj)
         {
-            toNew.__dict__ = new Dictionary<string, object>(__dict__);
+            toNew.__dict__ = new Dictionary<string, object>(classObj.__dict__);
         }
 
         public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context)
@@ -181,7 +181,7 @@ namespace LanguageImplementation
             var newObject = new PyException();
 
             // Shallow copy __dict__
-            DefaultNewPyObject(newObject);
+            DefaultNewPyObject(newObject, this);
             return newObject;
 
         }
@@ -198,9 +198,9 @@ namespace LanguageImplementation
         }
     }
 
-    public class AttributeError : Exception
+    public class AttributeError : PyException
     {
-        public AttributeError(string msg) : base(msg)
+        public AttributeError(PyException self, string msg) : base(self, msg)
         {
 
         }
@@ -235,7 +235,8 @@ namespace LanguageImplementation
         {
             if(!__dict__.ContainsKey(name))
             {
-                throw new AttributeError("'" + __class__.Name + "' object has no attribute named '" + name + "'");
+                var attrErrorSelf = (PyException) PyExceptionClass.DefaultNew(new PyExceptionClass());
+                throw new EscapedPyException(new AttributeError(attrErrorSelf, "'" + __class__.Name + "' object has no attribute named '" + name + "'"));
             }
             return __dict__[name];
         }

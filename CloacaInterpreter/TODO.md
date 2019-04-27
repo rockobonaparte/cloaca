@@ -81,6 +81,7 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
   * assert function
   * raise from (exception chaining)
+  * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
 * See if you can use that REPL helper module directly.
 
 
