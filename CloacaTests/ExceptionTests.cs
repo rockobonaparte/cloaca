@@ -1,8 +1,9 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Collections.Generic;
 
 using NUnit.Framework;
+
+using LanguageImplementation;
 
 namespace CloacaTests
 {
@@ -12,11 +13,10 @@ namespace CloacaTests
         [Test]
         public void RaiseException()
         {
-            // "RAISE_VARARGS not implemented yet"
-            Assert.Throws(typeof(NotImplementedException), () =>
+            Assert.Throws(typeof(EscapedPyException), () =>
             {
                 var interpreter = runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
-            }, "RAISE_VARARGS not implemented yet");
+            }, "Hello, World!");
         }
 
         [Test]

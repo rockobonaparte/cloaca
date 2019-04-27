@@ -139,7 +139,7 @@ namespace LanguageImplementation
 
     public class PyException : PyObject
     {
-        private string message;
+        public string message;
 
         public PyException()
         {
@@ -154,6 +154,16 @@ namespace LanguageImplementation
         public void PythonPyExceptionConstructor(PyException self, string message)
         {
             this.message = message;
+        }
+    }
+
+    // Use when the exception gets raised out of the root context.
+    public class EscapedPyException : Exception
+    {
+        public PyException originalException;
+        public EscapedPyException(PyException original) : base(original.message)
+        {
+            originalException = original;
         }
     }
 

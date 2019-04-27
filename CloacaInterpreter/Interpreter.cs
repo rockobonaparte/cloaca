@@ -791,8 +791,12 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.RAISE_VARARGS:
                         {
+                            // Assuming that the parameter is always one for now.
                             context.Cursor += 1;
-                            throw new NotImplementedException("RAISE_VARARGS not implemented yet");
+                            var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
+                            var theException = (PyException) context.DataStack.Pop();
+                            context.Cursor += 2;
+                            throw new EscapedPyException(theException);
                         }
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);
