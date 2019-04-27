@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Collections.Generic;
 
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {

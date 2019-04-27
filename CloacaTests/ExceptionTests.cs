@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 using NUnit.Framework;
 
-using LanguageImplementation;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaTests
 {

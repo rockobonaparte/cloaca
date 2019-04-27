@@ -68,7 +68,13 @@
     </Compile>
     <Compile Include="CodeContainers.cs" />
     <Compile Include="CodeObject.cs" />
-    <Compile Include="DataTypes.cs" />
+    <Compile Include="DataTypes\Exceptions\PyException.cs" />
+    <Compile Include="DataTypes\Exceptions\StandardExceptions.cs" />
+    <Compile Include="DataTypes\NoneType.cs" />
+    <Compile Include="DataTypes\PyClass.cs" />
+    <Compile Include="DataTypes\PyObject.cs" />
+    <Compile Include="DataTypes\PyTuple.cs" />
+    <Compile Include="DataTypes\PyTypeObject.cs" />
     <Compile Include="Dis.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Interfaces.cs" />
@@ -86,6 +92,7 @@
       <Name>Language</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
