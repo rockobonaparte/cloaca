@@ -6,8 +6,9 @@ using Antlr4.Runtime;
 
 using Language;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 using CloacaInterpreter;
-using Antlr4.Runtime.Tree;
+
 
 /// <summary>
 /// Use to raise parsing issues while we figure out a better way to do this.
@@ -269,6 +270,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // For now, we're assuming an atom of parentheses is a tuple
         base.VisitAtomSquareBrackets(context);
         AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length);
+        return null;
+    }
+
+    public override object VisitRaise_stmt([NotNull] CloacaParser.Raise_stmtContext context)
+    {
+        // This will build up the exception and put it on the stack.
+        // TODO: Support 'from' statement by expanding to test(1) as well--if defined.
+        base.VisitTest(context.test(0));
+
+        // For now, we only support one argument for exceptions, which will be the exception
+        // created from visit the parent context.
+        AddInstruction(ByteCodes.RAISE_VARARGS, 1);
+
         return null;
     }
 

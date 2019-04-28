@@ -3,16 +3,20 @@ using System.Collections.Generic;
 
 using NUnit.Framework;
 
+using LanguageImplementation.DataTypes.Exceptions;
+
 namespace CloacaTests
 {
     [TestFixture]
     public class ExceptionTests : RunCodeTest
     {
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void RaiseException()
         {
-            var interpreter = runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            Assert.Throws(typeof(EscapedPyException), () =>
+            {
+                var interpreter = runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            }, "Hello, World!");
         }
 
         [Test]

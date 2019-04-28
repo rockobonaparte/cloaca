@@ -80,6 +80,10 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * try-catch-finally (else?)
   * Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
   * assert function
+  * raise from (exception chaining)
+  * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
+     * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
+       in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
 * See if you can use that REPL helper module directly.
 
 

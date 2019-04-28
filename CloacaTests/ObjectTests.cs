@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Collections.Generic;
 
-using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 using NUnit.Framework;
 

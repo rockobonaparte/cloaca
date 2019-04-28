@@ -4,11 +4,23 @@ using System.Numerics;
 using System.Collections.Generic;
 
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
     public class Interpreter: IInterpreter
     {
+        private Dictionary<string, object> builtins;
+
+        public Interpreter()
+        {
+            builtins = new Dictionary<string, object>
+            {
+                { "Exception", new PyExceptionClass() }
+            };
+        }
+
         public bool DumpState;
 
         /// <summary>
@@ -350,6 +362,10 @@ namespace CloacaInterpreter
                                 {
                                     context.DataStack.Push(foundVar);
                                 }
+                                else if(builtins.ContainsKey(globalName))
+                                {
+                                    context.DataStack.Push(builtins[globalName]);
+                                }
                                 else
                                 {
                                     throw new Exception("Global '" + globalName + "' was not found!");
@@ -520,9 +536,9 @@ namespace CloacaInterpreter
                                 // Python and .NET. We're just starting to enable the plumbing before stepping
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
-                                foreach(var continuation in functionToRun.Call(args.ToArray()))
+                                foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {
-                                    if(continuation is ReturnValue)
+                                    if (continuation is ReturnValue)
                                     {
                                         var asReturnValue = continuation as ReturnValue;
                                         if (asReturnValue.Returned != null)
@@ -535,6 +551,7 @@ namespace CloacaInterpreter
                                         yield return continuation;
                                     }
                                 }
+
                                 context.Cursor += 2;
                             }
                             else
@@ -547,13 +564,10 @@ namespace CloacaInterpreter
                                     // 2. Pass it to __init__
                                     // 3. Return the self reference                                    
                                     var asClass = (PyClass)abstractFunctionToRun;
-
-                                    // Right now, __new__ is hard-coded because we don't have abstraction to 
-                                    // call either Python code or built-in code.
                                     PyObject self = null;
-                                    foreach(var continuation in asClass.__new__.Call(new object[] { asClass })) 
+                                    foreach (var continuation in asClass.__new__.Call(this, context, new object[] { asClass }))
                                     {
-                                        if(continuation is ReturnValue)
+                                        if (continuation is ReturnValue)
                                         {
                                             var asReturnValue = continuation as ReturnValue;
                                             self = asReturnValue.Returned as PyObject;
@@ -562,10 +576,6 @@ namespace CloacaInterpreter
                                         {
                                             yield return continuation;
                                         }
-                                    }
-                                    if(self == null)
-                                    {
-                                        throw new Exception("__new__ invocation did not return a PyObject");
                                     }
 
                                     args.Insert(0, self);
@@ -596,7 +606,10 @@ namespace CloacaInterpreter
                                         // TODO: Reconcile this with stubbed __new__. This is such a mess.
                                         var self = new PyObject();      // This is the default __new__ for now.
                                         args.Insert(0, self);
-                                        CallInto(context, functionToRun, args.ToArray());
+                                        foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
+                                        {
+                                            yield return continuation;
+                                        }
                                         context.DataStack.Push(self);
                                     }
 
@@ -778,6 +791,15 @@ namespace CloacaInterpreter
                             context.DataStack.Push(class_builder);
                         }
                         break;
+                    case ByteCodes.RAISE_VARARGS:
+                        {
+                            // Assuming that the parameter is always one for now.
+                            context.Cursor += 1;
+                            var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
+                            var theException = (PyException) context.DataStack.Pop();
+                            context.Cursor += 2;
+                            throw new EscapedPyException(theException);
+                        }
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);
                 }
