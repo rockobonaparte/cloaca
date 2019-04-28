@@ -2,7 +2,7 @@
 {
     public class AttributeError : PyException
     {
-        public AttributeError(PyException self, string msg) : base(self, msg)
+        public AttributeError(string msg) : base(msg)
         {
 
         }

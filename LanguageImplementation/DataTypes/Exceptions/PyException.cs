@@ -1,21 +1,26 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-// BOOKMARK: Figure out how to embed a 1-step constructor inside the interpreter so we don't have to do the __new__ -> __init__ crap where it isn't applicable.
-// Or alternately, don't take the self pointer as an argument when passing to native code. This might not be as bad as I currently think.
 namespace LanguageImplementation.DataTypes.Exceptions
 {
     /// <summary>
     /// An instance of a PyExceptionClass. These are exceptions meant to be thrown from within the
     /// interpreter and handled within the interpreter. Still, embedded code can raise them in
-    /// order to give the interpreter an exception to handle.
-    /// 
-    /// Construction is currently a little awkward because Python exceptions are also PyObjects
-    /// and are initialized in Python using the two-step __new__ and __init__ process.
+    /// order to give the interpreter an exception to handle--using EscapedPyException in particular.
     /// </summary>
     public class PyException : PyObject
     {
-        public string message;
+        public string Message
+        {
+            get
+            {
+                return (string) this.__dict__["message"];
+            }
+            set
+            {
+                this.__dict__["message"] = value;
+            }
+        }
 
         /// <summary>
         /// Creates an empty shell of a Python exception.
@@ -26,23 +31,27 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
 
         /// <summary>
-        /// Creates a new Python exception from an existing Python exception.
+        /// Create a new Python exception based on a message
         /// </summary>
-        /// <param name="self">An instance formally created using the default constructor</param>
-        /// <param name="message">The exception's message</param>
-        public PyException(PyException self, string message)
+        /// <param name="message">The exception message</param>
+        public PyException(string message)
         {
-            PythonPyExceptionConstructor(self, message);
+            PyTypeObject.DefaultNewPyObject(this, new PyExceptionClass());
+            Message = message;
         }
 
         /// <summary>
-        /// Exposed as the __init__ for Exception() inside the interpreter.
+        /// Exposed as the __init__ for Exception() inside the interpreter. The self parameter
+        /// is exposed in order to invoke the constructor using the class Python class method
+        /// signature where the 'this' pointer is the first argument. It is just a handle to
+        /// the current object.
         /// </summary>
-        /// <param name="self">The exception reference</param>
+        /// <param name="self">The exception reference created from __init__. Included for API consistency to Python
+        /// but otherwise not useful in C# since we impliciy have the this pointer.</param>
         /// <param name="message">The exception message</param>
         public void PythonPyExceptionConstructor(PyException self, string message)
         {
-            this.message = message;
+            Message = message;
         }
     }
 
@@ -58,7 +67,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         /// Create the escaped PyException.
         /// </summary>
         /// <param name="escaped">The exception that escaped.</param>
-        public EscapedPyException(PyException escaped) : base(escaped.message)
+        public EscapedPyException(PyException escaped) : base(escaped.Message)
         {
             originalException = escaped;
         }
@@ -69,26 +78,23 @@ namespace LanguageImplementation.DataTypes.Exceptions
     /// </summary>
     public class PyExceptionClass : PyClass
     {
+        /// <summary>
+        /// Embedded implementation of a Python Exception constructor.
+        /// </summary>
+        /// <param name="self">The PyObject to use as an exception created via __new__</param>
+        /// <param name="message">The Exception message</param>
+        /// <returns>The same object, properly populated. This is the convention for constructors,
+        /// although the interpreter just assumes the object it passed in is the returned value anyways.
+        /// </returns>
         private PyObject __init__impl(PyException self, string message)
         {
             self.PythonPyExceptionConstructor(self, message);
             return self;
         }
 
-        // Keeping signature of DefaultNew for consistency even though we don't need it.
-        private PyObject exceptionNew(PyTypeObject typeObjIgnored)
-        {
-            var newObject = new PyException();
-
-            // Shallow copy __dict__
-            DefaultNewPyObject(newObject, this);
-            return newObject;
-
-        }
-
         public PyExceptionClass() : base("Exception", null, null, null)
         {
-            Expression<Action<PyTypeObject>> __new__expr = instance => exceptionNew(null);
+            Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
             var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__init__", __new__methodInfo, this);
 
