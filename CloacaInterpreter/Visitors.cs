@@ -483,6 +483,36 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitTry_stmt([NotNull] CloacaParser.Try_stmtContext context)
+    {
+        // We have to emit a SETUP_EXCEPT, with a target an offset from the end of this instruction to where it would go for the first except check
+        // We will emit the instruction, remember our place, and fix it up once we have emitted the entire try block.
+        int startOfSuite = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
+        int setupExceptOffsetPos = startOfSuite - 2;
+        Visit(context.suite(0));
+        int jumpOutOffsetPos = AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2;
+
+        // Start of except statements
+        var exceptionOffsets = new List<int>();
+        foreach(var except_clause in context.except_clause())
+        {
+            Visit(except_clause);
+            AddInstruction(ByteCodes.POP_BLOCK);
+            exceptionOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
+        }
+
+        // Fixups
+        ActiveProgram.Code.SetUShort(setupExceptOffsetPos, ActiveProgram.Code.Count - startOfSuite);
+        ActiveProgram.Code.SetUShort(jumpOutOffsetPos, ActiveProgram.Code.Count - jumpOutOffsetPos + 2);
+
+        // Exception fixups
+        foreach(var exceptOffsetPos in exceptionOffsets)
+        {
+            ActiveProgram.Code.SetUShort(exceptOffsetPos, ActiveProgram.Code.Count - exceptOffsetPos + 2);
+        }
+        return null;
+    }
+
     public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
     {
         //

@@ -20,7 +20,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptBlank()
         {
             var interpreter = runProgram(
