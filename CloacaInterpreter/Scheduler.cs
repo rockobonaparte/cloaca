@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 
 using LanguageImplementation;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
@@ -60,8 +61,18 @@ namespace CloacaInterpreter
                 contexts[currentTaskIndex] = interpreter.Run(tasklets[currentTaskIndex]);
             }
 
+            var activeTask = tasklets[currentTaskIndex];
             var taskEnumerator = contexts[currentTaskIndex].GetEnumerator();
-            if (!taskEnumerator.MoveNext())
+
+            // This will run the current context to its next yield.
+            var taskIsFinished = !taskEnumerator.MoveNext();
+
+            if (activeTask.CurrentException != null)
+            {
+                throw new EscapedPyException(activeTask.CurrentException);
+            }
+
+            if (taskIsFinished)
             {
                 // Done. Rewind the taskindex since it'll move up on the next tick.
                 contexts.RemoveAt(currentTaskIndex);

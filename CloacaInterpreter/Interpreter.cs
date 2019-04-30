@@ -175,6 +175,19 @@ namespace CloacaInterpreter
             return new FrameContext(newFrameStack);
         }
 
+        private Block UnrollCurrentBlock(FrameContext context)
+        {
+            var block = context.BlockStack.Pop();
+
+            // Restore the stack.
+            while (context.DataStack.Count > block.StackSize)
+            {
+                context.DataStack.Pop();
+            }
+
+            return block;
+        }
+
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually intrepts
         /// our Python(ish) code!
@@ -193,6 +206,26 @@ namespace CloacaInterpreter
                 //{
                 //    Console.WriteLine(Dis.dis(callStack.Peek().Program, Cursor, 1));
                 //}
+
+                // Are we unwinding from an exception?
+                while(context.CurrentException != null)
+                {
+                    if (context.BlockStack.Count > 0)
+                    {
+                        var block = UnrollCurrentBlock(context);
+                        if(block.Opcode == ByteCodes.SETUP_EXCEPT)
+                        {
+                            // We'll now go to the except routine.
+                            context.CurrentException = null;
+                            context.Cursor = block.HandlerAddress;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        yield break;
+                    }
+                }
 
                 var opcode = (ByteCodes)context.Code[context.Cursor];
                 switch(opcode)
@@ -476,15 +509,17 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.POP_BLOCK:
                         {
-                            var block = context.BlockStack.Pop();
-
-                            // Restore the stack.
-                            while(context.DataStack.Count > block.StackSize)
-                            {
-                                context.DataStack.Pop();
-                            }
+                            UnrollCurrentBlock(context);
                         }
                         context.Cursor += 1;
+                        break;
+                    case ByteCodes.SETUP_EXCEPT:
+                        {
+                            context.Cursor += 1;
+                            var exceptionCatchPoint = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, exceptionCatchPoint, context.DataStack.Count));
+                        }
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
                         {
@@ -798,7 +833,8 @@ namespace CloacaInterpreter
                             var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
                             var theException = (PyException) context.DataStack.Pop();
                             context.Cursor += 2;
-                            throw new EscapedPyException(theException);
+                            context.CurrentException = theException;
+                            break;
                         }
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);

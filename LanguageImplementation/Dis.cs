@@ -210,6 +210,14 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(null, cursor, "LOAD_BUILD_CLASS", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.SETUP_EXCEPT:
+                        {
+                            cursor += 1;
+                            var offset = code.GetUShort(cursor);
+                            disassembly += disassembleLine(null, cursor, "SETUP_EXCEPT", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            cursor += 2;
+                        }
+                        break;
                     case ByteCodes.RAISE_VARARGS:
                         {
                             cursor += 1;
