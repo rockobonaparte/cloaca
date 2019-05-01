@@ -486,6 +486,14 @@ namespace CloacaInterpreter
                         }
                         context.Cursor += 1;
                         break;
+                    case ByteCodes.SETUP_EXCEPT:
+                        {
+                            context.Cursor += 1;
+                            var exceptionCatchPoint = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, exceptionCatchPoint, context.DataStack.Count));
+                        }
+                        break;
                     case ByteCodes.JUMP_ABSOLUTE:
                         {
                             context.Cursor += 1;
