@@ -54,69 +54,69 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.LOAD_CONST:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_CONST", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "LOAD_CONST", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.LOAD_NAME:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "LOAD_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.LOAD_FAST:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "LOAD_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.LOAD_GLOBAL:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "LOAD_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.LOAD_ATTR:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "LOAD_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "LOAD_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.STORE_NAME:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "STORE_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "STORE_NAME", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.STORE_FAST:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "STORE_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "STORE_FAST", code.GetUShort(cursor), string.Format("({0})", codeObject.VarNames[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.STORE_ATTR:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "STORE_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "STORE_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.STORE_GLOBAL:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "STORE_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
+                        disassembly += disassembleLine(null, cursor-1, "STORE_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
                     case ByteCodes.COMPARE_OP:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "COMPARE_OP", code.GetUShort(cursor), string.Format("({0})", code[cursor]));
+                        disassembly += disassembleLine(null, cursor-1, "COMPARE_OP", code.GetUShort(cursor), string.Format("({0})", code[cursor]));
                         cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_FALSE:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "POP_JUMP_IF_FALSE", code.GetUShort(cursor), null);
+                        disassembly += disassembleLine(null, cursor-1, "POP_JUMP_IF_FALSE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_TRUE:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
+                        disassembly += disassembleLine(null, cursor-1, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
                     case ByteCodes.SETUP_LOOP:
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "SETUP_LOOP", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "SETUP_LOOP", offset, string.Format("(to {0})", cursor + 1 + offset));
                             cursor += 2;
                         }
                         break;
@@ -129,7 +129,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var target = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "JUMP_ABSOLUTE", target, string.Format("(to {0})", target));
+                            disassembly += disassembleLine(null, cursor-1, "JUMP_ABSOLUTE", target, string.Format("(to {0})", target));
                             cursor += 2;
                         }
                         break;
@@ -137,7 +137,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "JUMP_FORWARD", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "JUMP_FORWARD", offset, string.Format("(to {0})", cursor + 1 + offset));
                             cursor += 2;
                         }
                         break;
@@ -149,7 +149,7 @@ namespace LanguageImplementation
                     case ByteCodes.MAKE_FUNCTION:
                         {
                             cursor += 1;
-                            var opcode = code.GetUShort(cursor);
+                            var opcode = code.GetUShort(cursor-1);
                             disassembly += disassembleLine(null, cursor, "MAKE_FUNCTION", opcode, null);
                             cursor += 2;
                         }
@@ -157,7 +157,7 @@ namespace LanguageImplementation
                     case ByteCodes.CALL_FUNCTION:
                         {
                             cursor += 1;
-                            var argCount = code.GetUShort(cursor);
+                            var argCount = code.GetUShort(cursor-1);
                             disassembly += disassembleLine(null, cursor, "CALL_FUNCTION", argCount, null);
                             cursor += 2;
                         }
@@ -170,7 +170,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var tuple_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "BUILD_TUPLE", tuple_size, null);
+                            disassembly += disassembleLine(null, cursor-1, "BUILD_TUPLE", tuple_size, null);
                             cursor += 2;
                         }
                         break;
@@ -178,7 +178,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var dict_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "BUILD_MAP", dict_size, null);
+                            disassembly += disassembleLine(null, cursor-1, "BUILD_MAP", dict_size, null);
                             cursor += 2;
                         }
                         break;
@@ -186,14 +186,14 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var dict_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "BUILD_CONST_KEY_MAP", dict_size, null);
+                            disassembly += disassembleLine(null, cursor-1, "BUILD_CONST_KEY_MAP", dict_size, null);
                             cursor += 2;
                         }
                         break;
                     case ByteCodes.BUILD_LIST:
                         {
                             cursor += 1;
-                            var list_size = code.GetUShort(cursor);
+                            var list_size = code.GetUShort(cursor-1);
                             disassembly += disassembleLine(null, cursor, "BUILD_LIST", list_size, null);
                             cursor += 2;
                         }
@@ -214,7 +214,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "SETUP_EXCEPT", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "SETUP_EXCEPT", offset, string.Format("(to {0})", cursor + 1 + offset));
                             cursor += 2;
                         }
                         break;
@@ -222,7 +222,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var opcode = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor, "RAISE_VARARGS", opcode, null);
+                            disassembly += disassembleLine(null, cursor-1, "RAISE_VARARGS", opcode, null);
                             cursor += 2;
                         }
                         break;
