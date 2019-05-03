@@ -86,14 +86,14 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Exception handling not implemented")]
-        public void TryExceptAliasUsed()
+        public void TryExceptAliasUseMessage()
         {
             var interpreter = runProgram(
                 "a = 'Fail'\n" +
                 "try:\n" +
                 "  raise Exception('Pass')\n" +
                 "except Exception as e:\n" +
-                "  a = e.message\n", new Dictionary<string, object>(), 1);
+                "  a = str(e)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo("Pass"));
