@@ -175,7 +175,7 @@ namespace CloacaInterpreter
             return new FrameContext(newFrameStack);
         }
 
-        private void UnrollCurrentBlock(FrameContext context)
+        private Block UnrollCurrentBlock(FrameContext context)
         {
             var block = context.BlockStack.Pop();
 
@@ -184,6 +184,8 @@ namespace CloacaInterpreter
             {
                 context.DataStack.Pop();
             }
+
+            return block;
         }
 
         /// <summary>
@@ -210,7 +212,14 @@ namespace CloacaInterpreter
                 {
                     if (context.BlockStack.Count > 0)
                     {
-                        UnrollCurrentBlock(context);
+                        var block = UnrollCurrentBlock(context);
+                        if(block.Opcode == ByteCodes.SETUP_EXCEPT)
+                        {
+                            // We'll now go to the except routine.
+                            context.CurrentException = null;
+                            context.Cursor = block.HandlerAddress;
+                            break;
+                        }
                     }
                     else
                     {

@@ -489,7 +489,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // We will emit the instruction, remember our place, and fix it up once we have emitted the entire try block.
         int startOfSuite = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
         int setupExceptOffsetPos = startOfSuite - 2;
-        Visit(context.suite(0));
+        int suiteIdx = 0;
+        Visit(context.suite(suiteIdx));
+        ++suiteIdx;
+        AddInstruction(ByteCodes.POP_BLOCK);
         int jumpOutOffsetPos = AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2;
 
         // Start of except statements
@@ -497,7 +500,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         foreach(var except_clause in context.except_clause())
         {
             Visit(except_clause);
-            AddInstruction(ByteCodes.POP_BLOCK);
+            Visit(context.suite(suiteIdx));
+            ++suiteIdx;
             exceptionOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
         }
 

@@ -27,7 +27,7 @@ namespace CloacaTests
                 "try:\n" +
                 "  raise Exception('Hello, World!')\n" +
                 "except:\n" +
-                "  a = a + 10\n", new Dictionary<string, object>(), 1);
+                "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(10)));
