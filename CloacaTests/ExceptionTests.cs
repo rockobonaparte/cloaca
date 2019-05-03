@@ -19,6 +19,7 @@ namespace CloacaTests
             }, "Hello, World!");
         }
 
+        // TryExceptBlank, TryExceptTyped, and TryExceptAliasBasic work their way up to a more and more advanced except block
         [Test]
         public void TryExceptBlank()
         {
@@ -31,6 +32,36 @@ namespace CloacaTests
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(10)));
+        }
+
+        [Test]
+        [Ignore("Exception handling not implemented")]
+        public void TryExceptTyped()
+        {
+            var interpreter = runProgram(
+                "a = 0\n" +
+                "try:\n" +
+                "  raise Exception('Hello, World!')\n" +
+                "except Exception\n" +
+                "  a = a + 10\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var a = (BigInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new BigInteger(11)));
+        }
+
+        [Test]
+        [Ignore("Exception handling not implemented")]
+        public void TryExceptAliasBasic()
+        {
+            var interpreter = runProgram(
+                "a = 0\n" +
+                "try:\n" +
+                "  raise Exception('Hello, World!')\n" +
+                "except Exception as e:\n" +
+                "  a = a + 10\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var a = (BigInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new BigInteger(11)));
         }
 
         [Test]
@@ -71,21 +102,6 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Exception handling not implemented")]
-        public void TryExceptAliasBasic()
-        {
-            var interpreter = runProgram(
-                "a = 0\n" +
-                "try:\n" +
-                "  raise Exception('Hello, World!')\n" +
-                "except Exception as e:\n" +
-                "  a = a + 10\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(11)));
-        }
-
-        [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptAliasUseMessage()
         {
             var interpreter = runProgram(
@@ -111,7 +127,7 @@ namespace CloacaTests
                 "try:\n" +
                 "  raise MeowException(1)\n" +
                 "except MeowException as e:\n" +
-                "  a = e\n", new Dictionary<string, object>(), 1);
+                "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(1)));
