@@ -511,11 +511,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // TODO: Point to END_FINALLY
                     finallyOffsets.Add(AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1) - 2);
                     AddInstruction(ByteCodes.POP_TOP);
+
+                    if(exceptClause.NAME() != null)
+                    {
+                        generateStoreForVariable(exceptClause.NAME().GetText());
+                    }
                 }
             }
 
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
+
+            // TODO: Look into deleting aliased exceptions.
+            // A DELETE_FAST was done for an aliased exception in an auto-generated END_FINALLY clause
+            // Look at Python generation for TryExceptAliasBasic
             exceptionOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
         }
 

@@ -51,7 +51,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptAliasBasic()
         {
             var interpreter = runProgram(

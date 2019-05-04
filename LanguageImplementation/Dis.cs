@@ -163,16 +163,16 @@ namespace LanguageImplementation
                     case ByteCodes.MAKE_FUNCTION:
                         {
                             cursor += 1;
-                            var opcode = code.GetUShort(cursor-1);
-                            disassembly += disassembleLine(null, cursor, "MAKE_FUNCTION", opcode, null);
+                            var opcode = code.GetUShort(cursor);
+                            disassembly += disassembleLine(null, cursor-1, "MAKE_FUNCTION", opcode, null);
                             cursor += 2;
                         }
                         break;
                     case ByteCodes.CALL_FUNCTION:
                         {
                             cursor += 1;
-                            var argCount = code.GetUShort(cursor-1);
-                            disassembly += disassembleLine(null, cursor, "CALL_FUNCTION", argCount, null);
+                            var argCount = code.GetUShort(cursor);
+                            disassembly += disassembleLine(null, cursor - 1, "CALL_FUNCTION", argCount, null);
                             cursor += 2;
                         }
                         break;
