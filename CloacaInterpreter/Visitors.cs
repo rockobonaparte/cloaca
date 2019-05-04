@@ -509,7 +509,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
 
                     // TODO: Point to END_FINALLY
-                    finallyOffsets.Add(AddInstruction(ByteCodes.JUMP_IF_FALSE, -1) - 2);
+                    finallyOffsets.Add(AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1) - 2);
+                    AddInstruction(ByteCodes.POP_TOP);
                 }
             }
 

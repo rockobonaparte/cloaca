@@ -493,7 +493,7 @@ namespace CloacaInterpreter
                         {
                             context.Cursor += 1;
                             var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                            var conditional = (bool)context.DataStack.Pop();
+                            var conditional = (bool)context.DataStack.Peek();
                             if (conditional)
                             {
                                 context.Cursor = jumpPosition;
@@ -506,10 +506,38 @@ namespace CloacaInterpreter
                         {
                             context.Cursor += 1;
                             var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                            var conditional = (bool)context.DataStack.Pop();
+                            var conditional = (bool)context.DataStack.Peek();
                             if(!conditional)
                             {
                                 context.Cursor = jumpPosition;
+                                continue;
+                            }
+                        }
+                        context.Cursor += 2;
+                        break;
+                    case ByteCodes.POP_JUMP_IF_TRUE:
+                        {
+                            context.Cursor += 1;
+                            var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                            var conditional = (bool)context.DataStack.Peek();
+                            if (conditional)
+                            {
+                                context.Cursor = jumpPosition;
+                                context.DataStack.Pop();
+                                continue;
+                            }
+                        }
+                        context.Cursor += 2;
+                        break;
+                    case ByteCodes.POP_JUMP_IF_FALSE:
+                        {
+                            context.Cursor += 1;
+                            var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                            var conditional = (bool)context.DataStack.Peek();
+                            if (!conditional)
+                            {
+                                context.Cursor = jumpPosition;
+                                context.DataStack.Pop();
                                 continue;
                             }
                         }
@@ -529,6 +557,12 @@ namespace CloacaInterpreter
                         }
                         context.Cursor += 1;
                         break;
+                    case ByteCodes.POP_TOP:
+                        {
+                            context.DataStack.Pop();
+                            context.Cursor += 1;
+                            break;
+                        }
                     case ByteCodes.SETUP_EXCEPT:
                         {
                             context.Cursor += 1;

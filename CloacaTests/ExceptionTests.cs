@@ -20,6 +20,8 @@ namespace CloacaTests
         }
 
         // TryExceptBlank, TryExceptTyped, and TryExceptAliasBasic work their way up to a more and more advanced except block
+        // They all have the same effect; this mostly just makes sure we don't totally choke on them.
+        // Other tests will ensure we properly qualify the type of exception and use the value.
         [Test]
         public void TryExceptBlank()
         {
@@ -57,10 +59,10 @@ namespace CloacaTests
                 "try:\n" +
                 "  raise Exception('Hello, World!')\n" +
                 "except Exception as e:\n" +
-                "  a = a + 10\n", new Dictionary<string, object>(), 1);
+                "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(11)));
+            Assert.That(a, Is.EqualTo(new BigInteger(10)));
         }
 
         [Test]

@@ -116,6 +116,10 @@
 		CALL_FUNCTION_VAR_KW       = 0x8E, // (2) Calls a function. /argc/ is interpreted as in CALL_FUNCTION. The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple, followed by explicit keyword and positional arguments.
 		EXTENDED_ARG               = 0x8F, // (2) Support for opargs more than 16 bits long.
 
+        // Some newer opcodes
+        POP_JUMP_IF_TRUE           = 0x90, // If TOS is true, sets the bytecode counter to target. TOS is popped.
+        POP_JUMP_IF_FALSE          = 0x91, // If TOS is false, sets the bytecode counter to target. TOS is popped.
+
         // TODO: Figure out the actual opcode byte for this.
         BUILD_CONST_KEY_MAP        = 0x9C, // (2) The version of BUILD_MAP specialized for constant keys. count values are consumed from the stack. The top element on the stack contains a tuple of keys.
 

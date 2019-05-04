@@ -104,12 +104,22 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.JUMP_IF_FALSE:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor-1, "POP_JUMP_IF_FALSE", code.GetUShort(cursor), null);
+                        disassembly += disassembleLine(null, cursor-1, "JUMP_IF_FALSE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
                     case ByteCodes.JUMP_IF_TRUE:
                         cursor += 1;
-                        disassembly += disassembleLine(null, cursor-1, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
+                        disassembly += disassembleLine(null, cursor-1, "JUMP_IF_TRUE", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
+                    case ByteCodes.POP_JUMP_IF_FALSE:
+                        cursor += 1;
+                        disassembly += disassembleLine(null, cursor - 1, "POP_JUMP_IF_FALSE", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
+                    case ByteCodes.POP_JUMP_IF_TRUE:
+                        cursor += 1;
+                        disassembly += disassembleLine(null, cursor - 1, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
                     case ByteCodes.SETUP_LOOP:
@@ -123,6 +133,10 @@ namespace LanguageImplementation
                     case ByteCodes.POP_BLOCK:
                         // TODO: Block targets should have a >> cursor next to them.
                         disassembly += disassembleLine(null, cursor, "POP_BLOCK", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.POP_TOP:
+                        disassembly += disassembleLine(null, cursor, "POP_TOP", null, null);
                         cursor += 1;
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
