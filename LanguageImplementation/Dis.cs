@@ -226,6 +226,12 @@ namespace LanguageImplementation
                             cursor += 2;
                         }
                         break;
+                    case ByteCodes.END_FINALLY:
+                        {
+                            disassembly += disassembleLine(null, cursor, "END_FINALLY", null, null);
+                            cursor += 1;
+                            break;
+                        }
                     default:
                         throw new Exception("Unexpected opcode to disassemble: " + code[cursor]);
                 }

@@ -7,4 +7,12 @@
 
         }
     }
+
+    public class TypeError : PyException
+    {
+        public TypeError(string msg) : base(msg)
+        {
+
+        }
+    }
 }

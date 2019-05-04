@@ -467,8 +467,24 @@ namespace CloacaInterpreter
                                 case CompareOps.IsNot:
                                     context.DataStack.Push(left.GetType() != right.GetType() || left != right);
                                     break;
+                                case CompareOps.ExceptionMatch:
+                                    {
+                                        var rightType = right as PyExceptionClass;
+                                        if(rightType == null)
+                                        {
+                                            // Well, now we're raising a type error!
+                                            // TypeError: catching classes that do not inherit from BaseException is not allowed
+                                            context.CurrentException = new TypeError("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                        }
+                                        else
+                                        {
+                                            var leftObject = left as PyObject;
+                                            context.DataStack.Push(leftObject.__class__.GetType() == right.GetType());
+                                        }
+                                        break;
+                                    }
                                 default:
-                                    throw new Exception("Unexpected comparision operation opcode: " + compare_op);
+                                    throw new Exception("Unexpected comparison operation opcode: " + compare_op);
                             }
                         }
                         context.Cursor += 2;
@@ -834,6 +850,12 @@ namespace CloacaInterpreter
                             var theException = (PyException) context.DataStack.Pop();
                             context.Cursor += 2;
                             context.CurrentException = theException;
+                            break;
+                        }
+                    case ByteCodes.END_FINALLY:
+                        {
+                            context.Cursor += 1;
+                            context.BlockStack.Pop();
                             break;
                         }
                     default:

@@ -135,7 +135,8 @@
         In = 7,
         Is = 8,         // This constant is accurate to Python disassembly
         IsNot = 9,      // This constant is accurate to Python disassembly
-        NotIn = 10,
-        LtGt = 11
+        ExceptionMatch = 10,
+        NotIn = 11,
+        LtGt = 12
     }
 }

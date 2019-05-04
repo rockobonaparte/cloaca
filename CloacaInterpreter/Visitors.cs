@@ -497,23 +497,45 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // Start of except statements
         var exceptionOffsets = new List<int>();
-        foreach(var except_clause in context.except_clause())
+        var finallyOffsets = new List<int>();
+        foreach(var exceptClause in context.except_clause())
         {
-            Visit(except_clause);
+            // Making a closure to represent visiting the Except_Clause. It's not a dedicated override of the default in the rule
+            // because we need so much context from the entire try block
+            {
+                if (exceptClause.test() != null && exceptClause.test().ChildCount > 0)
+                {
+                    generateLoadForVariable(exceptClause.test().GetText());
+                    AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
+
+                    // TODO: Point to END_FINALLY
+                    finallyOffsets.Add(AddInstruction(ByteCodes.JUMP_IF_FALSE, -1) - 2);
+                }
+            }
+
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
             exceptionOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
         }
 
-        // Fixups
+        // Try-block
         ActiveProgram.Code.SetUShort(setupExceptOffsetPos, ActiveProgram.Code.Count - startOfSuite);
         ActiveProgram.Code.SetUShort(jumpOutOffsetPos, ActiveProgram.Code.Count - jumpOutOffsetPos + 2);
 
-        // Exception fixups
+        // Except statement fixups
         foreach(var exceptOffsetPos in exceptionOffsets)
         {
             ActiveProgram.Code.SetUShort(exceptOffsetPos, ActiveProgram.Code.Count - exceptOffsetPos + 2);
         }
+
+        // Finally statement fixups
+        foreach(var finallyOffsetPos in finallyOffsets)
+        {
+            ActiveProgram.Code.SetUShort(finallyOffsetPos, ActiveProgram.Code.Count - finallyOffsetPos + 2);
+        }
+
+        // End block.
+        AddInstruction(ByteCodes.END_FINALLY);
         return null;
     }
 

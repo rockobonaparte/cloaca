@@ -35,18 +35,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptTyped()
         {
             var interpreter = runProgram(
                 "a = 0\n" +
                 "try:\n" +
                 "  raise Exception('Hello, World!')\n" +
-                "except Exception\n" +
-                "  a = a + 10\n", new Dictionary<string, object>(), 1);
+                "except Exception:\n" +
+                "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(11)));
+            Assert.That(a, Is.EqualTo(new BigInteger(10)));
         }
 
         [Test]
