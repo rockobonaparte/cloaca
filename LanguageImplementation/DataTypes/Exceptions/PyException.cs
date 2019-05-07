@@ -27,7 +27,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         /// </summary>
         public PyException()
         {
-
+            __class__ = PyExceptionClass.Instance;
         }
 
         /// <summary>
@@ -36,7 +36,8 @@ namespace LanguageImplementation.DataTypes.Exceptions
         /// <param name="message">The exception message</param>
         public PyException(string message)
         {
-            PyTypeObject.DefaultNewPyObject(this, new PyExceptionClass());
+            __class__ = PyExceptionClass.Instance;
+            PyTypeObject.DefaultNewPyObject(this, PyExceptionClass.Instance);
             Message = message;
         }
 
@@ -91,6 +92,21 @@ namespace LanguageImplementation.DataTypes.Exceptions
             self.PythonPyExceptionConstructor(self, message);
             return self;
         }
+
+        // TODO: Migrate to a built-in that can be invoked as necessary. One problem will be to fetch it out to run from C# code to create exceptions.
+        private static PyExceptionClass instance = null;
+        public static PyExceptionClass Instance
+        {
+            get
+            {
+                if(instance == null)
+                {
+                    instance = new PyExceptionClass();
+                }
+                return instance;
+            }           
+        }
+
 
         public PyExceptionClass() : base("Exception", null, null, null)
         {

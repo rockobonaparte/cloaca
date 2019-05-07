@@ -17,7 +17,7 @@ namespace CloacaInterpreter
         {
             builtins = new Dictionary<string, object>
             {
-                { "Exception", new PyExceptionClass() }
+                { "Exception", PyExceptionClass.Instance }
             };
         }
 
@@ -216,6 +216,7 @@ namespace CloacaInterpreter
                         if(block.Opcode == ByteCodes.SETUP_EXCEPT)
                         {
                             // We'll now go to the except routine.
+                            context.DataStack.Push(context.CurrentException);
                             context.CurrentException = null;
                             context.Cursor = block.HandlerAddress;
                             break;
@@ -479,7 +480,7 @@ namespace CloacaInterpreter
                                         else
                                         {
                                             var leftObject = left as PyObject;
-                                            context.DataStack.Push(leftObject.__class__.GetType() == right.GetType());
+                                            context.DataStack.Push(leftObject.__class__ == right);
                                         }
                                         break;
                                     }
@@ -563,12 +564,26 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         }
+                    case ByteCodes.DUP_TOP:
+                        {
+                            context.DataStack.Push(context.DataStack.Peek());
+                            context.Cursor += 1;
+                            break;
+                        }
                     case ByteCodes.SETUP_EXCEPT:
                         {
                             context.Cursor += 1;
                             var exceptionCatchPoint = context.CodeBytes.GetUShort(context.Cursor);
                             context.Cursor += 2;
-                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, exceptionCatchPoint, context.DataStack.Count));
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, context.Cursor + exceptionCatchPoint, context.DataStack.Count));
+                        }
+                        break;
+                    case ByteCodes.SETUP_FINALLY:
+                        {
+                            context.Cursor += 1;
+                            var finallyClausePoint = context.CodeBytes.GetUShort(context.Cursor);
+                            context.Cursor += 2;
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, context.Cursor + finallyClausePoint, context.DataStack.Count));
                         }
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:

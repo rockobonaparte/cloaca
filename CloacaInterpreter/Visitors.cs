@@ -485,10 +485,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTry_stmt([NotNull] CloacaParser.Try_stmtContext context)
     {
-        // We have to emit a SETUP_EXCEPT, with a target an offset from the end of this instruction to where it would go for the first except check
+        // Block setup for SETUP_EXCEPT, SETUP_FINALLY:
+        // We have to emit them with a target an offset from the end of this instruction to where it would go for the first except check
         // We will emit the instruction, remember our place, and fix it up once we have emitted the entire try block.
-        int startOfSuite = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
-        int setupExceptOffsetPos = startOfSuite - 2;
+        // Determine if we have a finally block. This HAS to be the last major statement in the block. So its suite is the last suite.
+        // Its child in the list is length-3
+        bool hasFinally = false;
+        int startOfSetupFinally = -1;
+        int setupFinallyOffsetPost = -1;
+        if (context.children.Count >= 3 && context.children[context.children.Count - 3].GetText() == "finally")
+        {
+            hasFinally = true;
+            startOfSetupFinally = AddInstruction(ByteCodes.SETUP_FINALLY, -1);
+            setupFinallyOffsetPost = startOfSetupFinally - 2;
+        }
+
+        int startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
+        int setupExceptOffsetPos = startOfSetupExcept - 2;
         int suiteIdx = 0;
         Visit(context.suite(suiteIdx));
         ++suiteIdx;
@@ -496,24 +509,34 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         int jumpOutOffsetPos = AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2;
 
         // Start of except statements
-        var exceptionOffsets = new List<int>();
+        var endOfExceptBlockJumpOffsets = new List<int>();
         var finallyOffsets = new List<int>();
-        foreach(var exceptClause in context.except_clause())
+        int startOfExceptBlocks = ActiveProgram.Code.Count;
+        foreach (var exceptClause in context.except_clause())
         {
             // Making a closure to represent visiting the Except_Clause. It's not a dedicated override of the default in the rule
             // because we need so much context from the entire try block
             {
                 if (exceptClause.test() != null && exceptClause.test().ChildCount > 0)
                 {
+                    // If the exception is aliased, we need to make sure we still have a copy
+                    // of it to store in the alias AFTER we have determined that we want to
+                    // enter its except clause. So we'll duplicate it here, then test, then store it.
+                    if (exceptClause.NAME() != null)
+                    {
+                        AddInstruction(ByteCodes.DUP_TOP);
+                    }
+
                     generateLoadForVariable(exceptClause.test().GetText());
                     AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
 
-                    // TODO: Point to END_FINALLY
+                    // Point to END_FINALLY to get us out of the except clause and into the finally block
                     finallyOffsets.Add(AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1) - 2);
-                    AddInstruction(ByteCodes.POP_TOP);
+                    AddInstruction(ByteCodes.POP_TOP);      // should pop the true/false from COMPARE_OP
 
-                    if(exceptClause.NAME() != null)
+                    if (exceptClause.NAME() != null)
                     {
+                        // BTW, this pops the exception
                         generateStoreForVariable(exceptClause.NAME().GetText());
                     }
                 }
@@ -525,27 +548,46 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // TODO: Look into deleting aliased exceptions.
             // A DELETE_FAST was done for an aliased exception in an auto-generated END_FINALLY clause
             // Look at Python generation for TryExceptAliasBasic
-            exceptionOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
+            endOfExceptBlockJumpOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
         }
 
+        int startOfFinallyBlock = ActiveProgram.Code.Count;
+        if (hasFinally)
+        {
+            Visit(context.suite(suiteIdx));
+            ++suiteIdx;
+            AddInstruction(ByteCodes.END_FINALLY);
+
+            // SETUP_FINALLY offset fixup:
+            ActiveProgram.Code.SetUShort(setupFinallyOffsetPost, ActiveProgram.Code.Count - startOfSetupFinally);
+        }
+
+        int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;
+
         // Try-block
-        ActiveProgram.Code.SetUShort(setupExceptOffsetPos, ActiveProgram.Code.Count - startOfSuite);
-        ActiveProgram.Code.SetUShort(jumpOutOffsetPos, ActiveProgram.Code.Count - jumpOutOffsetPos + 2);
+        ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
+        ActiveProgram.Code.SetUShort(jumpOutOffsetPos, endOfBlockPosition - jumpOutOffsetPos - 2);
 
         // Except statement fixups
-        foreach(var exceptOffsetPos in exceptionOffsets)
+        foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
         {
-            ActiveProgram.Code.SetUShort(exceptOffsetPos, ActiveProgram.Code.Count - exceptOffsetPos + 2);
+            ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
         }
 
         // Finally statement fixups
-        foreach(var finallyOffsetPos in finallyOffsets)
+        foreach (var finallyOffsetPos in finallyOffsets)
         {
-            ActiveProgram.Code.SetUShort(finallyOffsetPos, ActiveProgram.Code.Count - finallyOffsetPos + 2);
+            ActiveProgram.Code.SetUShort(finallyOffsetPos, endOfBlockPosition - finallyOffsetPos);
         }
 
-        // End block.
-        AddInstruction(ByteCodes.END_FINALLY);
+        //// TODO: Investigate correctness of this END_FINALLY emitter. Looks like it's necessary to set up an END_FINALLY if none of our except clauses trigger and we don't have a finally statement either.
+        //// End block. If we have a finally, we end out dumping two of these. It looks like we want one either wait (if we had an except). Dunno
+        //// about try-else. Is that even legal?
+        //if (!hasFinally)
+        //{
+        //    AddInstruction(ByteCodes.END_FINALLY);
+        //}
+
         return null;
     }
 

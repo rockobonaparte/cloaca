@@ -65,7 +65,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptFinally()
         {
             var interpreter = runProgram(
@@ -73,12 +72,27 @@ namespace CloacaTests
                 "try:\n" +
                 "  raise Exception('Hello, World!')\n" +
                 "except Exception:\n" +
-                "  a = a + 10\n" +
+                "  a = 10\n" +
                 "finally:\n" +
                 "  a = a + 1\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(11)));
+        }
+
+        [Test]
+        [Ignore("Exception handling not implemented")]
+        public void TryUnhandledFinally()
+        {
+            var interpreter = runProgram(
+                "a = 0\n" +
+                "try:\n" +
+                "  raise Exception('Hello, World!')\n" +
+                "finally:\n" +
+                "  a = 1\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var a = (BigInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new BigInteger(1)));
         }
 
         [Test]
@@ -97,7 +111,7 @@ namespace CloacaTests
                 "  a = a + 1000\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1111)));
+            Assert.That(a, Is.EqualTo(new BigInteger(1101)));
         }
 
         [Test]

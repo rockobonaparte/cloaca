@@ -126,7 +126,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor-1, "SETUP_LOOP", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "SETUP_LOOP", offset, string.Format("(to {0})", cursor + 2 + offset));
                             cursor += 2;
                         }
                         break;
@@ -137,6 +137,10 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.POP_TOP:
                         disassembly += disassembleLine(null, cursor, "POP_TOP", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.DUP_TOP:
+                        disassembly += disassembleLine(null, cursor, "DUP_TOP", null, null);
                         cursor += 1;
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
@@ -151,7 +155,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor-1, "JUMP_FORWARD", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "JUMP_FORWARD", offset, string.Format("(to {0})", cursor + offset + 2));
                             cursor += 2;
                         }
                         break;
@@ -228,7 +232,15 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var offset = code.GetUShort(cursor);
-                            disassembly += disassembleLine(null, cursor-1, "SETUP_EXCEPT", offset, string.Format("(to {0})", cursor + 1 + offset));
+                            disassembly += disassembleLine(null, cursor-1, "SETUP_EXCEPT", offset, string.Format("(to {0})", cursor + 2 + offset));
+                            cursor += 2;
+                        }
+                        break;
+                    case ByteCodes.SETUP_FINALLY:
+                        {
+                            cursor += 1;
+                            var offset = code.GetUShort(cursor);
+                            disassembly += disassembleLine(null, cursor - 1, "SETUP_FINALLY", offset, string.Format("(to {0})", cursor + 2 + offset));
                             cursor += 2;
                         }
                         break;
