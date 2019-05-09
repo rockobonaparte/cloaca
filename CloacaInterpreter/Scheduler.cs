@@ -40,6 +40,25 @@ namespace CloacaInterpreter
         }
 
         /// <summary>
+        /// Particularly used in debugging to make sure the scheduler is pointing to a valid tasklet.
+        /// This makes the first dump from it point to something.
+        /// </summary>
+        public void Home()
+        {
+            if (tasklets.Count == 0)
+            {
+                currentTaskIndex = -1;
+                return;
+            }
+
+            ++currentTaskIndex;
+            if (currentTaskIndex >= tasklets.Count)
+            {
+                currentTaskIndex = 0;
+            }
+        }
+
+        /// <summary>
         /// Run until next yield, program termination, or completion of scheduled tasklets.
         /// </summary>
         public void Tick()
@@ -95,6 +114,21 @@ namespace CloacaInterpreter
             get
             {
                 return tasklets.Count == 0;
+            }
+        }
+
+        public FrameContext ActiveTasklet
+        {
+            get
+            {
+                if(currentTaskIndex >= 0)
+                {
+                    return tasklets[currentTaskIndex];
+                }
+                else
+                {
+                    return null;
+                }
             }
         }
 

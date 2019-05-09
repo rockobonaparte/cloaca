@@ -188,6 +188,12 @@ namespace CloacaInterpreter
             return block;
         }
 
+        // If set, runs one bytecode at a time.
+        public bool StepMode
+        {
+            get; set;
+        }
+
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually intrepts
         /// our Python(ish) code!
@@ -910,6 +916,12 @@ namespace CloacaInterpreter
                     default:
                         throw new Exception("Unexpected opcode: " + opcode);
                 }
+
+                if(StepMode)
+                {
+                    yield return new YieldOnePass();
+                }
+
             }
         }
     }
