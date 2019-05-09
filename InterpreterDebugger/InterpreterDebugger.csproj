@@ -5,18 +5,19 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{66917410-F054-4D8E-9FBD-155BB1D4AE14}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LanguageImplementation</RootNamespace>
-    <AssemblyName>LanguageImplementation</AssemblyName>
+    <ProjectGuid>{2E76CAC0-2516-4C5B-A1B3-7B850BA9C893}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>InterpreterDebugger</RootNamespace>
+    <AssemblyName>InterpreterDebugger</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -26,6 +27,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -39,7 +41,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -48,53 +49,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Language\obj\Debug\CloacaBaseListener.cs">
-      <Link>GeneratedFiles\CloacaBaseListener.cs</Link>
-    </Compile>
-    <Compile Include="..\Language\obj\Debug\CloacaBaseVisitor.cs">
-      <Link>GeneratedFiles\CloacaBaseVisitor.cs</Link>
-    </Compile>
-    <Compile Include="..\Language\obj\Debug\CloacaLexer.cs">
-      <Link>GeneratedFiles\CloacaLexer.cs</Link>
-    </Compile>
-    <Compile Include="..\Language\obj\Debug\CloacaListener.cs">
-      <Link>GeneratedFiles\CloacaListener.cs</Link>
-    </Compile>
-    <Compile Include="..\Language\obj\Debug\CloacaParser.cs">
-      <Link>GeneratedFiles\CloacaParser.cs</Link>
-    </Compile>
-    <Compile Include="..\Language\obj\Debug\CloacaVisitor.cs">
-      <Link>GeneratedFiles\CloacaVisitor.cs</Link>
-    </Compile>
-    <Compile Include="CodeContainers.cs" />
-    <Compile Include="CodeObject.cs" />
-    <Compile Include="DataTypes\Exceptions\PyException.cs" />
-    <Compile Include="DataTypes\Exceptions\StandardExceptions.cs" />
-    <Compile Include="DataTypes\NoneType.cs" />
-    <Compile Include="DataTypes\PyClass.cs" />
-    <Compile Include="DataTypes\PyObject.cs" />
-    <Compile Include="DataTypes\PyTuple.cs" />
-    <Compile Include="DataTypes\PyTypeObject.cs" />
-    <Compile Include="Dis.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="FrameContext.cs" />
-    <Compile Include="Interfaces.cs" />
-    <Compile Include="OpCodes.cs" />
-    <Compile Include="ParseErrorListener.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SchedulingInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="notes.md" />
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Language\Language.csproj">
-      <Project>{bd5147c9-3bb4-4b1e-8a13-405fe2381330}</Project>
-      <Name>Language</Name>
+    <ProjectReference Include="..\CloacaInterpreter\CloacaInterpreter.csproj">
+      <Project>{d78ef7cf-40d2-47ad-84e2-d90e5088309a}</Project>
+      <Name>CloacaInterpreter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LanguageImplementation\LanguageImplementation.csproj">
+      <Project>{66917410-f054-4d8e-9fbd-155bb1d4ae14}</Project>
+      <Name>LanguageImplementation</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
