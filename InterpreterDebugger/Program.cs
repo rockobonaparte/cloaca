@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 using CloacaInterpreter;
 using Language;
@@ -12,10 +13,18 @@ namespace InterpreterDebugger
 {
     class Program
     {
-        static void Main()
+        static void Main(string[] cmdline_args)
         {
-            string program = "a = 10\n";
-            var variablesIn = new Dictionary<string, object>();
+            if(cmdline_args.Length != 1)
+            {
+                Console.WriteLine("One argument required: path to script to compile and run.");
+                return;
+            }
+            string program = null;
+            using (var inFile = new StreamReader(cmdline_args[0]))
+            {
+                program = inFile.ReadToEnd();
+            }
 
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -23,9 +32,15 @@ namespace InterpreterDebugger
             var errorListener = new ParseErrorListener();
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
+            if(errorListener.Errors.Count > 0)
+            {
+                Console.WriteLine("There were errors trying to compile the script. We cannot run it.");
+                return;
+            }
 
             var antlrVisitorContext = parser.program();
 
+            var variablesIn = new Dictionary<string, object>();
             var visitor = new CloacaBytecodeVisitor(variablesIn);
             visitor.Visit(antlrVisitorContext);
 
@@ -85,6 +100,10 @@ namespace InterpreterDebugger
                     {
                         interpreter.StepMode = true;
                         scheduler.Tick();
+                        if(traceMode)
+                        {
+                            DumpState(scheduler);
+                        }
                     }
                 },
                 Description = "Steps one line of bytecode"
@@ -137,11 +156,7 @@ namespace InterpreterDebugger
                     }
                     else
                     {
-                        var currentTasklet = scheduler.ActiveTasklet;
-                        if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
-                        {
-                            Dis.dis(currentTasklet.Program);
-                        }
+                        DumpCode(scheduler);
                     }
                 },
                 Description = "Disassembles the current code object."
@@ -162,12 +177,12 @@ namespace InterpreterDebugger
                         {
                             if (args.Length == 0)
                             {
-                                Dis.dis(currentTasklet.Program, currentTasklet.Cursor);
+                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor));
                             }
                             else if (args.Length == 1)
                             {
                                 int count = Int32.Parse(args[0]);
-                                Dis.dis(currentTasklet.Program, currentTasklet.Cursor, count);
+                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor, count));
                             }
                         }
                     }
@@ -207,7 +222,8 @@ namespace InterpreterDebugger
 
         static void DumpCode(FrameContext tasklet)
         {
-            Console.WriteLine(Dis.dis(tasklet.Program, tasklet.Cursor, 1));
+            Console.WriteLine("Code dump for " + tasklet.Program.Name ?? "<null>");
+            Console.WriteLine(Dis.dis(tasklet.Program));
         }
 
         static void DumpDatastack(FrameContext tasklet)
@@ -231,6 +247,9 @@ namespace InterpreterDebugger
         static void DumpState(FrameContext tasklet)
         {
             DumpCode(tasklet);
+            var currentLine = Dis.dis(tasklet.Program, tasklet.Cursor, 1);
+            currentLine = ">>>" + currentLine.Substring(3, currentLine.Length - 3);
+            Console.WriteLine(currentLine);
             DumpDatastack(tasklet);
         }
     }

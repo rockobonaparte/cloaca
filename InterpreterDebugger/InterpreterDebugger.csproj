@@ -70,6 +70,11 @@
       <Name>LibREPL</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="demo_script.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
