@@ -5,13 +5,14 @@ using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
 
+using Piksel.LibREPL;
 using Antlr4.Runtime;
 
 namespace InterpreterDebugger
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             string program = "a = 10\n";
             var variablesIn = new Dictionary<string, object>();
@@ -43,18 +44,79 @@ namespace InterpreterDebugger
 
             interpreter.StepMode = true;
             scheduler.Home();
-            // Console.WriteLine(Dis.dis(compiledProgram, 0, 1));
-            while (!scheduler.Done)
-            {
-                var currentTasklet = scheduler.ActiveTasklet;
-                if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
-                {
-                    DumpState(currentTasklet);
-                }
-                scheduler.Tick();
-            }
 
-            Console.ReadKey();
+            var debugRepl = new Repl("dbg> ")
+            {
+                HeaderTitle = "Cloaca Interpreter Debugger",
+                HeaderSubTitle = "Debug Cloaca ByteCode Evaluation"
+            };
+
+            debugRepl.Commands.Add("g", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Running until finished");
+                    while (!scheduler.Done)
+                    {
+                        scheduler.Tick();
+                    }
+                },
+                Description = "Runs until finished"
+            });
+
+            debugRepl.Commands.Add("s", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Stepping");
+                    interpreter.StepMode = true;
+                    scheduler.Tick();
+                },
+                Description = "Steps one line of bytecode"
+            });
+
+            debugRepl.Commands.Add("d", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Datastack");
+                    var currentTasklet = scheduler.ActiveTasklet;
+                    if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+                    {
+                        DumpState(currentTasklet);
+                    }
+                },
+                Description = "Dumps the data stack"
+            });
+
+            debugRepl.Commands.Add("t", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Trace mode on. Will show current line and data stack after each stop");
+                },
+                Description = "Toggle trace mode (not implemented yet)."
+            });
+
+            debugRepl.Commands.Add("c", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Disassembles current code");
+                },
+                Description = "Disassembles the current code object (not implemented yet)."
+            });
+
+            debugRepl.Commands.Add("l", new Command()
+            {
+                Action = (repl, cmd, args) =>
+                {
+                    repl.Write("Disassembles current code");
+                },
+                Description = "Disassembles byte code based on the current location (not implemented yet)."
+            });
+
+            debugRepl.Start();
         }
 
         static void DumpState(FrameContext tasklet)

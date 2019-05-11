@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterWaiting", "Inter
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterpreterDebugger", "InterpreterDebugger\InterpreterDebugger.csproj", "{2E76CAC0-2516-4C5B-A1B3-7B850BA9C893}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibREPL", "LibREPL-master\LibREPL\LibREPL.csproj", "{97D256C9-E2C7-4FCC-A14A-1180D05726B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleREPL", "LibREPL-master\ExampleREPL\ExampleREPL.csproj", "{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,6 +52,14 @@ Global
 		{2E76CAC0-2516-4C5B-A1B3-7B850BA9C893}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E76CAC0-2516-4C5B-A1B3-7B850BA9C893}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E76CAC0-2516-4C5B-A1B3-7B850BA9C893}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97D256C9-E2C7-4FCC-A14A-1180D05726B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97D256C9-E2C7-4FCC-A14A-1180D05726B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97D256C9-E2C7-4FCC-A14A-1180D05726B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97D256C9-E2C7-4FCC-A14A-1180D05726B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
