@@ -30,7 +30,6 @@ namespace InterpreterDebugger
             visitor.Visit(antlrVisitorContext);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
-            Console.WriteLine(Dis.dis(compiledProgram));
 
             var interpreter = new Interpreter();
             interpreter.DumpState = true;
@@ -44,6 +43,9 @@ namespace InterpreterDebugger
 
             interpreter.StepMode = true;
             scheduler.Home();
+            bool traceMode = false;
+
+
 
             var debugRepl = new Repl("dbg> ")
             {
@@ -55,10 +57,17 @@ namespace InterpreterDebugger
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Running until finished");
-                    while (!scheduler.Done)
+                    if (scheduler.Done)
                     {
-                        scheduler.Tick();
+                        repl.Write("Scheduled programs are all done.");
+                    }
+                    else
+                    {
+                        interpreter.StepMode = false;
+                        while (!scheduler.Done)
+                        {
+                            scheduler.Tick();
+                        }
                     }
                 },
                 Description = "Runs until finished"
@@ -68,9 +77,15 @@ namespace InterpreterDebugger
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Stepping");
-                    interpreter.StepMode = true;
-                    scheduler.Tick();
+                    if (scheduler.Done)
+                    {
+                        repl.Write("Scheduled programs are all done.");
+                    }
+                    else
+                    {
+                        interpreter.StepMode = true;
+                        scheduler.Tick();
+                    }
                 },
                 Description = "Steps one line of bytecode"
             });
@@ -79,11 +94,17 @@ namespace InterpreterDebugger
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Datastack");
-                    var currentTasklet = scheduler.ActiveTasklet;
-                    if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+                    if (scheduler.Done)
                     {
-                        DumpState(currentTasklet);
+                        repl.Write("Scheduled programs are all done.");
+                    }
+                    else
+                    {
+                        var currentTasklet = scheduler.ActiveTasklet;
+                        if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+                        {
+                            DumpDatastack(currentTasklet);
+                        }
                     }
                 },
                 Description = "Dumps the data stack"
@@ -93,25 +114,63 @@ namespace InterpreterDebugger
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Trace mode on. Will show current line and data stack after each stop");
+                    traceMode = !traceMode;
+                    if(traceMode)
+                    {
+                        repl.Write("Trace mode on.");
+                    }
+                    else
+                    {
+                        repl.Write("Trace mode off.");
+                    }
                 },
-                Description = "Toggle trace mode (not implemented yet)."
+                Description = "Toggle trace mode."
             });
 
             debugRepl.Commands.Add("c", new Command()
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Disassembles current code");
+                    if (scheduler.Done)
+                    {
+                        repl.Write("Scheduled programs are all done.");
+                    }
+                    else
+                    {
+                        var currentTasklet = scheduler.ActiveTasklet;
+                        if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+                        {
+                            Dis.dis(currentTasklet.Program);
+                        }
+                    }
                 },
-                Description = "Disassembles the current code object (not implemented yet)."
+                Description = "Disassembles the current code object."
             });
 
             debugRepl.Commands.Add("l", new Command()
             {
                 Action = (repl, cmd, args) =>
                 {
-                    repl.Write("Disassembles current code");
+                    if (scheduler.Done)
+                    {
+                        repl.Write("Scheduled programs are all done.");
+                    }
+                    else
+                    {
+                        var currentTasklet = scheduler.ActiveTasklet;
+                        if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+                        {
+                            if (args.Length == 0)
+                            {
+                                Dis.dis(currentTasklet.Program, currentTasklet.Cursor);
+                            }
+                            else if (args.Length == 1)
+                            {
+                                int count = Int32.Parse(args[0]);
+                                Dis.dis(currentTasklet.Program, currentTasklet.Cursor, count);
+                            }
+                        }
+                    }
                 },
                 Description = "Disassembles byte code based on the current location (not implemented yet)."
             });
@@ -119,11 +178,40 @@ namespace InterpreterDebugger
             debugRepl.Start();
         }
 
-        static void DumpState(FrameContext tasklet)
+        static void DumpState(Scheduler scheduler)
         {
-            Console.WriteLine("Dumping");
-            Console.WriteLine(Dis.dis(tasklet.Program, tasklet.Cursor, 1));
+            var currentTasklet = scheduler.ActiveTasklet;
+            if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+            {
+                DumpState(currentTasklet);
+            }
+        }
 
+        static void DumpDatastack(Scheduler scheduler)
+        {
+            var currentTasklet = scheduler.ActiveTasklet;
+            if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+            {
+                DumpDatastack(currentTasklet);
+            }
+        }
+
+        static void DumpCode(Scheduler scheduler)
+        {
+            var currentTasklet = scheduler.ActiveTasklet;
+            if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
+            {
+                DumpCode(currentTasklet);
+            }
+        }
+
+        static void DumpCode(FrameContext tasklet)
+        {
+            Console.WriteLine(Dis.dis(tasklet.Program, tasklet.Cursor, 1));
+        }
+
+        static void DumpDatastack(FrameContext tasklet)
+        {
             if (tasklet.DataStack.Count > 0)
             {
                 Console.WriteLine("Data stack:");
@@ -137,6 +225,13 @@ namespace InterpreterDebugger
             {
                 Console.WriteLine("Data stack is empty");
             }
+            Console.WriteLine("Code cursor = " + tasklet.Cursor);
+        }
+
+        static void DumpState(FrameContext tasklet)
+        {
+            DumpCode(tasklet);
+            DumpDatastack(tasklet);
         }
     }
 }
