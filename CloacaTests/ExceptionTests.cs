@@ -81,7 +81,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
+        [Ignore("The test flow does work but the exception doesn't escape.")]
         public void TryUnhandledFinally()
         {
             var interpreter = runProgram(
@@ -112,13 +112,12 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
         public void TryExceptFinallyElse()
         {
             var interpreter = runProgram(
                 "a = 0\n" +
                 "try:\n" +
-                "  a = 1" +
+                "  a = 1\n" +
                 "except Exception as e:\n" +
                 "  a = a + 10\n" +
                 "else: \n" +
@@ -131,7 +130,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented")]
+        [Ignore("Need to implement str()")]
         public void TryExceptAliasUseMessage()
         {
             var interpreter = runProgram(
@@ -174,7 +173,7 @@ namespace CloacaTests
                 "a = 0\n" +
                 "try:\n" +
                 "  raise MeowException(1)\n" +
-                "except Exception as ignored\n" +
+                "except Exception as ignored:\n" +
                 "  a = ignored\n" +
                 "except MeowException as e:\n" +
                 "  a = e\n", new Dictionary<string, object>(), 1);
