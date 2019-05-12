@@ -195,6 +195,18 @@ namespace CloacaInterpreter
         }
 
         /// <summary>
+        /// Returns true if an exception was raised and the context would not be in a position to still try to
+        /// handle it. This is used when stepping through frame context in debugging to allow the interpreter to
+        /// keep trying to process the exception. If you just test the frame context for an exception while stepping,
+        /// you'll miss out on the interpreter trying out the except (and finally) clauses that have some stuff left
+        /// to do. It also misses out on all the unrolling to properly escape.
+        /// </summary>
+        public bool ExceptionEscaped(FrameContext context)
+        {
+            return context.CurrentException != null && context.BlockStack.Count == 0;
+        }
+
+        /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually intrepts
         /// our Python(ish) code!
         /// 

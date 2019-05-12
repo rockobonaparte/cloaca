@@ -177,7 +177,7 @@ namespace InterpreterDebugger
                         {
                             if (args.Length == 0)
                             {
-                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor));
+                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor, 1));
                             }
                             else if (args.Length == 1)
                             {

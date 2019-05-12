@@ -86,7 +86,7 @@ namespace CloacaInterpreter
             // This will run the current context to its next yield.
             var taskIsFinished = !taskEnumerator.MoveNext();
 
-            if (activeTask.CurrentException != null)
+            if(interpreter.ExceptionEscaped(activeTask))
             {
                 throw new EscapedPyException(activeTask.CurrentException);
             }
