@@ -735,7 +735,7 @@ namespace CloacaInterpreter
                                 }
                                 context.Cursor += 2;                    // Resume at next instruction in this program.                                
                             }
-                            continue;
+                            break;
                         }
                     case ByteCodes.RETURN_VALUE:
                         {

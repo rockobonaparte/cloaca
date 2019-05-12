@@ -1,2 +1,5 @@
-﻿a = 10
-a = a + 1
+﻿a = 0
+try:
+  raise Exception('Hello, World!')
+finally:
+  a = 1
