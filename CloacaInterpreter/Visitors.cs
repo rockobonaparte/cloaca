@@ -504,6 +504,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Its child in the list is length-3
         bool hasFinally = false;
         bool hasElse = false;
+        bool hasExcept = false;
         int startOfSetupFinally = -1;
         int setupElseOffsetPos = -1;
         int setupFinallyOffsetPos = -1;
@@ -522,9 +523,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             hasElse = true;
         }
 
-        // Try block
-        int startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
-        int setupExceptOffsetPos = startOfSetupExcept - 2;
+        if(context.except_clause().Length > 0)
+        {
+            hasExcept = true;
+        }
+
+        // Try block preamble. If there are exceptions, then we need a SETUP_EXCEPT position.
+        int startOfSetupExcept = -1;
+        int setupExceptOffsetPos = -1;
+        if (hasExcept)
+        {
+            startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
+            setupExceptOffsetPos = startOfSetupExcept - 2;
+        }
+
         int suiteIdx = 0;
         Visit(context.suite(suiteIdx));
         ++suiteIdx;
@@ -598,13 +610,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         endOfBlockPosition = hasElse ? startOfElseBlock : endOfBlockPosition;
 
         // Try block fixups
-        ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
         ActiveProgram.Code.SetUShort(jumpOutOffsetPos, endOfBlockPosition - jumpOutOffsetPos - 2);
 
         // Except statement fixups
-        foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
+        if (hasExcept)
         {
-            ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
+            ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
+            foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
+            {
+                ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
+            }
         }
 
         // Finally statement fixups

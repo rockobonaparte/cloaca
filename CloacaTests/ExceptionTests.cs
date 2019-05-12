@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes.Exceptions;
+using LanguageImplementation;
 
 namespace CloacaTests
 {
@@ -81,16 +82,22 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("The test flow does work but the exception doesn't escape.")]
+        [Ignore("Work-in-progress. Still failing but more from interpreter than codegen.")]
         public void TryUnhandledFinally()
         {
-            var interpreter = runProgram(
-                "a = 0\n" +
-                "try:\n" +
-                "  raise Exception('Hello, World!')\n" +
-                "finally:\n" +
-                "  a = 1\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            FrameContext runContext = null;
+
+            Assert.Throws<EscapedPyException>(
+              () => {
+                  runContext = runProgram(
+                    "a = 0\n" +
+                    "try:\n" +
+                    "  raise Exception('Hello, World!')\n" +
+                    "finally:\n" +
+                    "  a = 1\n", new Dictionary<string, object>(), 1);
+              }, "Hello, World!");
+
+            var variables = new VariableMultimap(runContext);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(1)));
         }
