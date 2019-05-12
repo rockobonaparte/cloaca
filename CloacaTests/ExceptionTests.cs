@@ -96,6 +96,22 @@ namespace CloacaTests
         }
 
         [Test]
+        public void TryExceptElse()
+        {
+            var interpreter = runProgram(
+                "a = 0\n" +
+                "try:\n" +
+                "  a = 1\n" +
+                "except Exception as e:\n" +
+                "  a = a + 10\n" +
+                "else:\n" +
+                "  a = a + 100\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var a = (BigInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new BigInteger(101)));
+        }
+
+        [Test]
         [Ignore("Exception handling not implemented")]
         public void TryExceptFinallyElse()
         {

@@ -483,6 +483,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    private int getFirstIndexOfText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
+    {
+        for(int foundIdx = 0; foundIdx < children.Count; ++foundIdx)
+        {
+            if(children[foundIdx].GetText() == text)
+            {
+                return foundIdx;
+            }
+        }
+        return -1;
+    }
+
     public override object VisitTry_stmt([NotNull] CloacaParser.Try_stmtContext context)
     {
         // Block setup for SETUP_EXCEPT, SETUP_FINALLY:
@@ -491,15 +503,26 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Determine if we have a finally block. This HAS to be the last major statement in the block. So its suite is the last suite.
         // Its child in the list is length-3
         bool hasFinally = false;
+        bool hasElse = false;
         int startOfSetupFinally = -1;
-        int setupFinallyOffsetPost = -1;
-        if (context.children.Count >= 3 && context.children[context.children.Count - 3].GetText() == "finally")
+        int setupElseOffsetPos = -1;
+        int setupFinallyOffsetPos = -1;
+
+        int finallyChildIdx = getFirstIndexOfText(context.children, "finally");
+        if (finallyChildIdx >= 0)
         {
             hasFinally = true;
             startOfSetupFinally = AddInstruction(ByteCodes.SETUP_FINALLY, -1);
-            setupFinallyOffsetPost = startOfSetupFinally - 2;
+            setupFinallyOffsetPos = startOfSetupFinally - 2;
         }
 
+        int elseChildIdx = getFirstIndexOfText(context.children, "else");
+        if (elseChildIdx >= 0)
+        {
+            hasElse = true;
+        }
+
+        // Try block
         int startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
         int setupExceptOffsetPos = startOfSetupExcept - 2;
         int suiteIdx = 0;
@@ -551,6 +574,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             endOfExceptBlockJumpOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
         }
 
+        // else block
+        int startOfElseBlock = ActiveProgram.Code.Count;
+        if(hasElse)
+        {
+            Visit(context.suite(suiteIdx));
+            ++suiteIdx;
+        }
+
+        // finally block
         int startOfFinallyBlock = ActiveProgram.Code.Count;
         if (hasFinally)
         {
@@ -559,12 +591,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             AddInstruction(ByteCodes.END_FINALLY);
 
             // SETUP_FINALLY offset fixup:
-            ActiveProgram.Code.SetUShort(setupFinallyOffsetPost, ActiveProgram.Code.Count - startOfSetupFinally);
+            ActiveProgram.Code.SetUShort(setupFinallyOffsetPos, ActiveProgram.Code.Count - startOfSetupFinally);
         }
 
         int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;
+        endOfBlockPosition = hasElse ? startOfElseBlock : endOfBlockPosition;
 
-        // Try-block
+        // Try block fixups
         ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
         ActiveProgram.Code.SetUShort(jumpOutOffsetPos, endOfBlockPosition - jumpOutOffsetPos - 2);
 
