@@ -17,7 +17,7 @@ namespace CloacaTests
     [TestFixture]
     public class RunCodeTest
     {
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
+        protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -42,7 +42,7 @@ namespace CloacaTests
             interpreter.DumpState = true;
             var scheduler = new Scheduler(interpreter);
 
-            var context = scheduler.Schedule(compiledProgram);
+            context = scheduler.Schedule(compiledProgram);
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
@@ -53,6 +53,12 @@ namespace CloacaTests
             var variables = new VariableMultimap(context);
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
+        }
+
+        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
+        {
+            FrameContext context;
+            runProgram(program, variablesIn, expectedIterations, out context);
             return context;
         }
 

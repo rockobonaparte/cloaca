@@ -603,7 +603,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             AddInstruction(ByteCodes.END_FINALLY);
 
             // SETUP_FINALLY offset fixup:
-            ActiveProgram.Code.SetUShort(setupFinallyOffsetPos, ActiveProgram.Code.Count - startOfSetupFinally);
+            ActiveProgram.Code.SetUShort(setupFinallyOffsetPos, startOfFinallyBlock - startOfSetupFinally);
         }
 
         int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;

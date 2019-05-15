@@ -226,7 +226,7 @@ namespace CloacaInterpreter
                 //}
 
                 // Are we unwinding from an exception?
-                while(context.CurrentException != null)
+                while(context.CurrentException != null && context.BlockStack.Peek().Opcode != ByteCodes.SETUP_FINALLY)
                 {
                     if (context.BlockStack.Count > 0)
                     {
@@ -236,6 +236,11 @@ namespace CloacaInterpreter
                             // We'll now go to the except routine.
                             context.DataStack.Push(context.CurrentException);
                             context.CurrentException = null;
+                            context.Cursor = block.HandlerAddress;
+                            break;
+                        }
+                        else if(block.Opcode == ByteCodes.SETUP_FINALLY)
+                        {
                             context.Cursor = block.HandlerAddress;
                             break;
                         }
@@ -601,7 +606,7 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             var finallyClausePoint = context.CodeBytes.GetUShort(context.Cursor);
                             context.Cursor += 2;
-                            context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, context.Cursor + finallyClausePoint, context.DataStack.Count));
+                            context.BlockStack.Push(new Block(ByteCodes.SETUP_FINALLY, context.Cursor + finallyClausePoint, context.DataStack.Count));
                         }
                         break;
                     case ByteCodes.JUMP_ABSOLUTE:
@@ -917,6 +922,17 @@ namespace CloacaInterpreter
                             var theException = (PyException) context.DataStack.Pop();
                             context.Cursor += 2;
                             context.CurrentException = theException;
+
+                            // TODO: Look into this method of handing try-finally when the try gets an exception.
+                            // Kind of goofy thing here. We need to get to the finally block for this exception
+                            // block if we are in a SETUP_FINALLY. If we have exceptions, we'll be in a SETUP_EXCEPT
+                            // again. I don't think this is the best way to manage this but here we are for now.
+                            var currentBlock = context.BlockStack.Count == 0 ? null : context.BlockStack.Peek();
+                            if(currentBlock != null && currentBlock.Opcode == ByteCodes.SETUP_FINALLY)
+                            {
+                                context.Cursor = currentBlock.HandlerAddress;
+                            }
+
                             break;
                         }
                     case ByteCodes.END_FINALLY:

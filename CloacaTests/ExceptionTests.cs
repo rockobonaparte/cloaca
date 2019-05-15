@@ -82,19 +82,18 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Work-in-progress. Still failing but more from interpreter than codegen.")]
         public void TryUnhandledFinally()
         {
             FrameContext runContext = null;
 
             Assert.Throws<EscapedPyException>(
               () => {
-                  runContext = runProgram(
+                  runProgram(
                     "a = 0\n" +
                     "try:\n" +
                     "  raise Exception('Hello, World!')\n" +
                     "finally:\n" +
-                    "  a = 1\n", new Dictionary<string, object>(), 1);
+                    "  a = 1\n", new Dictionary<string, object>(), 1, out runContext);
               }, "Hello, World!");
 
             var variables = new VariableMultimap(runContext);
