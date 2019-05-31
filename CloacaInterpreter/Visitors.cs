@@ -483,6 +483,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    /// <summary>
+    /// Finds the first occurrance of the given text in the context's children.
+    /// </summary>
+    /// <param name="children"></param>
+    /// <param name="text"></param>
+    /// <returns></returns>
     private int getFirstIndexOfText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
     {
         for(int foundIdx = 0; foundIdx < children.Count; ++foundIdx)
@@ -493,6 +499,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
         }
         return -1;
+    }
+
+    /// <summary>
+    /// Wrapper around getFirstIndexOfText that returns true if the text exists at all in the children.
+    /// This is a more readable version of a basic existence test.
+    /// </summary>
+    /// <param name="children">Children of the context to check.</param>
+    /// <param name="text">The text to find.</param>
+    /// <returns>True if the text exists anywhere in the list of the children, false otherwise.</returns>
+    private bool hasText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
+    {
+        return getFirstIndexOfText(children, text) >= 0;
     }
 
     public override object VisitTry_stmt([NotNull] CloacaParser.Try_stmtContext context)
@@ -506,26 +524,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         bool hasElse = false;
         bool hasExcept = false;
         JumpOpcodeFixer finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
-        int setupElseOffsetPos = -1;
-        int setupFinallyOffsetPos = -1;
 
-        int finallyChildIdx = getFirstIndexOfText(context.children, "finally");
-        if (finallyChildIdx >= 0)
+        if (hasText(context.children, "finally"))
         {
             hasFinally = true;
             finallyTarget.Add(AddInstruction(ByteCodes.SETUP_FINALLY, -1));
         }
 
-        int elseChildIdx = getFirstIndexOfText(context.children, "else");
-        if (elseChildIdx >= 0)
-        {
-            hasElse = true;
-        }
-
-        if(context.except_clause().Length > 0)
-        {
-            hasExcept = true;
-        }
+        hasElse = hasText(context.children, "else");
+        hasExcept = context.except_clause().Length > 0;
 
         // Try block preamble. If there are exceptions, then we need a SETUP_EXCEPT position.
         int startOfSetupExcept = -1;
