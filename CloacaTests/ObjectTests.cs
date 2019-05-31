@@ -131,5 +131,44 @@ namespace CloacaTests
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
         }
+
+        [Test]
+        [Ignore("Subclassing not implemented yet")]
+        public void SubclassBasic()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   def __init__(self):\n" +
+                                         "      self.a = 1\n" +
+                                         "\n" +
+                                         "class Bar(Foo):\n" +
+                                         "   def change_a(self, new_a):\n" +
+                                         "      self.a = new_a\n" +
+                                         "\n" +
+                                         "bar = Bar()\n" +
+                                         "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject)variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
+        }
+
+        [Test]
+        [Ignore("Subclassing not implemented yet")]
+        public void SubclassSuperconstructor()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   def __init__(self):\n" +
+                                         "      self.a = 1\n" +
+                                         "\n" +
+                                         "class Bar(Foo):\n" +
+                                         "   def __init__(self):\n" +
+                                         "      super().__init__()\n" +
+                                         "      self.b = 2\n" +
+                                         "\n" +
+                                         "bar = Bar()\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var bar = (PyObject)variables.Get("bar");
+            Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(1)));
+            Assert.That(bar.__dict__["b"], Is.EqualTo(new BigInteger(2)));
+        }
     }
 }
