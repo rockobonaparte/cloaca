@@ -523,7 +523,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         bool hasFinally = false;
         bool hasElse = false;
         bool hasExcept = false;
-        JumpOpcodeFixer finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
+        var finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
 
         if (hasText(context.children, "finally"))
         {
@@ -535,12 +535,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         hasExcept = context.except_clause().Length > 0;
 
         // Try block preamble. If there are exceptions, then we need a SETUP_EXCEPT position.
-        int startOfSetupExcept = -1;
-        int setupExceptOffsetPos = -1;
+        var setupExceptTarget = new JumpOpcodeFixer(ActiveProgram.Code);
         if (hasExcept)
         {
-            startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
-            setupExceptOffsetPos = startOfSetupExcept - 2;
+            setupExceptTarget.Add(AddInstruction(ByteCodes.SETUP_EXCEPT, -1));
         }
 
         int suiteIdx = 0;
@@ -619,7 +617,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Except statement fixups
         if (hasExcept)
         {
-            ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
+            setupExceptTarget.Fixup(startOfExceptBlocks);
             foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
             {
                 ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
