@@ -483,6 +483,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    /// <summary>
+    /// Finds the first occurrance of the given text in the context's children.
+    /// </summary>
+    /// <param name="children"></param>
+    /// <param name="text"></param>
+    /// <returns></returns>
     private int getFirstIndexOfText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
     {
         for(int foundIdx = 0; foundIdx < children.Count; ++foundIdx)
@@ -495,6 +501,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return -1;
     }
 
+    /// <summary>
+    /// Wrapper around getFirstIndexOfText that returns true if the text exists at all in the children.
+    /// This is a more readable version of a basic existence test.
+    /// </summary>
+    /// <param name="children">Children of the context to check.</param>
+    /// <param name="text">The text to find.</param>
+    /// <returns>True if the text exists anywhere in the list of the children, false otherwise.</returns>
+    private bool hasText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
+    {
+        return getFirstIndexOfText(children, text) >= 0;
+    }
+
     public override object VisitTry_stmt([NotNull] CloacaParser.Try_stmtContext context)
     {
         // Block setup for SETUP_EXCEPT, SETUP_FINALLY:
@@ -505,47 +523,33 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         bool hasFinally = false;
         bool hasElse = false;
         bool hasExcept = false;
-        int startOfSetupFinally = -1;
-        int setupElseOffsetPos = -1;
-        int setupFinallyOffsetPos = -1;
+        var finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
 
-        int finallyChildIdx = getFirstIndexOfText(context.children, "finally");
-        if (finallyChildIdx >= 0)
+        if (hasText(context.children, "finally"))
         {
             hasFinally = true;
-            startOfSetupFinally = AddInstruction(ByteCodes.SETUP_FINALLY, -1);
-            setupFinallyOffsetPos = startOfSetupFinally - 2;
+            finallyTarget.Add(AddInstruction(ByteCodes.SETUP_FINALLY, -1));
         }
 
-        int elseChildIdx = getFirstIndexOfText(context.children, "else");
-        if (elseChildIdx >= 0)
-        {
-            hasElse = true;
-        }
-
-        if(context.except_clause().Length > 0)
-        {
-            hasExcept = true;
-        }
+        hasElse = hasText(context.children, "else");
+        hasExcept = context.except_clause().Length > 0;
 
         // Try block preamble. If there are exceptions, then we need a SETUP_EXCEPT position.
-        int startOfSetupExcept = -1;
-        int setupExceptOffsetPos = -1;
+        var setupExceptTarget = new JumpOpcodeFixer(ActiveProgram.Code);
         if (hasExcept)
         {
-            startOfSetupExcept = AddInstruction(ByteCodes.SETUP_EXCEPT, -1);
-            setupExceptOffsetPos = startOfSetupExcept - 2;
+            setupExceptTarget.Add(AddInstruction(ByteCodes.SETUP_EXCEPT, -1));
         }
 
         int suiteIdx = 0;
         Visit(context.suite(suiteIdx));
         ++suiteIdx;
         AddInstruction(ByteCodes.POP_BLOCK);
-        int jumpOutOffsetPos = AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2;
+        var endOfTryJumpTarget = new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_FORWARD, -1));
 
         // Start of except statements
-        var endOfExceptBlockJumpOffsets = new List<int>();
-        var finallyOffsets = new List<int>();
+        var endOfExceptBlockJumpFixups = new List<JumpOpcodeFixer>();
+        var finallyOffsets = new List<JumpOpcodeFixer>();
         int startOfExceptBlocks = ActiveProgram.Code.Count;
         foreach (var exceptClause in context.except_clause())
         {
@@ -566,7 +570,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
 
                     // Point to END_FINALLY to get us out of the except clause and into the finally block
-                    finallyOffsets.Add(AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1) - 2);
+                    finallyOffsets.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1)));
                     AddInstruction(ByteCodes.POP_TOP);      // should pop the true/false from COMPARE_OP
 
                     if (exceptClause.NAME() != null)
@@ -583,7 +587,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // TODO: Look into deleting aliased exceptions.
             // A DELETE_FAST was done for an aliased exception in an auto-generated END_FINALLY clause
             // Look at Python generation for TryExceptAliasBasic
-            endOfExceptBlockJumpOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
+            endOfExceptBlockJumpFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_FORWARD, -1)));
         }
 
         // else block
@@ -600,32 +604,30 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
+            finallyTarget.Fixup(startOfFinallyBlock);
             AddInstruction(ByteCodes.END_FINALLY);
-
-            // SETUP_FINALLY offset fixup:
-            ActiveProgram.Code.SetUShort(setupFinallyOffsetPos, startOfFinallyBlock - startOfSetupFinally);
         }
 
         int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;
         endOfBlockPosition = hasElse ? startOfElseBlock : endOfBlockPosition;
 
         // Try block fixups
-        ActiveProgram.Code.SetUShort(jumpOutOffsetPos, endOfBlockPosition - jumpOutOffsetPos - 2);
+        endOfTryJumpTarget.Fixup(endOfBlockPosition);
 
         // Except statement fixups
         if (hasExcept)
         {
-            ActiveProgram.Code.SetUShort(setupExceptOffsetPos, startOfExceptBlocks - startOfSetupExcept);
-            foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
+            setupExceptTarget.Fixup(startOfExceptBlocks);
+            foreach (var exceptJumpOutFixup in endOfExceptBlockJumpFixups)
             {
-                ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
+                exceptJumpOutFixup.Fixup(endOfBlockPosition);
             }
         }
 
         // Finally statement fixups
-        foreach (var finallyOffsetPos in finallyOffsets)
+        foreach (var finallyFixup in finallyOffsets)
         {
-            ActiveProgram.Code.SetUShort(finallyOffsetPos, endOfBlockPosition - finallyOffsetPos);
+            finallyFixup.Fixup(endOfBlockPosition);
         }
 
         //// TODO: Investigate correctness of this END_FINALLY emitter. Looks like it's necessary to set up an END_FINALLY if none of our except clauses trigger and we don't have a finally statement either.
