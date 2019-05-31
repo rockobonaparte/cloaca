@@ -599,7 +599,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
-            finallyTarget.Fixup(ActiveProgram.Code.Count);
+            finallyTarget.Fixup(startOfFinallyBlock);
             AddInstruction(ByteCodes.END_FINALLY);
         }
 

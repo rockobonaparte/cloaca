@@ -48,9 +48,11 @@ namespace CloacaInterpreter
 
         public void Fixup(int jumpPoint)
         {
+            // Fixup offset is relative to the location AFTER the instruction (it is fully fetched and 
+            // we are pointing at the next instruction when we jump).
             foreach(var sourceJump in fixupByteOffsets)
             {
-                builder.SetUShort(sourceJump, jumpPoint - sourceJump);
+                builder.SetUShort(sourceJump, jumpPoint - sourceJump - 2);
             }            
         }
     }
