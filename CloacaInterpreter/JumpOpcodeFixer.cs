@@ -27,17 +27,31 @@ namespace CloacaInterpreter
     /// </summary>
     public class JumpOpcodeFixer
     {
-        private int fixupByteOffset;
+        private List<int> fixupByteOffsets;
         private CodeBuilder builder;
-        public JumpOpcodeFixer(CodeBuilder builder, int codeByteIndexAfterInstruction)
+
+        public JumpOpcodeFixer(CodeBuilder builder)
         {
+            fixupByteOffsets = new List<int>();
             this.builder = builder;
-            fixupByteOffset = codeByteIndexAfterInstruction - 2;
+        }
+
+        public JumpOpcodeFixer(CodeBuilder builder, int codeByteIndexAfterInstruction) : this(builder)
+        {
+            Add(codeByteIndexAfterInstruction);
+        }
+
+        public void Add(int codeByteIndexAfterInstruction)
+        {
+            fixupByteOffsets.Add(codeByteIndexAfterInstruction - 2);
         }
 
         public void Fixup(int jumpPoint)
         {
-            builder.SetUShort(fixupByteOffset, jumpPoint - fixupByteOffset);
+            foreach(var sourceJump in fixupByteOffsets)
+            {
+                builder.SetUShort(sourceJump, jumpPoint - sourceJump);
+            }            
         }
     }
 }

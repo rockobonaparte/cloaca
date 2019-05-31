@@ -505,7 +505,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         bool hasFinally = false;
         bool hasElse = false;
         bool hasExcept = false;
-        int startOfSetupFinally = -1;
+        JumpOpcodeFixer finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
         int setupElseOffsetPos = -1;
         int setupFinallyOffsetPos = -1;
 
@@ -513,8 +513,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (finallyChildIdx >= 0)
         {
             hasFinally = true;
-            startOfSetupFinally = AddInstruction(ByteCodes.SETUP_FINALLY, -1);
-            setupFinallyOffsetPos = startOfSetupFinally - 2;
+            finallyTarget.Add(AddInstruction(ByteCodes.SETUP_FINALLY, -1));
         }
 
         int elseChildIdx = getFirstIndexOfText(context.children, "else");
@@ -600,10 +599,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
+            finallyTarget.Fixup(ActiveProgram.Code.Count);
             AddInstruction(ByteCodes.END_FINALLY);
-
-            // SETUP_FINALLY offset fixup:
-            ActiveProgram.Code.SetUShort(setupFinallyOffsetPos, startOfFinallyBlock - startOfSetupFinally);
         }
 
         int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;
