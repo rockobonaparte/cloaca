@@ -545,11 +545,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         Visit(context.suite(suiteIdx));
         ++suiteIdx;
         AddInstruction(ByteCodes.POP_BLOCK);
-        int jumpOutOffsetPos = AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2;
+        var endOfTryJumpTarget = new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_FORWARD, -1));
 
         // Start of except statements
-        var endOfExceptBlockJumpOffsets = new List<int>();
-        var finallyOffsets = new List<int>();
+        var endOfExceptBlockJumpFixups = new List<JumpOpcodeFixer>();
+        var finallyOffsets = new List<JumpOpcodeFixer>();
         int startOfExceptBlocks = ActiveProgram.Code.Count;
         foreach (var exceptClause in context.except_clause())
         {
@@ -570,7 +570,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
 
                     // Point to END_FINALLY to get us out of the except clause and into the finally block
-                    finallyOffsets.Add(AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1) - 2);
+                    finallyOffsets.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1)));
                     AddInstruction(ByteCodes.POP_TOP);      // should pop the true/false from COMPARE_OP
 
                     if (exceptClause.NAME() != null)
@@ -587,7 +587,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // TODO: Look into deleting aliased exceptions.
             // A DELETE_FAST was done for an aliased exception in an auto-generated END_FINALLY clause
             // Look at Python generation for TryExceptAliasBasic
-            endOfExceptBlockJumpOffsets.Add(AddInstruction(ByteCodes.JUMP_FORWARD, -1) - 2);
+            endOfExceptBlockJumpFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_FORWARD, -1)));
         }
 
         // else block
@@ -612,22 +612,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         endOfBlockPosition = hasElse ? startOfElseBlock : endOfBlockPosition;
 
         // Try block fixups
-        ActiveProgram.Code.SetUShort(jumpOutOffsetPos, endOfBlockPosition - jumpOutOffsetPos - 2);
+        endOfTryJumpTarget.Fixup(endOfBlockPosition);
 
         // Except statement fixups
         if (hasExcept)
         {
             setupExceptTarget.Fixup(startOfExceptBlocks);
-            foreach (var exceptOffsetPos in endOfExceptBlockJumpOffsets)
+            foreach (var exceptJumpOutFixup in endOfExceptBlockJumpFixups)
             {
-                ActiveProgram.Code.SetUShort(exceptOffsetPos, endOfBlockPosition - exceptOffsetPos - 2);
+                exceptJumpOutFixup.Fixup(endOfBlockPosition);
             }
         }
 
         // Finally statement fixups
-        foreach (var finallyOffsetPos in finallyOffsets)
+        foreach (var finallyFixup in finallyOffsets)
         {
-            ActiveProgram.Code.SetUShort(finallyOffsetPos, endOfBlockPosition - finallyOffsetPos);
+            finallyFixup.Fixup(endOfBlockPosition);
         }
 
         //// TODO: Investigate correctness of this END_FINALLY emitter. Looks like it's necessary to set up an END_FINALLY if none of our except clauses trigger and we don't have a finally statement either.
