@@ -55,5 +55,13 @@ namespace CloacaInterpreter
                 builder.SetUShort(sourceJump, jumpPoint - sourceJump - 2);
             }            
         }
+
+        public void FixupAbsolute(int absoluteJumpPoint)
+        {
+            foreach (var sourceJump in fixupByteOffsets)
+            {
+                builder.SetUShort(sourceJump, absoluteJumpPoint);
+            }
+        }
     }
 }

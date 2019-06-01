@@ -390,23 +390,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitIf_stmt([NotNull] CloacaParser.If_stmtContext context)
     {
-        List<int> conditional_block_fixups = new List<int>();
+        var conditional_block_fixups = new List<JumpOpcodeFixer>();
         int if_cond_i = 0;
         for (if_cond_i = 0; if_cond_i < context.test().Length; ++if_cond_i)
         {
             var comparison = context.test(if_cond_i);
             Visit(comparison);
-            AddInstruction(ByteCodes.JUMP_IF_FALSE, 0xFFFF);
-            var jump_opcode_index = ActiveProgram.Code.Count - 2;
+            var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_IF_FALSE, -1));
             Visit(context.suite(if_cond_i));
 
             // We'll need this to skip other conditional blocks, but we only need this if we actually
             // have other ones:
             if (context.test().Length > 1)
             {
-                conditional_block_fixups.Add(AddInstruction(ByteCodes.JUMP_FORWARD, 0xFFFF) - 2);
+                conditional_block_fixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_FORWARD, -1)));
             }
-            ActiveProgram.Code.SetUShort(jump_opcode_index, ActiveProgram.Code.Count);
+            jumpFalseSkip.FixupAbsolute(ActiveProgram.Code.Count);
         }
 
         // Handles the 'else' clause if we have one. The else is a suite without a comparison.
@@ -418,9 +417,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         // Fixup any forward jumps we might have. They should all come to our current program position.
-        foreach (int fixupPosition in conditional_block_fixups)
+        foreach (var fixup in conditional_block_fixups)
         {
-            ActiveProgram.Code.SetUShort(fixupPosition, ActiveProgram.Code.Count - fixupPosition - 2);
+            fixup.Fixup(ActiveProgram.Code.Count);
         }
         return null;
     }
