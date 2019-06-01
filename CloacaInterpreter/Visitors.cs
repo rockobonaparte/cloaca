@@ -458,16 +458,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         */
         // We'll have to fix this up after generating the loop
         // SETUP_LOOP takes a delta from the next instruction address
-        var loop_fixup = AddInstruction(ByteCodes.SETUP_LOOP, 0xFFFF) - 2;
+        var setupLoopIdx = AddInstruction(ByteCodes.SETUP_LOOP, -1);
+        var setupLoopFixup = new JumpOpcodeFixer(ActiveProgram.Code, setupLoopIdx);
 
         Visit(context.test());
-        int pop_jump_fixup = AddInstruction(ByteCodes.JUMP_IF_FALSE, 0xFFFF) - 2;               // Another one to fixup
+        var pop_jump_fixup = new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.JUMP_IF_FALSE, -1));
 
         Visit(context.suite(0));
 
-        AddInstruction(ByteCodes.JUMP_ABSOLUTE, loop_fixup + 2);
+        AddInstruction(ByteCodes.JUMP_ABSOLUTE, setupLoopIdx);
         int pop_block_i = AddInstruction(ByteCodes.POP_BLOCK) - 1;
-        ActiveProgram.Code.SetUShort(pop_jump_fixup, pop_block_i);
+        pop_jump_fixup.FixupAbsolute(pop_block_i);
 
         // Else clause? We will have two suites.
         if (context.suite().Length > 1)
@@ -475,9 +476,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             Visit(context.suite(1));
         }
 
-        // We're outside the loop block so we use this for fixups
-        int out_of_loop = ActiveProgram.Code.Count;
-        ActiveProgram.Code.SetUShort(loop_fixup, out_of_loop - loop_fixup);
+        setupLoopFixup.Fixup(ActiveProgram.Code.Count);
 
         return null;
     }
