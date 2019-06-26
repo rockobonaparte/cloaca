@@ -29,9 +29,10 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that wants to make a class.</param>
         /// <param name="func">The class body as interpretable code.</param>
         /// <param name="name">The name of the class.</param>
+        /// <param name="bases">Base classes parenting this class.</param>
         /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
         /// ReturnValue object containing the PyClass of the built class.</returns>
-        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name)
+        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
@@ -651,7 +652,7 @@ namespace CloacaInterpreter
                             {
                                 args.Insert(0, context.DataStack.Pop());
                             }
-
+                           
                             object abstractFunctionToRun = context.DataStack.Pop();
                             if (abstractFunctionToRun is WrappedCodeObject)
                             {
@@ -659,7 +660,40 @@ namespace CloacaInterpreter
                                 // Python and .NET. We're just starting to enable the plumbing before stepping
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
-                                foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
+
+                                // If there's a params field and we don't have enough stuff to fill it, then we need to
+                                // give it a null or else we'll run into a TargetParameterCountException
+                                // If we *can* fill it in, we need to conver to the params array type.
+                                //
+                                // FrameContext is a freebie that'll get tacked on so we reference on less than our
+                                // length.
+                                var methodParams = functionToRun.MethodInfo.GetParameters();
+                                if(methodParams.Length > 1 && methodParams[methodParams.Length-1].IsDefined(typeof(ParamArrayAttribute), false))
+                                {
+                                    if (args.Count < methodParams.Length-1)
+                                    {
+                                        args.Add(null);
+                                    }
+                                    else
+                                    {
+                                        var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
+                                        var paramsArray = Array.CreateInstance(elementType, args.Count - (methodParams.Length - 2));
+                                        var base_i = args.Count - (methodParams.Length - 3);
+                                        for(int i = 0; i < paramsArray.Length; ++i)
+                                        {
+                                            paramsArray.SetValue(args[base_i + i], i);
+                                        }
+                                        for (int i = 0; i < paramsArray.Length; ++i)
+                                        {
+                                            args.RemoveAt(args.Count - 1);
+                                        }
+
+                                        // TODO: Figure out how to get an actual array! Not Array, but T[].
+                                        args.Add(paramsArray);
+                                    }
+                                }
+
+                                foreach (var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {
                                     if (continuation is ReturnValue)
                                     {

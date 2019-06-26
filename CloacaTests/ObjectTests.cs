@@ -133,19 +133,49 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Subclassing not implemented yet")]
         public void SubclassBasic()
         {
+            /*
+             *   2           0 LOAD_BUILD_CLASS
+              2 LOAD_CONST               1 (<code object Foo at 0x000001DBDF5511E0, file "<stdin>", line 2>)
+              4 LOAD_CONST               2 ('Foo')
+              6 MAKE_FUNCTION            0
+              8 LOAD_CONST               2 ('Foo')
+             10 CALL_FUNCTION            2
+             12 STORE_FAST               0 (Foo)
+
+  5          14 LOAD_BUILD_CLASS
+             16 LOAD_CONST               3 (<code object Bar at 0x000001DBDF568390, file "<stdin>", line 5>)
+             18 LOAD_CONST               4 ('Bar')
+             20 MAKE_FUNCTION            0
+             22 LOAD_CONST               4 ('Bar')
+             24 LOAD_FAST                0 (Foo)
+             26 CALL_FUNCTION            3
+             28 STORE_FAST               1 (Bar)
+
+  8          30 LOAD_FAST                1 (Bar)
+             32 CALL_FUNCTION            0
+             34 STORE_FAST               2 (bar)
+
+  9          36 LOAD_FAST                2 (bar)
+             38 LOAD_ATTR                0 (change_a)
+             40 LOAD_CONST               5 (1)
+             42 CALL_FUNCTION            1
+             44 POP_TOP
+             46 LOAD_CONST               0 (None)
+             48 RETURN_VALUE
+             */
+
             var interpreter = runProgram("class Foo:\n" +
                                          "   def __init__(self):\n" +
                                          "      self.a = 1\n" +
                                          "\n" +
                                          "class Bar(Foo):\n" +
                                          "   def change_a(self, new_a):\n" +
-                                         "      self.a = new_a\n" +
+                                         "      self.a = self.a + new_a\n" +
                                          "\n" +
                                          "bar = Bar()\n" +
-                                         "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
+                                         "bar.change_a(1)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(new BigInteger(2)));
