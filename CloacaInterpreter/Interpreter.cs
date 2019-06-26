@@ -29,9 +29,10 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that wants to make a class.</param>
         /// <param name="func">The class body as interpretable code.</param>
         /// <param name="name">The name of the class.</param>
+        /// <param name="bases">Base classes parenting this class.</param>
         /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
         /// ReturnValue object containing the PyClass of the built class.</returns>
-        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name)
+        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
@@ -651,7 +652,7 @@ namespace CloacaInterpreter
                             {
                                 args.Insert(0, context.DataStack.Pop());
                             }
-
+                           
                             object abstractFunctionToRun = context.DataStack.Pop();
                             if (abstractFunctionToRun is WrappedCodeObject)
                             {
@@ -659,7 +660,8 @@ namespace CloacaInterpreter
                                 // Python and .NET. We're just starting to enable the plumbing before stepping
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
-                                foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
+
+                                foreach (var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {
                                     if (continuation is ReturnValue)
                                     {

@@ -1008,6 +1008,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //       4 LOAD_CONST               2 ('Foo')
         //       6 MAKE_FUNCTION            0
         //       8 LOAD_CONST               2 ('Foo')
+        //     (xx LOAD_FAST                y1 (Subclass1))
+        //     (xx LOAD_FAST                y2 (Subclass2))... etc
+        //     (If no explicit subclass is given, those LOAD_FASTS don't happen)
         //      10 CALL_FUNCTION            2
         //      12 STORE_FAST               0 (Foo)
         //      14 LOAD_CONST               0 (None)
@@ -1017,7 +1020,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
         AddInstruction(ByteCodes.MAKE_FUNCTION, 0);
         AddInstruction(ByteCodes.LOAD_CONST, nameIndex);
-        AddInstruction(ByteCodes.CALL_FUNCTION, 2);
+
+        int subclasses = 0;
+        if (context.arglist() != null)
+        {
+            if (context.arglist().ChildCount > 1)
+            {
+                throw new Exception("Only one subclass is supported right now.");
+            }
+
+            for(int i = 0; i < context.arglist().ChildCount; ++i)
+            {
+                generateLoadForVariable(context.arglist().argument(i).GetText());
+            }
+            subclasses = context.arglist().ChildCount;
+        }
+
+        AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses);
 
         ActiveProgram.VarNames.Add(className);
         AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1);
