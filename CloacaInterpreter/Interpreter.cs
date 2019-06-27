@@ -661,38 +661,6 @@ namespace CloacaInterpreter
                                 // back and seeing what we got for all the trouble.
                                 var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
 
-                                // If there's a params field and we don't have enough stuff to fill it, then we need to
-                                // give it a null or else we'll run into a TargetParameterCountException
-                                // If we *can* fill it in, we need to conver to the params array type.
-                                //
-                                // FrameContext is a freebie that'll get tacked on so we reference on less than our
-                                // length.
-                                var methodParams = functionToRun.MethodInfo.GetParameters();
-                                if(methodParams.Length > 1 && methodParams[methodParams.Length-1].IsDefined(typeof(ParamArrayAttribute), false))
-                                {
-                                    if (args.Count < methodParams.Length-1)
-                                    {
-                                        args.Add(null);
-                                    }
-                                    else
-                                    {
-                                        var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
-                                        var paramsArray = Array.CreateInstance(elementType, args.Count - (methodParams.Length - 2));
-                                        var base_i = args.Count - (methodParams.Length - 3);
-                                        for(int i = 0; i < paramsArray.Length; ++i)
-                                        {
-                                            paramsArray.SetValue(args[base_i + i], i);
-                                        }
-                                        for (int i = 0; i < paramsArray.Length; ++i)
-                                        {
-                                            args.RemoveAt(args.Count - 1);
-                                        }
-
-                                        // TODO: Figure out how to get an actual array! Not Array, but T[].
-                                        args.Add(paramsArray);
-                                    }
-                                }
-
                                 foreach (var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {
                                     if (continuation is ReturnValue)

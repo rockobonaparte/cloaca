@@ -54,32 +54,71 @@ namespace LanguageImplementation
 
         private IEnumerable<SchedulingInfo> Call(object[] args)
         {
-            object[] finalArgs;
+            var finalArgsList = new List<object>();
          
             // Auto-curry the FrameContext if we were given one (non-null) when this WrappedCodeObject was created.
             // We have to do this so we don't publish a function to the interpreter that is asking for this zany 
             // FrameContext object thing.
             if(context != null)
             {
-                finalArgs = new object[args.Length + 1];
-                finalArgs[0] = context;
-                Array.Copy(args, 0, finalArgs, 1, args.Length);
-            }
-            else
-            {
-                finalArgs = args;
+                finalArgsList.Add(context);
             }
 
-            if(MethodInfo.ReturnType == typeof(IEnumerable<SchedulingInfo>))
+            // Transform all arguments except for any in the params field.
+            var methodParams = MethodInfo.GetParameters();
+            bool hasParamsField = methodParams.Length > 1 && methodParams[methodParams.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
+
+            var argSearchLength = methodParams.Length;
+            if (hasParamsField)
             {
-                foreach(var continuation in MethodInfo.Invoke(instance, finalArgs) as IEnumerable<SchedulingInfo>)
+                argSearchLength -= 1;
+            }
+            if(context != null)
+            {
+                argSearchLength -= 1;
+            }
+            for(int i = 0; i < argSearchLength; ++i)
+            {
+                finalArgsList.Add(args[i]);
+            }
+
+            // If there's a params field and we don't have enough stuff to fill it, then we need to
+            // give it a null or else we'll run into a TargetParameterCountException
+            // If we *can* fill it in, we need to conver to the params array type.
+            //
+            // FrameContext is a freebie that'll get tacked on so we reference on less than our
+            // length.
+            if (hasParamsField)
+            {
+                // + 1 to account for the params field we know we have.
+                if (args.Length < argSearchLength + 1)
+                {
+                    finalArgsList.Add(null);
+                }
+                else
+                {
+                    var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
+                    var paramsArray = Array.CreateInstance(elementType, methodParams.Length - argSearchLength - 1);
+                    var base_i = argSearchLength;
+                    for (int i = 0; i < paramsArray.Length; ++i)
+                    {
+                        paramsArray.SetValue(args[base_i + i], i);
+                    }
+
+                    finalArgsList.Add(paramsArray);
+                }
+            }
+
+            if (MethodInfo.ReturnType == typeof(IEnumerable<SchedulingInfo>))
+            {
+                foreach(var continuation in MethodInfo.Invoke(instance, finalArgsList.ToArray()) as IEnumerable<SchedulingInfo>)
                 {
                     yield return continuation;
                 }
             }
             else
             {
-                yield return new ReturnValue(MethodInfo.Invoke(instance, finalArgs));
+                yield return new ReturnValue(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
             }
         }
 
