@@ -45,27 +45,40 @@ namespace CloacaInterpreter
                 yield return yielding;
             }
 
+            // Figure out what kind of constructor we're using:
+            // 1. One that was actually defined in code for this specific class
+            // 2. A parent constructor, if existing
+            // 3. Failing all that, a default constructor
             var initIdx = classFrame.LocalNames.IndexOf("__init__");
             CodeObject __init__ = null;
             if(initIdx < 0)
             {
-                // Insert a default constructor. This comes up as a "slot wrapper" at least in Python 3.6. For us, we're
-                // just making our own no-op __init__ for now.
-                // TODO: Replace with a wrapped default when WrappedCodeObject is freely interchangable with CodeObject
-                var initBuilder = new CodeObjectBuilder();
-                initBuilder.AddInstruction(ByteCodes.LOAD_CONST, 0);
-                initBuilder.Constants.Add(null);
-                initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
-                initBuilder.Name = "__init__";
-                initBuilder.ArgVarNames.Add("self");
-                __init__ = initBuilder.Build();
+                if (bases != null && bases.Length > 0)
+                {
+                    // Default to parent constructor. We hard-cast to a CodeObject
+                    // TODO: Test subclassing a .NET object in Python. This will probably fail there and we'll need a more abstract handler for __init__
+                    __init__ = (CodeObject)bases[0].__init__;
+                }
+                else
+                {
+                    // Insert a default constructor. This comes up as a "slot wrapper" at least in Python 3.6. For us, we're
+                    // just making our own no-op __init__ for now.
+                    // TODO: Replace with a wrapped default when WrappedCodeObject is freely interchangable with CodeObject
+                    var initBuilder = new CodeObjectBuilder();
+                    initBuilder.AddInstruction(ByteCodes.LOAD_CONST, 0);
+                    initBuilder.Constants.Add(null);
+                    initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
+                    initBuilder.Name = "__init__";
+                    initBuilder.ArgVarNames.Add("self");
+                    __init__ = initBuilder.Build();
+                }
             }
             else
             {
                 __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
-            var pyclass = new PyClass(name, __init__, this, context);
+            var pyclass = new PyClass(name, __init__, this, context, bases);
 
             foreach(var classMemberName in classFrame.Names)
             {

@@ -273,3 +273,83 @@ New opcodes:
                  26 RETURN_VALUE
 ```
 
+
+
+
+
+
+Testing proper inheritance. How are symbols propagated to subclass?
+
+```python
+class A:
+   def __init__(self):
+      self.a = 0
+
+class B(A):
+   def __init__(self):
+      self.b = self.a
+```
+Constructing B will fail since a isn't known.
+
+```
+>>> dis(B)
+Disassembly of __init__:
+  3           0 LOAD_FAST                0 (self)
+              2 LOAD_ATTR                0 (a)
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               1 (b)
+              8 LOAD_CONST               0 (None)
+             10 RETURN_VALUE
+```
+
+Now to properly call superconstructor
+```python
+class A:
+   def __init__(self):
+      self.a = 0
+
+class B(A):
+   def __init__(self):
+      super().__init__()
+      self.b = self.a
+```
+>>> dis(B)
+Disassembly of __init__:
+  3           0 LOAD_GLOBAL              0 (super)
+              2 CALL_FUNCTION            0
+              4 LOAD_ATTR                1 (__init__)
+              6 CALL_FUNCTION            0
+              8 POP_TOP
+
+  4          10 LOAD_FAST                0 (self)
+             12 LOAD_ATTR                2 (a)
+             14 LOAD_FAST                0 (self)
+             16 STORE_ATTR               3 (b)
+             18 LOAD_CONST               0 (None)
+             20 RETURN_VALUE
+```
+
+```python
+class Foo:
+   def __init__(self):
+      self.a = 1
+
+class Bar(Foo):
+   def change_a(self, new_a):
+      self.a = self.a + new_a
+```
+This works too despite not calling init? Yes, because Bar doesn't have a
+constructor defined so it defaults to the parent. Try this:
+
+```python
+class Foo:
+   def __init__(self):
+      self.a = 1
+
+class Bar(Foo):
+   def __init__(self):
+      pass
+   def change_a(self, new_a):
+      self.a = self.a + new_a
+```
+This won't find a.

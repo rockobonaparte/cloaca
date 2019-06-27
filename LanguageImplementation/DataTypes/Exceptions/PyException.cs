@@ -108,7 +108,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
 
 
-        public PyExceptionClass() : base("Exception", null, null, null)
+        public PyExceptionClass() : base("Exception", null, null, null, null)
         {
             Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
             var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;
