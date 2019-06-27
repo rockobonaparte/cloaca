@@ -47,6 +47,7 @@ namespace LanguageImplementation.DataTypes
         public static void DefaultNewPyObject(PyObject toNew, PyTypeObject classObj)
         {
             toNew.__dict__ = new Dictionary<string, object>(classObj.__dict__);
+            toNew.__class__ = (PyClass) classObj;
         }
 
         public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context)
