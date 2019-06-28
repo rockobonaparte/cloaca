@@ -334,3 +334,6 @@ https://www.python.org/dev/peps/pep-3135/
 https://stackoverflow.com/questions/13126727/how-is-super-in-python-3-implemented
 
 Asking for details in comp.lang.python on how super() manages internally to get a handle to self.
+
+It looks in CPython that self is actually TOP(), which is the top of the stack. This
+implies I put self on the top of the stack!

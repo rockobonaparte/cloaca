@@ -17,6 +17,7 @@ namespace LanguageImplementation
 
         private object instance;
         private FrameContext context;
+        public bool NeedsFrameContext = false;
 
         public int ArgCount
         {
@@ -46,6 +47,7 @@ namespace LanguageImplementation
 
         public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
+            this.context = context;
             foreach (var continuation in Call(args))
             {
                 yield return continuation;
@@ -56,10 +58,11 @@ namespace LanguageImplementation
         {
             var finalArgsList = new List<object>();
          
-            // Auto-curry the FrameContext if we were given one (non-null) when this WrappedCodeObject was created.
+            // Auto-curry the FrameContext if we were requested one when this WrappedCodeObject was created.
             // We have to do this so we don't publish a function to the interpreter that is asking for this zany 
             // FrameContext object thing.
-            if(context != null)
+            // TODO: Start to just inject it into the method signature.
+            if(NeedsFrameContext)
             {
                 finalArgsList.Add(context);
             }
@@ -73,7 +76,7 @@ namespace LanguageImplementation
             {
                 argSearchLength -= 1;
             }
-            if(context != null)
+            if(NeedsFrameContext)
             {
                 argSearchLength -= 1;
             }
@@ -127,7 +130,7 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             instance = null;
-            this.context = context;
+            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo) : this(null, nameInsideInterpreter, methodInfo)
@@ -139,7 +142,7 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             instance = null;
-            this.context = context;
+            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(MethodInfo methodInfo)
@@ -155,7 +158,7 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             this.instance = instance;
-            this.context = context;
+            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance) : this(null, nameInsideInterpreter, methodInfo, instance)
@@ -167,7 +170,7 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             this.instance = instance;
-            this.context = context;
+            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(MethodInfo methodInfo, object instance)

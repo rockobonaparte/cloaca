@@ -182,7 +182,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("super() is not yet implemented")]
+        //[Ignore("super() is not yet implemented")]
         public void SubclassSuperconstructor()
         {
             var interpreter = runProgram("class Foo:\n" +

@@ -15,19 +15,21 @@ namespace CloacaInterpreter
 
         public Interpreter()
         {
-            Expression<Action<PyTypeObject>> super_expr = instance => getSuperClass();
+            Expression<Action<PyTypeObject>> super_expr = instance => getSuperClass(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
+            var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
+            super_wrapper.NeedsFrameContext = true;
 
             builtins = new Dictionary<string, object>
             {
                 { "Exception", PyExceptionClass.Instance },
-                { "super", new WrappedCodeObject( "super", super_methodInfo ) }
+                { "super", super_wrapper }
             };
         }
 
         public bool DumpState;
 
-        private static PyObject getSuperClass()
+        private static PyObject getSuperClass(FrameContext context)
         {
             throw new NotImplementedException("super() has not yet been implemented.");
         }
@@ -935,6 +937,7 @@ namespace CloacaInterpreter
                             Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null, null);
                             var methodInfo = ((MethodCallExpression)expr.Body).Method;
                             var class_builder = new WrappedCodeObject(context, "__build_class__", methodInfo, this);
+                            class_builder.NeedsFrameContext = true;
                             context.DataStack.Push(class_builder);
                         }
                         break;

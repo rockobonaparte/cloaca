@@ -148,6 +148,10 @@ At this point you should start trying to embed it and suffer it.
 
 
 Tech debt:
+* Start to use dependency injection to manage CodeObject, FrameContext, and the like for WrappedCodeObjects instead of your chicken bits.
+  * This wasn't done at the time because I was dabbling in seeing if super() could be implemented with the frame context.
+  * I realized trying to pass the frame context too early in the process would be impossible for global built-ins because the
+    context will be constantly changing under them.
 * Implement BYTES_LITERAL
 * Implement full atom rule
   * Requires yield
