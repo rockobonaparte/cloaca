@@ -29,9 +29,26 @@ namespace CloacaInterpreter
 
         public bool DumpState;
 
-        private static PyObject getSuperClass(FrameContext context)
+        private static PyClass getSuperClass(FrameContext context)
         {
-            throw new NotImplementedException("super() has not yet been implemented.");
+            // Believe it or not, this is very similar to how CPython does this! It grabs the code object and the frame and just
+            // infers self from it.
+            if (context.Locals.Count == 0)
+            {
+                throw new IndexOutOfRangeException("getSuperClass found no locals from which to steal the class' self pointer.");
+            }            
+
+            var self = context.Locals[0] as PyObject;
+            if(self == null)
+            {
+                throw new InvalidCastException("getSuperClass could not convert first local (assumed to be self) to PyObject. Element is: " + context.Locals[0]);
+            }
+
+            if(self.__bases__ == null || self.__bases__.Count == 0)
+            {
+                throw new Exception("getSuperClass could not find a superclass for the current context.");
+            }
+            return self.__bases__[0];
         }
 
         /// <summary>
