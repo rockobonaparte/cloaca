@@ -15,13 +15,22 @@ namespace CloacaInterpreter
 
         public Interpreter()
         {
+            Expression<Action<PyTypeObject>> super_expr = instance => getSuperClass();
+            var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
+
             builtins = new Dictionary<string, object>
             {
-                { "Exception", PyExceptionClass.Instance }
+                { "Exception", PyExceptionClass.Instance },
+                { "super", new WrappedCodeObject( "super", super_methodInfo ) }
             };
         }
 
         public bool DumpState;
+
+        private static PyObject getSuperClass()
+        {
+            throw new NotImplementedException("super() has not yet been implemented.");
+        }
 
         /// <summary>
         /// Implementation of builtins.__build_class__. This create a class as a PyClass.

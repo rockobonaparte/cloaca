@@ -329,27 +329,8 @@ Disassembly of __init__:
              20 RETURN_VALUE
 ```
 
-```python
-class Foo:
-   def __init__(self):
-      self.a = 1
+Super internals:
+https://www.python.org/dev/peps/pep-3135/
+https://stackoverflow.com/questions/13126727/how-is-super-in-python-3-implemented
 
-class Bar(Foo):
-   def change_a(self, new_a):
-      self.a = self.a + new_a
-```
-This works too despite not calling init? Yes, because Bar doesn't have a
-constructor defined so it defaults to the parent. Try this:
-
-```python
-class Foo:
-   def __init__(self):
-      self.a = 1
-
-class Bar(Foo):
-   def __init__(self):
-      pass
-   def change_a(self, new_a):
-      self.a = self.a + new_a
-```
-This won't find a.
+Asking for details in comp.lang.python on how super() manages internally to get a handle to self.
