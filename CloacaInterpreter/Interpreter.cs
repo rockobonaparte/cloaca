@@ -44,11 +44,17 @@ namespace CloacaInterpreter
                 throw new InvalidCastException("getSuperClass could not convert first local (assumed to be self) to PyObject. Element is: " + context.Locals[0]);
             }
 
-            if(self.__bases__ == null || self.__bases__.Count == 0)
+            // TODO: Shouldn't I be able to use self.__bases__ directly? I suspect that needs to be plumbed.
+            if(self.__class__ == null)
+            {
+                throw new NullReferenceException("getSuperClass needed class information from a self pointer that has no __class__ defined.");
+            }
+
+            if(self.__class__.__bases__ == null || self.__class__.__bases__.Length == 0)
             {
                 throw new Exception("getSuperClass could not find a superclass for the current context.");
             }
-            return self.__bases__[0];
+            return self.__class__.__bases__[0];
         }
 
         /// <summary>
