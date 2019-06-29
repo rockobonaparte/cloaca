@@ -763,87 +763,90 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
-        // TODO: It looks like trailers should be delegated at this point. This is too rigid and probably will fail if we call a function that returns a function that we call ie "x = foo(x)(y)"
-
-        // We are looking at function calls with possibly multiple trailers. So we need to determine
-        // how far we are along in parsing them.
-        int trailersConsumed = 0;
-
-        // This is a little rough, but we'll assume for now that if there are any trailers
-        // defined that we're working with a function. If no trailer is defined, then we'll
-        // pass it along to the atom visitor.
-        if (context.trailer().Length > 0)
+        if (context.trailer().Length == 0)
         {
-            // If it has NAME, then we're treating it like an object attribute.
-            // Otherwise, we treat it like a function. What could go wrong?
-            if(context.trailer(0).NAME() != null)
+            return base.VisitAtom_expr(context);
+        }
+        else
+        {
+            // Example input that winds up here:
+            // super().__init__()
+            //
+            // context = super().__init__()
+            // atom = super
+            // trailers:
+            //   0: ()
+            //   1: .__init__
+            //   2: ()
+            //
+            // So we have to determine if we're looking at arguments to a function or a continuation of
+            // object attribute lookups.
+            Visit(context.atom());
+            for (int trailer_i = 0; trailer_i < context.trailer().Length; ++trailer_i)
             {
-                var variableName = context.atom().GetText();
-                generateLoadForVariable(variableName);
-
-                var attrName = context.trailer()[0].NAME().GetText();
-
-                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
-                AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
-
-                // ...what can go wrong is a method invocation. So we stopped returning and let ourselves
-                // continue if we have more than one trailer.
-                ++trailersConsumed;
-                if (context.trailer().Length == 1)
+                var trailer = context.trailer(trailer_i);
+                if (trailer.NAME() != null)
                 {
-                    return null;
+                    var attrName = trailer.NAME().GetText();
+                    var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
+                    AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
+
+                    // The rest of this block determines if we need to inject self as an argument to a method.
+                    //
+                    // If it's a function (next trailer is parentheses) that starts with a dot, then it's a class
+                    // method and we have to insert the variable represent self. If the previous trailer was a function
+                    // call, then it implicitly already put it on the stack, so we skip those.
+                    // That's unless it's already been put on the stack as an output from a previous function call.
+                    RuleContext priorToken = context.atom();
+                    if (trailer_i > 0)
+                    {
+                        priorToken = context.trailer(trailer_i - 1);
+                    }
+                   
+                    if (trailer_i < context.trailer().Length - 1
+                        && !priorToken.GetText().StartsWith("(")
+                        && context.trailer(trailer_i+1).GetText().StartsWith("(")
+                        && trailer.GetText().StartsWith("."))
+                    {
+                        var variableName = priorToken.GetText();
+                        var selfIdx = ActiveProgram.VarNames.IndexOf(variableName);
+                        if (selfIdx < 0)
+                        {
+                            throw new IndexOutOfRangeException("Could not find self reference for class instance '"
+                                + variableName + "'");
+                        }
+                        AddInstruction(ByteCodes.LOAD_FAST, selfIdx);
+                    }
                 }
-            }
-
-            if (trailersConsumed == 0)
-            {
-                // Get the function name loaded on the stack first!
-                Visit(context.atom());
-            }
-
-            // If it's a class method, we have to load up the self reference
-            int numArgs = 0;
-            if(context.trailer(0).GetText().StartsWith("."))
-            {
-                var variableName = context.atom().GetText();
-                var selfIdx = ActiveProgram.VarNames.IndexOf(variableName);
-                if(selfIdx < 0)
+                // A function that doesn't take any arguments doesn't have an arglist, but that is what 
+                // got triggered. The only way I know to make sure we trigger on it is to see if we match
+                // parentheses. There has to be a better way...
+                else if (trailer.arglist() != null || trailer.GetText() == "()")
                 {
-                    throw new IndexOutOfRangeException("Could not find self reference for class instance '" 
-                        + variableName + "'");
-                }
-                AddInstruction(ByteCodes.LOAD_FAST, selfIdx);
-                ++numArgs;
-            }
+                    int argIdx = 0;
+                    for (argIdx = 0; trailer.arglist() != null &&
+                        trailer.arglist().argument(argIdx) != null; ++argIdx)
+                    {
+                        base.Visit(trailer.arglist().argument(argIdx));
+                    }
 
-            // A function that doesn't take any arguments doesn't have an arglist, but that is what 
-            // got triggered. The only way I know to make sure we trigger on it is to see if we match
-            // parentheses. There has to be a better way...
-            if (context.trailer(trailersConsumed).arglist() != null || context.trailer(trailersConsumed).GetText() == "()")
-            {
-                int argIdx = 0;
-                for (argIdx = 0; context.trailer(trailersConsumed).arglist() != null &&
-                    context.trailer(trailersConsumed).arglist().argument(argIdx) != null; ++argIdx)
-                {
-                    base.Visit(context.trailer(trailersConsumed).arglist().argument(argIdx));
-                    ++numArgs;
+                    // If it's a method, we have to add on one more argument to represent
+                    // the self reference. We'll do this by looking backwards once and checking
+                    // for a dot in the preceding term.
+                    var numArgs = argIdx;
+                    if(trailer_i > 0 && context.trailer(trailer_i-1).GetText().StartsWith("."))
+                    {
+                        numArgs += 1;
+                    }
+                    AddInstruction(ByteCodes.CALL_FUNCTION, numArgs);
                 }
-                AddInstruction(ByteCodes.CALL_FUNCTION, numArgs);
-            }
-            else
-            {
-                foreach(var trailer in context.trailer())
+                else
                 {
                     base.Visit(trailer);
                 }
             }
-
-            return null;
         }
-        else
-        {
-            return base.VisitAtom_expr(context);
-        }
+        return null;
     }
 
     // TODO: Consider switching to same method that VisitAtomParens is using here, which might make this general-purpose enough.
