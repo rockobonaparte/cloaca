@@ -35,7 +35,8 @@ namespace LanguageImplementation.DataTypes
         {
             if (!__dict__.ContainsKey(name))
             {
-                throw new EscapedPyException(new AttributeError("'" + __class__.Name + "' object has no attribute named '" + name + "'"));
+                var className = __class__ != null ? __class__.Name : "(Null Class!)";
+                throw new EscapedPyException(new AttributeError("'" + className + "' object has no attribute named '" + name + "'"));
             }
             return __dict__[name];
         }
