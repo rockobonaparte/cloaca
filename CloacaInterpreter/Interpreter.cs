@@ -118,12 +118,12 @@ namespace CloacaInterpreter
             {
                 var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
                 if (nameIdx >= 0)
-                {                    
-                    pyclass.__dict__.Add(classMemberName, classFrame.Locals[nameIdx]);
+                {
+                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[nameIdx]);
                 }
                 else
                 {
-                    pyclass.__dict__.Add(classMemberName, context.GetVariable(classMemberName));
+                    pyclass.__dict__.AddOrSet(classMemberName, context.GetVariable(classMemberName));
                 }
             }
             
@@ -776,7 +776,16 @@ namespace CloacaInterpreter
                                         // Yeap, it's a user-specified constructor. We'll still use our internal __new__
                                         // to make the stub since we don't support overridding __new__ yet.
                                         // TODO: Reconcile this with stubbed __new__. This is such a mess.
-                                        var self = new PyObject();      // This is the default __new__ for now.
+                                        // Oh wait, this might be a superconstructor!!!
+                                        PyObject self = null;
+                                        if(context.Locals.Count > 0 && context.Locals[0] is PyObject)
+                                        {
+                                            self = context.Locals[0] as PyObject;
+                                        }
+                                        else
+                                        {
+                                            self = new PyObject();      // This is the default __new__ for now.
+                                        }                                        
                                         args.Insert(0, self);
                                         foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
                                         {
