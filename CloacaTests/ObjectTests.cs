@@ -133,7 +133,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Subclassing not implemented yet")]
         public void SubclassBasic()
         {
             /*
