@@ -4,11 +4,9 @@ using System.Collections.Generic;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyTypeObject : IPyCallable
+    public class PyTypeObject : PyObject, IPyCallable
     {
         public string Name;
-        public Dictionary<string, object> __dict__;
-        public IPyCallable __new__;
         public IPyCallable __init__;
         private IInterpreter interpreter;
         private FrameContext context;
@@ -55,6 +53,7 @@ namespace LanguageImplementation.DataTypes
             __dict__ = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
+            __dict__["__init__"] = this.__init__;
 
             // DefaultNew doesn't invoking any yielding code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);

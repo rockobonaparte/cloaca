@@ -11,7 +11,7 @@ namespace LanguageImplementation.DataTypes
         public Dictionary<string, object> __dict__;
         public PyClass __class__;
         public string __doc__;
-        public CodeObject __new__;
+        public IPyCallable __new__;
         public BigInteger __sizeof__;
         public List<PyClass> __bases__;
         public List<PyClass> __subclasses__()
