@@ -58,9 +58,15 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * [DONE] Constructor
   * [DONE] Access members
   * [DONE] Call functions
-  * Inheritance
-  * Start to wrap data types as classes
-  * Classes as objects (I think that's how it's done, right?). Need it for except classes (Exception as e, CompareException operator)
+  * [DONE] Inheritance
+  * Wrap data types as classes
+     *  Integer
+     *  Floating-Point
+     *  Boolean
+     *  String
+     *  List
+     *  Dict
+  * [DONE] Classes as objects (I think that's how it's done, right?). Need it for except classes (Exception as e, CompareException operator)
 * [DONE] Scheduler controlling interpreter to switch programs when one waits
 * Integration with parent runtime
   * [DONE] Call embedded C# function from script
