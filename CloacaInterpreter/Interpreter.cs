@@ -701,12 +701,10 @@ namespace CloacaInterpreter
                             }
                            
                             object abstractFunctionToRun = context.DataStack.Pop();
-                            if (abstractFunctionToRun is WrappedCodeObject)
+
+                            if(abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
                             {
-                                // This is currently done very naively. No conversion of types between
-                                // Python and .NET. We're just starting to enable the plumbing before stepping
-                                // back and seeing what we got for all the trouble.
-                                var functionToRun = (WrappedCodeObject)abstractFunctionToRun;
+                                var functionToRun = (IPyCallable)abstractFunctionToRun;
 
                                 foreach (var continuation in functionToRun.Call(this, context, args.ToArray()))
                                 {

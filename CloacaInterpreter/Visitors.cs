@@ -791,32 +791,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
                     AddInstruction(ByteCodes.LOAD_ATTR, attrIdx);
 
-                    // The rest of this block determines if we need to inject self as an argument to a method.
-                    //
-                    // If it's a function (next trailer is parentheses) that starts with a dot, then it's a class
-                    // method and we have to insert the variable represent self. If the previous trailer was a function
-                    // call, then it implicitly already put it on the stack, so we skip those.
-                    // That's unless it's already been put on the stack as an output from a previous function call.
-                    RuleContext priorToken = context.atom();
-                    if (trailer_i > 0)
-                    {
-                        priorToken = context.trailer(trailer_i - 1);
-                    }
-                   
-                    if (trailer_i < context.trailer().Length - 1
-                        && !priorToken.GetText().StartsWith("(")
-                        && context.trailer(trailer_i+1).GetText().StartsWith("(")
-                        && trailer.GetText().StartsWith("."))
-                    {
-                        var variableName = priorToken.GetText();
-                        var selfIdx = ActiveProgram.VarNames.IndexOf(variableName);
-                        if (selfIdx < 0)
-                        {
-                            throw new IndexOutOfRangeException("Could not find self reference for class instance '"
-                                + variableName + "'");
-                        }
-                        AddInstruction(ByteCodes.LOAD_FAST, selfIdx);
-                    }
                 }
                 // A function that doesn't take any arguments doesn't have an arglist, but that is what 
                 // got triggered. The only way I know to make sure we trigger on it is to see if we match
@@ -830,15 +804,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                         base.Visit(trailer.arglist().argument(argIdx));
                     }
 
-                    // If it's a method, we have to add on one more argument to represent
-                    // the self reference. We'll do this by looking backwards once and checking
-                    // for a dot in the preceding term.
-                    var numArgs = argIdx;
-                    if(trailer_i > 0 && context.trailer(trailer_i-1).GetText().StartsWith("."))
-                    {
-                        numArgs += 1;
-                    }
-                    AddInstruction(ByteCodes.CALL_FUNCTION, numArgs);
+                    AddInstruction(ByteCodes.CALL_FUNCTION, argIdx);
                 }
                 else
                 {
