@@ -20,10 +20,25 @@ namespace CloacaInterpreter
             var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
             super_wrapper.NeedsFrameContext = true;
 
+            Expression<Action<PyTypeObject>> issubclass_expr = instance => Builtins.issubclass(null, null);
+            var issubclass_methodInfo = ((MethodCallExpression)issubclass_expr.Body).Method;
+            var issubclass_wrapper = new WrappedCodeObject("issubclass", issubclass_methodInfo);
+
+            Expression<Action<PyTypeObject>> isinstance_expr = instance => Builtins.isinstance(null, null);
+            var isinstance_methodInfo = ((MethodCallExpression)isinstance_expr.Body).Method;
+            var isinstance_wrapper = new WrappedCodeObject("isinstance", isinstance_methodInfo);
+
+            Expression<Action<PyTypeObject>> builtin_type_expr = instance => Builtins.builtin_type(null);
+            var builtin_type_methodInfo = ((MethodCallExpression)builtin_type_expr.Body).Method;
+            var builtin_type_wrapper = new WrappedCodeObject("builtin_type", builtin_type_methodInfo);
+
             builtins = new Dictionary<string, object>
             {
                 { "Exception", PyExceptionClass.Instance },
-                { "super", super_wrapper }
+                { "super", super_wrapper },
+                { "issubclass", issubclass_wrapper },
+                { "isinstance", isinstance_wrapper },
+                { "type", builtin_type_wrapper },
             };
         }
 

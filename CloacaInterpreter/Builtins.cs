@@ -43,5 +43,51 @@ namespace CloacaInterpreter
             }
             return self.__class__.__bases__[0];
         }
+
+        public static bool isinstance(PyObject obj, PyClass _class)
+        {
+            return obj.__class__ == _class;
+        }
+
+        public static bool issubclass(PyClass child, PyClass parent)
+        {
+            if(child.__bases__ == null)
+            {
+                return false;
+            }
+            foreach(var __base__ in child.__bases__)
+            {                
+                if(__base__ == parent)
+                {
+                    return true;
+                }
+                else
+                {
+                    if(isinstance(__base__, parent))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Internally-consumed variation on issubclass that assesses if a given object is a child of a 
+        /// given class. This is a simplified helper for getting the type of o first and then figuring out
+        /// issubclass on that type.
+        /// </summary>
+        /// <param name="o">The object to test.</param>
+        /// <param name="parent">The type of the class to test against this object</param>
+        /// <returns>True if o's class type is derived from parent. False otherwise.</returns>
+        public static bool issubclass(PyObject o, PyClass parent)
+        {
+            return issubclass(builtin_type(o), parent);
+        }
+
+        public static PyClass builtin_type(PyObject obj)
+        {
+            return obj.__class__;
+        }
     }
 }

@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builtins.cs" />
     <Compile Include="ConstantsFactory.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Interpreter.cs" />

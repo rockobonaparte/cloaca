@@ -44,6 +44,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuiltinsTests.cs" />
     <Compile Include="CodeTests.cs" />
     <Compile Include="ConstantFactoryTests.cs" />
     <Compile Include="EmbeddingTests.cs" />
