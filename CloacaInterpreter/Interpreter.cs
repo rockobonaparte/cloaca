@@ -15,7 +15,7 @@ namespace CloacaInterpreter
 
         public Interpreter()
         {
-            Expression<Action<PyTypeObject>> super_expr = instance => getSuperClass(null);
+            Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
             var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
             super_wrapper.NeedsFrameContext = true;
@@ -28,34 +28,6 @@ namespace CloacaInterpreter
         }
 
         public bool DumpState;
-
-        private static PyClass getSuperClass(FrameContext context)
-        {
-            // Believe it or not, this is very similar to how CPython does this! It grabs the code object and the frame and just
-            // infers self from it.
-            if (context.Locals.Count == 0)
-            {
-                throw new IndexOutOfRangeException("getSuperClass found no locals from which to steal the class' self pointer.");
-            }            
-
-            var self = context.Locals[0] as PyObject;
-            if(self == null)
-            {
-                throw new InvalidCastException("getSuperClass could not convert first local (assumed to be self) to PyObject. Element is: " + context.Locals[0]);
-            }
-
-            // TODO: Shouldn't I be able to use self.__bases__ directly? I suspect that needs to be plumbed.
-            if(self.__class__ == null)
-            {
-                throw new NullReferenceException("getSuperClass needed class information from a self pointer that has no __class__ defined.");
-            }
-
-            if(self.__class__.__bases__ == null || self.__class__.__bases__.Length == 0)
-            {
-                throw new Exception("getSuperClass could not find a superclass for the current context.");
-            }
-            return self.__class__.__bases__[0];
-        }
 
         /// <summary>
         /// Implementation of builtins.__build_class__. This create a class as a PyClass.

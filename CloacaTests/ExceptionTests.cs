@@ -151,7 +151,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented; subclassing not implemented yet.")]
+        [Ignore("Proper recognition of subclasses exceptions not implemented yet")]
         public void TryExceptAliasUseValue()
         {
             var interpreter = runProgram(
@@ -169,7 +169,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exception handling not implemented; subclassing not implemented yet.")]
+        [Ignore("Proper recognition of subclasses exceptions not implemented yet")]
         public void TryExceptTwoExceptions()
         {
             var interpreter = runProgram(
