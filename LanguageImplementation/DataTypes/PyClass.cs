@@ -2,7 +2,6 @@
 {
     public class PyClass : PyTypeObject
     {
-        public PyClass[] __bases__;
         public PyClass(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context,
             PyClass[] bases) :
             base(name, __init__, interpreter, context)

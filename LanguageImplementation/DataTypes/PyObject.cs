@@ -13,7 +13,7 @@ namespace LanguageImplementation.DataTypes
         public string __doc__;
         public IPyCallable __new__;
         public BigInteger __sizeof__;
-        public List<PyClass> __bases__;
+        public PyClass[] __bases__;
         public List<PyClass> __subclasses__()
         {
             throw new NotImplementedException();
