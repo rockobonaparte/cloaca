@@ -52,6 +52,21 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Raising from an Exception class currently not supported")]
+        public void RaiseFromClass()
+        {
+            var interpreter = runProgram(
+                "a = False\n" +
+                "try:\n" +
+                "  raise Exception\n" +
+                "except Exception:\n" +
+                "  a = True\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var a = (bool)variables.Get("a");
+            Assert.That(a, Is.True);
+        }
+
+        [Test]
         public void TryExceptAliasBasic()
         {
             var interpreter = runProgram(
@@ -64,7 +79,6 @@ namespace CloacaTests
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(10)));
         }
-
         [Test]
         public void TryExceptFinally()
         {

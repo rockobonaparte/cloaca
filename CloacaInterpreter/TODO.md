@@ -1,6 +1,11 @@
 ﻿Cloaca TODO
 ===========
 
+Current work is on handling raising subclasses of Exception. Internals are expecting
+PyException but you get a PyObject. It looks like CPython works on PyObject so we should
+consider switching to that kind of mechanism too. CPython just makes sure the PyObject is
+derived from BaseException. We want to explore that class and understand it.
+
 Need to implement LOAD_NAME/STORE_NAME
 
 Good stuff about LOAD_NAME and reference ordering
@@ -91,6 +96,7 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
        in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
+  * Raise from class
 * See if you can use that REPL helper module directly.
 
 
