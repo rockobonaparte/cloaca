@@ -51,6 +51,11 @@ namespace CloacaInterpreter
 
         public static bool issubclass(PyClass child, PyClass parent)
         {
+            // Same class also qualifies as true; it doesn't technically have to be a child.
+            if(child == parent)
+            {
+                return true;
+            }               
             if(child.__bases__ == null)
             {
                 return false;

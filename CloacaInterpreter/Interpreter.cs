@@ -528,8 +528,8 @@ namespace CloacaInterpreter
                                     break;
                                 case CompareOps.ExceptionMatch:
                                     {
-                                        var rightType = right as PyExceptionClass;
-                                        if(rightType == null)
+                                        var rightType = right as PyClass;
+                                        if(rightType == null || !Builtins.issubclass(rightType, PyExceptionClass.Instance))
                                         {
                                             // Well, now we're raising a type error!
                                             // TypeError: catching classes that do not inherit from BaseException is not allowed
