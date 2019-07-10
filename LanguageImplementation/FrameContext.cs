@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using LanguageImplementation.DataTypes.Exceptions;
+using LanguageImplementation.DataTypes;
 
 namespace LanguageImplementation
 {
@@ -10,7 +10,7 @@ namespace LanguageImplementation
         /// Mimicking the global exception structure I believe used in Python. We put one in the frame and react to it if it's
         /// present. If it's null, we don't have an exception and we run as usual.
         /// </summary>
-        public PyException CurrentException;
+        public PyObject CurrentException;
 
         public Stack<Frame> callStack;
 

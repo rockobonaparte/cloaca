@@ -963,7 +963,15 @@ namespace CloacaInterpreter
                             // Assuming that the parameter is always one for now.
                             context.Cursor += 1;
                             var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
-                            var theException = (PyException) context.DataStack.Pop();
+                            var theException = (PyObject) context.DataStack.Pop();
+
+                            // Make sure it's an exception!
+                            // Replace the exception with "exceptions must derive from BaseException"
+                            if (!Builtins.issubclass(theException, PyExceptionClass.Instance))
+                            {
+                                theException = new PyException("exceptions must derive from BaseException");
+                            }
+
                             context.Cursor += 2;
                             context.CurrentException = theException;
 

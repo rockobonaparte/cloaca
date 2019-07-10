@@ -62,13 +62,18 @@ namespace LanguageImplementation.DataTypes.Exceptions
     /// </summary>
     public class EscapedPyException : Exception
     {
-        public PyException originalException;
+        public PyObject originalException;
+
+        private static string extractExceptionMessage(PyObject exc)
+        {
+            return (string) exc.__dict__["message"];
+        }
 
         /// <summary>
         /// Create the escaped PyException.
         /// </summary>
         /// <param name="escaped">The exception that escaped.</param>
-        public EscapedPyException(PyException escaped) : base(escaped.Message)
+        public EscapedPyException(PyObject escaped) : base(extractExceptionMessage(escaped))
         {
             originalException = escaped;
         }
