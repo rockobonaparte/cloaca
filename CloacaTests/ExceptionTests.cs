@@ -182,7 +182,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Looks like multiple excepts aren't aligning properly yet")]
         public void TryExceptTwoExceptions()
         {
             var interpreter = runProgram(
@@ -193,9 +192,9 @@ namespace CloacaTests
                 "try:\n" +
                 "  raise MeowException(1)\n" +
                 "except Exception as ignored:\n" +
-                "  a = ignored\n" +
+                "  a = -1\n" +
                 "except MeowException as e:\n" +
-                "  a = e\n", new Dictionary<string, object>(), 1);
+                "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (BigInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(new BigInteger(1)));

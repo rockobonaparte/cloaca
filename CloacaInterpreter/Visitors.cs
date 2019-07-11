@@ -547,13 +547,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // Start of except statements
         var endOfExceptBlockJumpFixups = new List<JumpOpcodeFixer>();
-        var finallyOffsets = new List<JumpOpcodeFixer>();
-        int startOfExceptBlocks = ActiveProgram.Code.Count;
+        var exceptionMatchTestFixups = new List<JumpOpcodeFixer>();
+        var startOfExcepts = new List<int>();
+
         foreach (var exceptClause in context.except_clause())
         {
             // Making a closure to represent visiting the Except_Clause. It's not a dedicated override of the default in the rule
             // because we need so much context from the entire try block
             {
+                startOfExcepts.Add(ActiveProgram.Code.Count);
                 if (exceptClause.test() != null && exceptClause.test().ChildCount > 0)
                 {
                     // If the exception is aliased, we need to make sure we still have a copy
@@ -567,8 +569,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     generateLoadForVariable(exceptClause.test().GetText());
                     AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch);
 
-                    // Point to END_FINALLY to get us out of the except clause and into the finally block
-                    finallyOffsets.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1)));
+                    // Point to next except clause to test for a match to this exception
+                    exceptionMatchTestFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1)));
+
                     AddInstruction(ByteCodes.POP_TOP);      // should pop the true/false from COMPARE_OP
 
                     if (exceptClause.NAME() != null)
@@ -615,17 +618,25 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Except statement fixups
         if (hasExcept)
         {
-            setupExceptTarget.Fixup(startOfExceptBlocks);
+            setupExceptTarget.Fixup(startOfExcepts[0]);
             foreach (var exceptJumpOutFixup in endOfExceptBlockJumpFixups)
             {
                 exceptJumpOutFixup.Fixup(endOfBlockPosition);
             }
         }
 
-        // Finally statement fixups
-        foreach (var finallyFixup in finallyOffsets)
+        // Exception matching block fixups
+        for (int except_i = 0; except_i < exceptionMatchTestFixups.Count; ++except_i)
         {
-            finallyFixup.Fixup(endOfBlockPosition);
+            var exceptTestFixup = exceptionMatchTestFixups[except_i];
+            if (except_i < exceptionMatchTestFixups.Count - 1)
+            {
+                exceptTestFixup.FixupAbsolute(startOfExcepts[except_i + 1]);
+            }
+            else
+            {
+                exceptTestFixup.FixupAbsolute(endOfBlockPosition);
+            }
         }
 
         //// TODO: Investigate correctness of this END_FINALLY emitter. Looks like it's necessary to set up an END_FINALLY if none of our except clauses trigger and we don't have a finally statement either.

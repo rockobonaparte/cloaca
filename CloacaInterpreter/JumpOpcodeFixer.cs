@@ -29,11 +29,16 @@ namespace CloacaInterpreter
     {
         private List<int> fixupByteOffsets;
         private CodeBuilder builder;
+        public int InstructionLocation
+        {
+            get; protected set;
+        }
 
         public JumpOpcodeFixer(CodeBuilder builder)
         {
             fixupByteOffsets = new List<int>();
             this.builder = builder;
+            InstructionLocation = builder.Count;
         }
 
         public JumpOpcodeFixer(CodeBuilder builder, int codeByteIndexAfterInstruction) : this(builder)
