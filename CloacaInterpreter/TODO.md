@@ -118,6 +118,16 @@ Part 2: First, harden the code, but keep some of this in mind while doing that.
 * Functions
   * Implement co_flags
 
+
+Getting line numbers
+https://late.am/post/2012/03/26/exploring-python-code-objects.html
+co_firstlineno is the first line number in the file (in case there is white space beforehand)_
+co_lnotab is a byte dump of alternately:
+1. The number of code bytes for the current line of code
+2. how far ahead the next line of code is from the current line
+
+
+
 https://docs.python.org/3/library/inspect.html
 Notes on co_flags
 inspect.CO_OPTIMIZED

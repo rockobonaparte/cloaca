@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 
+using Antlr4.Runtime;
+
 namespace LanguageImplementation
 {
     /// <summary>
@@ -216,6 +218,9 @@ namespace LanguageImplementation
 
         public List<object> Constants;     // co_constants
 
+        public byte[] lnotab;
+        public int firstlineno;
+
         public CodeObject(byte[] code)
         {
             ArgCount = 0;
@@ -244,14 +249,57 @@ namespace LanguageImplementation
     public class CodeObjectBuilder : CodeObject
     {
         public new CodeBuilder Code;
+        private int firstLine;
+        private int trackingLine;
+        private List<byte> lnotab_builder;
 
         public CodeObjectBuilder() : base(null)
         {
             Code = new CodeBuilder();
+            lnotab_builder = new List<byte>();
+            firstLine = -1;
+            trackingLine = -1;
+        }
+
+        private void advanceLineCounts(byte bytesAdded, int line_no)
+        {
+            if (firstLine == -1)
+            {
+                firstLine = line_no;
+                trackingLine = firstLine;
+                lnotab_builder.Add(bytesAdded);
+            }
+            else if (trackingLine != line_no)
+            {
+                int lineDiff = line_no - trackingLine;
+                while (lineDiff > 255)
+                {
+                    // Check out this jackass that has over 255 lines of nothing between
+                    // lines of code.
+                    // (that must be a hell of a comment block... I am going to assume)
+                    lnotab_builder.Add(255);
+                    lnotab_builder.Add(0);
+                    lineDiff -= 255;
+                }
+                lnotab_builder.Add((byte)lineDiff);
+                lnotab_builder.Add(bytesAdded);
+                trackingLine = line_no;
+            }
+            else
+            {
+                lnotab_builder[lnotab_builder.Count - 1] += bytesAdded;
+            }
+        }
+
+        private void advanceLineCounts(byte bytesAdded, ParserRuleContext context)
+        {
+            int line_no = context.Start.Line;
+            advanceLineCounts(bytesAdded, line_no);
         }
 
         /// <summary>
-        /// Add an instruction to the end of the active program.
+        /// Add an instruction to the end of the active program. It is assumed to not
+        /// correspond to actual user code and won't have line number matching.
         /// </summary>
         /// <param name="opcode">The instruction opcode</param>
         /// <param name="data">Opcode data.</param>
@@ -267,10 +315,42 @@ namespace LanguageImplementation
         /// Add an instruction to the end of the active program.
         /// </summary>
         /// <param name="opcode">The instruction opcode</param>
+        /// <param name="data">Opcode data.</param>
+        /// <param name="context">Parser context from which to infer line count information
+        /// from source</param>
+        /// <returns>The index of the NEXT instruction in the program.</returns>
+        public int AddInstruction(ByteCodes opcode, int data, ParserRuleContext context)
+        {
+            Code.AddByte((byte)opcode);
+            Code.AddUShort(data);
+
+            advanceLineCounts(3, context);
+            return Code.Count;
+        }
+
+        /// <summary>
+        /// Add a single-byte instruction to the end of the active program. It is assumed
+        /// to not correspond to actual user code and won't have line number matching.
+        /// </summary>
+        /// <param name="opcode">The instruction opcode</param>
         /// <returns>The index of the NEXT instruction in the program.</returns>
         public int AddInstruction(ByteCodes opcode)
         {
             Code.AddByte((byte)opcode);
+            return Code.Count;
+        }
+
+        /// <summary>
+        /// Add a single-byte instruction to the end of the active program. 
+        /// </summary>
+        /// <param name="opcode">The instruction opcode</param>
+        /// <param name="context">Parser context from which to infer line count information
+        /// from source</param>
+        /// <returns>The index of the NEXT instruction in the program.</returns>
+        public int AddInstruction(ByteCodes opcode, ParserRuleContext context)
+        {
+            Code.AddByte((byte)opcode);
+            advanceLineCounts(1, context);
             return Code.Count;
         }
 
@@ -295,6 +375,9 @@ namespace LanguageImplementation
                     newCodeObj.Constants[i] = asBuilder.Build();
                 }
             }
+
+            newCodeObj.firstlineno = firstlineno;
+            newCodeObj.lnotab = lnotab_builder.ToArray();
 
             return newCodeObj;
         }
