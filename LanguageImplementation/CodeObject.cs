@@ -253,12 +253,17 @@ namespace LanguageImplementation
         private int trackingLine;
         private List<byte> lnotab_builder;
 
+        // If true, will raise runtime exception for AddInstruction calls used that don't take context as argument.
+        // Sanity check for normal code building.
+        public bool AssertContextGiven;
+
         public CodeObjectBuilder() : base(null)
         {
             Code = new CodeBuilder();
             lnotab_builder = new List<byte>();
             firstLine = -1;
             trackingLine = -1;
+            AssertContextGiven = true;
         }
 
         private void advanceLineCounts(byte bytesAdded, int line_no)
@@ -269,9 +274,22 @@ namespace LanguageImplementation
                 trackingLine = firstLine;
                 lnotab_builder.Add(bytesAdded);
             }
+            else if(line_no < trackingLine)
+            {
+                // Somehow we went backwards on lines. This can happen when doing stuff
+                // like building loops. While I thought this was alarming, Python seems to
+                // just assume these advance lines are part of the current line. So I'll do
+                // the same until it becomes a problem.
+
+                // Same logic as else clause, for now. We're coding it special
+                // and separate so we can insert a blurb.
+                // throw new Exception("Told to advanced backwards in source line count");
+                lnotab_builder[lnotab_builder.Count - 1] += bytesAdded;
+            }
             else if (trackingLine != line_no)
             {
                 int lineDiff = line_no - trackingLine;
+
                 while (lineDiff > 255)
                 {
                     // Check out this jackass that has over 255 lines of nothing between
@@ -306,6 +324,10 @@ namespace LanguageImplementation
         /// <returns>The index of the NEXT instruction in the program.</returns>
         public int AddInstruction(ByteCodes opcode, int data)
         {
+            if(AssertContextGiven)
+            {
+                throw new Exception("AddInstruction called without context");
+            }
             Code.AddByte((byte)opcode);
             Code.AddUShort(data);
             return Code.Count;
@@ -336,6 +358,10 @@ namespace LanguageImplementation
         /// <returns>The index of the NEXT instruction in the program.</returns>
         public int AddInstruction(ByteCodes opcode)
         {
+            if (AssertContextGiven)
+            {
+                throw new Exception("AddInstruction called without context");
+            }
             Code.AddByte((byte)opcode);
             return Code.Count;
         }
@@ -376,7 +402,7 @@ namespace LanguageImplementation
                 }
             }
 
-            newCodeObj.firstlineno = firstlineno;
+            newCodeObj.firstlineno = firstLine;
             newCodeObj.lnotab = lnotab_builder.ToArray();
 
             return newCodeObj;

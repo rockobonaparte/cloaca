@@ -86,6 +86,7 @@ namespace CloacaInterpreter
                     // just making our own no-op __init__ for now.
                     // TODO: Replace with a wrapped default when WrappedCodeObject is freely interchangable with CodeObject
                     var initBuilder = new CodeObjectBuilder();
+                    initBuilder.AssertContextGiven = false;
                     initBuilder.AddInstruction(ByteCodes.LOAD_CONST, 0);
                     initBuilder.Constants.Add(null);
                     initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);

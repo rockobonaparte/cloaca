@@ -271,7 +271,7 @@ namespace LanguageImplementation
                 }
                 lastLineNumber = currentLineNumber;
                 bytesIntoLine += cursor - cursorBefore;
-                if(lnotab_i < codeObject.lnotab.Length && codeObject.lnotab[lnotab_i] <= bytesIntoLine)
+                if(lnotab_i < codeObject.lnotab.Length - 1 && codeObject.lnotab[lnotab_i] <= bytesIntoLine)
                 {
                     lnotab_i += 1;
                     currentLineNumber += codeObject.lnotab[lnotab_i];
@@ -279,7 +279,7 @@ namespace LanguageImplementation
                     bytesIntoLine = 0;
 
                     // Fast-forward through huge whitespace blocks
-                    while (lnotab_i < codeObject.lnotab.Length && codeObject.lnotab[lnotab_i] == 0)
+                    while (lnotab_i < codeObject.lnotab.Length - 1 && codeObject.lnotab[lnotab_i] == 0)
                     {
                         lnotab_i += 1;
                         currentLineNumber += codeObject.lnotab[lnotab_i];

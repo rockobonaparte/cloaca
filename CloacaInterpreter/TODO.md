@@ -126,6 +126,8 @@ co_lnotab is a byte dump of alternately:
 1. The number of code bytes for the current line of code
 2. how far ahead the next line of code is from the current line
 
+https://svn.python.org/projects/python/branches/pep-0384/Objects/lnotab_notes.txt
+
 
 
 https://docs.python.org/3/library/inspect.html
