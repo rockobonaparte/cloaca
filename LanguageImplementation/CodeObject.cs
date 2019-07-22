@@ -233,6 +233,35 @@ namespace LanguageImplementation
             Names = new List<string>();
         }
 
+
+        /// <summary>
+        /// Gets line of code corresponding to the given position in byte code
+        /// </summary>
+        /// <param name="bytePosition">The position in the byte code to translate to a source file line.</param>
+        /// <returns>The source line corresponding to the given byte code position, or -1 if no
+        /// mapping is available.</returns>
+        public int GetCodeLine(int bytePosition)
+        {
+            if(lnotab.Length == 0)
+            {
+                return -1;
+            }
+            int currentLine = firstlineno;
+            int byteCount = 0;
+            for(int i = 0; i < lnotab.Length; i += 2)
+            {
+                if(byteCount >= bytePosition)
+                {
+                    return currentLine;
+                }
+                byteCount += lnotab[i];
+                currentLine += lnotab[i + 1];
+            }
+
+            // Fallback, last byte code of program. Return current line now.
+            return currentLine;
+        }
+
         public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             foreach(var continuation in interpreter.CallInto(context, this, args))
