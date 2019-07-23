@@ -74,6 +74,7 @@
     <Compile Include="DataTypes\PyClass.cs" />
     <Compile Include="DataTypes\PyMethod.cs" />
     <Compile Include="DataTypes\PyObject.cs" />
+    <Compile Include="DataTypes\PyTraceback.cs" />
     <Compile Include="DataTypes\PyTuple.cs" />
     <Compile Include="DataTypes\PyTypeObject.cs" />
     <Compile Include="Dis.cs" />

@@ -961,9 +961,15 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.RAISE_VARARGS:
                         {
-                            // Assuming that the parameter is always one for now.
                             context.Cursor += 1;
+
+                            // Assuming that the parameter is always one for now.
                             var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
+                            if(argCountIgnored != 1)
+                            {
+                                throw new NotImplementedException("RAISE_VARARGS with none-one fields not yet implemented.");
+                            }
+
                             var theException = (PyObject) context.DataStack.Pop();
 
                             // Make sure it's an exception!
