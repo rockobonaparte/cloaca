@@ -10,6 +10,20 @@ namespace LanguageImplementation.DataTypes.Exceptions
     /// </summary>
     public class PyException : PyObject
     {
+        public const string TracebackName = "tb";
+
+        public PyTraceback tb
+        {
+            get
+            {
+                return (PyTraceback)__dict__[TracebackName];
+            }
+            set
+            {
+                __dict__[TracebackName] = value;
+            }
+        }
+
         public string Message
         {
             get
@@ -28,6 +42,8 @@ namespace LanguageImplementation.DataTypes.Exceptions
         public PyException()
         {
             __class__ = PyExceptionClass.Instance;
+            tb = null;
+            Message = null;
         }
 
         /// <summary>
@@ -38,6 +54,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         {
             __class__ = PyExceptionClass.Instance;
             PyTypeObject.DefaultNewPyObject(this, PyExceptionClass.Instance);
+            tb = null;
             Message = message;
         }
 
@@ -53,6 +70,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         public void PythonPyExceptionConstructor(PyException self, string message)
         {
             Message = message;
+            tb = null;
         }
     }
 
@@ -117,7 +135,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         {
             Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
             var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;
-            this.__new__ = new WrappedCodeObject("__init__", __new__methodInfo, this);
+            this.__new__ = new WrappedCodeObject("__new__", __new__methodInfo, this);
 
             Expression<Action<PyTypeObject>> __init__expr = instance => __init__impl(null, null);
             var __init__methodInfo = ((MethodCallExpression)__init__expr.Body).Method;

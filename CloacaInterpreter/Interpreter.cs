@@ -979,6 +979,22 @@ namespace CloacaInterpreter
                                 theException = new PyException("exceptions must derive from BaseException");
                             }
 
+                            var offendingFrame = context.callStack.Peek();
+                            if(theException.__dict__.ContainsKey(PyException.TracebackName))
+                            {
+                                theException.__dict__[PyException.TracebackName] =
+                                    new PyTraceback((PyTraceback)theException.__dict__[PyException.TracebackName],
+                                    offendingFrame,
+                                    offendingFrame.Program.GetCodeLine(context.Cursor));
+                            }
+                            else
+                            {
+                                theException.__dict__.Add(PyException.TracebackName,
+                                    new PyTraceback(null,
+                                    offendingFrame,
+                                    offendingFrame.Program.GetCodeLine(context.Cursor)));
+                            }
+
                             context.Cursor += 2;
                             context.CurrentException = theException;
 

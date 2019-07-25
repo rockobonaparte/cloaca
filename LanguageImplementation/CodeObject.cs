@@ -248,7 +248,7 @@ namespace LanguageImplementation
             }
             int currentLine = firstlineno;
             int byteCount = 0;
-            for(int i = 0; i < lnotab.Length; i += 2)
+            for(int i = 0; i < lnotab.Length - 1; i += 2)
             {
                 if(byteCount >= bytePosition)
                 {
