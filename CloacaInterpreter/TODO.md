@@ -1,10 +1,10 @@
 ﻿Cloaca TODO
 ===========
 
-Current work is on handling raising subclasses of Exception. Internals are expecting
-PyException but you get a PyObject. It looks like CPython works on PyObject so we should
-consider switching to that kind of mechanism too. CPython just makes sure the PyObject is
-derived from BaseException. We want to explore that class and understand it.
+Immediate next work is adding a separate test bench for a basic exception generation scenario that
+hardens against specific exception stack trace output and nitpicks. We can isolate it there with some
+notion that it will carry to the other scenarios correctly. Use this to make sure the string output
+makes sense, and then start to morph it more into how Python generates it normally.
 
 Need to implement LOAD_NAME/STORE_NAME
 
@@ -89,14 +89,14 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * Import Unity stuff?
 * Exceptions
   * AssertionError
-  * try-catch-finally (else?)
+  * [DONE] try-catch-finally (else?)
   * Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
   * assert function
   * raise from (exception chaining)
   * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
        in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
-  * Raise from class
+  * [DONE] Raise from class
 * See if you can use that REPL helper module directly.
 
 
