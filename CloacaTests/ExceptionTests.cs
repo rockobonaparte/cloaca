@@ -200,4 +200,40 @@ namespace CloacaTests
             Assert.That(a, Is.EqualTo(new BigInteger(1)));
         }
     }
+
+    /// <summary>
+    /// Same test case over and over, but we will assert different subcategories.
+    /// </summary>
+    [TestFixture]
+    public class ExceptionInternalsTests : RunCodeTest
+    {
+        private EscapedPyException escaped;
+
+        [SetUp]
+        public void RunMainTestCase()
+        {
+            try
+            {
+                var ignored = runProgram(
+                    "class MeowException(Exception):\n" +
+                    "  def __init__(self, number):\n" +
+                    "    self.number = number\n" +
+                    "\n" +
+                    "def meow_loudly():\n" +
+                    "   raise MeowException(1)\n" +
+                    "\n" +
+                    "meow_loudly()\n", new Dictionary<string, object>(), 1);
+            }
+            catch(EscapedPyException e)
+            {
+                escaped = e;
+            }            
+        }
+
+        [Test]
+        public void SanityTest()
+        {
+            Assert.That(escaped, Is.Not.Null);
+        }
+    }
 }

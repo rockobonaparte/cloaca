@@ -51,7 +51,17 @@
 
         public string DumpStack()
         {
-            string currentTrace = "Line " + Frame.Program.GetCodeLine(Frame.Cursor);
+            /*
+                >>> def raise_stuff():
+                ...   raise Exception("Derp")
+                ...
+                >>> raise_stuff()
+                Traceback (most recent call last):
+                  File "<stdin>", line 1, in <module>
+                  File "<stdin>", line 2, in raise_stuff
+                Exception: Derp
+            */
+            string currentTrace = "\tline " + Frame.Program.GetCodeLine(Frame.Cursor);
             if(Next != null)
             {
                 return Next.DumpStack() + "\n" + currentTrace;

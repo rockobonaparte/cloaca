@@ -262,7 +262,8 @@ namespace CloacaInterpreter
                 //}
 
                 // Are we unwinding from an exception?
-                while(context.CurrentException != null && context.BlockStack.Peek().Opcode != ByteCodes.SETUP_FINALLY)
+                while(context.CurrentException != null && 
+                    (context.BlockStack.Count > 0 && context.BlockStack.Peek().Opcode != ByteCodes.SETUP_FINALLY))
                 {
                     if (context.BlockStack.Count > 0)
                     {

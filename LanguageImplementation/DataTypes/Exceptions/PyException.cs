@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace LanguageImplementation.DataTypes.Exceptions
 {
@@ -84,7 +85,15 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
         private static string extractExceptionMessage(PyObject exc)
         {
-            return (string) exc.__dict__["message"];
+            var b = new StringBuilder();
+            b.AppendLine("Traceback (most recent call list):");
+            var tb = (PyTraceback)exc.__dict__[PyException.TracebackName];
+            b.AppendLine(tb.DumpStack());
+            if (exc.__dict__.ContainsKey("message"))
+            {
+                b.AppendLine((string) exc.__dict__["message"]);
+            }
+            return b.ToString();
         }
 
         /// <summary>
