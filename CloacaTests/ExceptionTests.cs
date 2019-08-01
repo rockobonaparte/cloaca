@@ -235,5 +235,19 @@ namespace CloacaTests
         {
             Assert.That(escaped, Is.Not.Null);
         }
+
+        [Test]
+        public void TraceBackObject()
+        {
+            Assert.That(escaped.OriginalException.__dict__, Contains.Key(PyException.TracebackName));
+            var tb = escaped.OriginalException.__dict__[PyException.TracebackName];
+        }
+
+        [Test]
+        public void Message()
+        {
+            Assert.That(escaped.Message, Is.EqualTo("Traceback (most recent call list):\r\n" +
+                                                    "\tline 6, in meow_loudly\r\n"));
+        }
     }
 }

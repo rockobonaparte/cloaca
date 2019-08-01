@@ -81,7 +81,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
     /// </summary>
     public class EscapedPyException : Exception
     {
-        public PyObject originalException;
+        public PyObject OriginalException;
 
         private static string extractExceptionMessage(PyObject exc)
         {
@@ -102,7 +102,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         /// <param name="escaped">The exception that escaped.</param>
         public EscapedPyException(PyObject escaped) : base(extractExceptionMessage(escaped))
         {
-            originalException = escaped;
+            OriginalException = escaped;
         }
     }
 
