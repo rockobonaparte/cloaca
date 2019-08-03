@@ -88,10 +88,10 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * clr library for .NET stuff
   * Import Unity stuff?
 * Exceptions
-  * AssertionError
   * [DONE] try-catch-finally (else?)
-  * Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
-  * assert function
+  * [DONE-ish] Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
+  * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
+    * AssertionError
   * raise from (exception chaining)
   * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
