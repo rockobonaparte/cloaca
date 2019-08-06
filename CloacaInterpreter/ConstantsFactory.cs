@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using LanguageImplementation.DataTypes;
 
 using Antlr4.Runtime.Tree;
 
@@ -43,7 +44,7 @@ namespace CloacaInterpreter
             {
                 return Decimal.Parse(rawText);
             }
-            return BigInteger.Parse(context.GetText());
+            return new PyInteger(BigInteger.Parse(context.GetText()));
         }
 
         public static bool CreateBool(IParseTree context)

@@ -71,6 +71,7 @@
     <Compile Include="DataTypes\Exceptions\PyException.cs" />
     <Compile Include="DataTypes\Exceptions\StandardExceptions.cs" />
     <Compile Include="DataTypes\NoneType.cs" />
+    <Compile Include="DataTypes\PyInteger.cs" />
     <Compile Include="DataTypes\PyClass.cs" />
     <Compile Include="DataTypes\PyMethod.cs" />
     <Compile Include="DataTypes\PyObject.cs" />

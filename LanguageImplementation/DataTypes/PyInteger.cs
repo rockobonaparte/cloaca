@@ -52,6 +52,24 @@ namespace LanguageImplementation.DataTypes
         {
             number = 0;
         }
+
+        public override bool Equals(object obj)
+        {
+            var asPyInt = obj as PyInteger;
+            if(asPyInt == null)
+            {
+                return false;
+            }
+            else
+            {
+                return asPyInt.number == number;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return number.GetHashCode();
+        }
     }
 
     public class ClassMember : System.Attribute
