@@ -8,8 +8,6 @@ namespace LanguageImplementation.DataTypes
     {
         public string Name;
         public IPyCallable __init__;
-        private IInterpreter interpreter;
-        private FrameContext context;
 
         /// <summary>
         /// A generic __new__ implementation for embedded class to create various kinds of PyObject;
@@ -68,7 +66,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyTypeObject(string name, CodeObject __init__, IInterpreter interpreter, FrameContext context)
+        public PyTypeObject(string name, CodeObject __init__)
         {
             __dict__ = new Dictionary<string, object>();
             Name = name;

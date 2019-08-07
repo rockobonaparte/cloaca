@@ -24,7 +24,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10 * (2 + 4) / 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(20) }
+                { "a", new PyInteger(20) }
             }), 1);
         }
 

@@ -57,5 +57,34 @@ namespace LanguageImplementation.DataTypes
         {
             __dict__ = new Dictionary<string, object>();
         }
+
+        public PyObject(PyTypeObject fromType)
+        {
+            // TODO: Determine if there needs to be additional properties.
+            __dict__ = fromType.__dict__;
+        }
+
+        public IEnumerable<SchedulingInfo> InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
+        {
+            if (__dict__.ContainsKey(name))
+            {
+                IPyCallable toCall = __dict__[name] as IPyCallable;
+                if (toCall == null)
+                {
+                    throw new Exception(name + " is not callable.");
+                }
+                PyObject[] argsWithSelf = new PyObject[args.Length + 1];
+                argsWithSelf[0] = this;
+                Array.Copy(args, 0, argsWithSelf, 1, args.Length);
+                foreach (var continuation in toCall.Call(interpreter, context, argsWithSelf))
+                {
+                    yield return continuation;
+                }
+            }
+            else
+            {
+
+            }
+        }
     }
 }

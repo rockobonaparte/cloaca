@@ -100,7 +100,7 @@ namespace CloacaInterpreter
                 __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
-            var pyclass = new PyClass(name, __init__, this, context, bases);
+            var pyclass = new PyClass(name, __init__, bases);
 
             foreach(var classMemberName in classFrame.Names)
             {
@@ -295,7 +295,25 @@ namespace CloacaInterpreter
                         {
                             dynamic right = context.DataStack.Pop();
                             dynamic left = context.DataStack.Pop();
-                            context.DataStack.Push(left + right);
+
+                            var leftInt = left as PyObject;
+                            var rightInt = right as PyObject;
+
+                            PyObject returned = null;
+                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt }))
+                            {
+                                if (continuation is ReturnValue)
+                                {
+                                    var asReturnValue = continuation as ReturnValue;
+                                    returned = (PyObject) asReturnValue.Returned;
+                                    break;
+                                }
+                                else
+                                {
+                                    yield return continuation;
+                                }
+                            }
+                            context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
                         break;
@@ -303,7 +321,25 @@ namespace CloacaInterpreter
                         {
                             dynamic right = context.DataStack.Pop();
                             dynamic left = context.DataStack.Pop();
-                            context.DataStack.Push(left - right);
+
+                            var leftInt = left as PyObject;
+                            var rightInt = right as PyObject;
+
+                            PyObject returned = null;
+                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightInt }))
+                            {
+                                if (continuation is ReturnValue)
+                                {
+                                    var asReturnValue = continuation as ReturnValue;
+                                    returned = (PyObject)asReturnValue.Returned;
+                                    break;
+                                }
+                                else
+                                {
+                                    yield return continuation;
+                                }
+                            }
+                            context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
                         break;
@@ -311,7 +347,25 @@ namespace CloacaInterpreter
                         {
                             dynamic right = context.DataStack.Pop();
                             dynamic left = context.DataStack.Pop();
-                            context.DataStack.Push(left * right);
+
+                            var leftInt = left as PyObject;
+                            var rightInt = right as PyObject;
+
+                            PyObject returned = null;
+                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightInt }))
+                            {
+                                if (continuation is ReturnValue)
+                                {
+                                    var asReturnValue = continuation as ReturnValue;
+                                    returned = (PyObject)asReturnValue.Returned;
+                                    break;
+                                }
+                                else
+                                {
+                                    yield return continuation;
+                                }
+                            }
+                            context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
                         break;
@@ -319,7 +373,25 @@ namespace CloacaInterpreter
                         {
                             dynamic right = context.DataStack.Pop();
                             dynamic left = context.DataStack.Pop();
-                            context.DataStack.Push(left / right);
+
+                            var leftInt = left as PyObject;
+                            var rightInt = right as PyObject;
+
+                            PyObject returned = null;
+                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__div__", new PyObject[] { rightInt }))
+                            {
+                                if (continuation is ReturnValue)
+                                {
+                                    var asReturnValue = continuation as ReturnValue;
+                                    returned = (PyObject)asReturnValue.Returned;
+                                    break;
+                                }
+                                else
+                                {
+                                    yield return continuation;
+                                }
+                            }
+                            context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
                         break;
