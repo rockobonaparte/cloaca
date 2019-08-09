@@ -42,9 +42,9 @@ namespace CloacaInterpreter
             string rawText = context.GetText();
             if (DecimalPointNumberRegex.Match(rawText).Success)
             {
-                return Decimal.Parse(rawText);
+                return new PyFloat(Decimal.Parse(rawText));
             }
-            return new PyInteger(BigInteger.Parse(context.GetText()));
+            return new PyInteger(PyInteger.Parse(context.GetText()));
         }
 
         public static bool CreateBool(IParseTree context)

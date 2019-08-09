@@ -33,7 +33,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10.0 * (2.0 + 4.0) / 3.0\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new decimal(20.0) }
+                { "a", new PyFloat(20.0) }
             }), 1);
         }
 
@@ -78,7 +78,7 @@ namespace CloacaTests
                 "h = a <> 10\n",
                 new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(10) },
+                { "a", new PyInteger(10) },
                 { "b", false },
                 { "c", true },
                 { "d", false },
@@ -110,11 +110,11 @@ namespace CloacaTests
                 "c = a is not None\n",
             new Dictionary<string, object>
             {
-                { "a", new BigInteger(10) }
+                { "a", new PyInteger(10) }
             },
             new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(10) },
+                { "a", new PyInteger(10) },
                 { "b", false },
                 { "c", true }
             }), 1);
@@ -129,8 +129,8 @@ namespace CloacaTests
                 "wait\n" +
                 "b = a + 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(20) },
-                { "b", new BigInteger(23) }
+                { "a", new PyInteger(20) },
+                { "b", new PyInteger(23) }
             }), 2);
         }
 
@@ -143,7 +143,7 @@ namespace CloacaTests
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(2) }
+                { "a", new PyInteger(2) }
             }), 1);
         }
 
@@ -156,7 +156,7 @@ namespace CloacaTests
                 "if a == 10:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(9) }
+                { "a", new PyInteger(9) }
             }), 1);
         }
 
@@ -169,7 +169,7 @@ namespace CloacaTests
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(11) }
+                { "a", new PyInteger(11) }
             }), 1);
         }
 
@@ -181,7 +181,7 @@ namespace CloacaTests
                 "while a < 3:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new BigInteger(3) }
+                { "a", new PyInteger(3) }
             }), 1);
         }
 
@@ -198,20 +198,20 @@ namespace CloacaTests
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new BigInteger(0) }
+                    { "a", new PyInteger(0) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(103) }
+                    { "a", new PyInteger(103) }
                 }), 1);
 
             // Skips the while loop, runs the else clause
             runBasicTest(program,
                 new Dictionary<string, object> 
                 {
-                    { "a", new BigInteger(10) }
+                    { "a", new PyInteger(10) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(110) }
+                    { "a", new PyInteger(110) }
                 }), 1);
         }
 
@@ -230,28 +230,28 @@ namespace CloacaTests
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new BigInteger(10) }
+                    { "a", new PyInteger(10) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(2) }
+                    { "a", new PyInteger(2) }
                 }), 1);
 
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new BigInteger(11) }
+                    { "a", new PyInteger(11) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(4) }
+                    { "a", new PyInteger(4) }
                 }), 1);
 
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new BigInteger(12) }
+                    { "a", new PyInteger(12) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(13) }
+                    { "a", new PyInteger(13) }
                 }), 1);
         }
 
@@ -272,7 +272,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(1) }
+                    { "a", new PyInteger(1) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -288,7 +288,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(1) }
+                    { "a", new PyInteger(1) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -305,7 +305,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(2) }
+                    { "a", new PyInteger(2) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -322,7 +322,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(2) }
+                    { "a", new PyInteger(2) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -337,7 +337,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(4) }
+                    { "a", new PyInteger(4) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -353,7 +353,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new BigInteger(4) }
+                    { "a", new PyInteger(4) }
                 }), 1, new string[] { "foo" });
         }
     }
