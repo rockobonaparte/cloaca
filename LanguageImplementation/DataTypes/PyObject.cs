@@ -83,7 +83,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-
+                throw new NotImplementedException("This object does not implement " + name);
             }
         }
     }

@@ -140,5 +140,10 @@ namespace LanguageImplementation.DataTypes
         {
             return number.GetHashCode();
         }
+
+        public override string ToString()
+        {
+            return number.ToString();
+        }
     }
 }

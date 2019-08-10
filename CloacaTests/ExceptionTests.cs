@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes.Exceptions;
+using LanguageImplementation.DataTypes;
 using LanguageImplementation;
 
 namespace CloacaTests
@@ -33,8 +34,8 @@ namespace CloacaTests
                 "except:\n" +
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(10)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(10)));
         }
 
         [Test]
@@ -47,8 +48,8 @@ namespace CloacaTests
                 "except Exception:\n" +
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(10)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(10)));
         }
 
         [Test]
@@ -76,8 +77,8 @@ namespace CloacaTests
                 "except Exception as e:\n" +
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(10)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(10)));
         }
         [Test]
         public void TryExceptFinally()
@@ -91,8 +92,8 @@ namespace CloacaTests
                 "finally:\n" +
                 "  a = a + 1\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(11)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(11)));
         }
 
         [Test]
@@ -111,8 +112,8 @@ namespace CloacaTests
               }, "Hello, World!");
 
             var variables = new VariableMultimap(runContext);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(1)));
         }
 
         [Test]
@@ -127,8 +128,8 @@ namespace CloacaTests
                 "else:\n" +
                 "  a = a + 100\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(101)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(101)));
         }
 
         [Test]
@@ -145,8 +146,8 @@ namespace CloacaTests
                 "finally:\n" +
                 "  a = a + 1000\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1101)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(1101)));
         }
 
         [Test]
@@ -160,7 +161,7 @@ namespace CloacaTests
                 "except Exception as e:\n" +
                 "  a = str(e)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
+            var a = (PyInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo("Pass"));
         }
 
@@ -177,8 +178,8 @@ namespace CloacaTests
                 "except MeowException as e:\n" +
                 "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(1)));
         }
 
         [Test]
@@ -196,8 +197,8 @@ namespace CloacaTests
                 "except MeowException as e:\n" +
                 "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var a = (BigInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new BigInteger(1)));
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(new PyInteger(1)));
         }
     }
 

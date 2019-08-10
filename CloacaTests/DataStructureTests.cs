@@ -35,7 +35,7 @@ namespace CloacaTests
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<string, object> {
                 { "foo", "bar" },
-                { "number", new BigInteger(1) }
+                { "number", new PyInteger(1) }
             }));
         }
 
@@ -48,11 +48,11 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<string, object> {
-                { "foo", new BigInteger(1) },
-                { "bar", new BigInteger(200) }
+                { "foo", new PyInteger(1) },
+                { "bar", new PyInteger(200) }
             }));
             Assert.That(variables.ContainsKey("b"));
-            Assert.That(variables["b"], Is.EqualTo(new BigInteger(1)));
+            Assert.That(variables["b"], Is.EqualTo(new PyInteger(1)));
         }
 
         [Test]
@@ -63,9 +63,9 @@ namespace CloacaTests
                 "a[1] = 200\n", new Dictionary<string, object>(), 1);
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
-            Assert.That(variables["a"], Is.EquivalentTo(new List<object> { new BigInteger(1), new BigInteger(200) }));
+            Assert.That(variables["a"], Is.EquivalentTo(new List<object> { new PyInteger(1), new PyInteger(200) }));
             Assert.That(variables.ContainsKey("b"));
-            Assert.That(variables["b"], Is.EqualTo(new BigInteger(1)));
+            Assert.That(variables["b"], Is.EqualTo(new PyInteger(1)));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var tuple = (PyTuple) variables["a"];
-            Assert.That(tuple.values, Is.EquivalentTo(new object[] { "foo", new BigInteger(1) }));
+            Assert.That(tuple.values, Is.EquivalentTo(new object[] { "foo", new PyInteger(1) }));
         }
 
         [Test]
@@ -110,7 +110,7 @@ namespace CloacaTests
             Assert.That(variables.ContainsKey("a"));
             List<object> referenceList = new List<object>();
             referenceList.Add("foo");
-            referenceList.Add(new BigInteger(1));
+            referenceList.Add(new PyInteger(1));
             var list = (List<object>)variables["a"];
             Assert.That(list, Is.EquivalentTo(referenceList));
         }

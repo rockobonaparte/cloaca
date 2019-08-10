@@ -567,57 +567,135 @@ namespace CloacaInterpreter
                             var compare_op = (CompareOps)context.Program.Code.GetUShort(context.Cursor);
                             dynamic right = context.DataStack.Pop();
                             dynamic left = context.DataStack.Pop();
-                            switch (compare_op)
+
+                            if (left is PyObject && right is PyObject)
                             {
-                                case CompareOps.Lt:
-                                    context.DataStack.Push(left < right);
-                                    break;
-                                case CompareOps.Gt:
-                                    context.DataStack.Push(left > right);
-                                    break;
-                                case CompareOps.Eq:
-                                    context.DataStack.Push(left == right);
-                                    break;
-                                case CompareOps.Gte:
-                                    context.DataStack.Push(left >= right);
-                                    break;
-                                case CompareOps.Lte:
-                                    context.DataStack.Push(left <= right);
-                                    break;
-                                case CompareOps.LtGt:
-                                    context.DataStack.Push(left < right || left > right);
-                                    break;
-                                case CompareOps.Ne:
-                                    context.DataStack.Push(left != right);
-                                    break;
-                                case CompareOps.In:
-                                    throw new NotImplementedException("'In' comparison operation");
-                                case CompareOps.NotIn:
-                                    throw new NotImplementedException("'Not In' comparison operation");
-                                case CompareOps.Is:
-                                    context.DataStack.Push(left.GetType() == right.GetType() && left == right);
-                                    break;
-                                case CompareOps.IsNot:
-                                    context.DataStack.Push(left.GetType() != right.GetType() || left != right);
-                                    break;
-                                case CompareOps.ExceptionMatch:
-                                    {
-                                        var rightType = right as PyClass;
-                                        if(rightType == null || !Builtins.issubclass(rightType, PyExceptionClass.Instance))
+                                var leftObj = left as PyObject;
+                                var rightObj = right as PyObject;
+                                string compareFunc = null;
+                                switch (compare_op)
+                                {
+                                    case CompareOps.Lt:
+                                        compareFunc = "__lt__";
+                                        break;
+                                    case CompareOps.Gt:
+                                        compareFunc = "__gt__";
+                                        break;
+                                    case CompareOps.Eq:
+                                        compareFunc = "__eq__";
+                                        break;
+                                    case CompareOps.Ge:
+                                        compareFunc = "__ge__";
+                                        break;
+                                    case CompareOps.Le:
+                                        compareFunc = "__le__";
+                                        break;
+                                    case CompareOps.LtGt:
+                                        compareFunc = "__ltgt__";
+                                        break;
+                                    case CompareOps.Ne:
+                                        compareFunc = "__ne__";
+                                        break;
+                                    case CompareOps.In:
+                                        throw new NotImplementedException("'In' comparison operation");
+                                    case CompareOps.NotIn:
+                                        throw new NotImplementedException("'Not In' comparison operation");
+                                    case CompareOps.Is:
+                                        context.DataStack.Push(left.GetType() == right.GetType() && left == right);
+                                        break;
+                                    case CompareOps.IsNot:
+                                        context.DataStack.Push(left.GetType() != right.GetType() || left != right);
+                                        break;
+                                    case CompareOps.ExceptionMatch:
                                         {
-                                            // Well, now we're raising a type error!
-                                            // TypeError: catching classes that do not inherit from BaseException is not allowed
-                                            context.CurrentException = new TypeError("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                            var rightType = right as PyClass;
+                                            if (rightType == null || !Builtins.issubclass(rightType, PyExceptionClass.Instance))
+                                            {
+                                                // Well, now we're raising a type error!
+                                                // TypeError: catching classes that do not inherit from BaseException is not allowed
+                                                context.CurrentException = new TypeError("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                            }
+                                            else
+                                            {
+                                                var leftObject = left as PyObject;
+                                                context.DataStack.Push(leftObject.__class__ == right);
+                                            }
+                                            break;
+                                        }
+                                    default:
+                                        throw new Exception("Unexpected comparison operation opcode: " + compare_op);
+                                }
+                                if (compareFunc != null)
+                                {
+                                    foreach (var continuation in leftObj.InvokeFromDict(this, context, compareFunc, new PyObject[] { rightObj }))
+                                    {
+                                        if (continuation is ReturnValue)
+                                        {
+                                            var asReturnValue = continuation as ReturnValue;
+                                            context.DataStack.Push((bool)asReturnValue.Returned);
+                                            break;
                                         }
                                         else
                                         {
-                                            var leftObject = left as PyObject;
-                                            context.DataStack.Push(leftObject.__class__ == right);
+                                            yield return continuation;
                                         }
-                                        break;
                                     }
-                                default:
-                                    throw new Exception("Unexpected comparison operation opcode: " + compare_op);
+                                }
+                            }
+                            else
+                            {
+                                switch (compare_op)
+                                {
+                                    case CompareOps.Lt:
+                                        context.DataStack.Push(left < right);
+                                        break;
+                                    case CompareOps.Gt:
+                                        context.DataStack.Push(left > right);
+                                        break;
+                                    case CompareOps.Eq:
+                                        context.DataStack.Push(left == right);
+                                        break;
+                                    case CompareOps.Ge:
+                                        context.DataStack.Push(left >= right);
+                                        break;
+                                    case CompareOps.Le:
+                                        context.DataStack.Push(left <= right);
+                                        break;
+                                    case CompareOps.LtGt:
+                                        context.DataStack.Push(left < right || left > right);
+                                        break;
+                                    case CompareOps.Ne:
+                                        context.DataStack.Push(left != right);
+                                        break;
+                                    case CompareOps.In:
+                                        throw new NotImplementedException("'In' comparison operation");
+                                    case CompareOps.NotIn:
+                                        throw new NotImplementedException("'Not In' comparison operation");
+                                    case CompareOps.Is:
+                                        context.DataStack.Push(left.GetType() == right.GetType() && left == right);
+                                        break;
+                                    case CompareOps.IsNot:
+                                        context.DataStack.Push(left.GetType() != right.GetType() || left != right);
+                                        break;
+                                    case CompareOps.ExceptionMatch:
+                                        {
+                                            var rightType = right as PyClass;
+                                            if (rightType == null || !Builtins.issubclass(rightType, PyExceptionClass.Instance))
+                                            {
+                                                // Well, now we're raising a type error!
+                                                // TypeError: catching classes that do not inherit from BaseException is not allowed
+                                                context.CurrentException = new TypeError("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                            }
+                                            else
+                                            {
+                                                var leftObject = left as PyObject;
+                                                context.DataStack.Push(leftObject.__class__ == right);
+                                            }
+                                            break;
+                                        }
+                                    default:
+                                        throw new Exception("Unexpected comparison operation opcode: " + compare_op);
+                                }
                             }
                         }
                         context.Cursor += 2;
@@ -970,14 +1048,14 @@ namespace CloacaInterpreter
                             else if(container is List<object>)
                             {
                                 var asList = (List<object>)container;
-                                var indexAsBigInt = (BigInteger)index;
-                                context.DataStack.Push(asList[(int) indexAsBigInt]);
+                                var indexAsPyInt = (PyInteger)index;
+                                context.DataStack.Push(asList[(int) indexAsPyInt.number]);
                             }
                             else if(container is PyTuple)
                             {
                                 var asTuple = (PyTuple)container;
-                                var indexAsBigInt = (BigInteger)index;
-                                context.DataStack.Push(asTuple.values[(int) indexAsBigInt]);
+                                var indexAsPyInt = (PyInteger)index;
+                                context.DataStack.Push(asTuple.values[(int) indexAsPyInt.number]);
                             }
                             else
                             {
@@ -987,8 +1065,29 @@ namespace CloacaInterpreter
                         break;
                     case ByteCodes.STORE_SUBSCR:
                         {
+                            // TODO: Stop checking between BigInt and friends once data types are all objects
+                            // TODO: Raw index conversion to int should probably be moved to its more local section
                             context.Cursor += 1;
                             var rawIndex = context.DataStack.Pop();
+                            int convertedIndex = 0;
+                            var idxAsPyInt = rawIndex as PyInteger;
+                            if(idxAsPyInt != null)
+                            {
+                                convertedIndex = (int) idxAsPyInt.number;
+                            }
+                            else
+                            {
+                                if(rawIndex is BigInteger)
+                                {
+                                    convertedIndex = (int)rawIndex;
+                                }
+                                else
+                                {
+                                    // might not matter...
+                                    // throw new InvalidCastException("Cannot convert subscript index data type to int: " + rawIndex.GetType());
+                                }
+                            }
+
                             var rawContainer = context.DataStack.Pop();
                             var toStore = context.DataStack.Pop();
 
@@ -1007,8 +1106,7 @@ namespace CloacaInterpreter
                             else if (rawContainer is List<object>)
                             {
                                 var asList = (List<object>)rawContainer;
-                                var indexAsBigInt = (BigInteger)rawIndex;
-                                asList[(int)indexAsBigInt] = toStore;
+                                asList[convertedIndex] = toStore;
                             }
                             else if (rawContainer is PyTuple)
                             {

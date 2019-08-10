@@ -134,8 +134,8 @@
         Ne = 1,
         Lt = 3,
         Gt = 4,
-        Lte = 5,
-        Gte = 6,
+        Le = 5,
+        Ge = 6,
         In = 7,
         Is = 8,         // This constant is accurate to Python disassembly
         IsNot = 9,      // This constant is accurate to Python disassembly

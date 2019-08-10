@@ -873,11 +873,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 break;
             case CloacaParser.COMP_OP_GTE:
                 ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Gte);
+                ActiveProgram.Code.AddUShort((ushort)CompareOps.Ge);
                 break;
             case CloacaParser.COMP_OP_LTE:
                 ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Lte);
+                ActiveProgram.Code.AddUShort((ushort)CompareOps.Le);
                 break;
             case CloacaParser.COMP_OP_LTGT:
                 ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);

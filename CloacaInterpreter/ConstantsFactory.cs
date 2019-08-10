@@ -44,7 +44,7 @@ namespace CloacaInterpreter
             {
                 return new PyFloat(Decimal.Parse(rawText));
             }
-            return new PyInteger(PyInteger.Parse(context.GetText()));
+            return new PyInteger(BigInteger.Parse(context.GetText()));
         }
 
         public static bool CreateBool(IParseTree context)
