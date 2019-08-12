@@ -1,18 +1,15 @@
 ﻿Cloaca TODO
 ===========
 
-Immediate next work is adding a separate test bench for a basic exception generation scenario that
-hardens against specific exception stack trace output and nitpicks. We can isolate it there with some
-notion that it will carry to the other scenarios correctly. Use this to make sure the string output
-makes sense, and then start to morph it more into how Python generates it normally.
-
-Need to implement LOAD_NAME/STORE_NAME
-
-Good stuff about LOAD_NAME and reference ordering
-https://stackoverflow.com/questions/20246523/how-references-to-variables-are-resolved-in-python_
-
-DeclareClassMember unit test shows the Names property in the interpreter having ["self", "self"] while
-ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up with that.
+Currently focusing on turning basic types into PyObjects. The interpreter loop and code generation need to
+get rid of their schizophrenic ways ot managing these data types. Some known issues:
+1. Array subscripts are inconsistent.
+2. Some attempts to consolidate lookups are messy.
+3. Where consolidation wasn't done, it's even messier!
+4. There amount of foreachs on continuations that happen now is obnoxious and it's time to investigate async-await
+5. PyFloat has not been implemented anywhere as near as PyInteger
+6. PyInteger itself isn't even finished!
+7. What's the dunder supposed to be for <>?
 
 * Strings (part 1)
   * [DONE] Parse strings
@@ -65,8 +62,8 @@ ActiveProgram.Names is ["a"] (which is what I expected). Figure out what's up wi
   * [DONE] Call functions
   * [DONE] Inheritance
   * Wrap data types as classes
-     *  Integer
-     *  Floating-Point
+     *  [In-progress] Integer
+     *  [In-progress] Floating-Point
      *  Boolean
      *  String
      *  List
