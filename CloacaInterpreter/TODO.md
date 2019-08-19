@@ -1,7 +1,18 @@
 ﻿Cloaca TODO
 ===========
 
-Currently focusing on turning basic types into PyObjects. The interpreter loop and code generation need to
+Switching to async-await using SyncContextTest as a template.
+1. Create a scheduler to manage suspended scripts.
+2. Associate scheduler with interpreter.
+3. Give unique IDs to frame contexts.
+4. Remove IEnumerable methodology from code.
+5. Devise a test to demonstrate that this is working correctly with an embedded function call
+   * Delete any previous IEnumerable tests or repurpose them, but I didn't find one in a quick search.
+     (I thought there was one!)
+6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
+7. Sketch out how serialization might work.
+
+Next, focusing on turning basic types into PyObjects. The interpreter loop and code generation need to
 get rid of their schizophrenic ways ot managing these data types. Some known issues:
 1. Array subscripts are inconsistent.
 2. Some attempts to consolidate lookups are messy.
