@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// These represent frames managed by the interpreter. Frames are the complete context of an
@@ -8,7 +9,7 @@
 /// We aren't actually implementing that feature here for this an are just using direct C#
 /// calls, but the naming is place to convey the intent.
 /// </summary>
-class InterpreterFrame
+public class InterpreterFrame
 {
     Callable script;
     public InterpreterFrame(Callable script)
@@ -22,14 +23,19 @@ class InterpreterFrame
     }
 }
 
-interface Callable
+public interface Callable
 {
     void Run();
 }
 
-class MockInterpreter
+public class MockInterpreter
 {
     public List<InterpreterFrame> frames;
+
+    public MockInterpreter()
+    {
+        frames = new List<InterpreterFrame>();
+    }
 
     public void AddScript(Callable script)
     {
@@ -45,12 +51,67 @@ class MockInterpreter
     }
 }
 
-class DialogRequest
+public class DialogScript : Callable
 {
-    public DialogRequest()
+    public void Run()
     {
-        // Does nothing yet. We'll need to plumb a callback and blocking mechanism or whatever before
-        // this goes live.
+        SubsystemProvider.Instance.Dialog.Say("Hi! Each of these...");
+        SubsystemProvider.Instance.Dialog.Say("...should be coming out...");
+        SubsystemProvider.Instance.Dialog.Say("...on different ticks...");
+        SubsystemProvider.Instance.Dialog.Say("...due to time delay...");
+        SubsystemProvider.Instance.Dialog.Say("...from user and engine...");
+        SubsystemProvider.Instance.Dialog.Say("...to acknowledge the output...");
+    }
+}
+
+// The subsystems are in a global-ish context. We'll use a singleton.
+public class SubsystemProvider
+{
+    public DialogSubsystem Dialog
+    {
+        get; protected set;
+    }
+
+    public MockInterpreter Interpreter
+    {
+        get; protected set;
+    }
+
+    private SubsystemProvider()
+    {
+        Dialog = new DialogSubsystem();
+        Interpreter = new MockInterpreter();
+    }
+
+    public void Tick()
+    {
+        Dialog.Tick();
+        Interpreter.Tick();
+    }
+
+    private static SubsystemProvider __instance;
+    public static SubsystemProvider Instance
+    {
+        get
+        {
+            if (__instance == null)
+            {
+                __instance = new SubsystemProvider();
+            }
+            return __instance;
+        }
+    }
+}
+
+public class DialogRequest
+{
+    public string Text
+    {
+        get; protected set;
+    }
+    public DialogRequest(string text)
+    {
+        Text = text;
     }
 
     public void SignalDone()
@@ -67,7 +128,7 @@ class DialogRequest
 /// procedural calls within a scripting interpreter. So we want those calls to look very natural
 /// (half-sync/half-async kind of thing).
 /// </summary>
-class DialogSubsystem
+public class DialogSubsystem
 {
     private Queue<DialogRequest> requests;
     private DialogRequest activeRequest;
@@ -83,18 +144,23 @@ class DialogSubsystem
         // many more frames than that, but having this is enough to show the temporal situation.
         if(activeRequest != null)
         {
+            Console.WriteLine("Dialog Subsystem: " + activeRequest.Text);
             activeRequest.SignalDone();
             activeRequest = null;
         }
-        if (requests.Count > 0)
+        while (requests.Count > 0)
         {
+            // Only the most recent request will get honored in this system.
+            // This will help to prove that we are not vomiting them in at once
+            // in the script; that the script is getting properly blocked and feeding
+            // in its inputs sequentially.
             activeRequest = requests.Dequeue();
         }
     }
 
-    public void Say(DialogRequest request)
+    public void Say(string text)
     {
-        requests.Enqueue(request);
+        requests.Enqueue(new DialogRequest(text));
     }
 }
 
@@ -102,14 +168,16 @@ class Program
 {
     static void Main()
     {
-        var dialogEngine = new DialogSubsystem();
-        var interpreter = new MockInterpreter();
+        var subsystems = SubsystemProvider.Instance;
+        subsystems.Interpreter.AddScript(new DialogScript());
 
         // Mimicking Unity game engine loop. Each iteration is a frame.
-        for(int frame = 0; frame < 100; ++frame)
+        for(int frame = 0; frame < 10; ++frame)
         {
-            dialogEngine.Tick();
-            interpreter.Tick();
+            Console.WriteLine("Frame #" + (frame + 1));
+            subsystems.Tick();
         }
+
+        Console.ReadKey();
     }
 }
