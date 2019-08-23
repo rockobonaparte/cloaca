@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 /// <summary>
 /// These represent frames managed by the interpreter. Frames are the complete context of an
@@ -25,7 +27,7 @@ public class InterpreterFrame
 
 public interface Callable
 {
-    void Run();
+    Task Run();
 }
 
 public class MockInterpreter
@@ -39,28 +41,32 @@ public class MockInterpreter
 
     public void AddScript(Callable script)
     {
-        frames.Add(new InterpreterFrame(script));
+        var newFrame = new InterpreterFrame(script);
+        frames.Add(newFrame);
+        newFrame.Run();
     }
 
     public void Tick()
     {
-        foreach(var frame in frames)
-        {
-            frame.Run();
-        }
+        // BOOKMARK: This is wrong. Need to get the tasks and continue in next tick.
+        //foreach(var frame in frames)
+        //{
+        //    frame.Run();
+        //}
     }
 }
 
 public class DialogScript : Callable
 {
-    public void Run()
+    public async Task Run()
     {
-        SubsystemProvider.Instance.Dialog.Say("Hi! Each of these...");
-        SubsystemProvider.Instance.Dialog.Say("...should be coming out...");
-        SubsystemProvider.Instance.Dialog.Say("...on different ticks...");
-        SubsystemProvider.Instance.Dialog.Say("...due to time delay...");
-        SubsystemProvider.Instance.Dialog.Say("...from user and engine...");
-        SubsystemProvider.Instance.Dialog.Say("...to acknowledge the output...");
+        await SubsystemProvider.Instance.Dialog.Say("Hi! Each of these...");
+        await SubsystemProvider.Instance.Dialog.Say("...should be coming out...");
+        await SubsystemProvider.Instance.Dialog.Say("...on different ticks...");
+        await SubsystemProvider.Instance.Dialog.Say("...due to time delay...");
+        await SubsystemProvider.Instance.Dialog.Say("...from user and engine...");
+        await SubsystemProvider.Instance.Dialog.Say("...to acknowledge the output...");
+
     }
 }
 
@@ -103,18 +109,66 @@ public class SubsystemProvider
     }
 }
 
-public class DialogRequest
+public class DialogRequest : INotifyCompletion
 {
+    private bool finished;
+    private Action continuation;
+
+    //public bool IsPaused
+    //{
+    //    get
+    //    {
+    //        return !finished;
+    //    }
+    //}
+
+    public bool IsCompleted
+    {
+        get
+        {
+            //Console.WriteLine("Checked IsCompleted. It is " + finished);
+            return finished;
+        }
+    }
+
     public string Text
     {
         get; protected set;
     }
+
     public DialogRequest(string text)
     {
         Text = text;
+        finished = false;
     }
 
     public void SignalDone()
+    {
+        Console.WriteLine("Signalled done");
+        finished = true;
+        Console.WriteLine("Invoking continuation");
+        continuation?.Invoke();
+    }
+
+    public void OnCompleted(Action continuation)
+    {
+        if (finished)
+        {
+            continuation();
+        }
+        else
+        {
+            Console.WriteLine("register continuation to call when request is filled");
+            this.continuation = continuation;
+        }
+    }
+
+    public DialogRequest GetAwaiter()
+    {
+        return this;
+    }
+
+    public void GetResult()
     {
 
     }
@@ -130,13 +184,7 @@ public class DialogRequest
 /// </summary>
 public class DialogSubsystem
 {
-    private Queue<DialogRequest> requests;
     private DialogRequest activeRequest;
-
-    public DialogSubsystem()
-    {
-        requests = new Queue<DialogRequest>();
-    }
 
     public void Tick()
     {
@@ -145,22 +193,20 @@ public class DialogSubsystem
         if(activeRequest != null)
         {
             Console.WriteLine("Dialog Subsystem: " + activeRequest.Text);
-            activeRequest.SignalDone();
+            var oldRequest = activeRequest;
             activeRequest = null;
-        }
-        while (requests.Count > 0)
-        {
-            // Only the most recent request will get honored in this system.
-            // This will help to prove that we are not vomiting them in at once
-            // in the script; that the script is getting properly blocked and feeding
-            // in its inputs sequentially.
-            activeRequest = requests.Dequeue();
+            oldRequest.SignalDone();
         }
     }
 
-    public void Say(string text)
+    public async Task Say(string text)
     {
-        requests.Enqueue(new DialogRequest(text));
+        activeRequest = new DialogRequest(text);
+        Console.WriteLine("Enqueued request");
+
+        Console.WriteLine("awaiting request result");
+        await activeRequest;
+        Console.WriteLine("request done");
     }
 }
 
