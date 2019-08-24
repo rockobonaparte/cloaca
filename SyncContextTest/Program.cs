@@ -70,6 +70,24 @@ public class DialogScript : Callable
     }
 }
 
+/// <summary>
+/// This doesn't represent a script with explicit yielding written into it. Rather, it 
+/// represents an ongoing, more intensive script that is being pre-empted by the interpreter
+/// for running so long. Tried the yielding as if the interpreter running the frame has had
+/// enough and is punching out of this script for now.
+/// </summary>
+public class YieldingScript : Callable
+{
+    public async Task Run()
+    {
+        for(int i = 1; i <= 8; ++i)
+        {
+            Console.WriteLine("Long-running script iteration #" + i);
+            await Task.Yield();        
+        }
+    }
+}
+
 // The subsystems are in a global-ish context. We'll use a singleton.
 public class SubsystemProvider
 {
@@ -216,9 +234,10 @@ class Program
     {
         var subsystems = SubsystemProvider.Instance;
         subsystems.Interpreter.AddScript(new DialogScript());
+        subsystems.Interpreter.AddScript(new YieldingScript());
 
         // Mimicking Unity game engine loop. Each iteration is a frame.
-        for(int frame = 0; frame < 10; ++frame)
+        for (int frame = 0; frame < 10; ++frame)
         {
             Console.WriteLine("Frame #" + (frame + 1));
             subsystems.Tick();
