@@ -14,59 +14,89 @@ using System.Threading.Tasks;
 public class InterpreterFrame
 {
     Callable script;
-    public InterpreterFrame(Callable script)
+    MockInterpreter interpreter;
+    public InterpreterFrame(Callable script, MockInterpreter interpreter)
     {
         this.script = script;
+        this.interpreter = interpreter;
     }
 
     public void Run()
     {
-        script.Run();
+        script.Run(interpreter);
     }
 }
 
 public interface Callable
 {
-    Task Run();
+    Task Run(MockInterpreter interpreter);
 }
 
 public class MockInterpreter
 {
+    // TODO: Get notice when an InterpreterFrame finishes.
     public List<InterpreterFrame> frames;
+
+    private List<ISubscheduledContinuation> blocked;
+    private List<ISubscheduledContinuation> unblocked;
+
 
     public MockInterpreter()
     {
         frames = new List<InterpreterFrame>();
+        blocked = new List<ISubscheduledContinuation>();
+        unblocked = new List<ISubscheduledContinuation>();
     }
 
     public void AddScript(Callable script)
     {
-        var newFrame = new InterpreterFrame(script);
+        var newFrame = new InterpreterFrame(script, this);
         frames.Add(newFrame);
         newFrame.Run();
     }
 
     public void Tick()
     {
-        // BOOKMARK: This is wrong. Need to get the tasks and continue in next tick.
-        //foreach(var frame in frames)
-        //{
-        //    frame.Run();
-        //}
+        // Queue flip because unblocked tasks might unblock further tasks.
+        // TODO: Clear and flip pre-allocated lists instead of constructing a new one each time.
+        // TODO: Revisit more than one time per tick.
+        var oldUnblocked = unblocked;
+        unblocked = new List<ISubscheduledContinuation>();
+        foreach(var continuation in oldUnblocked)
+        {
+            continuation.Continue();
+        }
+        oldUnblocked.Clear();
+    }
+
+    // This is called when the currently-active script is blocking. Call this right before invoking
+    // an awaiter from the task in which the script is running.
+    public void NotifyBlocked(ISubscheduledContinuation continuation)
+    {
+        blocked.Add(continuation);
+    }
+
+    // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
+    // immediately resume the script, but will set it up to be run in interpreter's tick interval.
+    public void NotifyUnblocked(ISubscheduledContinuation continuation)
+    {
+        if(blocked.Remove(continuation))
+        {
+            unblocked.Add(continuation);
+        }
     }
 }
 
 public class DialogScript : Callable
 {
-    public async Task Run()
+    public async Task Run(MockInterpreter interpreter)
     {
-        await SubsystemProvider.Instance.Dialog.Say("Hi! Each of these...");
-        await SubsystemProvider.Instance.Dialog.Say("...should be coming out...");
-        await SubsystemProvider.Instance.Dialog.Say("...on different ticks...");
-        await SubsystemProvider.Instance.Dialog.Say("...due to time delay...");
-        await SubsystemProvider.Instance.Dialog.Say("...from user and engine...");
-        await SubsystemProvider.Instance.Dialog.Say("...to acknowledge the output...");
-
+        await SubsystemProvider.Instance.Dialog.Say("Hi! Each of these...", interpreter);
+        await SubsystemProvider.Instance.Dialog.Say("...should be coming out...", interpreter);
+        await SubsystemProvider.Instance.Dialog.Say("...on different ticks...", interpreter);
+        await SubsystemProvider.Instance.Dialog.Say("...due to time delay...", interpreter);
+        await SubsystemProvider.Instance.Dialog.Say("...from user and engine...", interpreter);
+        await SubsystemProvider.Instance.Dialog.Say("...to acknowledge the output...", interpreter);
     }
 }
 
@@ -78,12 +108,12 @@ public class DialogScript : Callable
 /// </summary>
 public class YieldingScript : Callable
 {
-    public async Task Run()
+    public async Task Run(MockInterpreter interpreter)
     {
         for(int i = 1; i <= 8; ++i)
         {
             Console.WriteLine("Long-running script iteration #" + i);
-            await Task.Yield();        
+            await Task.Yield();
         }
     }
 }
@@ -127,24 +157,44 @@ public class SubsystemProvider
     }
 }
 
-public class DialogRequest : INotifyCompletion
+public class CustomPausingAwaiter : INotifyCompletion
+{
+    public CustomPausingAwaiter(MockInterpreter interpreter)
+    {
+
+    }
+
+    private Action continuation;
+
+    public void OnCompleted(Action continuation)
+    {
+        this.continuation = continuation;
+    }
+
+    public void Continue()
+    {
+        continuation?.Invoke();
+    }
+}
+
+// This is used by the interpreter to run scheduled tasks within its own context instead of the
+// SynchronizationContext. All awaiters used by the interpreter should implement this and interact
+// with the interpreter.
+public interface ISubscheduledContinuation
+{
+    void Continue();
+}
+
+public class DialogRequest : INotifyCompletion, ISubscheduledContinuation
 {
     private bool finished;
     private Action continuation;
-
-    //public bool IsPaused
-    //{
-    //    get
-    //    {
-    //        return !finished;
-    //    }
-    //}
+    MockInterpreter interpreter;
 
     public bool IsCompleted
     {
         get
         {
-            //Console.WriteLine("Checked IsCompleted. It is " + finished);
             return finished;
         }
     }
@@ -154,16 +204,22 @@ public class DialogRequest : INotifyCompletion
         get; protected set;
     }
 
-    public DialogRequest(string text)
+    public DialogRequest(string text, MockInterpreter interpreterToSubschedule)
     {
         Text = text;
         finished = false;
+        interpreter = interpreterToSubschedule;
     }
 
     public void SignalDone()
     {
         Console.WriteLine("Signalled done");
         finished = true;
+        interpreter.NotifyUnblocked(this);
+    }
+
+    public void Continue()
+    {
         Console.WriteLine("Invoking continuation");
         continuation?.Invoke();
     }
@@ -172,7 +228,7 @@ public class DialogRequest : INotifyCompletion
     {
         if (finished)
         {
-            continuation();
+            this.continuation();
         }
         else
         {
@@ -217,9 +273,12 @@ public class DialogSubsystem
         }
     }
 
-    public async Task Say(string text)
+    // The interpreter is needed to create the DialogRequest properly; the request needs to know how to
+    // phone home to the interpreter to get scheduled properly in the embedded subscheduler.
+    public async Task Say(string text, MockInterpreter interpreter)
     {
-        activeRequest = new DialogRequest(text);
+        activeRequest = new DialogRequest(text, interpreter);
+        interpreter.NotifyBlocked(activeRequest);
         Console.WriteLine("Enqueued request");
 
         Console.WriteLine("awaiting request result");
