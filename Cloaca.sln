@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleREPL", "LibREPL-mast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncContextTest", "SyncContextTest\SyncContextTest.csproj", "{CBF5778B-BF50-454F-BD51-DA69F199CA26}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IEnumeratorImprovement", "IEnumeratorImprovement\IEnumeratorImprovement.csproj", "{16F3F193-FD8A-45CA-8B6C-F7B03E2A3F3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +68,10 @@ Global
 		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16F3F193-FD8A-45CA-8B6C-F7B03E2A3F3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16F3F193-FD8A-45CA-8B6C-F7B03E2A3F3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16F3F193-FD8A-45CA-8B6C-F7B03E2A3F3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16F3F193-FD8A-45CA-8B6C-F7B03E2A3F3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
