@@ -1,4 +1,9 @@
-﻿Notes on green thread selection
+﻿
+
+
+
+
+Notes on green thread selection
 
 Currently using IEnumerable yields to pre-empt. My constraints:
 1. Needs to work in Mono and .NET
@@ -6,12 +11,11 @@ Currently using IEnumerable yields to pre-empt. My constraints:
 3. Should not get into running in other, multiple threads
 
 Considered strategies:
-* Async-await by itself is insufficient. I can trigger the scheduler in a custom awaiter but that doesn't shift to another
-  frame. So the call stack would just keep growing and growing as I context switch until it explodes.
+* Async-await by itself is insufficient if I intend to make scheduling decisions in an embedded runtime when the scripts block.
+  I have to create my own awaiters that trigger the scheduler.
+  * I think I'd end up having to also create my own SynchronizationContext, but I'd have to cooperate with the one Unity is using.
+    I figured 
 * Mono has a tasklet implementation, but it doesn't work in .NET
-* I could write a custom SynchronizationContext, but it would probably kill Unity
-* I could try to hijack the custom SynchronizationContext, but I feel like I'm pushing my luck at that point. It also means
-  it would be bumping into a lot of stuff it has to pass-forward that I don't own.
 
 IEnumerables are so last-decade and they hog the return value, but they're the most common superset that precedes all the
 other methods.
