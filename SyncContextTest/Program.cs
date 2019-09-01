@@ -185,21 +185,9 @@ public interface ISubscheduledContinuation
     void Continue();
 }
 
-public class DialogRequest : INotifyCompletion, ISubscheduledContinuation
+public class DialogRequest
 {
-    private bool finished;
-    private Action continuation;
-    MockInterpreter interpreter;
-
-    public bool IsCompleted
-    {
-        get
-        {
-            return finished;
-        }
-    }
-
-    public string Text
+    public FutureVoidAwaiter Future
     {
         get; protected set;
     }
@@ -207,44 +195,12 @@ public class DialogRequest : INotifyCompletion, ISubscheduledContinuation
     public DialogRequest(string text, MockInterpreter interpreterToSubschedule)
     {
         Text = text;
-        finished = false;
-        interpreter = interpreterToSubschedule;
+        Future = new FutureVoidAwaiter(interpreterToSubschedule);
     }
 
-    public void SignalDone()
+    public string Text
     {
-        Console.WriteLine("Signalled done");
-        finished = true;
-        interpreter.NotifyUnblocked(this);
-    }
-
-    public void Continue()
-    {
-        Console.WriteLine("Invoking continuation");
-        continuation?.Invoke();
-    }
-
-    public void OnCompleted(Action continuation)
-    {
-        if (finished)
-        {
-            this.continuation();
-        }
-        else
-        {
-            Console.WriteLine("register continuation to call when request is filled");
-            this.continuation = continuation;
-        }
-    }
-
-    public DialogRequest GetAwaiter()
-    {
-        return this;
-    }
-
-    public void GetResult()
-    {
-
+        get; protected set;
     }
 }
 
@@ -269,7 +225,7 @@ public class DialogSubsystem
             Console.WriteLine("Dialog Subsystem: " + activeRequest.Text);
             var oldRequest = activeRequest;
             activeRequest = null;
-            oldRequest.SignalDone();
+            oldRequest.Future.SignalDone();
         }
     }
 
@@ -278,11 +234,11 @@ public class DialogSubsystem
     public async Task Say(string text, MockInterpreter interpreter)
     {
         activeRequest = new DialogRequest(text, interpreter);
-        interpreter.NotifyBlocked(activeRequest);
+        interpreter.NotifyBlocked(activeRequest.Future);
         Console.WriteLine("Enqueued request");
 
         Console.WriteLine("awaiting request result");
-        await activeRequest;
+        await activeRequest.Future;
         Console.WriteLine("request done");
     }
 }
