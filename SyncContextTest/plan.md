@@ -42,3 +42,8 @@ Loop 5 Times:
    Request something from external subsystems; the external subsystem should block for one iteration before supplying it
   (this task should then pause)
 ```
+
+# Next Steps
+1. Try to make the mechanics for this reusable so it's easy to expose a blocking call to the interpreter.
+2. Experiment with serializing this state. To do this well, that means serializing actions and having everything restore between restarts
+   of the entire application.
