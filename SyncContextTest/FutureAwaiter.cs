@@ -40,7 +40,6 @@ public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletio
 
     public void Continue()
     {
-        Console.WriteLine("Invoking continuation");
         continuation?.Invoke();
     }
 
@@ -52,7 +51,6 @@ public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletio
         }
         else
         {
-            Console.WriteLine("register continuation to call when request is filled");
             this.continuation = continuation;
         }
     }

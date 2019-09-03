@@ -235,11 +235,7 @@ public class DialogSubsystem
     {
         activeRequest = new DialogRequest(text, interpreter);
         interpreter.NotifyBlocked(activeRequest.Future);
-        Console.WriteLine("Enqueued request");
-
-        Console.WriteLine("awaiting request result");
         await activeRequest.Future;
-        Console.WriteLine("request done");
     }
 }
 
