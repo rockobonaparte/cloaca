@@ -39,13 +39,14 @@ public class MockInterpreter
 
     private List<ISubscheduledContinuation> blocked;
     private List<ISubscheduledContinuation> unblocked;
-
+    private List<ISubscheduledContinuation> yielded;
 
     public MockInterpreter()
     {
         frames = new List<InterpreterFrame>();
         blocked = new List<ISubscheduledContinuation>();
         unblocked = new List<ISubscheduledContinuation>();
+        yielded = new List<ISubscheduledContinuation>();
     }
 
     public void AddScript(Callable script)
@@ -55,6 +56,11 @@ public class MockInterpreter
         newFrame.Run();
     }
 
+    public void SetYielded(ISubscheduledContinuation continuation)
+    {
+        yielded.Add(continuation);
+    }
+
     public void Tick()
     {
         // Queue flip because unblocked tasks might unblock further tasks.
@@ -62,7 +68,10 @@ public class MockInterpreter
         // TODO: Revisit more than one time per tick.
         var oldUnblocked = unblocked;
         unblocked = new List<ISubscheduledContinuation>();
-        foreach(var continuation in oldUnblocked)
+
+        oldUnblocked.AddRange(yielded);
+        yielded.Clear();
+        foreach (var continuation in oldUnblocked)
         {
             continuation.Continue();
         }
@@ -113,7 +122,7 @@ public class YieldingScript : Callable
         for(int i = 1; i <= 8; ++i)
         {
             Console.WriteLine("Long-running script iteration #" + i);
-            await Task.Yield();
+            await new YieldTick(interpreter);
         }
     }
 }
