@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 /// We aren't actually implementing that feature here for this an are just using direct C#
 /// calls, but the naming is place to convey the intent.
 /// </summary>
+[Serializable]
 public class InterpreterFrame
 {
     Callable script;
@@ -38,6 +40,7 @@ public interface ISubscheduledContinuation
     void Continue();
 }
 
+[Serializable]
 public class MockInterpreter
 {
     // TODO: Get notice when an InterpreterFrame finishes.

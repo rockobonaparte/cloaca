@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
+[Serializable]
 public class DialogScript : Callable
 {
     public async Task Run(MockInterpreter interpreter)
@@ -20,6 +21,7 @@ public class DialogScript : Callable
 /// for running so long. Tried the yielding as if the interpreter running the frame has had
 /// enough and is punching out of this script for now.
 /// </summary>
+[Serializable]
 public class YieldingScript : Callable
 {
     public async Task Run(MockInterpreter interpreter)

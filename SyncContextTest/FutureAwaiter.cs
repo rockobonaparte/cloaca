@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 /// Custom awaiter implemented like a future connected to the scheduler.
 /// 
+[Serializable]
 public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletion, ISubscheduledContinuation
 {
     private T result;
@@ -74,6 +75,7 @@ public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletio
 /// implied that the interpreter will keep an eye out for this sentinel from FutureAwaiters and not push
 /// anything on the stack if it sees it.
 /// </summary>
+[Serializable]
 public class VoidSentinel
 {
     private VoidSentinel()
@@ -97,6 +99,7 @@ public class VoidSentinel
 }
 
 // A void version because we can't use void as a parameter type.
+[Serializable]
 public class FutureVoidAwaiter : FutureAwaiter<VoidSentinel>
 {
     public FutureVoidAwaiter(MockInterpreter interpreterToSubschedule) : base(interpreterToSubschedule)

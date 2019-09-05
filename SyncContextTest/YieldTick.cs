@@ -3,6 +3,7 @@
 // Custom awaiter for Cloaca scheduler to have this coroutine pause for one tick.
 // Simply yield a new instance of this when you want to pause this script for at least a tick. No
 // extra handling necessary.
+[Serializable]
 public class YieldTick : System.Runtime.CompilerServices.INotifyCompletion, ISubscheduledContinuation
 {
     private Action continuation;

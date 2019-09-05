@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 class Program
 {
@@ -14,6 +15,11 @@ class Program
         {
             Console.WriteLine("Frame #" + (frame + 1));
             subsystems.Tick();
+
+            var s = File.Create(@"C:\temp\cloaca_serialization_test.dat");
+            BinaryFormatter b = new BinaryFormatter();
+            b.Serialize(s, subsystems.Interpreter);
+            s.Close();
         }
 
         Console.ReadKey();

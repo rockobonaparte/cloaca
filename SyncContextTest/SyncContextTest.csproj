@@ -44,8 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FutureAwaiter.cs" />
+    <Compile Include="Interpreter.cs" />
+    <Compile Include="MockScripts.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Subsystems.cs" />
     <Compile Include="YieldTick.cs" />
   </ItemGroup>
   <ItemGroup>
