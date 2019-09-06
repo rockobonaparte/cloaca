@@ -38,85 +38,96 @@ public static class Checkpoint
     //    return sm.Task;
     //}
 
-    //struct ReadStateMachineResult
-    //{
-    //    public IAsyncStateMachine StateMachine; // is a boxed state machine whose builder is wired up right
-    //    public Task Task; // is the task from that boxed copy of the state machine
-    //    public object AwaiterForAwaitingThisStateMachine; // (might be a struct that has to be copied in place)
-    //    //
-    //    public Action LeafActionToStartWork;
-    //    public CheckpointSaveAwaiter LeafCheckpointSaveAwaiter;
-    //}
+    struct ReadStateMachineResult
+    {
+        public IAsyncStateMachine StateMachine; // is a boxed state machine whose builder is wired up right
+        public Task Task; // is the task from that boxed copy of the state machine
+        public object AwaiterForAwaitingThisStateMachine; // (might be a struct that has to be copied in place)
+        //
+        public Action LeafActionToStartWork;
+        //public CheckpointSaveAwaiter LeafCheckpointSaveAwaiter;
+    }
 
 
-    //private static ReadStateMachineResult ReconstructStateMachine(AsyncMethodState state)
-    //{
-    //    var bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+    private static ReadStateMachineResult ReconstructStateMachine(AsyncMethodState state)
+    {
+        var bf = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-    //    // sm = new StateMachineType();
-    //    var sm = Activator.CreateInstance(state.StateMachineAssemblyName, state.StateMachineTypeName).Unwrap() as IAsyncStateMachine;
+        // sm = new StateMachineType();
+        var sm = Activator.CreateInstance(state.StateMachineAssemblyName, state.StateMachineTypeName).Unwrap() as IAsyncStateMachine;
 
-    //    // sm.builder = BuilderType.Create()
-    //    var builderField = sm.BuilderField();
-    //    builderField.SetValue(sm, builderField.FieldType.GetMethod("Create").Invoke(null, new object[] { }));
+        // sm.builder = BuilderType.Create()
+        var builderField = sm.BuilderField();
+        builderField.SetValue(sm, builderField.FieldType.GetMethod("Create").Invoke(null, new object[] { }));
 
-    //    // sm.builder.SetStateMachine(sm)
-    //    Expression.Lambda<Action>(Expression.Call(Expression.Field(Expression.Constant(sm), builderField), builderField.FieldType.GetMethod("SetStateMachine"), Expression.Constant(sm))).Compile().Invoke();
+        // sm.builder.SetStateMachine(sm)
+        Expression.Lambda<Action>(Expression.Call(Expression.Field(Expression.Constant(sm), builderField), builderField.FieldType.GetMethod("SetStateMachine"), Expression.Constant(sm))).Compile().Invoke();
 
-    //    // sm.state = i
-    //    sm.GetType().GetField(state.StateNumber.MemberName).SetValue(sm, state.StateNumber.Value);
+        // sm.state = i
+        sm.GetType().GetField(state.StateNumber.MemberName).SetValue(sm, state.StateNumber.Value);
 
-    //    // sm.<local> = <local_value>
-    //    foreach (var local in state.Locals) sm.GetType().GetField(local.MemberName, bf).SetValue(sm, local.Value);
+        // sm.<local> = <local_value>
+        foreach (var local in state.Locals) sm.GetType().GetField(local.MemberName, bf).SetValue(sm, local.Value);
 
-    //    ReadStateMachineResult awaited;
-    //    if (state.CurrentAwaiter.Value == null)
-    //    {
-    //        // sm.awaiter = new CheckpointSaveAwaiter()
-    //        var awaiter = new CheckpointSaveAwaiter() { _result = 0 };
-    //        awaited = new ReadStateMachineResult() { AwaiterForAwaitingThisStateMachine = awaiter, LeafCheckpointSaveAwaiter = awaiter };
-    //        sm.GetType().GetField(state.CurrentAwaiter.MemberName, bf).SetValue(sm, awaiter);
-    //    }
-    //    else
-    //    {
-    //        // sm.awaiter = <nested state machine's awaiter>
-    //        awaited = ReconstructStateMachine(state.CurrentAwaiter.Value);
-    //        var awaiter = awaited.AwaiterForAwaitingThisStateMachine;
-    //        sm.GetType().GetField(state.CurrentAwaiter.MemberName, bf).SetValue(sm, awaiter);
-    //    }
+        ReadStateMachineResult awaited;
+        //if (state.CurrentAwaiter.Value == null)
+        //{
+        //    // sm.awaiter = new CheckpointSaveAwaiter()
+        //    var awaiter = new CheckpointSaveAwaiter() { _result = 0 };
+        //    awaited = new ReadStateMachineResult() { AwaiterForAwaitingThisStateMachine = awaiter, LeafCheckpointSaveAwaiter = awaiter };
+        //    sm.GetType().GetField(state.CurrentAwaiter.MemberName, bf).SetValue(sm, awaiter);
+        //}
+        //else
+        //{
+        //    // sm.awaiter = <nested state machine's awaiter>
+        //    awaited = ReconstructStateMachine(state.CurrentAwaiter.Value);
+        //    var awaiter = awaited.AwaiterForAwaitingThisStateMachine;
+        //    sm.GetType().GetField(state.CurrentAwaiter.MemberName, bf).SetValue(sm, awaiter);
+        //}
+        if (state.CurrentAwaiter.Value != null)
+        {
+            // sm.awaiter = <nested state machine's awaiter>
+            awaited = ReconstructStateMachine(state.CurrentAwaiter.Value);
+            var awaiter = awaited.AwaiterForAwaitingThisStateMachine;
+            sm.GetType().GetField(state.CurrentAwaiter.MemberName, bf).SetValue(sm, awaiter);
+        }
+        else
+        {
+            throw new Exception("Assumed we could not get a null awaiter in the state machine. Back to the drawing board!");
+        }
 
-    //    // sm.builder.AwaitOnCompleted(ref child_awaiter, ref sm);
-    //    var varSm = Expression.Variable(sm.GetType(), "sm");
-    //    var varAwaiter = Expression.Variable(awaited.AwaiterForAwaitingThisStateMachine.GetType(), "awaiter");
-    //    var expression = Expression.Lambda<Action>(Expression.Block(
-    //        new[] { varSm, varAwaiter },
-    //        Expression.Assign(varSm, Expression.Constant(sm)),
-    //        Expression.Assign(varAwaiter, Expression.Constant(awaited.AwaiterForAwaitingThisStateMachine)),
-    //        Expression.Call(
-    //            Expression.Field(varSm, builderField),
-    //            builderField.FieldType.GetMethod("AwaitOnCompleted").MakeGenericMethod(awaited.AwaiterForAwaitingThisStateMachine.GetType(), sm.GetType()),
-    //            new Expression[] { varAwaiter, varSm })));
-    //    var lambda = expression.Compile();
-    //    if (state.CurrentAwaiter.Value == null) awaited.LeafActionToStartWork = lambda;
-    //    else lambda();
+        // sm.builder.AwaitOnCompleted(ref child_awaiter, ref sm);
+        var varSm = Expression.Variable(sm.GetType(), "sm");
+        var varAwaiter = Expression.Variable(awaited.AwaiterForAwaitingThisStateMachine.GetType(), "awaiter");
+        var expression = Expression.Lambda<Action>(Expression.Block(
+            new[] { varSm, varAwaiter },
+            Expression.Assign(varSm, Expression.Constant(sm)),
+            Expression.Assign(varAwaiter, Expression.Constant(awaited.AwaiterForAwaitingThisStateMachine)),
+            Expression.Call(
+                Expression.Field(varSm, builderField),
+                builderField.FieldType.GetMethod("AwaitOnCompleted").MakeGenericMethod(awaited.AwaiterForAwaitingThisStateMachine.GetType(), sm.GetType()),
+                new Expression[] { varAwaiter, varSm })));
+        var lambda = expression.Compile();
+        if (state.CurrentAwaiter.Value == null) awaited.LeafActionToStartWork = lambda;
+        else lambda();
 
-    //    // task = sm.Builder.Task
-    //    var task = Expression.Lambda<Func<object>>(Expression.Property(Expression.Field(Expression.Constant(sm), builderField), builderField.FieldType.GetProperty("Task"))).Compile().Invoke();
+        // task = sm.Builder.Task
+        var task = Expression.Lambda<Func<object>>(Expression.Property(Expression.Field(Expression.Constant(sm), builderField), builderField.FieldType.GetProperty("Task"))).Compile().Invoke();
 
-    //    // task.GetAwaiter();
-    //    var taskAwaiter = task.GetType().GetMethod("GetAwaiter").Invoke(task, new object[] { });
+        // task.GetAwaiter();
+        var taskAwaiter = task.GetType().GetMethod("GetAwaiter").Invoke(task, new object[] { });
 
 
-    //    return new ReadStateMachineResult
-    //    {
-    //        StateMachine = sm,
-    //        Task = task as Task,
-    //        AwaiterForAwaitingThisStateMachine = taskAwaiter,
-    //        LeafActionToStartWork = awaited.LeafActionToStartWork,
-    //        LeafCheckpointSaveAwaiter = awaited.LeafCheckpointSaveAwaiter
-    //    };
+        return new ReadStateMachineResult
+        {
+            StateMachine = sm,
+            Task = task as Task,
+            AwaiterForAwaitingThisStateMachine = taskAwaiter,
+            LeafActionToStartWork = awaited.LeafActionToStartWork,
+            //LeafCheckpointSaveAwaiter = awaited.LeafCheckpointSaveAwaiter
+        };
 
-    //}
+    }
 
     public class DeferRemainderException : Exception
     {
@@ -175,12 +186,7 @@ public static class Checkpoint
         }
     }
 
-    //public class CheckpointSaveAwaitable
-    //{
-    //    public CheckpointSaveAwaiter GetAwaiter() => new CheckpointSaveAwaiter() { _result = 0 };
-    //}
-
-    public static AsyncMethodState GetContinuationRepl(Action continuation)
+    public static AsyncMethodState SerializeContinuation(Action continuation)
     {
         var asyncMethod = TryGetStateMachineForDebugger(continuation).Target as IAsyncStateMachine;
 
@@ -217,6 +223,15 @@ public static class Checkpoint
         }
 
         return state;
+    }
+
+    public static Action DeserializeContinuation(AsyncMethodState state)
+    {
+        var sm = ReconstructStateMachine(state);
+        //sm.LeafCheckpointSaveAwaiter._result = tt.Item2 + 1;
+        sm.LeafActionToStartWork.Invoke();
+        //return sm.Task;
+        return sm.LeafActionToStartWork;
     }
 
     //public class CheckpointSaveAwaiter : INotifyCompletion

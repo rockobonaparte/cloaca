@@ -71,14 +71,17 @@ public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletio
 
     public void GetObjectData(SerializationInfo info, StreamingContext context)
     {
-        info.AddValue("continuation", Checkpoint.GetContinuationRepl(continuation));
+        info.AddValue("continuation", Checkpoint.SerializeContinuation(continuation));
         info.AddValue("result", result);
         info.AddValue("finished", finished);
     }
 
     protected FutureAwaiter(SerializationInfo info, StreamingContext context)
     {
-        throw new NotImplementedException("Not yet deserializing continuations!");
+        var methodState = (Checkpoint.AsyncMethodState)info.GetValue("continuation", typeof(Checkpoint.AsyncMethodState));
+        continuation = Checkpoint.DeserializeContinuation(methodState);
+        result = (T) info.GetValue("result", typeof(T));
+        finished = info.GetBoolean("finished");
     }
 }
 
