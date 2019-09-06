@@ -198,9 +198,22 @@ public static class Checkpoint
             state = state1;
 
             var parent = asyncMethod.GetAsyncMethodThatsAwaitingThisOne();
-            if (parent == null) throw new NotSupportedException($"Can't figure out which async method is awaiting {asyncMethod.Name()}");
+            if(parent == null)
+            {
+                // Not sure about this. This code originally was looking specifically for a certain custom awaiter.
+                //if (parent == null) throw new NotSupportedException($"Can't figure out which async method is awaiting {asyncMethod.Name()}");
+                break;
+            }
             var parentAwaiter = parent.GetCurrentAwaiter();
             if (parentAwaiter == null) throw new NotSupportedException($"Async method {parent.Name()} has awaiter types that we don't know how to checkpoint");
+            else if (parentAwaiter.Value.GetType().ToString().StartsWith("System.Runtime.CompilerServices.TaskAwaiter"))
+            {
+                asyncMethod = parent;
+            }
+            else
+            {
+                throw new NotSupportedException($"Async method {parent.Name()} is awaiting a {parentAwaiter.Value.GetType().ToString()}, but we only know how to checkpoint awaits on normal Tasks");
+            }
         }
 
         return state;
@@ -262,6 +275,7 @@ public static class Checkpoint
     //}
 
 
+    [Serializable]
     public class AsyncMethodState
     {
         public string AsyncMethodName;
@@ -274,6 +288,7 @@ public static class Checkpoint
 
     public static Member<T> CreateMember<T>(string name, T value) => new Member<T> { MemberName = name, Value = value };
 
+    [Serializable]
     public class Member<T>
     {
         public string MemberName;

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
+using System.Runtime.Serialization;
 
 /// Custom awaiter implemented like a future connected to the scheduler.
 /// 
@@ -64,6 +62,23 @@ public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletio
     public T GetResult()
     {
         return result;
+    }
+
+    public void AssignInterpreter(MockInterpreter interpreter)
+    {
+        this.interpreter = interpreter;
+    }
+
+    public void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        info.AddValue("continuation", Checkpoint.GetContinuationRepl(continuation));
+        info.AddValue("result", result);
+        info.AddValue("finished", finished);
+    }
+
+    protected FutureAwaiter(SerializationInfo info, StreamingContext context)
+    {
+        throw new NotImplementedException("Not yet deserializing continuations!");
     }
 }
 

@@ -40,6 +40,7 @@ public class SubsystemProvider
     }
 }
 
+[Serializable]
 public class DialogRequest
 {
     public FutureVoidAwaiter Future
@@ -67,6 +68,7 @@ public class DialogRequest
 /// procedural calls within a scripting interpreter. So we want those calls to look very natural
 /// (half-sync/half-async kind of thing).
 /// </summary>
+[Serializable]
 public class DialogSubsystem
 {
     private DialogRequest activeRequest;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -35,9 +36,10 @@ public interface Callable
 // This is used by the interpreter to run scheduled tasks within its own context instead of the
 // SynchronizationContext. All awaiters used by the interpreter should implement this and interact
 // with the interpreter.
-public interface ISubscheduledContinuation
+public interface ISubscheduledContinuation : ISerializable
 {
     void Continue();
+    void AssignInterpreter(MockInterpreter interpreter);        // Used on deserialization to get new interpreter handle
 }
 
 [Serializable]

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 // Custom awaiter for Cloaca scheduler to have this coroutine pause for one tick.
 // Simply yield a new instance of this when you want to pause this script for at least a tick. No
@@ -47,4 +48,20 @@ public class YieldTick : System.Runtime.CompilerServices.INotifyCompletion, ISub
     {
         // Empty -- just needed to satisfy the rules for how custom awaiters work.
     }
+
+    public void AssignInterpreter(MockInterpreter interpreter)
+    {
+        this.interpreter = interpreter;
+    }
+
+    public void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        info.AddValue("continuation", Checkpoint.GetContinuationRepl(continuation));
+    }
+
+    protected YieldTick(SerializationInfo info, StreamingContext context)
+    {
+        throw new NotImplementedException("Not yet deserializing continuations!");
+    }
+
 }
