@@ -26,6 +26,12 @@ public class SubsystemProvider
         Interpreter.Tick();
     }
 
+    public void ReloadSubsystems(MockInterpreter interpreter, DialogSubsystem dialog)
+    {
+        Interpreter = interpreter;
+        Dialog = dialog;
+    }
+
     private static SubsystemProvider __instance;
     public static SubsystemProvider Instance
     {
