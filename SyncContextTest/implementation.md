@@ -83,3 +83,60 @@ Note that F# apparently has a `yield!` keyword that would exhaust all the yieldi
 if we have to actually return something and intercept the last yield to use it. Also, Cloaca isn't written in F# (yet :p). There really
 isn't a nice way to express this process in C#. Even if there was, we'd still be internally yielding and yielding and yielding up
 possibly large stacks. The async-await approach pops out that frame right at the awaiter and that's that.
+
+```
+    public interface IPyCallable
+    {
+        IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args);
+    }
+```
+
+First we're not dealing with IPyCallable anymore so we should change its signature:
+```
+    public interface IPyCallable
+    {
+        object Call(IInterpreter interpreter, FrameContext context, object[] args);
+    }
+```
+It looks like a void call might just return null anyways, but I am finding that scary, so I'd recommend a sentinel.
+
+Now extend the interface if the call can be reissued:
+```
+    public interface IPyReissuable : IPyCallable
+    {
+        object Reissue(int someMagicToken, IInterpreter interpreter, FrameContext context, object[] args);
+    }
+```
+That token is something to identify this particular call against other blocked calls in the scheduler. Presumably it will be given 
+during serialization so it can be saved. It would also have to be accessible to the subsystem executing this call so it can tell that it
+was in-progress to service X, and be able to reconnect the reissued call to X.
+
+So the current flow is sketched like:
+1. Call() is invoked from the interpreter. The callable involves an async call.
+2. The implementation of the callable sets up the yielding operation and passes the ISubscheduledContinuation awaiter to the interpreter.
+3. The interpreter will pass this along to the scheduler, and cause the current script to pause.
+4. (other scripts can run and the Cloaca runtime itself can be left and re-entered without the context getting lost)
+
+Let's say nothing fancy happens and the call finishes.
+5. The awaiter it triggered awake.
+6. The scheduler stages the ISubscheduledContinuation to resume
+7. (some more scheduled scripts might run)
+8. The callable is resumed.
+9. Call() finishes and returns the result--if any.
+
+Let's say instead we try to save:
+5. The blocking subsystem should know a continuation was blocked on it. That continuation has handle XYZ.
+6. Cloaca sets up serialization data. The interpreter state in the scheduler is saved. It notes it was blocked on at a specific
+   call with handle XYZ.
+7. All of that is written to disk.
+
+Upon resumption:
+8. The scheduler notes that it has to reconnect to a subsystem. It's blocked on something with handle XYZ. The associated callable is
+  an IPyReissuable.
+9. It invokes Reissue, passing XYZ and the original arguments.
+10. The subsystem doesn't start a new request with this command. Instead, it finds XYZ, pairs whatever callback it needs for when that
+  is finally done.
+11. The reissue blocks the interpreter just like with call, but the resulting ISubscheduledContinuation is set to wake up when the in-flight
+  request ultimately finishes.
+
+There's some handwaving over this handle that needs to be understood.

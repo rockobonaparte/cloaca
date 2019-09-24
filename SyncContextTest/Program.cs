@@ -50,14 +50,20 @@ class Program
             var s = File.OpenRead(savePath);
             BinaryFormatter b = new BinaryFormatter();
             var record = (RootSerializationRecord)b.Deserialize(s);
+            subsystems = SubsystemProvider.Instance;
             subsystems.ReloadSubsystems(record.Interpreter, record.Dialog);
             frame = record.Frame;
         }
 
         // Mimicking Unity game engine loop. Each iteration is a frame.
-        for (; frame < 10; ++frame)
+        if(frame >= 10)
         {
-            Console.WriteLine("Frame #" + (frame + 1));
+            Console.WriteLine("No more frames to run");
+        }
+        else
+        {
+            frame += 1;
+            Console.WriteLine("Frame #" + frame);
             subsystems.Tick();
 
             var s = File.Create(savePath);
