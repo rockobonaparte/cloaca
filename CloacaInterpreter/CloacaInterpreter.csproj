@@ -57,6 +57,7 @@
     <Compile Include="ConstantsFactory.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Interpreter.cs" />
+    <Compile Include="ISubscheduledContinuation.cs" />
     <Compile Include="JumpOpcodeFixer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scheduler.cs" />

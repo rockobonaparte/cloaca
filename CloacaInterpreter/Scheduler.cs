@@ -16,11 +16,18 @@ namespace CloacaInterpreter
         private int currentTaskIndex;
         public int TickCount;
 
+        private List<ISubscheduledContinuation> blocked;
+        private List<ISubscheduledContinuation> unblocked;
+
         public Scheduler(Interpreter interpreter)
         {
             this.interpreter = interpreter;
-            this.tasklets = new List<FrameContext>();
-            this.contexts = new List<IEnumerable<SchedulingInfo>>();
+
+            contexts = new List<IEnumerable<SchedulingInfo>>();
+            tasklets = new List<FrameContext>();
+            blocked = new List<ISubscheduledContinuation>();
+            unblocked = new List<ISubscheduledContinuation>();
+
             currentTaskIndex = -1;
             TickCount = 0;
         }
@@ -58,6 +65,23 @@ namespace CloacaInterpreter
             }
         }
 
+        // This is called when the currently-active script is blocking. Call this right before invoking
+        // an awaiter from the task in which the script is running.
+        public void NotifyBlocked(ISubscheduledContinuation continuation)
+        {
+            blocked.Add(continuation);
+        }
+
+        // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
+        // immediately resume the script, but will set it up to be run in interpreter's tick interval.
+        public void NotifyUnblocked(ISubscheduledContinuation continuation)
+        {
+            if (blocked.Remove(continuation))
+            {
+                unblocked.Add(continuation);
+            }
+        }
+
         /// <summary>
         /// Run until next yield, program termination, or completion of scheduled tasklets.
         /// </summary>
@@ -86,7 +110,7 @@ namespace CloacaInterpreter
             // This will run the current context to its next yield.
             var taskIsFinished = !taskEnumerator.MoveNext();
 
-            if(interpreter.ExceptionEscaped(activeTask))
+            if (interpreter.ExceptionEscaped(activeTask))
             {
                 throw new EscapedPyException(activeTask.CurrentException);
             }
@@ -98,6 +122,22 @@ namespace CloacaInterpreter
                 tasklets.RemoveAt(currentTaskIndex);
                 --currentTaskIndex;
             }
+
+            //////////////////////// BEGIN: Taken from async-await demo scheduler
+            // Queue flip because unblocked tasks might unblock further tasks.
+            // TODO: Clear and flip pre-allocated lists instead of constructing a new one each time.
+            // TODO: Revisit more than one time per tick.
+            var oldUnblocked = unblocked;
+            unblocked = new List<ISubscheduledContinuation>();
+
+            foreach (var continuation in oldUnblocked)
+            {
+                continuation.Continue();
+            }
+
+            oldUnblocked.Clear();
+            //////////////////////// END: Taken from async-await demo scheduler
+
             ++TickCount;
         }
 
