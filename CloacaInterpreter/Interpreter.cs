@@ -17,7 +17,7 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public Interpreter(Scheduler schedular)
+        public Interpreter(Scheduler scheduler)
         {
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
@@ -45,7 +45,7 @@ namespace CloacaInterpreter
                 { "type", builtin_type_wrapper },
             };
 
-            this.Scheduler = schedular;
+            this.Scheduler = scheduler;
         }
 
         public bool DumpState;
