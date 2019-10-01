@@ -19,10 +19,8 @@ namespace CloacaInterpreter
         private List<ISubscheduledContinuation> blocked;
         private List<ISubscheduledContinuation> unblocked;
 
-        public Scheduler(Interpreter interpreter)
+        public Scheduler()
         {
-            this.interpreter = interpreter;
-
             contexts = new List<IEnumerable<SchedulingInfo>>();
             tasklets = new List<FrameContext>();
             blocked = new List<ISubscheduledContinuation>();
@@ -30,6 +28,11 @@ namespace CloacaInterpreter
 
             currentTaskIndex = -1;
             TickCount = 0;
+        }
+
+        public void SetInterpreter(Interpreter interpreter)
+        {
+            this.interpreter = interpreter;
         }
 
         /// <summary>

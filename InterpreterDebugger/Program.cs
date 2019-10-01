@@ -46,9 +46,10 @@ namespace InterpreterDebugger
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            var interpreter = new Interpreter();
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
-            var scheduler = new Scheduler(interpreter);
+            scheduler.SetInterpreter(interpreter);
 
             var context = scheduler.Schedule(compiledProgram);
             foreach (string varName in variablesIn.Keys)

@@ -12,8 +12,12 @@ namespace CloacaInterpreter
     public class Interpreter: IInterpreter
     {
         private Dictionary<string, object> builtins;
+        public Scheduler Scheduler
+        {
+            get; protected set;
+        }
 
-        public Interpreter()
+        public Interpreter(Scheduler schedular)
         {
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
@@ -40,6 +44,8 @@ namespace CloacaInterpreter
                 { "isinstance", isinstance_wrapper },
                 { "type", builtin_type_wrapper },
             };
+
+            this.Scheduler = schedular;
         }
 
         public bool DumpState;
@@ -558,6 +564,7 @@ namespace CloacaInterpreter
                             // *very important!* advance the cursor first! Otherwise, we come right back to this wait
                             // instruction!
                             context.Cursor += 1;
+                            
                             yield return new YieldOnePass();
                         }
                         break;

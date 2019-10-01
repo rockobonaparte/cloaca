@@ -12,6 +12,9 @@ Switching to async-await using SyncContextTest as a template.
 6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
 7. Sketch out how serialization might work.
 
+There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
+without a reference to the interpreter and then fill it in afterwards.
+
 Next, focusing on turning basic types into PyObjects. The interpreter loop and code generation need to
 get rid of their schizophrenic ways ot managing these data types. Some known issues:
 1. Array subscripts are inconsistent.

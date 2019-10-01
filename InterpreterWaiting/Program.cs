@@ -53,10 +53,10 @@ namespace InterpreterWaiting
             CodeObject compiledProgram2 = compileCode(program2, variablesIn);
             CodeObject compiledProgram3 = compileCode(program3, variablesIn);
 
-            var interpreter = new Interpreter();
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
-
-            var scheduler = new Scheduler(interpreter);
+            scheduler.SetInterpreter(interpreter);
 
             scheduler.Schedule(compiledProgram1);
             scheduler.Schedule(compiledProgram2);

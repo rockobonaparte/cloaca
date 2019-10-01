@@ -38,9 +38,12 @@ namespace CloacaTests
 
             Dis.dis(compiledProgram);
 
-            var interpreter = new Interpreter();
+            // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
+            // the interpreter reference to the schedular after its initial constructor.
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
-            var scheduler = new Scheduler(interpreter);
+            scheduler.SetInterpreter(interpreter);
 
             context = scheduler.Schedule(compiledProgram);
             foreach (string varName in variablesIn.Keys)
