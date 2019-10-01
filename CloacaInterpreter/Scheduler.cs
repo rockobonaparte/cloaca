@@ -18,6 +18,7 @@ namespace CloacaInterpreter
 
         private List<ISubscheduledContinuation> blocked;
         private List<ISubscheduledContinuation> unblocked;
+        private List<ISubscheduledContinuation> yielded;
 
         public Scheduler()
         {
@@ -25,6 +26,7 @@ namespace CloacaInterpreter
             tasklets = new List<FrameContext>();
             blocked = new List<ISubscheduledContinuation>();
             unblocked = new List<ISubscheduledContinuation>();
+            yielded = new List<ISubscheduledContinuation>();
 
             currentTaskIndex = -1;
             TickCount = 0;
@@ -85,6 +87,12 @@ namespace CloacaInterpreter
             }
         }
 
+        // Use to cooperative stop running for just a single tick.
+        public void SetYielded(ISubscheduledContinuation continuation)
+        {
+            yielded.Add(continuation);
+        }
+
         /// <summary>
         /// Run until next yield, program termination, or completion of scheduled tasklets.
         /// </summary>
@@ -132,6 +140,9 @@ namespace CloacaInterpreter
             // TODO: Revisit more than one time per tick.
             var oldUnblocked = unblocked;
             unblocked = new List<ISubscheduledContinuation>();
+
+            oldUnblocked.AddRange(yielded);
+            yielded.Clear();
 
             foreach (var continuation in oldUnblocked)
             {

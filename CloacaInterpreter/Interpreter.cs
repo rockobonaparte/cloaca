@@ -564,7 +564,7 @@ namespace CloacaInterpreter
                             // *very important!* advance the cursor first! Otherwise, we come right back to this wait
                             // instruction!
                             context.Cursor += 1;
-                            
+                            //await new YieldTick(this);
                             yield return new YieldOnePass();
                         }
                         break;
