@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using LanguageImplementation;
 using LanguageImplementation.DataTypes.Exceptions;
@@ -12,7 +13,6 @@ namespace CloacaInterpreter
     {
         private Interpreter interpreter;
         private List<FrameContext> tasklets;
-        private List<IEnumerable<SchedulingInfo>> contexts;
         private int currentTaskIndex;
         public int TickCount;
 
@@ -22,7 +22,6 @@ namespace CloacaInterpreter
 
         public Scheduler()
         {
-            contexts = new List<IEnumerable<SchedulingInfo>>();
             tasklets = new List<FrameContext>();
             blocked = new List<ISubscheduledContinuation>();
             unblocked = new List<ISubscheduledContinuation>();
@@ -110,16 +109,9 @@ namespace CloacaInterpreter
                 currentTaskIndex = 0;
             }
 
-            if (contexts[currentTaskIndex] == null)
-            {
-                contexts[currentTaskIndex] = interpreter.Run(tasklets[currentTaskIndex]);
-            }
-
             var activeTask = tasklets[currentTaskIndex];
-            var taskEnumerator = contexts[currentTaskIndex].GetEnumerator();
 
-            // This will run the current context to its next yield.
-            var taskIsFinished = !taskEnumerator.MoveNext();
+            throw new NotImplementedException("The new way of launching tasks has not yet been written");
 
             if (interpreter.ExceptionEscaped(activeTask))
             {

@@ -59,7 +59,7 @@ namespace CloacaInterpreter
         /// <param name="bases">Base classes parenting this class.</param>
         /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
         /// ReturnValue object containing the PyClass of the built class.</returns>
-        public IEnumerable<SchedulingInfo> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
+        public async object builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
@@ -67,10 +67,7 @@ namespace CloacaInterpreter
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            foreach(var yielding in CallInto(context, classFrame, new object[0]))
-            {
-                yield return yielding;
-            }
+            await CallInto(context, classFrame, new object[0]);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
@@ -121,7 +118,7 @@ namespace CloacaInterpreter
                 }
             }
             
-            yield return new ReturnValue(pyclass);
+            return pyclass;
         }
 
         /// <summary>
@@ -137,23 +134,20 @@ namespace CloacaInterpreter
         /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
         /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
         /// anything at the end of the call.</returns>
-        public IEnumerable<SchedulingInfo> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
+        public async object CallInto(FrameContext context, CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
-            foreach(var yielding in CallInto(context, nextFrame, args))
-            {
-                yield return yielding;
-            }
+            await CallInto(context, nextFrame, args);
 
             if(context.DataStack.Count > 0)
             {
-                yield return new ReturnValue(context.DataStack.Pop());
+                return context.DataStack.Pop();
             }
             else
             {
-                yield break;
+                return null;
             }
         }
 
@@ -169,7 +163,7 @@ namespace CloacaInterpreter
         /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
         /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
         /// anything at the end of the call.</returns>
-        public IEnumerable<SchedulingInfo> CallInto(FrameContext context, Frame frame, object[] args)
+        public async object CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
@@ -183,18 +177,13 @@ namespace CloacaInterpreter
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
 
-            foreach(var yielding in Run(context))
-            {
-                yield return yielding;
-            }
-
             if (context.DataStack.Count > 0)
             {
-                yield return new ReturnValue(context.DataStack.Pop());
+                return context.DataStack.Pop();
             }
             else
             {
-                yield break;
+                return null;
             }
         }
 
@@ -258,7 +247,7 @@ namespace CloacaInterpreter
         /// <returns>The underlying code may yield so this will return various SchedulingInfo. It will not
         /// return a ReturnValue variant of ScheduleInfo. The ScheduleInfo is supposed to provide context
         /// to the scheduler or parent code that invoked the context.</returns>
-        public IEnumerable<SchedulingInfo> Run(FrameContext context)
+        public async void Run(FrameContext context)
         {
             while(context.Cursor < context.Code.Length)
             {
@@ -305,20 +294,7 @@ namespace CloacaInterpreter
                             var leftInt = left as PyObject;
                             var rightInt = right as PyObject;
 
-                            PyObject returned = null;
-                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt }))
-                            {
-                                if (continuation is ReturnValue)
-                                {
-                                    var asReturnValue = continuation as ReturnValue;
-                                    returned = (PyObject) asReturnValue.Returned;
-                                    break;
-                                }
-                                else
-                                {
-                                    yield return continuation;
-                                }
-                            }
+                            PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt });
                             context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
@@ -331,20 +307,7 @@ namespace CloacaInterpreter
                             var leftInt = left as PyObject;
                             var rightInt = right as PyObject;
 
-                            PyObject returned = null;
-                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightInt }))
-                            {
-                                if (continuation is ReturnValue)
-                                {
-                                    var asReturnValue = continuation as ReturnValue;
-                                    returned = (PyObject)asReturnValue.Returned;
-                                    break;
-                                }
-                                else
-                                {
-                                    yield return continuation;
-                                }
-                            }
+                            PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightInt });
                             context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
@@ -357,20 +320,7 @@ namespace CloacaInterpreter
                             var leftInt = left as PyObject;
                             var rightInt = right as PyObject;
 
-                            PyObject returned = null;
-                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightInt }))
-                            {
-                                if (continuation is ReturnValue)
-                                {
-                                    var asReturnValue = continuation as ReturnValue;
-                                    returned = (PyObject)asReturnValue.Returned;
-                                    break;
-                                }
-                                else
-                                {
-                                    yield return continuation;
-                                }
-                            }
+                            PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightInt });
                             context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
@@ -383,20 +333,7 @@ namespace CloacaInterpreter
                             var leftInt = left as PyObject;
                             var rightInt = right as PyObject;
 
-                            PyObject returned = null;
-                            foreach (var continuation in leftInt.InvokeFromDict(this, context, "__div__", new PyObject[] { rightInt }))
-                            {
-                                if (continuation is ReturnValue)
-                                {
-                                    var asReturnValue = continuation as ReturnValue;
-                                    returned = (PyObject)asReturnValue.Returned;
-                                    break;
-                                }
-                                else
-                                {
-                                    yield return continuation;
-                                }
-                            }
+                            PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__div__", new PyObject[] { rightInt });
                             context.DataStack.Push(returned);
                         }
                         context.Cursor += 1;
@@ -564,8 +501,7 @@ namespace CloacaInterpreter
                             // *very important!* advance the cursor first! Otherwise, we come right back to this wait
                             // instruction!
                             context.Cursor += 1;
-                            //await new YieldTick(this);
-                            yield return new YieldOnePass();
+                            await new YieldTick(this);
                         }
                         break;
                     case ByteCodes.COMPARE_OP:
@@ -634,18 +570,10 @@ namespace CloacaInterpreter
                                 }
                                 if (compareFunc != null)
                                 {
-                                    foreach (var continuation in leftObj.InvokeFromDict(this, context, compareFunc, new PyObject[] { rightObj }))
+                                    var returned = await leftObj.InvokeFromDict(this, context, compareFunc, new PyObject[] { rightObj });
+                                    if(returned != null)
                                     {
-                                        if (continuation is ReturnValue)
-                                        {
-                                            var asReturnValue = continuation as ReturnValue;
-                                            context.DataStack.Push((bool)asReturnValue.Returned);
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            yield return continuation;
-                                        }
+                                        context.DataStack.Push((bool)returned);
                                     }
                                 }
                             }
@@ -852,20 +780,10 @@ namespace CloacaInterpreter
                             {
                                 var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                                foreach (var continuation in functionToRun.Call(this, context, args.ToArray()))
+                                var returned = await functionToRun.Call(this, context, args.ToArray());
+                                if (returned != null)
                                 {
-                                    if (continuation is ReturnValue)
-                                    {
-                                        var asReturnValue = continuation as ReturnValue;
-                                        if (asReturnValue.Returned != null)
-                                        {
-                                            context.DataStack.Push(asReturnValue.Returned);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        yield return continuation;
-                                    }
+                                    context.DataStack.Push(returned);
                                 }
 
                                 context.Cursor += 2;
@@ -881,33 +799,11 @@ namespace CloacaInterpreter
                                     // 3. Return the self reference                                    
                                     var asClass = (PyClass)abstractFunctionToRun;
                                     PyObject self = null;
-                                    foreach (var continuation in asClass.__new__.Call(this, context, new object[] { asClass }))
-                                    {
-                                        if (continuation is ReturnValue)
-                                        {
-                                            var asReturnValue = continuation as ReturnValue;
-                                            self = asReturnValue.Returned as PyObject;
-                                        }
-                                        else
-                                        {
-                                            yield return continuation;
-                                        }
-                                    }
+                                    var returned = await asClass.__new__.Call(this, context, new object[] { asClass });
+                                    self = returned as PyObject;
 
                                     args.Insert(0, self);
-                                    foreach(var continuation in asClass.__init__.Call(this, context, args.ToArray()))
-                                    {
-                                        // Suppress the self reference that gets returned since, well, we already have it.
-                                        // We don't need it to escape upwards for cause reschedules.
-                                        if (continuation is ReturnValue)
-                                        {
-                                            continue;
-                                        }
-                                        else
-                                        {
-                                            yield return continuation;
-                                        }
-                                    }
+                                    await asClass.__init__.Call(this, context, args.ToArray());
                                     context.DataStack.Push(self);
                                 }
                                 else
@@ -931,26 +827,13 @@ namespace CloacaInterpreter
                                             self = new PyObject();      // This is the default __new__ for now.
                                         }                                        
                                         args.Insert(0, self);
-                                        foreach(var continuation in functionToRun.Call(this, context, args.ToArray()))
-                                        {
-                                            yield return continuation;
-                                        }
+                                        await functionToRun.Call(this, context, args.ToArray());
                                         context.DataStack.Push(self);
                                     }
 
                                     // We're assuming it's a good-old-fashioned CodeObject
-                                    foreach (var continuation in CallInto(context, functionToRun, args.ToArray()))
-                                    {
-                                        if (continuation is ReturnValue)
-                                        {
-                                            var asReturnValue = continuation as ReturnValue;
-                                            context.DataStack.Push(asReturnValue.Returned);
-                                        }
-                                        else
-                                        {
-                                            yield return continuation;
-                                        }
-                                    }
+                                    var returned = await CallInto(context, functionToRun, args.ToArray());
+                                    context.DataStack.Push(returned);
                                 }
                                 context.Cursor += 2;                    // Resume at next instruction in this program.                                
                             }
@@ -1200,7 +1083,7 @@ namespace CloacaInterpreter
 
                 if(StepMode)
                 {
-                    yield return new YieldOnePass();
+                    throw new NotImplementedException("Step mode yielding not implemented with async-await yet");
                 }
 
             }

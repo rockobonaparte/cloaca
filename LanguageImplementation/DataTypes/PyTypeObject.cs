@@ -91,43 +91,20 @@ namespace LanguageImplementation.DataTypes
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
         /// <param name="args">Arguments given to this class's call.</param>
         /// <returns>A fully-initialized instance of this type, with __new__ and __init__ invoked.</returns>
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public object Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             // Right now, __new__ is hard-coded because we don't have abstraction to 
             // call either Python code or built-in code.
             PyObject self = null;
-            foreach (var continuation in __new__.Call(interpreter, context, new object[] { this }))
-            {
-                if (continuation is ReturnValue)
-                {
-                    var asReturnValue = continuation as ReturnValue;
-                    self = asReturnValue.Returned as PyObject;
-                }
-                else
-                {
-                    yield return continuation;
-                }
-            }
+            var returned = await __new__.Call(interpreter, context, new object[] { this });
+            self = returned as PyObject;
             if (self == null)
             {
                 throw new Exception("__new__ invocation did not return a PyObject");
             }
 
-            foreach (var continuation in __init__.Call(interpreter, context, new object[] { self }))
-            {
-                // Suppress the self reference that gets returned since, well, we already have it.
-                // We don't need it to escape upwards for cause reschedules.
-                if (continuation is ReturnValue)
-                {
-                    continue;
-                }
-                else
-                {
-                    yield return continuation;
-                }
-            }
-
-            yield return new ReturnValue(self);
+            await __init__.Call(interpreter, context, new object[] { self });
+            return self;
         }
     }
 }

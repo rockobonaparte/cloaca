@@ -10,6 +10,7 @@ Switching to async-await using SyncContextTest as a template.
    * Delete any previous IEnumerable tests or repurpose them, but I didn't find one in a quick search.
      (I thought there was one!)
 6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
+   * Also remove ReturnValue and SchedulingInfo.
 7. Sketch out how serialization might work.
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler

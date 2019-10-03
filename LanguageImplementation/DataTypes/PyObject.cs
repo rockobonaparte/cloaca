@@ -64,7 +64,7 @@ namespace LanguageImplementation.DataTypes
             __dict__ = fromType.__dict__;
         }
 
-        public IEnumerable<SchedulingInfo> InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
+        public object InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
         {
             if (__dict__.ContainsKey(name))
             {
@@ -76,10 +76,7 @@ namespace LanguageImplementation.DataTypes
                 PyObject[] argsWithSelf = new PyObject[args.Length + 1];
                 argsWithSelf[0] = this;
                 Array.Copy(args, 0, argsWithSelf, 1, args.Length);
-                foreach (var continuation in toCall.Call(interpreter, context, argsWithSelf))
-                {
-                    yield return continuation;
-                }
+                return await toCall.Call(interpreter, context, argsWithSelf);
             }
             else
             {

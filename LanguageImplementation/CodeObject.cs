@@ -47,16 +47,12 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public object Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            this.context = context;
-            foreach (var continuation in Call(args))
-            {
-                yield return continuation;
-            }
+            return Call(args);
         }
 
-        private IEnumerable<SchedulingInfo> Call(object[] args)
+        private object Call(object[] args)
         {
             var finalArgsList = new List<object>();
          
@@ -114,17 +110,7 @@ namespace LanguageImplementation
                 }
             }
 
-            if (MethodInfo.ReturnType == typeof(IEnumerable<SchedulingInfo>))
-            {
-                foreach(var continuation in MethodInfo.Invoke(instance, finalArgsList.ToArray()) as IEnumerable<SchedulingInfo>)
-                {
-                    yield return continuation;
-                }
-            }
-            else
-            {
-                yield return new ReturnValue(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
-            }
+            yield return MethodInfo.Invoke(instance, finalArgsList.ToArray());
         }
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo)
@@ -262,12 +248,9 @@ namespace LanguageImplementation
             return currentLine;
         }
 
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public async object Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            foreach(var continuation in interpreter.CallInto(context, this, args))
-            {
-                yield return continuation;
-            }
+            return await interpreter.CallInto(context, this, args);
         }
     }
 
