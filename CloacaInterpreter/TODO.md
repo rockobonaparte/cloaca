@@ -1,17 +1,6 @@
 ﻿Cloaca TODO
 ===========
 
-Switching to async-await using SyncContextTest as a template.
-1. Create a scheduler to manage suspended scripts.
-2. Associate scheduler with interpreter.
-3. Give unique IDs to frame contexts.
-4. Remove IEnumerable methodology from code.
-5. Devise a test to demonstrate that this is working correctly with an embedded function call
-   * Delete any previous IEnumerable tests or repurpose them, but I didn't find one in a quick search.
-     (I thought there was one!)
-6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
-7. Sketch out how serialization might work.
-
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
@@ -24,6 +13,8 @@ get rid of their schizophrenic ways ot managing these data types. Some known iss
 5. PyFloat has not been implemented anywhere as near as PyInteger
 6. PyInteger itself isn't even finished!
 7. What's the dunder supposed to be for <>?
+
+Following that, serialization of tasks.
 
 * Strings (part 1)
   * [DONE] Parse strings
@@ -108,6 +99,7 @@ get rid of their schizophrenic ways ot managing these data types. Some known iss
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
        in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
   * [DONE] Raise from class
+  * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
 
 

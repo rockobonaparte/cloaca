@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 
 namespace LanguageImplementation
@@ -47,16 +47,13 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             this.context = context;
-            foreach (var continuation in Call(args))
-            {
-                yield return continuation;
-            }
+            return Call(args);
         }
 
-        private IEnumerable<SchedulingInfo> Call(object[] args)
+        private Task<object> Call(object[] args)
         {
             var finalArgsList = new List<object>();
          
@@ -114,16 +111,14 @@ namespace LanguageImplementation
                 }
             }
 
-            if (MethodInfo.ReturnType == typeof(IEnumerable<SchedulingInfo>))
+            // Little convenience here. We'll convert a non-task Task<object> type to a task.
+            if(MethodInfo.ReturnType == typeof(Task<object>))
             {
-                foreach(var continuation in MethodInfo.Invoke(instance, finalArgsList.ToArray()) as IEnumerable<SchedulingInfo>)
-                {
-                    yield return continuation;
-                }
+                return (Task<object>) MethodInfo.Invoke(instance, finalArgsList.ToArray());
             }
             else
             {
-                yield return new ReturnValue(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
+                return Task.FromResult(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
             }
         }
 
@@ -262,12 +257,9 @@ namespace LanguageImplementation
             return currentLine;
         }
 
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            foreach(var continuation in interpreter.CallInto(context, this, args))
-            {
-                yield return continuation;
-            }
+            return interpreter.CallInto(context, this, args);
         }
     }
 

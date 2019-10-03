@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -73,7 +74,7 @@ namespace LanguageImplementation.DataTypes
             this.__init__ = __init__;
             __dict__["__init__"] = this.__init__;
 
-            // DefaultNew doesn't invoking any yielding code so we won't pass along its context to the wrapper.
+            // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
@@ -82,52 +83,27 @@ namespace LanguageImplementation.DataTypes
         /// <summary>
         /// Data types can be called directly. Consider class constructors in particular. So this is an implementation
         /// of IPyCallable that runs the __new__ -> __init__ chain that happens when a class is invoked. The
-        /// implementations of __new__ and __init__ have embedded defaults that *don't* yield, but they could have
-        /// been specified with Python scripts in the program and DO yield, hence it yields IEnumerables. When it
-        /// returns a ReturnValue of the self pointer, then it has finished object initialization and you have a new
-        /// instance of the given type.
+        /// implementations of __new__ and __init__ have embedded defaults that *don't* block with await, but they could have
+        /// been specified with Python scripts in the program and DO. Hence it has to return a Task.
         /// </summary>
         /// <param name="interpreter">The interpreter instance that has invoked this code.</param>
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
         /// <param name="args">Arguments given to this class's call.</param>
         /// <returns>A fully-initialized instance of this type, with __new__ and __init__ invoked.</returns>
-        public IEnumerable<SchedulingInfo> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             // Right now, __new__ is hard-coded because we don't have abstraction to 
             // call either Python code or built-in code.
             PyObject self = null;
-            foreach (var continuation in __new__.Call(interpreter, context, new object[] { this }))
-            {
-                if (continuation is ReturnValue)
-                {
-                    var asReturnValue = continuation as ReturnValue;
-                    self = asReturnValue.Returned as PyObject;
-                }
-                else
-                {
-                    yield return continuation;
-                }
-            }
+            var returned = await __new__.Call(interpreter, context, new object[] { this });
+            self = returned as PyObject;
             if (self == null)
             {
                 throw new Exception("__new__ invocation did not return a PyObject");
             }
 
-            foreach (var continuation in __init__.Call(interpreter, context, new object[] { self }))
-            {
-                // Suppress the self reference that gets returned since, well, we already have it.
-                // We don't need it to escape upwards for cause reschedules.
-                if (continuation is ReturnValue)
-                {
-                    continue;
-                }
-                else
-                {
-                    yield return continuation;
-                }
-            }
-
-            yield return new ReturnValue(self);
+            await __init__.Call(interpreter, context, new object[] { self });
+            return self;
         }
     }
 }
