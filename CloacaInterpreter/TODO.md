@@ -11,6 +11,7 @@ Switching to async-await using SyncContextTest as a template.
      (I thought there was one!)
 6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
    * Also remove ReturnValue and SchedulingInfo.
+   * Search for "yield" and touch up where it is mentioned.
 7. Sketch out how serialization might work.
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler

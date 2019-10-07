@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
+using System.Threading.Tasks;
 
 namespace CloacaInterpreter
 {
@@ -59,7 +60,7 @@ namespace CloacaInterpreter
         /// <param name="bases">Base classes parenting this class.</param>
         /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
         /// ReturnValue object containing the PyClass of the built class.</returns>
-        public async object builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
+        public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
@@ -134,7 +135,7 @@ namespace CloacaInterpreter
         /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
         /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
         /// anything at the end of the call.</returns>
-        public async object CallInto(FrameContext context, CodeObject functionToRun, object[] args)
+        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
@@ -163,7 +164,7 @@ namespace CloacaInterpreter
         /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
         /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
         /// anything at the end of the call.</returns>
-        public async object CallInto(FrameContext context, Frame frame, object[] args)
+        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
@@ -244,10 +245,8 @@ namespace CloacaInterpreter
         /// This call is stateless; all the state changes mae happen in the FrameContext passed into Run().
         /// </summary>
         /// <param name="context">The current state of the frame and stacks to run</param>
-        /// <returns>The underlying code may yield so this will return various SchedulingInfo. It will not
-        /// return a ReturnValue variant of ScheduleInfo. The ScheduleInfo is supposed to provide context
-        /// to the scheduler or parent code that invoked the context.</returns>
-        public async void Run(FrameContext context)
+        /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
+        public async Task Run(FrameContext context)
         {
             while(context.Cursor < context.Code.Length)
             {
@@ -279,7 +278,7 @@ namespace CloacaInterpreter
                     }
                     else
                     {
-                        yield break;
+                        return;
                     }
                 }
 
@@ -861,7 +860,7 @@ namespace CloacaInterpreter
                             // That's because I don't have a more obvious way to have Python code call a built-in that itself needs
                             // to resolve some Python code. That latter code will return. At that point, we'll lose sync with the
                             // frames.
-                            yield break;
+                            return;
                         }
                     case ByteCodes.BUILD_TUPLE:
                         {
