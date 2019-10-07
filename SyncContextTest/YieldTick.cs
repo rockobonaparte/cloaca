@@ -53,15 +53,4 @@ public class YieldTick : System.Runtime.CompilerServices.INotifyCompletion, ISub
     {
         this.interpreter = interpreter;
     }
-
-    public void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        info.AddValue("continuation", Checkpoint.SerializeContinuation(continuation));
-    }
-
-    protected YieldTick(SerializationInfo info, StreamingContext context)
-    {
-        var methodState = (Checkpoint.AsyncMethodState) info.GetValue("continuation", typeof(Checkpoint.AsyncMethodState));
-        continuation = Checkpoint.DeserializeContinuation(methodState);
-    }
 }
