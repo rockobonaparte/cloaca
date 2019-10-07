@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -91,7 +92,7 @@ namespace LanguageImplementation.DataTypes
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
         /// <param name="args">Arguments given to this class's call.</param>
         /// <returns>A fully-initialized instance of this type, with __new__ and __init__ invoked.</returns>
-        public object Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             // Right now, __new__ is hard-coded because we don't have abstraction to 
             // call either Python code or built-in code.

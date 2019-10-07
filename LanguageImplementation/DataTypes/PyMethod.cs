@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -17,13 +18,13 @@ namespace LanguageImplementation.DataTypes
             __dict__.Add("__call__", callable);
         }
 
-        public object Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             object[] massagedArgs = new object[args.Length + 1];
             massagedArgs[0] = selfHandle;
             Array.Copy(args, 0, massagedArgs, 1, args.Length);
 
-            return await ((IPyCallable) __dict__["__call__"]).Call(interpreter, context, massagedArgs);
+            return ((IPyCallable) __dict__["__call__"]).Call(interpreter, context, massagedArgs);
         }
     }
 }

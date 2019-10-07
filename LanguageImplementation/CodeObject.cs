@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 
 namespace LanguageImplementation
@@ -47,12 +47,12 @@ namespace LanguageImplementation
             get; protected set;
         }
 
-        public object Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             return Call(args);
         }
 
-        private object Call(object[] args)
+        private Task<object> Call(object[] args)
         {
             var finalArgsList = new List<object>();
          
@@ -248,9 +248,9 @@ namespace LanguageImplementation
             return currentLine;
         }
 
-        public async object Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            return await interpreter.CallInto(context, this, args);
+            return interpreter.CallInto(context, this, args);
         }
     }
 

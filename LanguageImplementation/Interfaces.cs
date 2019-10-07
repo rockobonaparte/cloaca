@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation
 {
@@ -92,6 +93,6 @@ namespace LanguageImplementation
 
     public interface IPyCallable
     {
-        object Call(IInterpreter interpreter, FrameContext context, object[] args);
+        Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args);
     }
 }

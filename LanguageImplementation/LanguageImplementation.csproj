@@ -86,7 +86,6 @@
     <Compile Include="OpCodes.cs" />
     <Compile Include="ParseErrorListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SchedulingInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="notes.md" />
