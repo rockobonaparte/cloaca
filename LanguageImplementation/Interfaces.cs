@@ -88,7 +88,7 @@ namespace LanguageImplementation
         /// <param name="functionToRun">The code object to call into.</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
-        object CallInto(FrameContext context, CodeObject program, object[] args);
+        Task<object> CallInto(FrameContext context, CodeObject program, object[] args);
     }
 
     public interface IPyCallable
