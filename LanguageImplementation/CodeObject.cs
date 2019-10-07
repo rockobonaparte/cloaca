@@ -52,7 +52,7 @@ namespace LanguageImplementation
             return Call(args);
         }
 
-        private Task<object> Call(object[] args)
+        private async Task<object> Call(object[] args)
         {
             var finalArgsList = new List<object>();
          
@@ -110,7 +110,18 @@ namespace LanguageImplementation
                 }
             }
 
-            yield return MethodInfo.Invoke(instance, finalArgsList.ToArray());
+            // Little convenience here. We'll convert a non-task Task<object> type to a task.
+            if(MethodInfo.ReturnType == typeof(Task<object>))
+            {
+                return MethodInfo.Invoke(instance, finalArgsList.ToArray());
+            }
+            else
+            {
+                return new Task<object>(() =>
+                {
+                    return MethodInfo.Invoke(instance, finalArgsList.ToArray());
+                });
+            }
         }
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo)
