@@ -239,7 +239,7 @@ namespace CloacaInterpreter
         }
 
         /// <summary>
-        /// Runs the given frame context until it either finishes normally or yields. This actually intrepts
+        /// Runs the given frame context until it either finishes normally or yields. This actually interprets
         /// our Python(ish) code!
         /// 
         /// This call is stateless; all the state changes mae happen in the FrameContext passed into Run().
