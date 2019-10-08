@@ -12,7 +12,7 @@ namespace CloacaInterpreter
     public class Scheduler
     {
         private Interpreter interpreter;
-        private List<FrameContext> tasklets;
+        private List<FrameContext> newTasklets;
         private int currentTaskIndex;
         public int TickCount;
 
@@ -22,7 +22,7 @@ namespace CloacaInterpreter
 
         public Scheduler()
         {
-            tasklets = new List<FrameContext>();
+            newTasklets = new List<FrameContext>();
             blocked = new List<ISubscheduledContinuation>();
             unblocked = new List<ISubscheduledContinuation>();
             yielded = new List<ISubscheduledContinuation>();
@@ -45,8 +45,7 @@ namespace CloacaInterpreter
         public FrameContext Schedule(CodeObject program)
         {
             var tasklet = interpreter.PrepareFrameContext(program);
-            tasklets.Add(tasklet);
-            contexts.Add(null);
+            newTasklets.Add(tasklet);
             return tasklet;
         }
 
@@ -56,14 +55,14 @@ namespace CloacaInterpreter
         /// </summary>
         public void Home()
         {
-            if (tasklets.Count == 0)
+            if (newTasklets.Count == 0)
             {
                 currentTaskIndex = -1;
                 return;
             }
 
             ++currentTaskIndex;
-            if (currentTaskIndex >= tasklets.Count)
+            if (currentTaskIndex >= newTasklets.Count)
             {
                 currentTaskIndex = 0;
             }
@@ -97,34 +96,17 @@ namespace CloacaInterpreter
         /// </summary>
         public void Tick()
         {
-            if (tasklets.Count == 0)
+            foreach(var activeTask in newTasklets)
             {
-                currentTaskIndex = -1;
-                return;
+                interpreter.Run(activeTask);
+                if (interpreter.ExceptionEscaped(activeTask))
+                {
+                    throw new EscapedPyException(activeTask.CurrentException);
+                }
             }
 
-            ++currentTaskIndex;
-            if (currentTaskIndex >= tasklets.Count)
-            {
-                currentTaskIndex = 0;
-            }
-
-            var activeTask = tasklets[currentTaskIndex];
-
-            throw new NotImplementedException("The new way of launching tasks has not yet been written");
-
-            if (interpreter.ExceptionEscaped(activeTask))
-            {
-                throw new EscapedPyException(activeTask.CurrentException);
-            }
-
-            if (taskIsFinished)
-            {
-                // Done. Rewind the taskindex since it'll move up on the next tick.
-                contexts.RemoveAt(currentTaskIndex);
-                tasklets.RemoveAt(currentTaskIndex);
-                --currentTaskIndex;
-            }
+            // Anything leftover should have gotten themselves blocked by now and have moved queues.
+            newTasklets.Clear();
 
             //////////////////////// BEGIN: Taken from async-await demo scheduler
             // Queue flip because unblocked tasks might unblock further tasks.
@@ -159,7 +141,7 @@ namespace CloacaInterpreter
         {
             get
             {
-                return tasklets.Count == 0;
+                return newTasklets.Count == 0;
             }
         }
 
@@ -169,7 +151,7 @@ namespace CloacaInterpreter
             {
                 if(currentTaskIndex >= 0)
                 {
-                    return tasklets[currentTaskIndex];
+                    return newTasklets[currentTaskIndex];
                 }
                 else
                 {
