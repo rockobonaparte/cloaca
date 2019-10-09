@@ -246,7 +246,7 @@ namespace CloacaInterpreter
         /// </summary>
         /// <param name="context">The current state of the frame and stacks to run</param>
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
-        public async Task Run(FrameContext context)
+        public async void Run(FrameContext context)
         {
             while(context.Cursor < context.Code.Length)
             {

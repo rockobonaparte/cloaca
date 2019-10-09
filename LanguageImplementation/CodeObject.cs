@@ -52,7 +52,7 @@ namespace LanguageImplementation
             return Call(args);
         }
 
-        private async Task<object> Call(object[] args)
+        private Task<object> Call(object[] args)
         {
             var finalArgsList = new List<object>();
          
@@ -113,14 +113,16 @@ namespace LanguageImplementation
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if(MethodInfo.ReturnType == typeof(Task<object>))
             {
-                return MethodInfo.Invoke(instance, finalArgsList.ToArray());
+                return (Task<object>) MethodInfo.Invoke(instance, finalArgsList.ToArray());
             }
             else
             {
-                return new Task<object>(() =>
+                var dummyTask = new Task<object>(() =>
                 {
                     return MethodInfo.Invoke(instance, finalArgsList.ToArray());
                 });
+                dummyTask.Start();
+                return dummyTask;
             }
         }
 
@@ -259,7 +261,7 @@ namespace LanguageImplementation
             return currentLine;
         }
 
-        public async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             return interpreter.CallInto(context, this, args);
         }

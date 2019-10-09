@@ -6,23 +6,48 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
+    public class InitialScheduledContinuation : ISubscheduledContinuation
+    {
+        private Interpreter interpreter;
+        public FrameContext TaskletFrame
+        {
+            get; private set;
+        }
+
+        public InitialScheduledContinuation(Interpreter interpreter, FrameContext taskletFrame)
+        {
+            AssignInterpreter(interpreter);
+            TaskletFrame = taskletFrame;
+        }
+
+        public void AssignInterpreter(Interpreter interpreter)
+        {
+            this.interpreter = interpreter;
+        }
+
+        public void Continue()
+        {
+            interpreter.Run(TaskletFrame);
+        }
+    }
+
     /// <summary>
     /// Manages all tasklets and how they're alternated through the interpreter.
     /// </summary>
     public class Scheduler
     {
         private Interpreter interpreter;
-        private List<FrameContext> newTasklets;
         private int currentTaskIndex;
         public int TickCount;
 
+        private List<FrameContext> activeFrames;
         private List<ISubscheduledContinuation> blocked;
         private List<ISubscheduledContinuation> unblocked;
         private List<ISubscheduledContinuation> yielded;
 
         public Scheduler()
         {
-            newTasklets = new List<FrameContext>();
+            activeFrames = new List<FrameContext>();
             blocked = new List<ISubscheduledContinuation>();
             unblocked = new List<ISubscheduledContinuation>();
             yielded = new List<ISubscheduledContinuation>();
@@ -44,9 +69,11 @@ namespace CloacaInterpreter
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         public FrameContext Schedule(CodeObject program)
         {
-            var tasklet = interpreter.PrepareFrameContext(program);
-            newTasklets.Add(tasklet);
-            return tasklet;
+            var newFrame = interpreter.PrepareFrameContext(program);
+            activeFrames.Add(newFrame);
+            var initialContinuation = new InitialScheduledContinuation(interpreter, newFrame);
+            unblocked.Add(initialContinuation);
+            return initialContinuation.TaskletFrame;
         }
 
         /// <summary>
@@ -55,17 +82,7 @@ namespace CloacaInterpreter
         /// </summary>
         public void Home()
         {
-            if (newTasklets.Count == 0)
-            {
-                currentTaskIndex = -1;
-                return;
-            }
-
-            ++currentTaskIndex;
-            if (currentTaskIndex >= newTasklets.Count)
-            {
-                currentTaskIndex = 0;
-            }
+            throw new NotImplementedException("The old method of having an active tasklet has been thrown into turmoil by the async-await reimplementation. Home() not yet patched up.");
         }
 
         // This is called when the currently-active script is blocking. Call this right before invoking
@@ -96,17 +113,20 @@ namespace CloacaInterpreter
         /// </summary>
         public void Tick()
         {
-            foreach(var activeTask in newTasklets)
+            var oldActiveFrames = activeFrames;
+            activeFrames = new List<FrameContext>();
+            foreach (var frame in oldActiveFrames)
             {
-                interpreter.Run(activeTask);
-                if (interpreter.ExceptionEscaped(activeTask))
+                if(interpreter.ExceptionEscaped(frame))
                 {
-                    throw new EscapedPyException(activeTask.CurrentException);
+                    throw new EscapedPyException(frame.CurrentException);
+                }
+
+                if (!(interpreter.ExceptionEscaped(frame) || (frame.BlockStack.Count == 0 && frame.Cursor >= frame.CodeBytes.Bytes.Length)))
+                {
+                    activeFrames.Add(frame);
                 }
             }
-
-            // Anything leftover should have gotten themselves blocked by now and have moved queues.
-            newTasklets.Clear();
 
             //////////////////////// BEGIN: Taken from async-await demo scheduler
             // Queue flip because unblocked tasks might unblock further tasks.
@@ -141,7 +161,7 @@ namespace CloacaInterpreter
         {
             get
             {
-                return newTasklets.Count == 0;
+                return activeFrames.Count == 0;
             }
         }
 
@@ -149,14 +169,8 @@ namespace CloacaInterpreter
         {
             get
             {
-                if(currentTaskIndex >= 0)
-                {
-                    return newTasklets[currentTaskIndex];
-                }
-                else
-                {
-                    return null;
-                }
+                throw new NotImplementedException("The old method of having an active tasklet has been thrown into turmoil by the async-await reimplementation. ActiveTasklet accessor not yet patched up.");
+                return null;
             }
         }
 
