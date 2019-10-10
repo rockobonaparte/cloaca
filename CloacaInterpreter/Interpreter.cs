@@ -106,7 +106,6 @@ namespace CloacaInterpreter
 
             var pyclass = new PyClass(name, __init__, bases);
 
-            classFrame.AddLocal("__init__", __init__);
             foreach(var classMemberName in classFrame.Names)
             {
                 var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
@@ -178,6 +177,7 @@ namespace CloacaInterpreter
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
+            Run(context);
 
             if (context.DataStack.Count > 0)
             {
