@@ -13,6 +13,7 @@ Switching to async-await using SyncContextTest as a template.
    * Also remove ReturnValue and SchedulingInfo.
    * Search for "yield" and touch up where it is mentioned.
 7. Sketch out how serialization might work.
+8. Get tick count assertions working in unit test again (if you can keep a tab on how much the scheduler has to tick to complete)
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
