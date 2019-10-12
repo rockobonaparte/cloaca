@@ -140,16 +140,7 @@ namespace CloacaInterpreter
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
-            await CallInto(context, nextFrame, args);
-
-            if(context.DataStack.Count > 0)
-            {
-                return context.DataStack.Pop();
-            }
-            else
-            {
-                return null;
-            }
+            return await CallInto(context, nextFrame, args);
         }
 
         /// <summary>
@@ -177,7 +168,7 @@ namespace CloacaInterpreter
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
-            Run(context);
+            await Run(context);
 
             if (context.DataStack.Count > 0)
             {
@@ -247,7 +238,7 @@ namespace CloacaInterpreter
         /// </summary>
         /// <param name="context">The current state of the frame and stacks to run</param>
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
-        public async void Run(FrameContext context)
+        public async Task Run(FrameContext context)
         {
             while(context.Cursor < context.Code.Length)
             {
