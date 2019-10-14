@@ -118,12 +118,7 @@ namespace LanguageImplementation
             }
             else
             {
-                var dummyTask = new Task<object>(() =>
-                {
-                    return MethodInfo.Invoke(instance, finalArgsList.ToArray());
-                });
-                dummyTask.Start();
-                return dummyTask;
+                return Task.FromResult(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
             }
         }
 
