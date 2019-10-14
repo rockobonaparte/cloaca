@@ -49,6 +49,7 @@ namespace LanguageImplementation
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
+            this.context = context;
             return Call(args);
         }
 
