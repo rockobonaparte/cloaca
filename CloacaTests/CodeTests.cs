@@ -121,7 +121,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Screwing around with the scheduler await/continuation mechanism right now.")]
+        [Ignore("Debug in progress")]
         public void BasicWait()
         {
             runBasicTest(

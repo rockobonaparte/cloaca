@@ -180,25 +180,6 @@ namespace CloacaInterpreter
             }
         }
 
-        /// <summary>
-        /// Prepare a fresh frame context to run the given CodeObject.
-        /// </summary>
-        /// <param name="newProgram">The code to prepare to run.</param>
-        /// <returns>The context that the interpreter can use to run the program.</returns>
-        public FrameContext PrepareFrameContext(CodeObject newProgram)
-        {
-            var newFrameStack = new Stack<Frame>();
-            var rootFrame = new Frame(newProgram);
-
-            foreach (string name in newProgram.VarNames)
-            {
-                rootFrame.AddLocal(name, null);
-            }
-
-            newFrameStack.Push(rootFrame);
-            return new FrameContext(newFrameStack);
-        }
-
         private Block UnrollCurrentBlock(FrameContext context)
         {
             var block = context.BlockStack.Pop();

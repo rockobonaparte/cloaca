@@ -31,28 +31,37 @@ namespace CloacaInterpreter
         }
     }
 
+    public class ScheduledTaskRecord
+    {
+        public FrameContext Frame;
+        public ISubscheduledContinuation Continuation;
+        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation)
+        {
+            Frame = frame;
+            Continuation = continuation;
+        }
+    }
+
     /// <summary>
     /// Manages all tasklets and how they're alternated through the interpreter.
     /// </summary>
     public class Scheduler
     {
         private Interpreter interpreter;
-        private int currentTaskIndex;
         public int TickCount;
 
-        private List<FrameContext> activeFrames;
-        private List<ISubscheduledContinuation> blocked;
-        private List<ISubscheduledContinuation> unblocked;
-        private List<ISubscheduledContinuation> yielded;
+        private List<ScheduledTaskRecord> active;
+        private List<ScheduledTaskRecord> blocked;
+        private List<ScheduledTaskRecord> unblocked;
+        private List<ScheduledTaskRecord> yielded;
 
         public Scheduler()
         {
-            activeFrames = new List<FrameContext>();
-            blocked = new List<ISubscheduledContinuation>();
-            unblocked = new List<ISubscheduledContinuation>();
-            yielded = new List<ISubscheduledContinuation>();
+            active = new List<ScheduledTaskRecord>();
+            blocked = new List<ScheduledTaskRecord>();
+            unblocked = new List<ScheduledTaskRecord>();
+            yielded = new List<ScheduledTaskRecord>();
 
-            currentTaskIndex = -1;
             TickCount = 0;
         }
 
@@ -69,11 +78,32 @@ namespace CloacaInterpreter
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         public FrameContext Schedule(CodeObject program)
         {
-            var newFrame = interpreter.PrepareFrameContext(program);
-            activeFrames.Add(newFrame);
-            var initialContinuation = new InitialScheduledContinuation(interpreter, newFrame);
-            unblocked.Add(initialContinuation);
-            return initialContinuation.TaskletFrame;
+            var scheduleState = PrepareFrameContext(program);
+            unblocked.Add(scheduleState);
+            return scheduleState.Frame;
+        }
+
+        /// <summary>
+        /// Prepare a fresh frame context and continuation for the code object. This will set it up to be run from
+        /// scratch.
+        /// </summary>
+        /// <param name="newProgram">The code to prepare to run.</param>
+        /// <returns>Scheduling state containing the the context that the interpreter can use to run the program as
+        /// well as the continuation to kick it off (and resume it later).</returns>
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram)
+        {
+            var newFrameStack = new Stack<Frame>();
+            var rootFrame = new Frame(newProgram);
+
+            foreach (string name in newProgram.VarNames)
+            {
+                rootFrame.AddLocal(name, null);
+            }
+
+            newFrameStack.Push(rootFrame);
+            var frame = new FrameContext(newFrameStack);
+            var initialContinuation = new InitialScheduledContinuation(interpreter, frame);
+            return new ScheduledTaskRecord(frame, initialContinuation);
         }
 
         /// <summary>
@@ -89,23 +119,26 @@ namespace CloacaInterpreter
         // an awaiter from the task in which the script is running.
         public void NotifyBlocked(ISubscheduledContinuation continuation)
         {
-            blocked.Add(continuation);
+            currentlyScheduled.Continuation = continuation;
+            blocked.Add(currentlyScheduled);
         }
 
         // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
         public void NotifyUnblocked(ISubscheduledContinuation continuation)
         {
-            if (blocked.Remove(continuation))
+            currentlyScheduled.Continuation = continuation;
+            if (blocked.Remove(currentlyScheduled))
             {
-                unblocked.Add(continuation);
+                unblocked.Add(currentlyScheduled);
             }
         }
 
         // Use to cooperative stop running for just a single tick.
         public void SetYielded(ISubscheduledContinuation continuation)
         {
-            yielded.Add(continuation);
+            currentlyScheduled.Continuation = continuation;
+            yielded.Add(currentlyScheduled);
         }
 
         /// <summary>
@@ -113,35 +146,40 @@ namespace CloacaInterpreter
         /// </summary>
         public async Task Tick()
         {
-            var oldActiveFrames = activeFrames;
-            activeFrames = new List<FrameContext>();
-            foreach (var frame in oldActiveFrames)
+            var oldActiveFrames = active;
+            active = new List<ScheduledTaskRecord>();
+            foreach (var scheduled in oldActiveFrames)
             {
-                if(interpreter.ExceptionEscaped(frame))
+                currentlyScheduled = scheduled;
+                if(interpreter.ExceptionEscaped(currentlyScheduled.Frame))
                 {
-                    throw new EscapedPyException(frame.CurrentException);
+                    throw new EscapedPyException(currentlyScheduled.Frame.CurrentException);
                 }
 
-                if (!(interpreter.ExceptionEscaped(frame) || (frame.BlockStack.Count == 0 && frame.Cursor >= frame.CodeBytes.Bytes.Length)))
+                if (!(interpreter.ExceptionEscaped(currentlyScheduled.Frame) || (currentlyScheduled.Frame.BlockStack.Count == 0 && currentlyScheduled.Frame.Cursor >= currentlyScheduled.Frame.CodeBytes.Bytes.Length)))
                 {
-                    activeFrames.Add(frame);
+                    active.Add(currentlyScheduled);
                 }
             }
+            currentlyScheduled = null;
 
             //////////////////////// BEGIN: Taken from async-await demo scheduler
             // Queue flip because unblocked tasks might unblock further tasks.
             // TODO: Clear and flip pre-allocated lists instead of constructing a new one each time.
             // TODO: Revisit more than one time per tick.
             var oldUnblocked = unblocked;
-            unblocked = new List<ISubscheduledContinuation>();
+            unblocked = new List<ScheduledTaskRecord>();
 
             oldUnblocked.AddRange(yielded);
             yielded.Clear();
 
-            foreach (var continuation in oldUnblocked)
+            foreach (var continued in oldUnblocked)
             {
-                await continuation.Continue();
+                currentlyScheduled = continued;
+                active.Add(currentlyScheduled);
+                await continued.Continuation.Continue();
             }
+            currentlyScheduled = null;
 
             oldUnblocked.Clear();
             //////////////////////// END: Taken from async-await demo scheduler
@@ -169,16 +207,16 @@ namespace CloacaInterpreter
         {
             get
             {
-                return activeFrames.Count == 0;
+                return active.Count == 0 && yielded.Count == 0 && blocked.Count == 0 && unblocked.Count == 0;
             }
         }
 
+        private ScheduledTaskRecord currentlyScheduled;
         public FrameContext ActiveTasklet
         {
             get
             {
-                throw new NotImplementedException("The old method of having an active tasklet has been thrown into turmoil by the async-await reimplementation. ActiveTasklet accessor not yet patched up.");
-                return null;
+                return currentlyScheduled.Frame;
             }
         }
 
