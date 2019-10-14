@@ -29,9 +29,10 @@ namespace CloacaInterpreter
             interpreter = interpreterToSubschedule;
         }
 
-        public void Continue()
+        public Task Continue()
         {
             continuation?.Invoke();
+            return Task.FromResult(true);
         }
 
         public void OnCompleted(Action continuation)

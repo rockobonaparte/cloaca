@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Threading.Tasks;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes.Exceptions;
 
@@ -25,9 +25,9 @@ namespace CloacaInterpreter
             this.interpreter = interpreter;
         }
 
-        public void Continue()
+        public async Task Continue()
         {
-            interpreter.Run(TaskletFrame);
+            await interpreter.Run(TaskletFrame);
         }
     }
 
@@ -111,7 +111,7 @@ namespace CloacaInterpreter
         /// <summary>
         /// Run until next yield, program termination, or completion of scheduled tasklets.
         /// </summary>
-        public void Tick()
+        public async Task Tick()
         {
             var oldActiveFrames = activeFrames;
             activeFrames = new List<FrameContext>();
@@ -140,7 +140,7 @@ namespace CloacaInterpreter
 
             foreach (var continuation in oldUnblocked)
             {
-                continuation.Continue();
+                await continuation.Continue();
             }
 
             oldUnblocked.Clear();
@@ -149,11 +149,11 @@ namespace CloacaInterpreter
             ++TickCount;
         }
 
-        public void RunUntilDone()
+        public async void RunUntilDone()
         {
             while(!Done)
             {
-                Tick();
+                Tick().Wait();
             }
         }
 

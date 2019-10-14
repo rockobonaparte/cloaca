@@ -1,5 +1,7 @@
 ﻿// For lack of a better place for now, this is given its own file in the interpreter project.
 
+using System.Threading.Tasks;
+
 namespace CloacaInterpreter
 {
     // This is used by the interpreter to run scheduled tasks within its own context instead of the
@@ -7,7 +9,7 @@ namespace CloacaInterpreter
     // with the interpreter.
     public interface ISubscheduledContinuation
     {
-        void Continue();
+        Task Continue();
         void AssignInterpreter(Interpreter interpreter);        // Used on deserialization to get new interpreter handle
     }
 }
