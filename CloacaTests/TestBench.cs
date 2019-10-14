@@ -51,7 +51,18 @@ namespace CloacaTests
                 context.SetVariable(varName, variablesIn[varName]);
             }
 
-            scheduler.RunUntilDone();
+            // Waiting on the task makes sure we get punched in the face by any exceptions it throws.
+            // But they'll come rolling in as AggregateExceptions so we'll have to unpack them.
+            try
+            {
+                var scheduler_task = scheduler.RunUntilDone();
+                scheduler_task.Wait();
+            }
+            catch (AggregateException wrappedEscapedException)
+            {
+                // Given the nature of exception handling, we should normally only have one of these!
+                throw wrappedEscapedException.InnerExceptions[0];
+            }
 
             var variables = new VariableMultimap(context);
 

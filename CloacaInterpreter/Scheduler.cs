@@ -149,11 +149,19 @@ namespace CloacaInterpreter
             ++TickCount;
         }
 
-        public async void RunUntilDone()
+        public async Task RunUntilDone()
         {
             while(!Done)
             {
-                Tick().Wait();
+                try
+                {
+                    Tick().Wait();
+                }
+                catch(AggregateException wrappedEscapedException)
+                {
+                    // Given the nature of exception handling, we should normally only have one of these!
+                    throw wrappedEscapedException.InnerExceptions[0];
+                }
             }
         }
 
