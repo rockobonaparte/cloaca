@@ -148,27 +148,8 @@ namespace CloacaInterpreter
         /// </summary>
         public async Task Tick()
         {
-            var oldActiveFrames = active;
-            active = new List<ScheduledTaskRecord>();
-            foreach (var scheduled in oldActiveFrames)
-            {
-                currentlyScheduled = scheduled;
-                if(interpreter.ExceptionEscaped(currentlyScheduled.Frame))
-                {
-                    throw new EscapedPyException(currentlyScheduled.Frame.CurrentException);
-                }
-
-                if (!(interpreter.ExceptionEscaped(currentlyScheduled.Frame) || (currentlyScheduled.Frame.BlockStack.Count == 0 && currentlyScheduled.Frame.Cursor >= currentlyScheduled.Frame.CodeBytes.Bytes.Length)))
-                {
-                    active.Add(currentlyScheduled);
-                }
-            }
-            currentlyScheduled = null;
-
-            //////////////////////// BEGIN: Taken from async-await demo scheduler
             // Queue flip because unblocked tasks might unblock further tasks.
             // TODO: Clear and flip pre-allocated lists instead of constructing a new one each time.
-            // TODO: Revisit more than one time per tick.
             var oldUnblocked = unblocked;
             unblocked = new List<ScheduledTaskRecord>();
 
@@ -184,7 +165,23 @@ namespace CloacaInterpreter
             currentlyScheduled = null;
 
             oldUnblocked.Clear();
-            //////////////////////// END: Taken from async-await demo scheduler
+
+            var oldActiveFrames = active;
+            active = new List<ScheduledTaskRecord>();
+            foreach (var scheduled in oldActiveFrames)
+            {
+                currentlyScheduled = scheduled;
+                if (interpreter.ExceptionEscaped(currentlyScheduled.Frame))
+                {
+                    throw new EscapedPyException(currentlyScheduled.Frame.CurrentException);
+                }
+
+                if (!(interpreter.ExceptionEscaped(currentlyScheduled.Frame) || (currentlyScheduled.Frame.BlockStack.Count == 0 && currentlyScheduled.Frame.Cursor >= currentlyScheduled.Frame.CodeBytes.Bytes.Length)))
+                {
+                    active.Add(currentlyScheduled);
+                }
+            }
+            currentlyScheduled = null;
 
             ++TickCount;
         }
