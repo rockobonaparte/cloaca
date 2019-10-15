@@ -3,7 +3,7 @@
 
 Switching to async-await using SyncContextTest as a template.
 1. [DONE] Create a scheduler to manage suspended scripts.
-2. Associate scheduler with interpreter.
+2. [DONE] Associate scheduler with interpreter.
 3. [DONE] Give unique IDs to frame contexts.
 4. [DONE] Remove IEnumerable methodology from code.
 5. Devise a test to demonstrate that this is working correctly with an embedded function call
@@ -14,6 +14,7 @@ Switching to async-await using SyncContextTest as a template.
    * Search for "yield" and touch up where it is mentioned.
 7. Sketch out how serialization might work.
 8. Get tick count assertions working in unit test again (if you can keep a tab on how much the scheduler has to tick to complete)
+9. Update step debug tool to work properly with async-await
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
