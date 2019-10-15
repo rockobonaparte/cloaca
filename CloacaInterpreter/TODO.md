@@ -2,13 +2,13 @@
 ===========
 
 Switching to async-await using SyncContextTest as a template.
-1. Create a scheduler to manage suspended scripts.
+1. [DONE] Create a scheduler to manage suspended scripts.
 2. Associate scheduler with interpreter.
-3. Give unique IDs to frame contexts.
-4. Remove IEnumerable methodology from code.
+3. [DONE] Give unique IDs to frame contexts.
+4. [DONE] Remove IEnumerable methodology from code.
 5. Devise a test to demonstrate that this is working correctly with an embedded function call
-   * Delete any previous IEnumerable tests or repurpose them, but I didn't find one in a quick search.
-     (I thought there was one!)
+   * [DONE] Delete any previous IEnumerable tests or repurpose them, but I didn't find one in a quick search.
+     (I thought there was one! [YES THERE WAS ONE!])
 6. Update existing documentation to remove IEnumerable notes and mention the async-await system.
    * Also remove ReturnValue and SchedulingInfo.
    * Search for "yield" and touch up where it is mentioned.

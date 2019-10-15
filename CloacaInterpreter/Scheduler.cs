@@ -27,7 +27,9 @@ namespace CloacaInterpreter
 
         public async Task Continue()
         {
-            await interpreter.Run(TaskletFrame);
+            // All I know is I should *not* await this. It jams up YieldTick, for example.
+            // TODO: Understand why this shouldn't be awaited, we shouldn't return the result of Run(), and why we still need an async Task signature.
+            interpreter.Run(TaskletFrame);
         }
     }
 

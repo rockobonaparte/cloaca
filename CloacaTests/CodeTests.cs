@@ -121,7 +121,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Debug in progress")]
         public void BasicWait()
         {
             runBasicTest(
