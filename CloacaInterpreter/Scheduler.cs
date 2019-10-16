@@ -108,39 +108,30 @@ namespace CloacaInterpreter
             return new ScheduledTaskRecord(frame, initialContinuation);
         }
 
-        /// <summary>
-        /// Particularly used in debugging to make sure the scheduler is pointing to a valid tasklet.
-        /// This makes the first dump from it point to something.
-        /// </summary>
-        public void Home()
-        {
-            throw new NotImplementedException("The old method of having an active tasklet has been thrown into turmoil by the async-await reimplementation. Home() not yet patched up.");
-        }
-
         // This is called when the currently-active script is blocking. Call this right before invoking
         // an awaiter from the task in which the script is running.
         public void NotifyBlocked(ISubscheduledContinuation continuation)
         {
-            currentlyScheduled.Continuation = continuation;
-            blocked.Add(currentlyScheduled);
+            lastScheduled.Continuation = continuation;
+            blocked.Add(lastScheduled);
         }
 
         // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
         public void NotifyUnblocked(ISubscheduledContinuation continuation)
         {
-            currentlyScheduled.Continuation = continuation;
-            if (blocked.Remove(currentlyScheduled))
+            lastScheduled.Continuation = continuation;
+            if (blocked.Remove(lastScheduled))
             {
-                unblocked.Add(currentlyScheduled);
+                unblocked.Add(lastScheduled);
             }
         }
 
         // Use to cooperative stop running for just a single tick.
         public void SetYielded(ISubscheduledContinuation continuation)
         {
-            currentlyScheduled.Continuation = continuation;
-            yielded.Add(currentlyScheduled);
+            lastScheduled.Continuation = continuation;
+            yielded.Add(lastScheduled);
         }
 
         /// <summary>
@@ -158,11 +149,11 @@ namespace CloacaInterpreter
 
             foreach (var continued in oldUnblocked)
             {
-                currentlyScheduled = continued;
-                active.Add(currentlyScheduled);
+                lastScheduled = continued;
+                active.Add(lastScheduled);
                 await continued.Continuation.Continue();
             }
-            currentlyScheduled = null;
+            lastScheduled = null;
 
             oldUnblocked.Clear();
 
@@ -170,18 +161,17 @@ namespace CloacaInterpreter
             active = new List<ScheduledTaskRecord>();
             foreach (var scheduled in oldActiveFrames)
             {
-                currentlyScheduled = scheduled;
-                if (interpreter.ExceptionEscaped(currentlyScheduled.Frame))
+                lastScheduled = scheduled;
+                if (interpreter.ExceptionEscaped(lastScheduled.Frame))
                 {
-                    throw new EscapedPyException(currentlyScheduled.Frame.CurrentException);
+                    throw new EscapedPyException(lastScheduled.Frame.CurrentException);
                 }
 
-                if (!(interpreter.ExceptionEscaped(currentlyScheduled.Frame) || (currentlyScheduled.Frame.BlockStack.Count == 0 && currentlyScheduled.Frame.Cursor >= currentlyScheduled.Frame.CodeBytes.Bytes.Length)))
+                if (!(interpreter.ExceptionEscaped(lastScheduled.Frame) || (lastScheduled.Frame.BlockStack.Count == 0 && lastScheduled.Frame.Cursor >= lastScheduled.Frame.CodeBytes.Bytes.Length)))
                 {
-                    active.Add(currentlyScheduled);
+                    active.Add(lastScheduled);
                 }
             }
-            currentlyScheduled = null;
 
             ++TickCount;
         }
@@ -210,12 +200,12 @@ namespace CloacaInterpreter
             }
         }
 
-        private ScheduledTaskRecord currentlyScheduled;
-        public FrameContext ActiveTasklet
+        private ScheduledTaskRecord lastScheduled;
+        public FrameContext LastTasklet
         {
             get
             {
-                return currentlyScheduled.Frame;
+                return lastScheduled.Frame;
             }
         }
 

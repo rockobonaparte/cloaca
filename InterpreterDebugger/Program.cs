@@ -58,10 +58,7 @@ namespace InterpreterDebugger
             }
 
             interpreter.StepMode = true;
-            scheduler.Home();
             bool traceMode = false;
-
-
 
             var debugRepl = new Repl("dbg> ")
             {
@@ -82,7 +79,15 @@ namespace InterpreterDebugger
                         interpreter.StepMode = false;
                         while (!scheduler.Done)
                         {
-                            scheduler.Tick();
+                            try
+                            {
+                                scheduler.Tick().Wait();
+                            }
+                            catch (AggregateException wrappedEscapedException)
+                            {
+                                // Given the nature of exception handling, we should normally only have one of these!
+                                throw wrappedEscapedException.InnerExceptions[0];
+                            }
                         }
                     }
                 },
@@ -100,7 +105,16 @@ namespace InterpreterDebugger
                     else
                     {
                         interpreter.StepMode = true;
-                        scheduler.Tick();
+                        try
+                        {
+                            scheduler.Tick().Wait();
+                        }
+                        catch (AggregateException wrappedEscapedException)
+                        {
+                            // Given the nature of exception handling, we should normally only have one of these!
+                            throw wrappedEscapedException.InnerExceptions[0];
+                        }
+
                         if(traceMode)
                         {
                             DumpState(scheduler);
@@ -120,7 +134,7 @@ namespace InterpreterDebugger
                     }
                     else
                     {
-                        var currentTasklet = scheduler.ActiveTasklet;
+                        var currentTasklet = scheduler.LastTasklet;
                         if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
                         {
                             DumpDatastack(currentTasklet);
@@ -173,7 +187,7 @@ namespace InterpreterDebugger
                     }
                     else
                     {
-                        var currentTasklet = scheduler.ActiveTasklet;
+                        var currentTasklet = scheduler.LastTasklet;
                         if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
                         {
                             if (args.Length == 0)
@@ -196,7 +210,7 @@ namespace InterpreterDebugger
 
         static void DumpState(Scheduler scheduler)
         {
-            var currentTasklet = scheduler.ActiveTasklet;
+            var currentTasklet = scheduler.LastTasklet;
             if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
             {
                 DumpState(currentTasklet);
@@ -205,7 +219,7 @@ namespace InterpreterDebugger
 
         static void DumpDatastack(Scheduler scheduler)
         {
-            var currentTasklet = scheduler.ActiveTasklet;
+            var currentTasklet = scheduler.LastTasklet;
             if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
             {
                 DumpDatastack(currentTasklet);
@@ -214,7 +228,7 @@ namespace InterpreterDebugger
 
         static void DumpCode(Scheduler scheduler)
         {
-            var currentTasklet = scheduler.ActiveTasklet;
+            var currentTasklet = scheduler.LastTasklet;
             if (currentTasklet != null && currentTasklet.Cursor < currentTasklet.CodeBytes.Bytes.Length)
             {
                 DumpCode(currentTasklet);
