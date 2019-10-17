@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes.Exceptions;
@@ -152,6 +153,17 @@ namespace CloacaInterpreter
                 lastScheduled = continued;
                 active.Add(lastScheduled);
                 await continued.Continuation.Continue();
+
+                if (lastScheduled.Frame.EscapedDotNetException != null)
+                {
+                    // We want to rethrow while retaining the original stack trace.
+                    // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
+                    ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException).Throw();
+                }
+                else if(interpreter.ExceptionEscaped(lastScheduled.Frame))
+                {
+                    throw new EscapedPyException(lastScheduled.Frame.CurrentException);
+                }
             }
             lastScheduled = null;
 
@@ -162,12 +174,15 @@ namespace CloacaInterpreter
             foreach (var scheduled in oldActiveFrames)
             {
                 lastScheduled = scheduled;
-                if (interpreter.ExceptionEscaped(lastScheduled.Frame))
-                {
-                    throw new EscapedPyException(lastScheduled.Frame.CurrentException);
-                }
 
-                if (!(interpreter.ExceptionEscaped(lastScheduled.Frame) || (lastScheduled.Frame.BlockStack.Count == 0 && lastScheduled.Frame.Cursor >= lastScheduled.Frame.CodeBytes.Bytes.Length)))
+                // Currently, we won't bump into these exception escape clauses since we'll bomb out from the checks run after every
+                // active task above, but we're keeping them here for later when we try to make the scheduler more resiliant against
+                // rogue scripts and keep running.
+                if (!(interpreter.ExceptionEscaped(lastScheduled.Frame) ||
+                      lastScheduled.Frame.EscapedDotNetException != null ||
+                      (lastScheduled.Frame.BlockStack.Count == 0 && lastScheduled.Frame.Cursor >= lastScheduled.Frame.CodeBytes.Bytes.Length)
+                     )
+                   )
                 {
                     active.Add(lastScheduled);
                 }

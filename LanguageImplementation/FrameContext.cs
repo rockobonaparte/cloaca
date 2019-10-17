@@ -12,6 +12,9 @@ namespace LanguageImplementation
         /// </summary>
         public PyObject CurrentException;
 
+        // TODO: Start wrapping these up as PyExceptions
+        public Exception EscapedDotNetException;
+
         public Stack<Frame> callStack;
 
         public FrameContext(Stack<Frame> callStack)

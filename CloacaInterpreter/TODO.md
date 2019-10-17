@@ -112,6 +112,7 @@ get rid of their schizophrenic ways ot managing these data types. Some known iss
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
        in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
   * [DONE] Raise from class
+  * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
 
 
