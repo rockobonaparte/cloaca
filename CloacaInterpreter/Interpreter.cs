@@ -58,9 +58,10 @@ namespace CloacaInterpreter
         /// <param name="func">The class body as interpretable code.</param>
         /// <param name="name">The name of the class.</param>
         /// <param name="bases">Base classes parenting this class.</param>
-        /// <returns>Since it calls the CodeObject, it may end up yielding. It will ultimately finish by yielding a
-        /// ReturnValue object containing the PyClass of the built class.</returns>
-        public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
+        /// <returns>Returns a task that will provide the finished PyClass. This calls the class body, which could wait for something,
+        /// but will normally be finished immediately. However, since the class body is theoretically asynchronous, it still has to be
+        /// provided as a Task return PyClass.</returns>
+        public async Task<PyClass> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
             Frame classFrame = new Frame(func);
@@ -132,9 +133,8 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that is makin the call.</param>
         /// <param name="functionToRun">The code object to call into</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
-        /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
-        /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
-        /// anything at the end of the call.</returns>
+        /// <returns>A task that returns some kind of object. This object is the return value of the
+        /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
         {
             Frame nextFrame = new Frame();
@@ -152,9 +152,8 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that is making the call.</param>
         /// <param name="nextFrame">The frame to run through,</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
-        /// <returns>The underlying code may yield so this will return various SchedulingInfo. After all inner
-        /// yielding is finished, it will return a ReturnValue containing the top of the stack if it contains
-        /// anything at the end of the call.</returns>
+        /// <returns>A task that returns some kind of object. This object is the return value of the
+        /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.

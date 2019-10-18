@@ -74,7 +74,7 @@ namespace LanguageImplementation.DataTypes
             this.__init__ = __init__;
             __dict__["__init__"] = this.__init__;
 
-            // DefaultNew doesn't invoking any yielding code so we won't pass along its context to the wrapper.
+            // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
@@ -83,10 +83,8 @@ namespace LanguageImplementation.DataTypes
         /// <summary>
         /// Data types can be called directly. Consider class constructors in particular. So this is an implementation
         /// of IPyCallable that runs the __new__ -> __init__ chain that happens when a class is invoked. The
-        /// implementations of __new__ and __init__ have embedded defaults that *don't* yield, but they could have
-        /// been specified with Python scripts in the program and DO yield, hence it yields IEnumerables. When it
-        /// returns a ReturnValue of the self pointer, then it has finished object initialization and you have a new
-        /// instance of the given type.
+        /// implementations of __new__ and __init__ have embedded defaults that *don't* block with await, but they could have
+        /// been specified with Python scripts in the program and DO. Hence it has to return a Task.
         /// </summary>
         /// <param name="interpreter">The interpreter instance that has invoked this code.</param>
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
