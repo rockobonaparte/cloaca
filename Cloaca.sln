@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2041
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29409.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Language", "Language\Language.csproj", "{BD5147C9-3BB4-4B1E-8A13-405FE2381330}"
 EndProject
@@ -21,8 +21,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibREPL", "LibREPL-master\LibREPL\LibREPL.csproj", "{97D256C9-E2C7-4FCC-A14A-1180D05726B8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleREPL", "LibREPL-master\ExampleREPL\ExampleREPL.csproj", "{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncContextTest", "SyncContextTest\SyncContextTest.csproj", "{CBF5778B-BF50-454F-BD51-DA69F199CA26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,10 +60,6 @@ Global
 		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C24F9225-F7A9-4544-ACFC-F5263D9A1BCE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CBF5778B-BF50-454F-BD51-DA69F199CA26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

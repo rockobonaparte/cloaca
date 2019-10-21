@@ -13,9 +13,54 @@ using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Sharpen;
 using NUnit.Framework;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
+    class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
+    {
+        private Interpreter interpreter;
+        private Action continuation;
+
+        public void AssignInterpreter(Interpreter interpreter)
+        {
+            this.interpreter = interpreter;
+        }
+
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        {
+            var task = wrappedMethodBody();
+            task.Start();
+            return task;
+        }
+
+        // This is the actual payload.
+        private async Task<object> wrappedMethodBody()
+        {
+            // We're just having it wait off one tick as a pause since we don't actually have something on the
+            // other end of this that will block.
+            await new YieldTick(this.interpreter);
+            return 1;
+        }
+
+        // Needed by ISubscheduledContinuation
+        public Task Continue()
+        {
+            // We only yield once so we're good.
+            continuation?.Invoke();
+            return Task.FromResult(true);
+        }
+
+        // Needed by INotifyCompletion. Gives us the continuation that we must run when we're done with our blocking section
+        // in order to continue execution wherever we were halted.
+        public void OnCompleted(Action continuation)
+        {
+            this.continuation = continuation;
+        }
+    }
+
     [TestFixture]
     public class EmbeddingTests : RunCodeTest
     {
@@ -41,6 +86,20 @@ namespace CloacaTests
                 { "meow", meowCode }
             }, 1);
             Assert.That(calledCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        [Ignore("Embedding a block call is a work-in-progress!")]
+        public void YieldForResult()
+        {
+            var blockedReturnMock = new MockBlockedReturnValue();
+            runBasicTest("a = blocking_call()\n", new Dictionary<string, object>()
+            {
+                { "blocking_call", blockedReturnMock }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(1) }
+            }), 2);
         }
     }
 }
