@@ -202,7 +202,7 @@ namespace CloacaInterpreter
                 catch(AggregateException wrappedEscapedException)
                 {
                     // Given the nature of exception handling, we should normally only have one of these!
-                    throw wrappedEscapedException.InnerExceptions[0];
+                    ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
                 }
             }
         }

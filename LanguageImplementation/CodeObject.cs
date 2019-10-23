@@ -112,8 +112,12 @@ namespace LanguageImplementation
             }
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
-            if(MethodInfo.ReturnType == typeof(Task<object>))
+            if(MethodInfo.ReturnType.IsGenericType && MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
+                // The little bit of bizarre testing above gets us this far but we still need a Task<object>.
+                // The cast will fail if they're returning something else. At least now it'll error in a way
+                // more related to the real problem. We had a method return Task<PyClass> and it would blow
+                // up from this section when it was written more naively.
                 return (Task<object>) MethodInfo.Invoke(instance, finalArgsList.ToArray());
             }
             else

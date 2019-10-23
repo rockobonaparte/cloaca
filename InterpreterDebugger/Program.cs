@@ -8,6 +8,7 @@ using LanguageImplementation;
 
 using Piksel.LibREPL;
 using Antlr4.Runtime;
+using System.Runtime.ExceptionServices;
 
 namespace InterpreterDebugger
 {
@@ -86,7 +87,7 @@ namespace InterpreterDebugger
                             catch (AggregateException wrappedEscapedException)
                             {
                                 // Given the nature of exception handling, we should normally only have one of these!
-                                throw wrappedEscapedException.InnerExceptions[0];
+                                ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
                             }
                         }
                     }
@@ -112,10 +113,10 @@ namespace InterpreterDebugger
                         catch (AggregateException wrappedEscapedException)
                         {
                             // Given the nature of exception handling, we should normally only have one of these!
-                            throw wrappedEscapedException.InnerExceptions[0];
+                            ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
                         }
 
-                        if(traceMode)
+                        if (traceMode)
                         {
                             DumpState(scheduler);
                         }

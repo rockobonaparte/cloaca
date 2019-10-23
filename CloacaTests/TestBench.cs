@@ -11,6 +11,7 @@ using Antlr4.Runtime.Dfa;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Sharpen;
 using NUnit.Framework;
+using System.Runtime.ExceptionServices;
 
 namespace CloacaTests
 {
@@ -61,7 +62,7 @@ namespace CloacaTests
             catch (AggregateException wrappedEscapedException)
             {
                 // Given the nature of exception handling, we should normally only have one of these!
-                throw wrappedEscapedException.InnerExceptions[0];
+                ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
             }
 
             var variables = new VariableMultimap(context);
