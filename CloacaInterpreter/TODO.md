@@ -202,11 +202,4 @@ Current notes on embedding
 
 Trying with YieldForResult unit test with MockBlockedReturnValue.
 
-WrappedCodeObject is not designed to know when to notify that something will block. I don't think it's the primary
-means we should be using for this.
-
-WrappedCodeObject:
-  * MockBlockedReturnValue needs to get an interpreter handle somehow in order to notify the interpreter's scheduler
-    that is it blocking. There is no plumbing for this.
-  * Unclear that async nature of the code is making it through. Do I need to qualify the lambda as async?
-  * Check for casting from IInterpreter to Interpreter. This casting is awkward.
+Need to cast int to PyInteger. Generally need box/unbox helpers.
