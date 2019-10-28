@@ -31,18 +31,18 @@ namespace CloacaTests
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            var task = wrappedMethodBody();
-            task.Start();
+            var task = wrappedMethodBody(interpreter);
             return task;
         }
 
         // This is the actual payload.
-        private async Task<object> wrappedMethodBody()
+        public async Task<object> wrappedMethodBody(IInterpreter interpreter)
         {
             // We're just having it wait off one tick as a pause since we don't actually have something on the
             // other end of this that will block.
+            this.interpreter = (Interpreter) interpreter;
             await new YieldTick(this.interpreter);
-            return 1;
+            return new PyInteger(1);                // TODO: Helpers to box/unbox between .NET and Python types.
         }
 
         // Needed by ISubscheduledContinuation
@@ -89,10 +89,10 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Embedding a block call is a work-in-progress!")]
         public void YieldForResult()
         {
             var blockedReturnMock = new MockBlockedReturnValue();
+
             runBasicTest("a = blocking_call()\n", new Dictionary<string, object>()
             {
                 { "blocking_call", blockedReturnMock }

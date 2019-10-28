@@ -1,6 +1,7 @@
 ﻿Cloaca TODO
 ===========
 
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
@@ -192,3 +193,13 @@ Useful bits:
 Dump a code object that comes up in a disassembly
 >>> import ctypes
 >>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value
+
+
+
+
+
+Current notes on embedding
+
+Trying with YieldForResult unit test with MockBlockedReturnValue.
+
+Need to cast int to PyInteger. Generally need box/unbox helpers.
