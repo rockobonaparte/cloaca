@@ -1,6 +1,7 @@
 ﻿Cloaca TODO
 ===========
 
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
@@ -192,3 +193,20 @@ Useful bits:
 Dump a code object that comes up in a disassembly
 >>> import ctypes
 >>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value
+
+
+
+
+
+Current notes on embedding
+
+Trying with YieldForResult unit test with MockBlockedReturnValue.
+
+WrappedCodeObject is not designed to know when to notify that something will block. I don't think it's the primary
+means we should be using for this.
+
+WrappedCodeObject:
+  * MockBlockedReturnValue needs to get an interpreter handle somehow in order to notify the interpreter's scheduler
+    that is it blocking. There is no plumbing for this.
+  * Unclear that async nature of the code is making it through. Do I need to qualify the lambda as async?
+  * Check for casting from IInterpreter to Interpreter. This casting is awkward.
