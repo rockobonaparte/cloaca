@@ -747,7 +747,8 @@ namespace CloacaInterpreter
 
                                 object abstractFunctionToRun = context.DataStack.Pop();
 
-                                if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
+                                if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 
+                                    (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject)))
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
@@ -777,7 +778,7 @@ namespace CloacaInterpreter
                                         await asClass.__init__.Call(this, context, args.ToArray());
                                         context.DataStack.Push(self);
                                     }
-                                    else
+                                    else if(abstractFunctionToRun is CodeObject)
                                     {
                                         // Could still be a constructor!
                                         functionToRun = (CodeObject)abstractFunctionToRun;
@@ -805,6 +806,10 @@ namespace CloacaInterpreter
                                         // We're assuming it's a good-old-fashioned CodeObject
                                         var returned = await CallInto(context, functionToRun, args.ToArray());
                                         context.DataStack.Push(returned);
+                                    }
+                                    else
+                                    {
+                                        throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
                                     }
                                     context.Cursor += 2;                    // Resume at next instruction in this program.                                
                                 }
