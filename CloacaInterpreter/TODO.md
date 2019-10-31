@@ -79,7 +79,16 @@ Following that, serialization of tasks.
 * Integration with parent runtime
   * [DONE] Call embedded C# function from script
   * Call Python function through interpreter
-  * Manage async call with waiting in interpreter
+  * [DONE-ish] Manage async call with waiting in interpreter
+  * Primitive Boxing/unboxing
+     * Int
+	 * BigInt
+	 * Float
+	 * Decimal types
+	 * strings
+	 * bools
+  * Object wrapping. Start with wrapping a generic object. All fields should also get boxed/unboxed which will
+    likely mess around with how primitive boxing/unboxing is done.
 * Serialization
   * Any test that can wait should automatically be run 
     * All the way through as usual
@@ -199,7 +208,4 @@ Dump a code object that comes up in a disassembly
 
 
 Current notes on embedding
-
-Trying with YieldForResult unit test with MockBlockedReturnValue.
-
 Need to cast int to PyInteger. Generally need box/unbox helpers.

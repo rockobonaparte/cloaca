@@ -101,5 +101,55 @@ namespace CloacaTests
                 { "a", new PyInteger(1) }
             }), 2);
         }
+
+        [Test]
+        [Ignore("Primitive boxing not yet implemented")]
+        public void EmbeddingBasicTypes()
+        {
+            runBasicTest(
+                "dest_int = src_int\n" +
+                "dest_float = src_float\n" +
+                "dest_double = src_double\n" +
+                "dest_string = src_string\n" +
+                "dest_bool = src_bool\n",
+                new Dictionary<string, object>()
+            {
+                { "src_int", 1 },        // Note that it's going in as a .NET integer, not PyInteger. It should get boxed.
+                { "src_float", 2.0f },
+                { "src_double", 3.0 },
+                { "src_string", "4" },
+                { "src_bool", true }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "dest_int", new PyInteger(1) },     // Note that it *should* be a PyInteger!
+                { "dest_float", new PyFloat(2.0f) },
+                { "dest_double", new PyFloat(3.0) },
+//                { "dest_string", new PyString("4") },
+//                { "dest_bool", new PyBool(true) },
+            }), 1);
+        }
+
+        class EmbeddedBasicObject
+        {
+            public int aNumber;
+            public EmbeddedBasicObject()
+            {
+                aNumber = 1111;
+            }
+        }
+
+        [Test]
+        [Ignore("Object boxing not yet implemented")]
+        public void EmbedBasicObjectRead()
+        {
+            var embeddedInstance = new EmbeddedBasicObject();
+            runBasicTest("a = basic_object.aNumber\n", new Dictionary<string, object>()
+            {
+                { "blocking_call", embeddedInstance }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(1111) }
+            }), 1);
+        }
     }
 }
