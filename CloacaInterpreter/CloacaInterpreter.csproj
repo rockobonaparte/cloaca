@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BoxUnbox.cs" />
     <Compile Include="Builtins.cs" />
     <Compile Include="ConstantsFactory.cs" />
     <Compile Include="ExtensionMethods.cs" />
