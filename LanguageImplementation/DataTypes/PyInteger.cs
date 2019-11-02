@@ -87,8 +87,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than");
-            var newPyInteger = a.number < b.number;
-            return newPyInteger;
+            return a.number < b.number;
         }
 
         [ClassMember]
@@ -96,8 +95,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than");
-            var newPyInteger = a.number > b.number;
-            return newPyInteger;
+            return a.number > b.number;
         }
 
         [ClassMember]
@@ -105,8 +103,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-equal");
-            var newPyInteger = a.number <= b.number;
-            return newPyInteger;
+            return a.number <= b.number;
         }
 
         [ClassMember]
@@ -114,8 +111,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than-equal");
-            var newPyInteger = a.number >= b.number;
-            return newPyInteger;
+            return a.number >= b.number;
         }
 
         [ClassMember]
@@ -123,8 +119,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "equality");
-            var newPyInteger = a.number == b.number;
-            return newPyInteger;
+            return a.number == b.number;
         }
 
         [ClassMember]
@@ -132,8 +127,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "non-equality");
-            var newPyInteger = a.number != b.number;
-            return newPyInteger;
+            return a.number != b.number;
         }
 
         [ClassMember]
@@ -141,8 +135,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
-            var newPyInteger = a.number < b.number && a.number > b.number;
-            return newPyInteger;
+            return a.number < b.number && a.number > b.number;
         }
     }
 
