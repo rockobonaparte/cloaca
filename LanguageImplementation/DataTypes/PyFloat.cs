@@ -125,14 +125,14 @@ namespace LanguageImplementation.DataTypes
 
         public override bool Equals(object obj)
         {
-            var asPyInt = obj as PyFloat;
-            if(asPyInt == null)
+            var asPyFloat = obj as PyFloat;
+            if(asPyFloat == null)
             {
                 return false;
             }
             else
             {
-                return asPyInt.number == number;
+                return asPyFloat.number == number;
             }
         }
 
