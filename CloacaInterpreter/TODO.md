@@ -212,3 +212,5 @@ Need to cast int to PyInteger. Generally need box/unbox helpers.
 Implementing PyString and PyBool before proceeding. Need to make sure all the __comparison__ functions for other
 types return PyBool when done.
 PyFloat needs comparison operators; can you write a generic helper for this?
+All numeric types--include bool--need to be able to handle having math done with them against the other types. So
+int + float + bool has to work.
