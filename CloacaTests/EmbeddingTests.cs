@@ -124,7 +124,7 @@ namespace CloacaTests
                 { "dest_int", new PyInteger(1) },     // Note that it *should* be a PyInteger!
                 { "dest_float", new PyFloat(2.0f) },
                 { "dest_double", new PyFloat(3.0) },
-//                { "dest_string", new PyString("4") },
+                { "dest_string", new PyString("4") },
 //                { "dest_bool", new PyBool(true) },
             }), 1);
         }

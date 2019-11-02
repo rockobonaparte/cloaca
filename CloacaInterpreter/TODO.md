@@ -209,3 +209,6 @@ Dump a code object that comes up in a disassembly
 
 Current notes on embedding
 Need to cast int to PyInteger. Generally need box/unbox helpers.
+Implementing PyString and PyBool before proceeding. Need to make sure all the __comparison__ functions for other
+types return PyBool when done.
+PyFloat needs comparison operators; can you write a generic helper for this?
