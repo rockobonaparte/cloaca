@@ -747,8 +747,9 @@ namespace CloacaInterpreter
 
                                 object abstractFunctionToRun = context.DataStack.Pop();
 
+                                // if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
                                 if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 
-                                    (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject)))
+                                    (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject) && !(abstractFunctionToRun is PyClass)))
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
