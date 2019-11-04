@@ -79,13 +79,13 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
             {
                 { "a", new PyInteger(10) },
-                { "b", false },
-                { "c", true },
-                { "d", false },
-                { "e", false },
-                { "f", true },
-                { "g", true },
-                { "h", false },
+                { "b", new PyBool(false) },
+                { "c", new PyBool(true) },
+                { "d", new PyBool(false) },
+                { "e", new PyBool(false) },
+                { "f", new PyBool(true) },
+                { "g", new PyBool(true) },
+                { "h", new PyBool(false) },
             }), 1);
         }
 

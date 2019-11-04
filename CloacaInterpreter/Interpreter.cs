@@ -544,7 +544,7 @@ namespace CloacaInterpreter
                                         var returned = await leftObj.InvokeFromDict(this, context, compareFunc, new PyObject[] { rightObj });
                                         if (returned != null)
                                         {
-                                            context.DataStack.Push((bool)returned);
+                                            context.DataStack.Push((PyBool)returned);
                                         }
                                     }
                                 }
@@ -610,7 +610,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (bool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Peek();
                                 if (conditional)
                                 {
                                     context.Cursor = jumpPosition;
@@ -623,7 +623,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (bool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Peek();
                                 if (!conditional)
                                 {
                                     context.Cursor = jumpPosition;
@@ -636,7 +636,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (bool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Peek();
                                 if (conditional)
                                 {
                                     context.Cursor = jumpPosition;
@@ -650,7 +650,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (bool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Peek();
                                 if (!conditional)
                                 {
                                     context.Cursor = jumpPosition;

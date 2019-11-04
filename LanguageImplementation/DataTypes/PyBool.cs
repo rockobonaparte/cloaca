@@ -74,43 +74,43 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __lt__(PyObject self, PyObject other)
+        public static PyBool __lt__(PyObject self, PyObject other)
         {
             return extractInt(self) < extractInt(other);
         }
 
         [ClassMember]
-        public static bool __gt__(PyObject self, PyObject other)
+        public static PyBool __gt__(PyObject self, PyObject other)
         {
             return extractInt(self) > extractInt(other);
         }
 
         [ClassMember]
-        public static bool __le__(PyObject self, PyObject other)
+        public static PyBool __le__(PyObject self, PyObject other)
         {
             return extractInt(self) <= extractInt(other);
         }
 
         [ClassMember]
-        public static bool __ge__(PyObject self, PyObject other)
+        public static PyBool __ge__(PyObject self, PyObject other)
         {
             return extractInt(self) >= extractInt(other);
         }
 
         [ClassMember]
-        public static bool __eq__(PyObject self, PyObject other)
+        public static PyBool __eq__(PyObject self, PyObject other)
         {
             return extractInt(self) == extractInt(other);
         }
 
         [ClassMember]
-        public static bool __ne__(PyObject self, PyObject other)
+        public static PyBool __ne__(PyObject self, PyObject other)
         {
             return extractInt(self) != extractInt(other);
         }
 
         [ClassMember]
-        public static bool __ltgt__(PyObject self, PyObject other)
+        public static PyBool __ltgt__(PyObject self, PyObject other)
         {
             var a = extractInt(self);
             var b = extractInt(other);
@@ -152,6 +152,16 @@ namespace LanguageImplementation.DataTypes
         public override string ToString()
         {
             return boolean.ToString();
+        }
+
+        public static implicit operator PyBool(bool rhs)
+        {
+            return new PyBool(rhs);
+        }
+
+        public static implicit operator bool(PyBool rhs)
+        {
+            return rhs.boolean;
         }
     }
 }

@@ -83,7 +83,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __lt__(PyObject self, PyObject other)
+        public static PyBool __lt__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than");
@@ -91,7 +91,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __gt__(PyObject self, PyObject other)
+        public static PyBool __gt__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than");
@@ -99,7 +99,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __le__(PyObject self, PyObject other)
+        public static PyBool __le__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-equal");
@@ -107,7 +107,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __ge__(PyObject self, PyObject other)
+        public static PyBool __ge__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than-equal");
@@ -115,7 +115,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __eq__(PyObject self, PyObject other)
+        public static PyBool __eq__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "equality");
@@ -123,7 +123,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __ne__(PyObject self, PyObject other)
+        public static PyBool __ne__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "non-equality");
@@ -131,7 +131,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static bool __ltgt__(PyObject self, PyObject other)
+        public static PyBool __ltgt__(PyObject self, PyObject other)
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
