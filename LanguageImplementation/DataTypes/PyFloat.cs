@@ -31,78 +31,6 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        [ClassMember]
-        public static PyObject __add__(PyObject self, PyObject other)
-        {
-            var a = self as PyFloat;
-            var b = other as PyFloat;
-            if (a == null)
-            {
-                throw new Exception("Tried to use a non-PyFloat for addition");
-            }
-            if (b == null)
-            {
-                throw new Exception("Tried to add a PyFloat to a non-PyFloat");
-            }
-
-            var newPyFloat = new PyFloat(a.number + b.number);
-            return newPyFloat;
-        }
-
-        [ClassMember]
-        public static PyObject __mul__(PyObject self, PyObject other)
-        {
-            var a = self as PyFloat;
-            var b = other as PyFloat;
-            if (a == null)
-            {
-                throw new Exception("Tried to use a non-PyFloat for multiplication");
-            }
-            if (b == null)
-            {
-                throw new Exception("Tried to multiply a PyFloat with a non-PyFloat");
-            }
-
-            var newPyFloat = new PyFloat(a.number * b.number);
-            return newPyFloat;
-        }
-
-        [ClassMember]
-        public static PyObject __sub__(PyObject self, PyObject other)
-        {
-            var a = self as PyFloat;
-            var b = other as PyFloat;
-            if (a == null)
-            {
-                throw new Exception("Tried to use a non-PyFloat for subtraction");
-            }
-            if (b == null)
-            {
-                throw new Exception("Tried to subtract a PyFloat by a non-PyFloat");
-            }
-
-            var newPyFloat = new PyFloat(a.number - b.number);
-            return newPyFloat;
-        }
-
-        [ClassMember]
-        public static PyObject __div__(PyObject self, PyObject other)
-        {
-            var a = self as PyFloat;
-            var b = other as PyFloat;
-            if (a == null)
-            {
-                throw new Exception("Tried to use a non-PyFloat for division");
-            }
-            if (b == null)
-            {
-                throw new Exception("Tried to divide a PyFloat by a non-PyFloat");
-            }
-
-            var newPyFloat = new PyFloat(a.number / b.number);
-            return newPyFloat;
-        }
-
         private static void castOperands(PyObject self, PyObject other, out PyFloat selfOut, out PyFloat otherOut, string operation)
         {
             selfOut = self as PyFloat;
@@ -121,7 +49,7 @@ namespace LanguageImplementation.DataTypes
             var rightInt = other as PyInteger;
             if (rightInt != null)
             {
-                otherOut = new PyFloat((decimal) rightInt.number);
+                otherOut = new PyFloat((decimal)rightInt.number);
                 return;
             }
 
@@ -143,6 +71,42 @@ namespace LanguageImplementation.DataTypes
             {
                 throw new Exception("TypeError: unsupported operand(s) for " + operation + " 'float' and '" + other.__class__.Name + "'");
             }
+        }
+
+        [ClassMember]
+        public static PyObject __add__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "addition");
+            var newPyFloat = new PyFloat(a.number + b.number);
+            return newPyFloat;
+        }
+
+        [ClassMember]
+        public static PyObject __mul__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "multiplication");
+            var newPyFloat = new PyFloat(a.number * b.number);
+            return newPyFloat;
+        }
+
+        [ClassMember]
+        public static PyObject __sub__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "subtract");
+            var newPyFloat = new PyFloat(a.number - b.number);
+            return newPyFloat;
+        }
+
+        [ClassMember]
+        public static PyObject __div__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "division");
+            var newPyFloat = new PyFloat(a.number / b.number);
+            return newPyFloat;
         }
 
         [ClassMember]
