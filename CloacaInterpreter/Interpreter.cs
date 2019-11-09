@@ -515,10 +515,10 @@ namespace CloacaInterpreter
                                         case CompareOps.NotIn:
                                             throw new NotImplementedException("'Not In' comparison operation");
                                         case CompareOps.Is:
-                                            context.DataStack.Push(left.GetType() == right.GetType() && left == right);
+                                            context.DataStack.Push(new PyBool(left.GetType() == right.GetType() && left == right));
                                             break;
                                         case CompareOps.IsNot:
-                                            context.DataStack.Push(left.GetType() != right.GetType() || left != right);
+                                            context.DataStack.Push(new PyBool(left.GetType() != right.GetType() || left != right));
                                             break;
                                         case CompareOps.ExceptionMatch:
                                             {
@@ -532,7 +532,7 @@ namespace CloacaInterpreter
                                                 else
                                                 {
                                                     var leftObject = left as PyObject;
-                                                    context.DataStack.Push(leftObject.__class__ == right);
+                                                    context.DataStack.Push(new PyBool(leftObject.__class__ == right));
                                                 }
                                                 break;
                                             }
@@ -553,35 +553,35 @@ namespace CloacaInterpreter
                                     switch (compare_op)
                                     {
                                         case CompareOps.Lt:
-                                            context.DataStack.Push(left < right);
+                                            context.DataStack.Push(new PyBool(left < right));
                                             break;
                                         case CompareOps.Gt:
-                                            context.DataStack.Push(left > right);
+                                            context.DataStack.Push(new PyBool(left > right));
                                             break;
                                         case CompareOps.Eq:
-                                            context.DataStack.Push(left == right);
+                                            context.DataStack.Push(new PyBool(left == right));
                                             break;
                                         case CompareOps.Ge:
-                                            context.DataStack.Push(left >= right);
+                                            context.DataStack.Push(new PyBool(left >= right));
                                             break;
                                         case CompareOps.Le:
-                                            context.DataStack.Push(left <= right);
+                                            context.DataStack.Push(new PyBool(left <= right));
                                             break;
                                         case CompareOps.LtGt:
-                                            context.DataStack.Push(left < right || left > right);
+                                            context.DataStack.Push(new PyBool(left < right || left > right));
                                             break;
                                         case CompareOps.Ne:
-                                            context.DataStack.Push(left != right);
+                                            context.DataStack.Push(new PyBool(left != right));
                                             break;
                                         case CompareOps.In:
                                             throw new NotImplementedException("'In' comparison operation");
                                         case CompareOps.NotIn:
                                             throw new NotImplementedException("'Not In' comparison operation");
                                         case CompareOps.Is:
-                                            context.DataStack.Push(left.GetType() == right.GetType() && left == right);
+                                            context.DataStack.Push(new PyBool(left.GetType() == right.GetType() && left == right));
                                             break;
                                         case CompareOps.IsNot:
-                                            context.DataStack.Push(left.GetType() != right.GetType() || left != right);
+                                            context.DataStack.Push(new PyBool(left.GetType() != right.GetType() || left != right));
                                             break;
                                         case CompareOps.ExceptionMatch:
                                             {

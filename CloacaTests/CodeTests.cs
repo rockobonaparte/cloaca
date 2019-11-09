@@ -101,8 +101,8 @@ namespace CloacaTests
             new VariableMultimap(new TupleList<string, object>
             {
                 { "a", NoneType.Instance },
-                { "b", true },
-                { "c", false }
+                { "b", new PyBool(true) },
+                { "c", new PyBool(false) }
             }), 1);
 
             // Now let's flip A around and make sure we're still cool.
@@ -115,8 +115,8 @@ namespace CloacaTests
             new VariableMultimap(new TupleList<string, object>
             {
                 { "a", new PyInteger(10) },
-                { "b", false },
-                { "c", true }
+                { "b", new PyBool(false) },
+                { "c", new PyBool(true) }
             }), 1);
         }
 
