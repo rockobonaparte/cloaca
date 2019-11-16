@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
     public class PyFloatClass : PyTypeObject
     {
         public PyFloatClass(CodeObject __init__) :
-            base("int", __init__)
+            base("float", __init__)
         {
             var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
 

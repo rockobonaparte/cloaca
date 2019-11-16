@@ -7,7 +7,7 @@ namespace LanguageImplementation.DataTypes
     public class PyBoolClass : PyTypeObject
     {
         public PyBoolClass(CodeObject __init__) :
-            base("int", __init__)
+            base("bool", __init__)
         {
             var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
 
