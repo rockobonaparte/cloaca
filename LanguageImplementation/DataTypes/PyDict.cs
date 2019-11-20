@@ -40,7 +40,41 @@ namespace LanguageImplementation.DataTypes
             //
             // __contains__(key, /) method of builtins.dict instance
             //     True if D has a key k, else False.
-            throw new NotImplementedException();
+            if(self.dict.ContainsKey(k))
+            {
+                return new PyBool(true);
+            }
+            else
+            {
+                return new PyBool(false);
+            }
+        }
+
+        [ClassMember]
+        public static PyObject __getitem__(PyDict self, PyObject k)
+        {
+            try
+            {
+                return self.dict[k];
+            }
+            catch(KeyNotFoundException)
+            {
+                // TODO: Represent as a more natural Python exception;
+                throw new Exception("KeyError: " + k);
+            }
+        }
+
+        [ClassMember]
+        public static void __setitem__(PyDict self, PyObject k, PyObject value)
+        {
+            if(self.dict.ContainsKey(k))
+            {
+                self.dict[k] = value;
+            }
+            else
+            {
+                self.dict.Add(k, value);
+            }
         }
 
         [ClassMember]
@@ -185,7 +219,7 @@ namespace LanguageImplementation.DataTypes
 
     public class PyDict : PyObject
     {
-        private Dictionary<PyObject, PyObject> dict;
+        internal Dictionary<PyObject, PyObject> dict;
         public PyDict()
         {
             dict = new Dictionary<PyObject, PyObject>();
