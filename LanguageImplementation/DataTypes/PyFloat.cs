@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -8,13 +7,6 @@ namespace LanguageImplementation.DataTypes
         public PyFloatClass(CodeObject __init__) :
             base("float", __init__)
         {
-            var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
-
-            foreach (var classMember in classMembers)
-            {
-                this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
-            }
-
             __instance = this;
         }
 

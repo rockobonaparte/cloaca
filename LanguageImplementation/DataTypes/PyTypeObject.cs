@@ -2,9 +2,19 @@
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace LanguageImplementation.DataTypes
 {
+    /// <summary>
+    /// Decorator used by subclasses of PyTypeObject to denote methods in the code that should be entered into the
+    /// classes dictionary as callables.
+    /// </summary>
+    public class ClassMember : System.Attribute
+    {
+
+    }
+
     public class PyTypeObject : PyObject, IPyCallable
     {
         public string Name;
@@ -78,6 +88,13 @@ namespace LanguageImplementation.DataTypes
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
+
+            var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
+
+            foreach (var classMember in classMembers)
+            {
+                this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
+            }
         }
 
         /// <summary>

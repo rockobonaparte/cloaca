@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Numerics;
 
 namespace LanguageImplementation.DataTypes
@@ -9,13 +8,6 @@ namespace LanguageImplementation.DataTypes
         public PyBoolClass(CodeObject __init__) :
             base("bool", __init__)
         {
-            var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
-
-            foreach (var classMember in classMembers)
-            {
-                this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
-            }
-
             __instance = this;
         }
 
