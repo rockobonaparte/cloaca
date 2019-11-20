@@ -9,6 +9,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyObject
     {
+        // TODO: Make map of string to PyObject
         public Dictionary<string, object> __dict__;
         public PyClass __class__;
         public string __doc__;
@@ -54,6 +55,16 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        public PyBool __eq__(PyObject other)
+        {
+            return Equals(other);
+        }
+
+        public PyBool __ne__(PyObject other)
+        {
+            return !Equals(other);
+        }
+
         public PyObject()
         {
             __dict__ = new Dictionary<string, object>();
@@ -63,7 +74,7 @@ namespace LanguageImplementation.DataTypes
         {
             // TODO: Determine if there needs to be additional properties.
             __dict__ = fromType.__dict__;
-        }
+        }        
 
         public Task<object> InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
         {
@@ -85,4 +96,5 @@ namespace LanguageImplementation.DataTypes
             }
         }
     }
+
 }

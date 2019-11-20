@@ -68,10 +68,35 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // TODO: Test
         [ClassMember]
         public static PyBool __eq__(PyDict self, PyObject other)
         {
-            throw new NotImplementedException("== not yet implemented. This needs to be an actual comparison of values!");
+            var otherDict = other as PyDict;
+            if(otherDict == null)
+            {
+                return new PyBool(false);
+            }
+
+            if(otherDict.dict.Count != self.dict.Count)
+            {
+                return new PyBool(false);
+            }
+
+            foreach(var pair in self.dict)
+            {
+                if(!otherDict.dict.ContainsKey(pair.Key))
+                {
+                    return new PyBool(false);
+                }
+
+                var otherVal = otherDict.dict[pair.Key];
+                if(pair.Value.__eq__(otherVal).boolean == false)
+                {
+                    return new PyBool(false);
+                }
+            }
+            return new PyBool(true);
         }
 
         [ClassMember]
