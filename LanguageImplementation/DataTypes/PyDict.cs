@@ -257,7 +257,15 @@ namespace LanguageImplementation.DataTypes
 
         public override bool Equals(object obj)
         {
-            throw new NotImplementedException();
+            var asList = obj as PyDict;
+            if (asList == null)
+            {
+                return false;
+            }
+            else
+            {
+                return PyDictClass.__eq__(this, asList).boolean;
+            }
         }
 
         public override int GetHashCode()
