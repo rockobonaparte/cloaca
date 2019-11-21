@@ -42,6 +42,20 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static void __delitem__(PyDict self, PyObject k)
+        {
+            try
+            {
+                self.dict.Remove(k);
+            }
+            catch (KeyNotFoundException)
+            {
+                // TODO: Represent as a more natural Python exception;
+                throw new Exception("KeyError: " + k);
+            }
+        }
+
+        [ClassMember]
         public static PyObject __getitem__(PyDict self, PyObject k)
         {
             try
