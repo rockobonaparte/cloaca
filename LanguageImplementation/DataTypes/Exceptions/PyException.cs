@@ -60,6 +60,14 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
 
         /// <summary>
+        /// Create a new Python exception based on a PyString message
+        /// </summary>
+        /// <param name="message">The exception message as a PyString</param>
+        public PyException(PyString message) : this(message.str)
+        {
+        }
+
+        /// <summary>
         /// Exposed as the __init__ for Exception() inside the interpreter. The self parameter
         /// is exposed in order to invoke the constructor using the class Python class method
         /// signature where the 'this' pointer is the first argument. It is just a handle to
@@ -123,6 +131,11 @@ namespace LanguageImplementation.DataTypes.Exceptions
         {
             self.PythonPyExceptionConstructor(self, message);
             return self;
+        }
+
+        private PyObject __init__impl(PyException self, PyString message)
+        {
+            return __init__impl(self, message.str);
         }
 
         // TODO: Migrate to a built-in that can be invoked as necessary. One problem will be to fetch it out to run from C# code to create exceptions.

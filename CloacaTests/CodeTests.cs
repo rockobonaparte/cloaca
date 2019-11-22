@@ -42,12 +42,12 @@ namespace CloacaTests
         {
             runBasicTest("a = 'Hello!'\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", "Hello!" }
+                { "a", new PyString("Hello!") }
             }), 1);
 
             runBasicTest("a = \"Hello!\"\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", "Hello!" }
+                { "a", new PyString("Hello!") }
             }), 1);
         }
 

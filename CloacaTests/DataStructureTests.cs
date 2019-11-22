@@ -33,9 +33,9 @@ namespace CloacaTests
             var interpreter = runProgram("a = { \"foo\": \"bar\", \"number\": 1 }\n", new Dictionary<string, object>(), 1);
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
-            Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<string, object> {
-                { "foo", "bar" },
-                { "number", new PyInteger(1) }
+            Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<PyString, object> {
+                { new PyString("foo"), new PyString("bar") },
+                { new PyString("number"), new PyInteger(1) }
             }));
         }
 
@@ -47,9 +47,9 @@ namespace CloacaTests
                 "a[\"bar\"] = 200\n", new Dictionary<string, object>(), 1);
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
-            Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<string, object> {
-                { "foo", new PyInteger(1) },
-                { "bar", new PyInteger(200) }
+            Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<PyString, object> {
+                { new PyString("foo"), new PyInteger(1) },
+                { new PyString("bar"), new PyInteger(200) }
             }));
             Assert.That(variables.ContainsKey("b"));
             Assert.That(variables["b"], Is.EqualTo(new PyInteger(1)));
@@ -95,7 +95,7 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var tuple = (PyTuple) variables["a"];
-            Assert.That(tuple.values, Is.EquivalentTo(new object[] { "foo", new PyInteger(1) }));
+            Assert.That(tuple.values, Is.EquivalentTo(new object[] { new PyString("foo"), new PyInteger(1) }));
         }
 
         [Test]
@@ -109,7 +109,7 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             List<object> referenceList = new List<object>();
-            referenceList.Add("foo");
+            referenceList.Add(new PyString("foo"));
             referenceList.Add(new PyInteger(1));
             var list = (List<object>)variables["a"];
             Assert.That(list, Is.EquivalentTo(referenceList));

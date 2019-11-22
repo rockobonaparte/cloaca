@@ -845,10 +845,10 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var tupleCount = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                object[] tuple = new object[tupleCount];
+                                PyObject[] tuple = new PyObject[tupleCount];
                                 for (int i = tupleCount - 1; i >= 0; --i)
                                 {
-                                    tuple[i] = context.DataStack.Pop();
+                                    tuple[i] = (PyObject) context.DataStack.Pop();
                                 }
                                 context.DataStack.Push(new PyTuple(tuple));
                             }

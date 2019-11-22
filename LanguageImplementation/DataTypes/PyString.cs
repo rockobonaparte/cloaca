@@ -175,5 +175,10 @@ namespace LanguageImplementation.DataTypes
         {
             return str;
         }
+
+        public static implicit operator string(PyString asPyString)
+        {
+            return asPyString.str;
+        }
     }
 }

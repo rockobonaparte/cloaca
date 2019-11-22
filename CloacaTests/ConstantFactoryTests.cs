@@ -4,6 +4,7 @@ using CloacaInterpreter;
 using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
@@ -64,24 +65,24 @@ namespace CloacaTests
         public void BasicDoubleQuoteString()
         {
             var context = new MockContext("\"Hello\"");
-            string result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo("Hello"));
+            PyString result = ConstantsFactory.CreateString(context);
+            Assert.That(result, Is.EqualTo(new PyString("Hello")));
         }
 
         [Test]
         public void BasicSingleQuoteString()
         {
             var context = new MockContext("'Hello'");
-            string result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo("Hello"));
+            PyString result = ConstantsFactory.CreateString(context);
+            Assert.That(result, Is.EqualTo(new PyString("Hello")));
         }
 
         [Test]
         public void LongString()
         {
             var context = new MockContext("\"\"\"Hello\"\"\"");
-            string result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo("Hello"));
+            PyString result = ConstantsFactory.CreateString(context);
+            Assert.That(result, Is.EqualTo(new PyString("Hello")));
         }
 
         [Test]

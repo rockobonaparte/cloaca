@@ -13,7 +13,7 @@ namespace CloacaInterpreter
         public static Regex LongStringSingleQuoteRegex = new Regex("^\\\'\\\'\\\'(.+)\\\'\\\'\\\'$");
         public static Regex DecimalPointNumberRegex = new Regex("\\d+\\.\\d+");
 
-        public static string CreateString(IParseTree context)
+        public static PyString CreateString(IParseTree context)
         {
             // TODO: Expand to include literals, unicode, f-strings...
             // For now, we just clip off the single/double quotes
@@ -23,18 +23,18 @@ namespace CloacaInterpreter
             var match = LongStringDoubleQuoteRegex.Match(rawText);
             if(match.Success)
             {
-                return match.Groups[1].Value;
+                return new PyString(match.Groups[1].Value);
             }
 
             match = LongStringSingleQuoteRegex.Match(rawText);
             if (match.Success)
             {
-                return match.Groups[1].Value;
+                return new PyString(match.Groups[1].Value);
             }
 
             // At this point, just assume quotes on each end and clip them off.
             string finalString = rawText.Substring(1, rawText.Length - 2);
-            return finalString;
+            return new PyString(finalString);
         }
 
         public static object CreateNumber(IParseTree context)
