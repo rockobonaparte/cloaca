@@ -61,7 +61,7 @@ namespace LanguageImplementation.DataTypes
             catch(IndexOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
-                throw new Exception("IndexError: list assignment index out of range");
+                throw new Exception("IndexError: list index out of range");
             }
         }
 
