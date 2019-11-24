@@ -1,14 +1,22 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyDictClass : PyTypeObject
+    public class PyDictClass : PyClass
     {
         public PyDictClass(CodeObject __init__) :
-            base("dict", __init__)
+            base("dict", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyDict.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyDict>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyDictClass __instance;
@@ -247,7 +255,7 @@ namespace LanguageImplementation.DataTypes
 
     }
 
-    public class PyDict : PyObject
+    public class PyDict : PyObject, IEnumerable
     {
         internal Dictionary<PyObject, PyObject> dict;
         public PyDict()
@@ -266,6 +274,12 @@ namespace LanguageImplementation.DataTypes
             {
                 return PyDictClass.__eq__(this, asList).boolean;
             }
+        }
+
+        // Implemented mostly for the sake of using container assertions in NUnit.
+        public IEnumerator GetEnumerator()
+        {
+            return dict.GetEnumerator();
         }
 
         public override int GetHashCode()

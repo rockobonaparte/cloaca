@@ -1,14 +1,22 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyListClass : PyTypeObject
+    public class PyListClass : PyClass
     {
         public PyListClass(CodeObject __init__) :
-            base("list", __init__)
+            base("list", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyDict.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyList>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyListClass __instance;
@@ -65,12 +73,26 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // TODO: Manage slices
         [ClassMember]
-        public static void __setitem__(PyList self, PyInteger i, PyObject value)
+        public static void __setitem__(PyList self, PyObject iPyObject, PyObject value)
+        {
+            var i = iPyObject as PyInteger;
+            if (i == null)
+            {
+                // TODO: Use __class__.__name__
+                throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + iPyObject.GetType().Name);
+            }
+
+            __setitem__(self, (int)i.number, value);
+        }
+
+        // TODO: Manage slices
+        public static void __setitem__(PyList self, int i, PyObject value)
         {
             try
             {
-                self.list[(int)i.number] = value;
+                self.list[i] = value;
             }
             catch (IndexOutOfRangeException)
             {
@@ -113,12 +135,23 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static void clear(PyList self)
         {
-            throw new NotImplementedException();
+            self.list.Clear();
+        }
+
+        [ClassMember]
+        public static void append(PyList self, PyObject toAdd)
+        {
+            self.list.Add(toAdd);
+        }
+
+        public static void prepend(PyList self, PyObject toAdd)
+        {
+            self.list.Insert(0, toAdd);
         }
 
     }
 
-    public class PyList : PyObject
+    public class PyList : PyObject, IEnumerable
     {
         internal List<PyObject> list;
         public PyList()
@@ -138,6 +171,13 @@ namespace LanguageImplementation.DataTypes
                 return PyListClass.__eq__(this, asList).boolean;
             }
         }
+
+        // Implemented mostly for the sake of using container assertions in NUnit.
+        public IEnumerator GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
+
 
         public override int GetHashCode()
         {

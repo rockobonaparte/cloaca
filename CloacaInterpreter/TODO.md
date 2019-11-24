@@ -37,6 +37,7 @@ Following that, serialization of tasks.
     * [DONE] Subscript read
     * [DONE] Subscript write
     * Subscript with variable
+    * Slices
   * Tuples
     * [DONE] Parse tuple
     * Single element (trailing comma) tuple
@@ -75,6 +76,9 @@ Following that, serialization of tasks.
      *  List
      *  Dict
   * [DONE] Classes as objects (I think that's how it's done, right?). Need it for except classes (Exception as e, CompareException operator)
+  * __class__.__name__
+     * Add to class definitions
+     * Use in error messages
 * [DONE] Scheduler controlling interpreter to switch programs when one waits
 * Integration with parent runtime
   * [DONE] Call embedded C# function from script

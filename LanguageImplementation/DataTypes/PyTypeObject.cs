@@ -119,7 +119,10 @@ namespace LanguageImplementation.DataTypes
                 throw new Exception("__new__ invocation did not return a PyObject");
             }
 
-            await __init__.Call(interpreter, context, new object[] { self });
+            if (__init__ != null)
+            {
+                await __init__.Call(interpreter, context, new object[] { self });
+            }
             return self;
         }
     }

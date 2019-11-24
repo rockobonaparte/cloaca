@@ -111,7 +111,7 @@ namespace CloacaTests
             List<object> referenceList = new List<object>();
             referenceList.Add(new PyString("foo"));
             referenceList.Add(new PyInteger(1));
-            var list = (List<object>)variables["a"];
+            var list = (PyList)variables["a"];
             Assert.That(list, Is.EquivalentTo(referenceList));
         }
     }

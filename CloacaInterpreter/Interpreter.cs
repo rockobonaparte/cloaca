@@ -858,12 +858,23 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var dictSize = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                var dict = new Dictionary<object, object>();
+                                var dictObj = await PyDictClass.Instance.Call(this, context, new object[0]);
+                                var dict = (PyDict) dictObj;
                                 for (int i = 0; i < dictSize; ++i)
                                 {
-                                    var value = context.DataStack.Pop();
-                                    var key = context.DataStack.Pop();
-                                    dict.Add(key, value);
+                                    var valueRaw = context.DataStack.Pop();
+                                    var keyRaw = context.DataStack.Pop();
+                                    var value = valueRaw as PyObject;
+                                    var key = keyRaw as PyObject;
+                                    if(key == null)
+                                    {
+                                        throw new Exception("BUILD_MAP key " + key.GetType().Name + " could not be cast to PyObject.");
+                                    }
+                                    if(value == null)
+                                    {
+                                        throw new Exception("BUILD_MAP value " + value.GetType().Name + " could not be cast to PyObject.");
+                                    }
+                                    PyDictClass.__setitem__(dict, key, value);
                                 }
                                 context.DataStack.Push(dict);
                             }
@@ -890,14 +901,13 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var listSize = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                var list = new List<object>();
-                                for (int i = listSize - 1; i >= 0; --i)
+                                var listObj = await PyListClass.Instance.Call(this, context, new object[0]);
+                                var list = (PyList)listObj;
+
+                                // Items come off the stack in reverse order!
+                                for (int i = 0; i < listSize; ++i)
                                 {
-                                    list.Add(null);
-                                }
-                                for (int i = listSize - 1; i >= 0; --i)
-                                {
-                                    list[i] = context.DataStack.Pop();
+                                    PyListClass.prepend(list, (PyObject) context.DataStack.Pop());
                                 }
                                 context.DataStack.Push(list);
                             }
@@ -907,26 +917,40 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var index = context.DataStack.Pop();
                                 var container = context.DataStack.Pop();
-                                if (container is Dictionary<object, object>)
+
+                                var containerPyObject = container as PyObject;
+                                if(containerPyObject == null)
                                 {
-                                    var asDict = (Dictionary<object, object>)container;
-                                    context.DataStack.Push(asDict[index]);
+                                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
                                 }
-                                else if (container is List<object>)
+
+                                var indexPyObject = index as PyObject;
+                                if(indexPyObject == null)
                                 {
-                                    var asList = (List<object>)container;
-                                    var indexAsPyInt = (PyInteger)index;
-                                    context.DataStack.Push(asList[(int)indexAsPyInt.number]);
+                                    throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
                                 }
-                                else if (container is PyTuple)
+
+                                try
                                 {
-                                    var asTuple = (PyTuple)container;
-                                    var indexAsPyInt = (PyInteger)index;
-                                    context.DataStack.Push(asTuple.values[(int)indexAsPyInt.number]);
+                                    var getter = containerPyObject.__dict__["__getitem__"];
+                                    var functionToRun = getter as IPyCallable;
+
+                                    if(functionToRun == null)
+                                    {
+                                        throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
+                                    }
+
+                                    var returned = await functionToRun.Call(this, context, new object[] { containerPyObject, indexPyObject });
+                                    if (returned != null)
+                                    {
+                                        context.DataStack.Push(returned);
+                                    }
+
                                 }
-                                else
+                                catch (KeyNotFoundException)
                                 {
-                                    throw new Exception("Unexpected container type in BINARY_SUBSCR:" + container.GetType().ToString());
+                                    // TODO: use __class__.__name__
+                                    throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
                                 }
                             }
                             break;
@@ -937,51 +961,43 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var rawIndex = context.DataStack.Pop();
                                 int convertedIndex = 0;
-                                var idxAsPyInt = rawIndex as PyInteger;
-                                if (idxAsPyInt != null)
+                                var idxAsPyObject = rawIndex as PyObject;
+                                if (idxAsPyObject == null)
                                 {
-                                    convertedIndex = (int)idxAsPyInt.number;
-                                }
-                                else
-                                {
-                                    if (rawIndex is BigInteger)
-                                    {
-                                        convertedIndex = (int)rawIndex;
-                                    }
-                                    else
-                                    {
-                                        // might not matter...
-                                        // throw new InvalidCastException("Cannot convert subscript index data type to int: " + rawIndex.GetType());
-                                    }
+                                    // TODO: use __class__.__name__
+                                    // throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + rawIndex.GetType().Name);
+                                    throw new Exception("Attempted to use non-PyObject '" + rawIndex.GetType().Name + "' as a subscript key.");
                                 }
 
                                 var rawContainer = context.DataStack.Pop();
                                 var toStore = context.DataStack.Pop();
 
-                                if (rawContainer is Dictionary<object, object>)
+                                var containerPyObject = rawContainer as PyObject;
+                                if (containerPyObject == null)
                                 {
-                                    var asDict = (Dictionary<object, object>)rawContainer;
-                                    if (!asDict.ContainsKey(rawIndex))
+                                    throw new Exception("TypeError: '" + rawContainer.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
+                                }
+
+                                try
+                                {
+                                    var setter = containerPyObject.__dict__["__setitem__"];
+                                    var functionToRun = setter as IPyCallable;
+
+                                    if (functionToRun == null)
                                     {
-                                        asDict.Add(rawIndex, toStore);
+                                        throw new Exception("TypeError: '" + containerPyObject.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
                                     }
-                                    else
+
+                                    var returned = await functionToRun.Call(this, context, new object[] { containerPyObject, idxAsPyObject, toStore });
+                                    if (returned != null)
                                     {
-                                        asDict[rawIndex] = toStore;
+                                        context.DataStack.Push(returned);
                                     }
                                 }
-                                else if (rawContainer is List<object>)
+                                catch (KeyNotFoundException)
                                 {
-                                    var asList = (List<object>)rawContainer;
-                                    asList[convertedIndex] = toStore;
-                                }
-                                else if (rawContainer is PyTuple)
-                                {
-                                    throw new Exception("Cannot modify a tuple");
-                                }
-                                else
-                                {
-                                    throw new Exception("Unexpected container type in STORE_SUBSCR:" + rawContainer.GetType().ToString());
+                                    // TODO: use __class__.__name__
+                                    throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
                                 }
                             }
                             break;
