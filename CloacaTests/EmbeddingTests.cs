@@ -125,7 +125,7 @@ namespace CloacaTests
                 { "dest_float", new PyFloat(2.0f) },
                 { "dest_double", new PyFloat(3.0) },
                 { "dest_string", new PyString("4") },
-                { "dest_bool", new PyBool(true) },
+                { "dest_bool", PyBool.True },
             }), 1);
         }
 

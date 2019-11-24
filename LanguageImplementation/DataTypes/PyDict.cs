@@ -41,11 +41,11 @@ namespace LanguageImplementation.DataTypes
             //     True if D has a key k, else False.
             if(self.dict.ContainsKey(k))
             {
-                return new PyBool(true);
+                return PyBool.True;
             }
             else
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
         }
 
@@ -97,28 +97,28 @@ namespace LanguageImplementation.DataTypes
             var otherDict = other as PyDict;
             if(otherDict == null)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             if(otherDict.dict.Count != self.dict.Count)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             foreach(var pair in self.dict)
             {
                 if(!otherDict.dict.ContainsKey(pair.Key))
                 {
-                    return new PyBool(false);
+                    return PyBool.False;
                 }
 
                 var otherVal = otherDict.dict[pair.Key];
                 if(pair.Value.__eq__(otherVal).boolean == false)
                 {
-                    return new PyBool(false);
+                    return PyBool.False;
                 }
             }
-            return new PyBool(true);
+            return PyBool.True;
         }
 
         [ClassMember]

@@ -29,11 +29,11 @@ namespace LanguageImplementation.DataTypes
         {
             if (Array.IndexOf(self.values, v) >= 0)
             {
-                return new PyBool(true);
+                return PyBool.True;
             }
             else
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
         }
 
@@ -58,22 +58,22 @@ namespace LanguageImplementation.DataTypes
             var otherList = other as PyTuple;
             if (otherList == null)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             if (otherList.values.Length != self.values.Length)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             for (int i = 0; i < self.values.Length; ++i)
             {
                 if (self.values[i].__eq__(otherList.values[i]).boolean == false)
                 {
-                    return new PyBool(false);
+                    return PyBool.False;
                 }
             }
-            return new PyBool(true);
+            return PyBool.True;
         }
 
         [ClassMember]

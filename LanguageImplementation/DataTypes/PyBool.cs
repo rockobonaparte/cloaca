@@ -112,7 +112,11 @@ namespace LanguageImplementation.DataTypes
 
     public class PyBool : PyObject
     {
-        public bool boolean;
+        public bool boolean
+        {
+            get; private set;
+        }
+
         public PyBool(bool boolean) : base(PyBoolClass.Instance)
         {
             this.boolean = boolean;
@@ -148,12 +152,22 @@ namespace LanguageImplementation.DataTypes
 
         public static implicit operator PyBool(bool rhs)
         {
-            return new PyBool(rhs);
+            if(rhs == true)
+            {
+                return PyBool.True;
+            }
+            else
+            {
+                return PyBool.False;
+            }
         }
 
         public static implicit operator bool(PyBool rhs)
         {
             return rhs.boolean;
         }
+
+        public static readonly PyBool True = new PyBool(true);
+        public static readonly PyBool False = new PyBool(false);
     }
 }

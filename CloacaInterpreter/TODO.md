@@ -212,8 +212,4 @@ Dump a code object that comes up in a disassembly
 
 
 Current notes on embedding
-Need to cast int to PyInteger. Generally need box/unbox helpers.
-All numeric types--include bool--need to be able to handle having math done with them against the other types. So
-int + float + bool has to work.
-Create singleton instance of PyBool true and PyBool false.
 PyObject dictionary should map string to PyObject

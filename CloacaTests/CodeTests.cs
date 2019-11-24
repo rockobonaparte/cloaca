@@ -79,13 +79,13 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
             {
                 { "a", new PyInteger(10) },
-                { "b", new PyBool(false) },
-                { "c", new PyBool(true) },
-                { "d", new PyBool(false) },
-                { "e", new PyBool(false) },
-                { "f", new PyBool(true) },
-                { "g", new PyBool(true) },
-                { "h", new PyBool(false) },
+                { "b", PyBool.False },
+                { "c", PyBool.True },
+                { "d", PyBool.False },
+                { "e", PyBool.False },
+                { "f", PyBool.True },
+                { "g", PyBool.True },
+                { "h", PyBool.False },
             }), 1);
         }
 
@@ -101,8 +101,8 @@ namespace CloacaTests
             new VariableMultimap(new TupleList<string, object>
             {
                 { "a", NoneType.Instance },
-                { "b", new PyBool(true) },
-                { "c", new PyBool(false) }
+                { "b", PyBool.True },
+                { "c", PyBool.False }
             }), 1);
 
             // Now let's flip A around and make sure we're still cool.
@@ -115,8 +115,8 @@ namespace CloacaTests
             new VariableMultimap(new TupleList<string, object>
             {
                 { "a", new PyInteger(10) },
-                { "b", new PyBool(false) },
-                { "c", new PyBool(true) }
+                { "b", PyBool.False },
+                { "c", PyBool.True }
             }), 1);
         }
 

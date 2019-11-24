@@ -37,11 +37,11 @@ namespace LanguageImplementation.DataTypes
         {
             if(self.list.Contains(v))
             {
-                return new PyBool(true);
+                return PyBool.True;
             }
             else
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
         }
 
@@ -108,22 +108,22 @@ namespace LanguageImplementation.DataTypes
             var otherList = other as PyList;
             if(otherList == null)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             if(otherList.list.Count != self.list.Count)
             {
-                return new PyBool(false);
+                return PyBool.False;
             }
 
             for(int i = 0; i < self.list.Count; ++i)
             {
                 if(self.list[i].__eq__(otherList.list[i]).boolean == false)
                 {
-                    return new PyBool(false);
+                    return PyBool.False;
                 }
             }
-            return new PyBool(true);
+            return PyBool.True;
         }
 
         [ClassMember]
