@@ -92,6 +92,7 @@
             this.richTextBox1.Size = new System.Drawing.Size(792, 396);
             this.richTextBox1.TabIndex = 0;
             this.richTextBox1.Text = "";
+            this.richTextBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhenKeyDown);
             // 
             // Form1
             // 

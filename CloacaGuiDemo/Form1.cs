@@ -26,7 +26,7 @@ namespace CloacaGuiDemo
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            string program = "a = 1";
+            string program = "a = 1\na = a + 1";
 
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -86,6 +86,17 @@ namespace CloacaGuiDemo
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void WhenKeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyData == Keys.Enter)
+            {
+                richTextBox1.Text += "Entered pressed!\n";
+                richTextBox1.SelectionStart = richTextBox1.Text.Length;
+                richTextBox1.ScrollToCaret();
+                e.Handled = true;
+            }
         }
     }
 }
