@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime">
+      <HintPath>..\packages\Antlr4.Runtime.4.6.6\lib\net45\Antlr4.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -78,6 +81,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CloacaInterpreter\CloacaInterpreter.csproj">
+      <Project>{d78ef7cf-40d2-47ad-84e2-d90e5088309a}</Project>
+      <Name>CloacaInterpreter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LanguageImplementation\LanguageImplementation.csproj">
+      <Project>{66917410-f054-4d8e-9fbd-155bb1d4ae14}</Project>
+      <Name>LanguageImplementation</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
