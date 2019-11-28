@@ -26,7 +26,9 @@ namespace CloacaGuiDemo
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            string program = "a = 1\na = a + 1";
+            //string program = "a = 1\na = a + 1";
+            // TODO: This shouldn't fully parse. Or rather, we should know that this isn't a complete program and we have more work to do.
+            string program = "if True:\n";
 
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
