@@ -82,7 +82,10 @@ namespace CloacaGuiDemo
         {
             //string program = "a = 1\na = a + 1\n";
             // TODO: This shouldn't fully parse. Or rather, we should know that this isn't a complete program and we have more work to do.
-            string program = "if True:\n";
+            string program = "a = 1\n" + 
+                             "if True:\n" +
+                             "   if False:\n" +
+                             "       a = 2\n";
 
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
