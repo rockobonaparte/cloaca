@@ -88,8 +88,8 @@ namespace CloacaTests
         [Test]
         public void Bools()
         {
-            Assert.That(ConstantsFactory.CreateBool(new MockContext("True")), Is.True);
-            Assert.That(ConstantsFactory.CreateBool(new MockContext("False")), Is.False);
+            Assert.That(ConstantsFactory.CreateBool(new MockContext("True")), Is.EqualTo(PyBool.True));
+            Assert.That(ConstantsFactory.CreateBool(new MockContext("False")), Is.EqualTo(PyBool.False));
         }
     }
 }

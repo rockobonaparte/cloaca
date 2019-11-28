@@ -56,12 +56,12 @@ namespace CloacaTests
         {
             runBasicTest("a = True\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", true }
+                { "a", PyBool.True }
             }), 1);
 
             runBasicTest("a = False\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", false }
+                { "a", PyBool.False }
             }), 1);
         }
 
@@ -139,6 +139,19 @@ namespace CloacaTests
             runBasicTest(
                 "a = 10\n" +
                 "if a == 10:\n" +
+                "   a = 1\n" +
+                "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(2) }
+            }), 1);
+        }
+
+        [Test]
+        public void BasicConditionalExplicitTrue()
+        {
+            runBasicTest(
+                "a = 10\n" +
+                "if True:\n" +
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {

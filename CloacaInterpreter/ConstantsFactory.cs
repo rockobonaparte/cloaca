@@ -47,16 +47,16 @@ namespace CloacaInterpreter
             return new PyInteger(BigInteger.Parse(context.GetText()));
         }
 
-        public static bool CreateBool(IParseTree context)
+        public static PyBool CreateBool(IParseTree context)
         {
             // We can make a lot of assumptions here thanks to the ANTLR rules.
             if(context.GetText() == "True")
             {
-                return true;
+                return PyBool.True;
             }
             else
             {
-                return false;
+                return PyBool.False;
             }
         }
     }
