@@ -39,7 +39,7 @@ namespace InterpreterDebugger
                 return;
             }
 
-            var antlrVisitorContext = parser.program();
+            var antlrVisitorContext = parser.file_input();
 
             var variablesIn = new Dictionary<string, object>();
             var visitor = new CloacaBytecodeVisitor(variablesIn);

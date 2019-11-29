@@ -379,7 +379,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    public override object VisitProgram([NotNull] CloacaParser.ProgramContext context)
+    public override object VisitFile_input([NotNull] CloacaParser.File_inputContext context)
     {
         for(int i = 0; i < context.stmt().Length; ++i)
         {

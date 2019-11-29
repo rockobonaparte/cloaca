@@ -210,7 +210,7 @@ namespace CloacaGuiDemo
                 return errorBuilder.ToString();
             }
 
-            var antlrVisitorContext = parser.program();
+            var antlrVisitorContext = parser.file_input();
             if (errorListener.ExpectedMoreText)
             {
                 return "... ";

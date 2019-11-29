@@ -27,7 +27,7 @@ namespace CloacaTests
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
 
-            var antlrVisitorContext = parser.program();
+            var antlrVisitorContext = parser.file_input();
 
             Assert.That(errorListener.Errors.Count, Is.Zero, "There were parse errors:\n" + errorListener.Report());
 

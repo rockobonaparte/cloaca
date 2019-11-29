@@ -110,8 +110,9 @@ using System.Text.RegularExpressions;
     }
 }
 
-// This is the file_input from the Python3 spec
-program		: (NEWLINE | stmt)* EOF;
+single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE;
+file_input: (NEWLINE | stmt)* EOF;
+eval_input: testlist NEWLINE* EOF;
 
 decorator: '@' dotted_name ( '(' (arglist)? ')' )? NEWLINE;
 decorators: decorator+;

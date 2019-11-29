@@ -20,7 +20,7 @@ namespace InterpreterWaiting
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
 
-            var context = parser.program();
+            var context = parser.file_input();
 
             var visitor = new CloacaBytecodeVisitor(variablesIn);
             visitor.Visit(context);
