@@ -115,6 +115,23 @@ Following that, serialization of tasks.
   * [DONE] Raise from class
   * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
+* REPL
+  * Retain context between statements
+  * Print out variables by typing their name
+  * implement dir()
+  * implement help() with a proof-of-concept implementation
+  * Improve GUI interaction
+     * Cannot move cursor before current cursor position
+	 * Can still select text outside this area
+	 * fixed-width font
+	 * Print exceptions with different coloring
+	 * History with arrow keys
+  * Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
+* First Unity embed!
+  * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
+  * Toss REPL into Unity!
+  * Expose a subsystem in REPL.
+  
 
 
 Part 2: First, harden the code, but keep some of this in mind while doing that.
