@@ -255,7 +255,10 @@ namespace CloacaGuiDemo
             var variables = context.DumpVariables();
             foreach (var var_pair in variables)
             {
-                stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + "\n");
+                if(var_pair.Value != null)
+                {
+                    stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + "\n");
+                }
             }
 
             return stack_output.ToString();
