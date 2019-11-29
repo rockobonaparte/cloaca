@@ -24,12 +24,18 @@ namespace CloacaGuiDemo
     public class ReplParseErrorListener : IParserErrorListener
     {
         public List<string> Errors;
-        public bool needsMoreText;
+        public bool ExpectedMoreText
+        {
+            get; private set;
+        }
+
+        public bool ReplMode;
 
         public ReplParseErrorListener()
         {
             Errors = new List<string>();
-            needsMoreText = false;
+            ExpectedMoreText = false;
+            ReplMode = false;
         }
 
         public void ReportAmbiguity([NotNull] Parser recognizer, [NotNull] DFA dfa, int startIndex, int stopIndex, bool exact, [Nullable] BitSet ambigAlts, [NotNull] ATNConfigSet configs)
@@ -50,9 +56,11 @@ namespace CloacaGuiDemo
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
             var expected_tokens = e.GetExpectedTokens();
-            if(expected_tokens.Count > 0 && expected_tokens.Contains(CloacaParser.INDENT))
+            if(ReplMode && expected_tokens.Count > 0 && expected_tokens.Contains(CloacaParser.INDENT))
             {
-                needsMoreText = true;
+                // Eat the error if it's just complaining that it expected more text in the REPL.
+                ExpectedMoreText = true;
+                return;
             }
             Errors.Add("line " + line + ":" + charPositionInLine + " " + msg);
         }
@@ -68,41 +76,54 @@ namespace CloacaGuiDemo
 
             return report;
         }
+
+        public void Clear()
+        {
+            Errors.Clear();
+            ExpectedMoreText = false;
+        }
     }
 
-
-    public partial class Form1 : Form
+    public class Repl
     {
-        public Form1()
+        private ReplParseErrorListener errorListener;
+
+        public Repl()
         {
-            InitializeComponent();
+            errorListener = new ReplParseErrorListener();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        public bool NeedsMoreInput
         {
-            //string program = "a = 1\na = a + 1\n";
-            // TODO: This shouldn't fully parse. Or rather, we should know that this isn't a complete program and we have more work to do.
-            string program = "a = 1\n" + 
-                             "if True:\n" +
-                             "   if False:\n" +
-                             "       a = 2\n";
+            get
+            {
+                return errorListener.ExpectedMoreText;
+            }
+        }
 
-            var inputStream = new AntlrInputStream(program);
+        public string Interpret(string input)
+        {
+            var inputStream = new AntlrInputStream(input);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-            var errorListener = new ReplParseErrorListener();
+            errorListener.ReplMode = true;
+            errorListener.Clear();
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
             if (errorListener.Errors.Count > 0)
             {
-                Console.WriteLine("There were errors trying to compile the script. We cannot run it.");
-                return;
+                StringBuilder errorBuilder = new StringBuilder("There were errors trying to compile the script. We cannot run it:");
+                foreach(var error in errorListener.Errors)
+                {
+                    errorBuilder.Append(error);
+                }
+                return errorBuilder.ToString();
             }
 
             var antlrVisitorContext = parser.program();
-            if(errorListener.needsMoreText)
+            if (errorListener.ExpectedMoreText)
             {
-                richTextBox1.Text += "Needs more text\n";
+                return "... ";
             }
 
             var variablesIn = new Dictionary<string, object>();
@@ -121,7 +142,7 @@ namespace CloacaGuiDemo
                 context.SetVariable(varName, variablesIn[varName]);
             }
 
-            while(!scheduler.Done)
+            while (!scheduler.Done)
             {
                 try
                 {
@@ -134,11 +155,39 @@ namespace CloacaGuiDemo
                 }
             }
 
-            var variables = context.DumpVariables();
-            foreach(var var_pair in variables)
+            var stack_output = new StringBuilder();
+            foreach(var stack_var in context.DataStack)
             {
-                richTextBox1.Text += var_pair.Key + " = " + var_pair.Value.ToString() + "\n";
+                stack_output.Append(stack_var.ToString());
+                stack_output.Append("\n");
             }
+
+            var variables = context.DumpVariables();
+            foreach (var var_pair in variables)
+            {
+                stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + "\n");
+            }
+
+            return stack_output.ToString();
+        }
+    }
+
+    public partial class Form1 : Form
+    {
+        Repl repl;
+        private int lastAnchorPosition;
+        private StringBuilder ongoingUserProgram;
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            repl = new Repl();
+            ongoingUserProgram = new StringBuilder();
+            richTextBox1.Text += ">>> ";
+            SetCursorToEnd();
         }
 
         private void tabPage1_Click(object sender, EventArgs e)
@@ -151,13 +200,34 @@ namespace CloacaGuiDemo
             Application.Exit();
         }
 
+        private void SetCursorToEnd()
+        {
+            richTextBox1.SelectionStart = richTextBox1.Text.Length;
+            richTextBox1.ScrollToCaret();
+            lastAnchorPosition = richTextBox1.Text.Length;
+        }
+
         private void WhenKeyDown(object sender, KeyEventArgs e)
         {
             if(e.KeyData == Keys.Enter)
             {
-                richTextBox1.Text += "Entered pressed!\n";
-                richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                richTextBox1.ScrollToCaret();
+                richTextBox1.Text += "\n";                
+                string newUserInput = richTextBox1.Text.Substring(lastAnchorPosition, richTextBox1.Text.Length - lastAnchorPosition);
+                ongoingUserProgram.Append(newUserInput);
+
+                var output = repl.Interpret(ongoingUserProgram.ToString());
+                if (repl.NeedsMoreInput)
+                {
+                    richTextBox1.Text += "... ";
+                }
+                else
+                {
+                    richTextBox1.Text += output;
+                    ongoingUserProgram.Clear();
+                    richTextBox1.Text += "\n>>> ";
+                }
+
+                SetCursorToEnd();
                 e.Handled = true;
             }
         }
