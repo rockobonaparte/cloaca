@@ -116,6 +116,9 @@ Following that, serialization of tasks.
   * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
 * REPL
+  * Fixes:
+     * Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
+	 * "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
   * Retain context between statements
   * Print out variables by typing their name
   * implement dir()
@@ -123,7 +126,7 @@ Following that, serialization of tasks.
   * Improve GUI interaction
      * Cannot move cursor before current cursor position
 	 * Can still select text outside this area
-	 * fixed-width font
+	 * [DONE] fixed-width font
 	 * Print exceptions with different coloring
 	 * History with arrow keys
   * Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
