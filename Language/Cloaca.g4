@@ -1,3 +1,5 @@
+// Original inspiration: https://github.com/antlr/grammars-v4/blob/master/python3-cs/Python3.g4
+
 grammar Cloaca;
 
 tokens { INDENT, DEDENT }
