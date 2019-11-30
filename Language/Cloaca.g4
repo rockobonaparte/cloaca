@@ -262,6 +262,9 @@ comp_iter: comp_for | comp_if;
 comp_for: (ASYNC)? 'for' exprlist 'in' or_test (comp_iter)?;
 comp_if: 'if' test_nocond (comp_iter)?;
 
+// not used in grammar, but may appear in "node" passed from Parser to Compiler
+encoding_decl: NAME;
+
 yield_expr: 'yield' (yield_arg)?;
 yield_arg: 'from' test | testlist;
 
