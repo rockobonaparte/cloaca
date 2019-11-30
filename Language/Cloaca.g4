@@ -314,7 +314,6 @@ ADD			 : '+' ;
 SUB			 : '-' ;
 EQUAL		 : '=' ;
 NAME		 : [a-zA-Z0-9_]+ ;
-WS			 : [ \t]+ -> skip ;
 COLON        : ':' ;
 
 NEWLINE
