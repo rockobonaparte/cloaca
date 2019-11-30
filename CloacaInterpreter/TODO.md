@@ -116,11 +116,11 @@ Following that, serialization of tasks.
   * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
 * REPL
-  * Reincorporate single_input, file_input, and eval_input from fill Grammar spec: https://docs.python.org/3/reference/grammar.html
+  * [DONE] Reincorporate single_input, file_input, and eval_input from fill Grammar spec: https://docs.python.org/3/reference/grammar.html
   * Fixes:
-     * Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
+     * [WIP] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
 	 * "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
-  * Retain context between statements
+  * [TRUE] Retain context between statements
   * Print out variables by typing their name
   * implement dir()
   * implement help() with a proof-of-concept implementation
@@ -234,43 +234,3 @@ Dump a code object that comes up in a disassembly
 
 Current notes on embedding
 PyObject dictionary should map string to PyObject
-
-
-
-
-Fragment of post fo comp.lang.python if I need it:
-
-Subject: What is the REPL's logic for deciding it's still inside a compound statement?
-
-I'm trying to implement a Python-like REPL for my pseudo-Python interpreter and I'm trying to replicate Python's behavior as much as possible. I'm using ANTLR4 for grammatical parsing based on:
-
-https://github.com/antlr/grammars-v4/blob/master/python3/Python3.g4
-
-(People also looking at the antlr group may be getting deja vu right now.)
-
-The Python REPL will normally starting with a '>>>' prompt. Let's say I'm doing a basic conditional:
-
->>> if True:
-...   a = 2
-...
->>>
-
-It knows to keep using the secondary prompt ("...") until I give it a newline with a lower indentation level--none in this case.
-
-
-
-
-
-
-if True:
-
-Exception thrown: 'Antlr4.Runtime.InputMismatchException' in Antlr4.Runtime.dll
-line 2:0 mismatched input '<EOF>' expecting INDENT
-
-
-
-if True:
-  a = 2
-
-parser.single_input()
-line 3:0 missing NEWLINE at '<EOF>'

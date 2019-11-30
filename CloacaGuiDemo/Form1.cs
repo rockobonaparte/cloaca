@@ -206,6 +206,7 @@ namespace CloacaGuiDemo
     public class Repl
     {
         private ReplParseErrorListener errorListener;
+        private Dictionary<string, object> contextVariables;
 
         public Repl()
         {
@@ -246,8 +247,12 @@ namespace CloacaGuiDemo
                 return "... ";
             }
 
-            var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            if(contextVariables == null)
+            {
+                contextVariables = new Dictionary<string, object>();
+            }
+            
+            var visitor = new CloacaBytecodeVisitor(contextVariables);
             visitor.Visit(antlrVisitorContext);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
@@ -257,9 +262,9 @@ namespace CloacaGuiDemo
             scheduler.SetInterpreter(interpreter);
 
             var context = scheduler.Schedule(compiledProgram);
-            foreach (string varName in variablesIn.Keys)
+            foreach (string varName in contextVariables.Keys)
             {
-                context.SetVariable(varName, variablesIn[varName]);
+                context.SetVariable(varName, contextVariables[varName]);
             }
 
             while (!scheduler.Done)
@@ -282,8 +287,8 @@ namespace CloacaGuiDemo
                 stack_output.Append(Environment.NewLine);
             }
 
-            var variables = context.DumpVariables();
-            foreach (var var_pair in variables)
+            contextVariables = context.DumpVariables();
+            foreach (var var_pair in contextVariables)
             {
                 if(var_pair.Value != null)
                 {
