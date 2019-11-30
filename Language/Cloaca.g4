@@ -330,14 +330,14 @@ NEWLINE
 		var spaces = (new Regex("[\r\n\f]+")).Replace(Text, "");
 
 		int next = _input.La(1);
-		if (Opened > 0 || next == '\r' || next == '\n' || next == '\f' || next == '#')
-		{
-			// If we're inside a list or on a blank line, ignore all indents, 
-			// dedents and line breaks.
-			Skip();
-		}
-		else
-		{
+//		if (Opened > 0 || next == '\r' || next == '\n' || next == '\f' || next == '#')
+//		{
+//			// If we're inside a list or on a blank line, ignore all indents, 
+//			// dedents and line breaks.
+//			Skip();
+//		}
+//		else
+//		{
 			Emit(CommonToken(NEWLINE, newLine));
 			int indent = GetIndentationCount(spaces);
 			int previous = Indents.Count == 0 ? 0 : Indents.Peek();
@@ -358,7 +358,7 @@ NEWLINE
 					Indents.Pop();
 				}
 			}
-		}
+//		}
    }
  ;
 
