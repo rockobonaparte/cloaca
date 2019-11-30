@@ -23,6 +23,15 @@ namespace CloacaGuiDemo
 {
     public partial class Form1 : Form
     {
+        // TODO: Remove after debugging parsing crap
+        public RichTextBox rtb_debug
+        {
+            get
+            {
+                return richTextBox1;
+            }
+        }
+
         Repl repl;
         private int lastAnchorPosition;
         private StringBuilder ongoingUserProgram;
@@ -78,7 +87,8 @@ namespace CloacaGuiDemo
             Application.Exit();
         }
 
-        private void SetCursorToEnd()
+        // TODO: Revert to null
+        public void SetCursorToEnd()
         {
             richTextBox1.SelectionStart = richTextBox1.Text.Length;
             richTextBox1.ScrollToCaret();
@@ -89,11 +99,14 @@ namespace CloacaGuiDemo
         {
             if (e.KeyData == Keys.Enter)
             {
-                richTextBox1.Text += "\n";
+                richTextBox1.Text += Environment.NewLine;
                 string newUserInput = richTextBox1.Text.Substring(lastAnchorPosition, richTextBox1.Text.Length - lastAnchorPosition);
                 ongoingUserProgram.Append(newUserInput);
 
-                var output = repl.Interpret(ongoingUserProgram.ToString());
+                richTextBox1.Text += ongoingUserProgram.ToString();
+                SetCursorToEnd();
+
+                var output = repl.Interpret(ongoingUserProgram.ToString(), this);
                 if (repl.NeedsMoreInput)
                 {
                     richTextBox1.Text += "... ";
@@ -102,7 +115,7 @@ namespace CloacaGuiDemo
                 {
                     richTextBox1.Text += output;
                     ongoingUserProgram.Clear();
-                    richTextBox1.Text += "\n>>> ";
+                    richTextBox1.Text += Environment.NewLine + ">>> ";
                 }
 
                 SetCursorToEnd();
@@ -114,6 +127,7 @@ namespace CloacaGuiDemo
     public class ReplParseErrorListener : IParserErrorListener
     {
         public List<string> Errors;
+        public Form1 gui;
         public bool ExpectedMoreText
         {
             get; private set;
@@ -145,8 +159,23 @@ namespace CloacaGuiDemo
 
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
-            var expected_tokens = e.GetExpectedTokens();
-            if(ReplMode && expected_tokens.Count > 0 && expected_tokens.Contains(CloacaParser.INDENT))
+            if(gui != null)
+            {
+                gui.rtb_debug.Text += msg + Environment.NewLine;
+                gui.SetCursorToEnd();
+            }
+
+            if (e != null)
+            {
+                var expected_tokens = e.GetExpectedTokens();
+                if (ReplMode && expected_tokens.Count > 0 && (expected_tokens.Contains(CloacaParser.INDENT) || expected_tokens.Contains(CloacaParser.NEWLINE)))
+                {
+                    // Eat the error if it's just complaining that it expected more text in the REPL.
+                    ExpectedMoreText = true;
+                    return;
+                }
+            }
+            else if(offendingSymbol.Text == "<EOF>" && charPositionInLine == 0)
             {
                 // Eat the error if it's just complaining that it expected more text in the REPL.
                 ExpectedMoreText = true;
@@ -191,7 +220,7 @@ namespace CloacaGuiDemo
             }
         }
 
-        public string Interpret(string input)
+        public string Interpret(string input, Form1 form)
         {
             var inputStream = new AntlrInputStream(input);
             var lexer = new CloacaLexer(inputStream);
@@ -199,6 +228,7 @@ namespace CloacaGuiDemo
             errorListener.ReplMode = true;
             errorListener.Clear();
             var parser = new CloacaParser(commonTokenStream);
+            errorListener.gui = form;
             parser.AddErrorListener(errorListener);
             if (errorListener.Errors.Count > 0)
             {
@@ -210,7 +240,7 @@ namespace CloacaGuiDemo
                 return errorBuilder.ToString();
             }
 
-            var antlrVisitorContext = parser.file_input();
+            var antlrVisitorContext = parser.single_input();
             if (errorListener.ExpectedMoreText)
             {
                 return "... ";
@@ -249,7 +279,7 @@ namespace CloacaGuiDemo
             foreach(var stack_var in context.DataStack)
             {
                 stack_output.Append(stack_var.ToString());
-                stack_output.Append("\n");
+                stack_output.Append(Environment.NewLine);
             }
 
             var variables = context.DumpVariables();
@@ -257,7 +287,7 @@ namespace CloacaGuiDemo
             {
                 if(var_pair.Value != null)
                 {
-                    stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + "\n");
+                    stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + Environment.NewLine);
                 }
             }
 

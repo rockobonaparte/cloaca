@@ -257,3 +257,20 @@ The Python REPL will normally starting with a '>>>' prompt. Let's say I'm doing 
 
 It knows to keep using the secondary prompt ("...") until I give it a newline with a lower indentation level--none in this case.
 
+
+
+
+
+
+if True:
+
+Exception thrown: 'Antlr4.Runtime.InputMismatchException' in Antlr4.Runtime.dll
+line 2:0 mismatched input '<EOF>' expecting INDENT
+
+
+
+if True:
+  a = 2
+
+parser.single_input()
+line 3:0 missing NEWLINE at '<EOF>'
