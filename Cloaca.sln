@@ -24,6 +24,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleREPL", "LibREPL-mast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloacaGuiDemo", "CloacaGuiDemo\CloacaGuiDemo.csproj", "{CD2F774F-0D2F-4F5B-9D42-0AC94D1A17E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OriginalPythonLanguage", "OriginalPython3Language\OriginalPythonLanguage.csproj", "{A469B7BF-514A-4A33-A621-684894FE0839}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python3ParseTest", "Python3ParseTest\Python3ParseTest.csproj", "{878B4537-317D-414A-A6E0-ACEEB027728D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +70,14 @@ Global
 		{CD2F774F-0D2F-4F5B-9D42-0AC94D1A17E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD2F774F-0D2F-4F5B-9D42-0AC94D1A17E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD2F774F-0D2F-4F5B-9D42-0AC94D1A17E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A469B7BF-514A-4A33-A621-684894FE0839}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A469B7BF-514A-4A33-A621-684894FE0839}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A469B7BF-514A-4A33-A621-684894FE0839}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A469B7BF-514A-4A33-A621-684894FE0839}.Release|Any CPU.Build.0 = Release|Any CPU
+		{878B4537-317D-414A-A6E0-ACEEB027728D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{878B4537-317D-414A-A6E0-ACEEB027728D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
