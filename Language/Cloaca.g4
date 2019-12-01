@@ -317,7 +317,7 @@ AT			 : '@';
 
 ADD			 : '+' ;
 SUB			 : '-' ;
-EQUAL		 : '=' ;
+ASSIGN		 : '=' ;
 NAME		 : [a-zA-Z0-9_]+ ;
 COLON        : ':' ;
 
@@ -330,14 +330,16 @@ NEWLINE
 		var spaces = (new Regex("[\r\n\f]+")).Replace(Text, "");
 
 		int next = _input.La(1);
-//		if (Opened > 0 || next == '\r' || next == '\n' || next == '\f' || next == '#')
-//		{
-//			// If we're inside a list or on a blank line, ignore all indents, 
-//			// dedents and line breaks.
-//			Skip();
-//		}
-//		else
-//		{
+		if (Opened > 0 || next == '\r' || next == '\n' || next == '\f' || next == '#')
+//		if (Opened > 0 && (next == '\r' || next == '\n' || next == '\f' || next == '#'))
+//      if (Opened > 0 || next == '#')
+		{
+			// If we're inside a list or on a blank line, ignore all indents, 
+			// dedents and line breaks.
+			Skip();
+		}
+		else
+		{
 			Emit(CommonToken(NEWLINE, newLine));
 			int indent = GetIndentationCount(spaces);
 			int previous = Indents.Count == 0 ? 0 : Indents.Peek();
@@ -358,7 +360,7 @@ NEWLINE
 					Indents.Pop();
 				}
 			}
-//		}
+		}
    }
  ;
 
@@ -401,6 +403,16 @@ IMAG_NUMBER
  : ( FLOAT_NUMBER | INT_PART ) [jJ]
  ;
 
+OPEN_PAREN : '(' {Opened++;};
+CLOSE_PAREN : ')' {Opened--;};
+OPEN_BRACK : '[' {Opened++;};
+CLOSE_BRACK : ']' {Opened--;};
+OPEN_BRACE : '{' {Opened++;};
+CLOSE_BRACE : '}' {Opened--;};
+
+SKIP_
+ : ( SPACES | COMMENT | LINE_JOINING ) -> skip
+ ;
 
 /// shortstring     ::=  "'" shortstringitem* "'" | '"' shortstringitem* '"'
 /// shortstringitem ::=  shortstringchar | stringescapeseq
@@ -487,3 +499,10 @@ fragment EXPONENT
  : [ \t]+
  ;
 
+ fragment COMMENT
+ : '#' ~[\r\n\f]*
+ ;
+
+ fragment LINE_JOINING
+ : '\\' SPACES? ( '\r'? '\n' | '\r' | '\f')
+ ;

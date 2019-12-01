@@ -114,5 +114,25 @@ namespace CloacaTests
             var list = (PyList)variables["a"];
             Assert.That(list, Is.EquivalentTo(referenceList));
         }
+
+        [Test]
+        public void DeclareNewlineBasicList()
+        {
+            // This scenario stumbles into a problem with parsing where NEWLINE tokens can get inserted into the list declaration.
+            // I'm having some fusses with that online so I wanted to put in a test to ensure whatever I do with the grammar
+            // to make the REPL work doesn't also break this situation.
+            var interpreter = runProgram("a = [\n" +
+                                         "\n" +
+                                         "# Look at me, I'm a riot!\n" +
+                                         "1\n" +
+                                         "]\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            List<object> referenceList = new List<object>();
+            referenceList.Add(new PyInteger(1));
+            var list = (PyList)variables["a"];
+            Assert.That(list, Is.EquivalentTo(referenceList));
+        }
+
     }
 }

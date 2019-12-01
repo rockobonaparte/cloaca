@@ -302,7 +302,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
     {
         if(context.testlist_star_expr().Length > 2 || 
-            (context.GetToken(CloacaParser.EQUAL, 0) == null && context.testlist_star_expr().Length == 2))
+            (context.GetToken(CloacaParser.ASSIGN, 0) == null && context.testlist_star_expr().Length == 2))
         {
             throw new Exception("Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
         }
