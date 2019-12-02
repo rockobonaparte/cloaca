@@ -404,7 +404,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             var comparison = context.test(if_cond_i);
             Visit(comparison);
-            var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_FALSE, -1, context));
+            var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
             Visit(context.suite(if_cond_i));
 
             // We'll need this to skip other conditional blocks, but we only need this if we actually
@@ -470,7 +470,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var setupLoopFixup = new JumpOpcodeFixer(ActiveProgram.Code, setupLoopIdx);
 
         Visit(context.test());
-        var pop_jump_fixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_FALSE, -1, context));
+        var pop_jump_fixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
 
         Visit(context.suite(0));
 

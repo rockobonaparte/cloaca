@@ -119,7 +119,7 @@ Following that, serialization of tasks.
   * [DONE] Reincorporate single_input, file_input, and eval_input from fill Grammar spec: https://docs.python.org/3/reference/grammar.html
   * Fixes:
      * [DONE] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
-	 * "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
+	 * [FIXED] "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
   * [TRUE] Retain context between statements
   * [WIP] Print out variables by typing their name
      * [DONE] Properly load variable on to stack
