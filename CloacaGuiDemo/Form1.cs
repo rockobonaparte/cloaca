@@ -159,7 +159,7 @@ namespace CloacaGuiDemo
 
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
-            //if(gui != null)
+            //if (gui != null)
             //{
             //    gui.rtb_debug.Text += msg + Environment.NewLine;
             //    gui.SetCursorToEnd();
@@ -168,7 +168,9 @@ namespace CloacaGuiDemo
             if (e != null)
             {
                 var expected_tokens = e.GetExpectedTokens();
-                if (ReplMode && expected_tokens.Count > 0 && (expected_tokens.Contains(CloacaParser.INDENT) || expected_tokens.Contains(CloacaParser.NEWLINE)))
+                if (ReplMode && 
+                    (e.OffendingToken.Type == CloacaLexer.Eof ||
+                    (expected_tokens.Count > 0 && (expected_tokens.Contains(CloacaParser.INDENT) || expected_tokens.Contains(CloacaParser.NEWLINE)))))
                 {
                     // Eat the error if it's just complaining that it expected more text in the REPL.
                     ExpectedMoreText = true;

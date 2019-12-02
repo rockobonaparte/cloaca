@@ -124,7 +124,7 @@ Following that, serialization of tasks.
   * [WIP] Print out variables by typing their name
      * [DONE] Properly load variable on to stack
      * Add a unit test that checks the value is on TOS
-	 * Test for list dereference and class members too
+	 * [WIP] Test for list dereference and class members too
 	 * Start using __repr__
   * implement dir()
   * implement help() with a proof-of-concept implementation

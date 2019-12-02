@@ -331,7 +331,7 @@ NEWLINE
 
 		int next = _input.La(1);
         int nextnext = _input.La(2);
-        if (nextnext != -1 && (Opened > 0 || next == '\r' || next == '\n' || next == '\f' || next == '#'))
+        if (Opened > 0 || (nextnext != -1 && (next == '\r' || next == '\n' || next == '\f' || next == '#')))
 		{
 			// If we're inside a list or on a blank line, ignore all indents, 
 			// dedents and line breaks.
