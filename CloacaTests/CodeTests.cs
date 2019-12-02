@@ -19,6 +19,20 @@ namespace CloacaTests
             }), 1);
         }
 
+        /// <summary>
+        /// Dumb to do as a standalone program, but this is done in the REPL all the time.
+        /// We didn't run this well before.
+        /// </summary>
+        [Test]
+        public void SimpleAssignmentAndLoad()
+        {
+            runBasicTest("a = 10\n" +
+                         "a\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(10) }
+            }), 1);
+        }
+
         [Test]
         public void SimpleIntMath()
         {

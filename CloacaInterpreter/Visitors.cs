@@ -307,10 +307,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             throw new Exception("Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
         }
 
-        // Single-statement (wait keyword)
+        // Single-statement 
         if(context.testlist_star_expr().Length == 1)
         {
-            VisitLValueTestlist_star_expr(context.testlist_star_expr()[0]);
+            // (wait keyword) TODO: Remove when the wait keyword is turned into a function!
+            if (context.testlist_star_expr(0).GetText() == "wait")
+            {
+                VisitLValueTestlist_star_expr(context.testlist_star_expr()[0]);
+            }
+            else
+            {
+                Visit(context.testlist_star_expr(0));
+            }
             return null;
         }
 

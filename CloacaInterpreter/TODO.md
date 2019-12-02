@@ -118,10 +118,14 @@ Following that, serialization of tasks.
 * REPL
   * [DONE] Reincorporate single_input, file_input, and eval_input from fill Grammar spec: https://docs.python.org/3/reference/grammar.html
   * Fixes:
-     * [WIP] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
+     * [DONE] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
 	 * "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
   * [TRUE] Retain context between statements
-  * Print out variables by typing their name
+  * [WIP] Print out variables by typing their name
+     * [DONE] Properly load variable on to stack
+     * Add a unit test that checks the value is on TOS
+	 * Test for list dereference and class members too
+	 * Start using __repr__
   * implement dir()
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
@@ -131,6 +135,7 @@ Following that, serialization of tasks.
 	 * Print exceptions with different coloring
 	 * History with arrow keys
   * Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
+  * Implement quit() because you keep wanting to type it! :)
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!
@@ -219,7 +224,9 @@ Tech debt:
   * Requires yield
 * Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
   Look at how CPython is managing them and try to reconcile
-* Reimplement WAIT--probably using async-await.  
+* Reimplement WAIT
+  * Using async-await.
+  * Make it a function instead of a keyword
 * Reconcile CodeObject and WrappedCodeObject
   * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
 

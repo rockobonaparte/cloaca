@@ -103,8 +103,8 @@ namespace CloacaGuiDemo
                 string newUserInput = richTextBox1.Text.Substring(lastAnchorPosition, richTextBox1.Text.Length - lastAnchorPosition);
                 ongoingUserProgram.Append(newUserInput);
 
-                richTextBox1.Text += ongoingUserProgram.ToString();
-                SetCursorToEnd();
+                //richTextBox1.Text += ongoingUserProgram.ToString();
+                //SetCursorToEnd();
 
                 var output = repl.Interpret(ongoingUserProgram.ToString(), this);
                 if (repl.NeedsMoreInput)
@@ -159,11 +159,11 @@ namespace CloacaGuiDemo
 
         public void SyntaxError([NotNull] IRecognizer recognizer, [Nullable] IToken offendingSymbol, int line, int charPositionInLine, [NotNull] string msg, [Nullable] RecognitionException e)
         {
-            if(gui != null)
-            {
-                gui.rtb_debug.Text += msg + Environment.NewLine;
-                gui.SetCursorToEnd();
-            }
+            //if(gui != null)
+            //{
+            //    gui.rtb_debug.Text += msg + Environment.NewLine;
+            //    gui.SetCursorToEnd();
+            //}
 
             if (e != null)
             {
@@ -288,13 +288,13 @@ namespace CloacaGuiDemo
             }
 
             contextVariables = context.DumpVariables();
-            foreach (var var_pair in contextVariables)
-            {
-                if(var_pair.Value != null)
-                {
-                    stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + Environment.NewLine);
-                }
-            }
+            //foreach (var var_pair in contextVariables)
+            //{
+            //    if(var_pair.Value != null)
+            //    {
+            //        stack_output.Append(var_pair.Key + " = " + var_pair.Value.ToString() + Environment.NewLine);
+            //    }
+            //}
 
             return stack_output.ToString();
         }
