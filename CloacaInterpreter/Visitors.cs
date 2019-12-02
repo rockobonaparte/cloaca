@@ -580,8 +580,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // Point to next except clause to test for a match to this exception
                     exceptionMatchTestFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context)));
 
-                    ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);      // should pop the true/false from COMPARE_OP
-
                     if (exceptClause.NAME() != null)
                     {
                         // BTW, this pops the exception

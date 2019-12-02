@@ -636,11 +636,10 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (PyBool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Pop();
                                 if (conditional)
                                 {
                                     context.Cursor = jumpPosition;
-                                    context.DataStack.Pop();
                                     continue;
                                 }
                             }
@@ -650,11 +649,10 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
-                                var conditional = (PyBool)context.DataStack.Peek();
+                                var conditional = (PyBool)context.DataStack.Pop();
                                 if (!conditional)
                                 {
                                     context.Cursor = jumpPosition;
-                                    context.DataStack.Pop();
                                     continue;
                                 }
                             }
