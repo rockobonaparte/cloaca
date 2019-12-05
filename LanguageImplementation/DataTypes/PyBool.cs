@@ -1,14 +1,21 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Numerics;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyBoolClass : PyTypeObject
+    public class PyBoolClass : PyClass
     {
         public PyBoolClass(CodeObject __init__) :
-            base("bool", __init__)
+            base("bool", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyBool.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyBool>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyBoolClass __instance;
@@ -107,6 +114,12 @@ namespace LanguageImplementation.DataTypes
             var a = extractInt(self);
             var b = extractInt(other);
             return a < b && a > b;
+        }
+
+        [ClassMember]
+        public static new PyString __repr__(PyObject self)
+        {
+            return new PyString(((PyBool)self).ToString());
         }
     }
 

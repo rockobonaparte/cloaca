@@ -19,6 +19,7 @@ using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes.Exceptions;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaGuiDemo
 {
@@ -96,7 +97,7 @@ namespace CloacaGuiDemo
             lastAnchorPosition = richTextBox1.Text.Length;
         }
 
-        private void WhenKeyDown(object sender, KeyEventArgs e)
+        private async void WhenKeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Enter)
             {
@@ -107,7 +108,7 @@ namespace CloacaGuiDemo
                 //richTextBox1.Text += ongoingUserProgram.ToString();
                 //SetCursorToEnd();
 
-                var output = repl.Interpret(ongoingUserProgram.ToString(), this);
+                var output = await repl.Interpret(ongoingUserProgram.ToString(), this);
                 if (repl.NeedsMoreInput)
                 {
                     richTextBox1.Text += "... ";
@@ -224,7 +225,7 @@ namespace CloacaGuiDemo
             }
         }
 
-        public string Interpret(string input, Form1 form)
+        public async Task<string> Interpret(string input, Form1 form)
         {
             var inputStream = new AntlrInputStream(input);
             var lexer = new CloacaLexer(inputStream);
@@ -296,7 +297,22 @@ namespace CloacaGuiDemo
             var stack_output = new StringBuilder();
             foreach(var stack_var in context.DataStack)
             {
-                stack_output.Append(stack_var.ToString());
+                var stack_var_obj = stack_var as PyObject;
+                if(stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
+                {
+                    stack_output.Append(stack_var.ToString());
+                }
+                else
+                {
+                    var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
+                    var functionToRun = __repr__ as IPyCallable;
+
+                    var returned = await functionToRun.Call(interpreter, context, new object[] { stack_var_obj });
+                    if (returned != null)
+                    {
+                        stack_output.Append(returned.ToString());
+                    }
+                }
                 stack_output.Append(Environment.NewLine);
             }
 

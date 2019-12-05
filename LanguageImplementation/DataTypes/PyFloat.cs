@@ -1,13 +1,20 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyFloatClass : PyTypeObject
+    public class PyFloatClass : PyClass
     {
         public PyFloatClass(CodeObject __init__) :
-            base("float", __init__)
+            base("float", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyFloat.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyFloat>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyFloatClass __instance;
@@ -155,6 +162,12 @@ namespace LanguageImplementation.DataTypes
             PyFloat a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
             return a.number < b.number && a.number > b.number;
+        }
+
+        [ClassMember]
+        public static new PyString __repr__(PyObject self)
+        {
+            return new PyString(((PyFloat)self).ToString());
         }
     }
 

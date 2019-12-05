@@ -12,7 +12,7 @@ namespace LanguageImplementation.DataTypes
         {
             __instance = this;
 
-            // We have to replace PyTypeObject.DefaultNew with one that creates a PyDict.
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyList.
             // TODO: Can this be better consolidated?
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyList>(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;

@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Reflection;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -89,10 +90,25 @@ namespace LanguageImplementation.DataTypes
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             this.__new__ = new WrappedCodeObject("__new__", methodInfo, this);
 
-            var classMembers = GetType().GetMethods().Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
+            // The FlattenHierarchy flag in particular will search upstairs for ClassMember-decorated methods that were declared
+            // in PyClass or PyTypeObject.
+            var classMembers = GetType().GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                .Where(m => m.GetCustomAttributes(typeof(ClassMember), false).Length > 0).ToArray();
 
             foreach (var classMember in classMembers)
             {
+                // We might have subclasses going on:
+                // 1. Test if we already declared a WrappedCodeObject for this method
+                // 2. If we did, check if it's declaring class is a child of the new candidate
+                // 3. If so, disregard the candidate; we have the better one already.
+                if (this.__dict__.ContainsKey(classMember.Name))
+                {
+                    var existing = this.__dict__[classMember.Name] as WrappedCodeObject;
+                    if(existing.MethodInfo.DeclaringType.IsSubclassOf(classMember.DeclaringType))
+                    {
+                        continue;
+                    }
+                }
                 this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
             }
         }

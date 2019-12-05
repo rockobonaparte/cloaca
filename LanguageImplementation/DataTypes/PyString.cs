@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyStringClass : PyTypeObject
+    public class PyStringClass : PyClass
     {
         public PyStringClass(CodeObject __init__) :
-            base("str", __init__)
+            base("str", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyString.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyString>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyStringClass __instance;
@@ -137,6 +144,12 @@ namespace LanguageImplementation.DataTypes
             castOperands(self, other, out a, out b, "less-than-greater-than");
             var compared = a.str.CompareTo(b.str);
             return compared < 0 && compared > 0;
+        }
+
+        [ClassMember]
+        public static new PyString __repr__(PyObject self)
+        {
+            return new PyString(((PyString)self).ToString());
         }
     }
 

@@ -125,14 +125,19 @@ Following that, serialization of tasks.
      * [DONE] Properly load variable on to stack
      * Add a unit test that checks the value is on TOS
 	 * [WIP] Test for list dereference and class members too
-	 * Start using __repr__
+	 * [WIP] Start using __repr__
+	    * [DONE] Implement for basic types
+		* Implement for:
+		   * list
+		   * dict
+		   * tuple
   * implement dir()
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
      * Cannot move cursor before current cursor position
 	 * Can still select text outside this area
 	 * [DONE] fixed-width font
-	 * Print exceptions with different coloring
+	 * [DONE] Print exceptions
 	 * History with arrow keys
   * Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
   * Implement quit() because you keep wanting to type it! :)

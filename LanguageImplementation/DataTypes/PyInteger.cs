@@ -1,14 +1,21 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Numerics;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyIntegerClass : PyTypeObject
+    public class PyIntegerClass : PyClass
     {
         public PyIntegerClass(CodeObject __init__) :
-            base("int", __init__)
+            base("int", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyInteger.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyInteger>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyIntegerClass __instance;
@@ -128,6 +135,12 @@ namespace LanguageImplementation.DataTypes
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
             return a.number < b.number && a.number > b.number;
+        }
+
+        [ClassMember]
+        public static new PyString __repr__(PyObject self)
+        {
+            return new PyString(self.ToString());
         }
     }
 
