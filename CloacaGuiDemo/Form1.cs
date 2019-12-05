@@ -18,6 +18,7 @@ using Antlr4.Runtime.Sharpen;
 using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaGuiDemo
 {
@@ -278,7 +279,17 @@ namespace CloacaGuiDemo
                 catch (AggregateException wrappedEscapedException)
                 {
                     // Given the nature of exception handling, we should normally only have one of these!
-                    ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
+                    var inner = wrappedEscapedException.InnerExceptions[0];
+                    if (inner is EscapedPyException)
+                    {
+                        return inner.Message;
+                    }
+                    else
+                    {
+                        // Rethrow exceptions that weren't part of the interpreter runtime. These are
+                        // crazy, bad exceptions that indicate internal bugs.
+                        ExceptionDispatchInfo.Capture(inner).Throw();
+                    }
                 }
             }
 
