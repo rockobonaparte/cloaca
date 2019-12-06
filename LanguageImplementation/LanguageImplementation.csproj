@@ -86,6 +86,7 @@
     <Compile Include="Dis.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FrameContext.cs" />
+    <Compile Include="Injector.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="OpCodes.cs" />
     <Compile Include="ParseErrorListener.cs" />

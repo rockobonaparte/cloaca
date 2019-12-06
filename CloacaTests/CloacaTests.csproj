@@ -49,6 +49,7 @@
     <Compile Include="ConstantFactoryTests.cs" />
     <Compile Include="EmbeddingTests.cs" />
     <Compile Include="ExceptionTests.cs" />
+    <Compile Include="InjectionTests.cs" />
     <Compile Include="ObjectTests.cs" />
     <Compile Include="DataStructureTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
