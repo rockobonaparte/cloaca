@@ -57,7 +57,26 @@ namespace LanguageImplementation
                 // The cast will fail if they're returning something else. At least now it'll error in a way
                 // more related to the real problem. We had a method return Task<PyClass> and it would blow
                 // up from this section when it was written more naively.
-                return (Task<object>)MethodInfo.Invoke(instance, final_args);
+                //
+                // This became a bigger issue when starting to work with PyList.__repr__ because it had to be
+                // async in case something it's __repr__'ing is async. It normally return PyString, which isn't
+                // allowed to be case to object when going from Task<PyString> to Task<object>. This reflection
+                // is technically slow.
+                //
+                // We'll only do this if we don't get a Task<object> in the first place. Otherwise, we start
+                // getting really high tick counts on our coroutines and fail a lot of tests expecting a single tick.
+                //
+                // TODO: Find better way to deal with these task casts.
+                dynamic task_result = MethodInfo.Invoke(instance, final_args);
+                if (task_result is Task<object>)
+                {
+                    return task_result;
+                }
+                else
+                {
+                    var asTask = (Task)task_result;
+                    return asTask.ContinueWith(t => (object)t.GetType().GetProperty("Result").GetValue(t));
+                }
             }
             else
             {

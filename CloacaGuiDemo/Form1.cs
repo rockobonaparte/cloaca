@@ -310,7 +310,7 @@ namespace CloacaGuiDemo
                     var returned = await functionToRun.Call(interpreter, context, new object[] { stack_var_obj });
                     if (returned != null)
                     {
-                        stack_output.Append(returned.ToString());
+                        stack_output.Append(returned);
                     }
                 }
                 stack_output.Append(Environment.NewLine);
