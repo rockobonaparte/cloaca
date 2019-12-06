@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -149,6 +150,33 @@ namespace LanguageImplementation.DataTypes
             self.list.Insert(0, toAdd);
         }
 
+        [ClassMember]
+        public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asList = (PyList)self;
+            PyString retStr = new PyString("[");
+            for(int i = 0; i < asList.list.Count; ++i)
+            {
+                var pyObj = asList.list[i];
+
+                var __repr__ = pyObj.__dict__[PyClass.__REPR__];
+                var functionToRun = __repr__ as IPyCallable;
+
+                var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });
+                if (returned != null)
+                {
+                    var asPyString = (PyString)returned;
+                    retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                }
+
+                // Appending commas except on last index
+                if (i < asList.list.Count - 1)
+                {
+                    retStr = (PyString)PyStringClass.__add__(retStr, new PyString(", "));
+                }
+            }
+            return (PyString) PyStringClass.__add__(retStr, new PyString("]"));
+        }
     }
 
     public class PyList : PyObject, IEnumerable
