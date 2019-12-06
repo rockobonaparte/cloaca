@@ -18,8 +18,6 @@ namespace LanguageImplementation
         }
 
         private object instance;
-        private FrameContext context;
-        public bool NeedsFrameContext = false;
 
         public int ArgCount
         {
@@ -49,80 +47,21 @@ namespace LanguageImplementation
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            this.context = context;
-            return Call(args);
-        }
-
-        private Task<object> Call(object[] args)
-        {
-             var finalArgsList = new List<object>();
-         
-            // Auto-curry the FrameContext if we were requested one when this WrappedCodeObject was created.
-            // We have to do this so we don't publish a function to the interpreter that is asking for this zany 
-            // FrameContext object thing.
-            // TODO: Start to just inject it into the method signature.
-            if(NeedsFrameContext)
-            {
-                finalArgsList.Add(context);
-            }
-
-            // Transform all arguments except for any in the params field.
-            var methodParams = MethodInfo.GetParameters();
-            bool hasParamsField = methodParams.Length > 1 && methodParams[methodParams.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
-
-            var argSearchLength = methodParams.Length;
-            if (hasParamsField)
-            {
-                argSearchLength -= 1;
-            }
-            if(NeedsFrameContext)
-            {
-                argSearchLength -= 1;
-            }
-            for(int i = 0; i < argSearchLength; ++i)
-            {
-                finalArgsList.Add(args[i]);
-            }
-
-            // If there's a params field and we don't have enough stuff to fill it, then we need to
-            // give it a null or else we'll run into a TargetParameterCountException
-            // If we *can* fill it in, we need to conver to the params array type.
-            //
-            // FrameContext is a freebie that'll get tacked on so we reference on less than our
-            // length.
-            if (hasParamsField)
-            {
-                // + 1 to account for the params field we know we have.
-                if (args.Length < argSearchLength + 1)
-                {
-                    finalArgsList.Add(null);
-                }
-                else
-                {
-                    var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
-                    var paramsArray = Array.CreateInstance(elementType, methodParams.Length - argSearchLength - 1);
-                    var base_i = argSearchLength;
-                    for (int i = 0; i < paramsArray.Length; ++i)
-                    {
-                        paramsArray.SetValue(args[base_i + i], i);
-                    }
-
-                    finalArgsList.Add(paramsArray);
-                }
-            }
+            var injector = new Injector(interpreter, context);
+            var final_args = injector.Inject(MethodInfo, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
-            if(MethodInfo.ReturnType.IsGenericType && MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+            if (MethodInfo.ReturnType.IsGenericType && MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 // The little bit of bizarre testing above gets us this far but we still need a Task<object>.
                 // The cast will fail if they're returning something else. At least now it'll error in a way
                 // more related to the real problem. We had a method return Task<PyClass> and it would blow
                 // up from this section when it was written more naively.
-                return (Task<object>) MethodInfo.Invoke(instance, finalArgsList.ToArray());
+                return (Task<object>)MethodInfo.Invoke(instance, final_args);
             }
             else
             {
-                return Task.FromResult(MethodInfo.Invoke(instance, finalArgsList.ToArray()));
+                return Task.FromResult(MethodInfo.Invoke(instance, final_args));
             }
         }
 
@@ -131,7 +70,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             instance = null;
-            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo) : this(null, nameInsideInterpreter, methodInfo)
@@ -143,7 +81,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             instance = null;
-            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(MethodInfo methodInfo)
@@ -151,7 +88,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             instance = null;
-            this.context = null;
         }
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo, object instance)
@@ -159,7 +95,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = nameInsideInterpreter;
             this.instance = instance;
-            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance) : this(null, nameInsideInterpreter, methodInfo, instance)
@@ -171,7 +106,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             this.instance = instance;
-            this.context = context;         // Possibly null
         }
 
         public WrappedCodeObject(MethodInfo methodInfo, object instance)
@@ -179,7 +113,6 @@ namespace LanguageImplementation
             this.MethodInfo = methodInfo;
             Name = methodInfo.Name;
             this.instance = instance;
-            this.context = null;
         }
     }
 

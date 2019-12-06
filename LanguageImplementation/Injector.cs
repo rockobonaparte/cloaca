@@ -7,14 +7,20 @@ using System.Threading.Tasks;
 
 namespace LanguageImplementation
 {
+    // TODO: Consider making this all static since it seems to get set up right at the point of injection.
     /// <summary>
     /// Helps WrappedCodeObjects inject the interpreter and frame context into wrapped calls that need them. Give it the current interpreter and frame
     /// context. Then when calls are being made, it'll take the actual arguments it has 
-    /// </summary>
+    /// </summary>    
     public class Injector
     {
         public IInterpreter Interpreter;
         public FrameContext Context;
+
+        public Injector(IInterpreter interpreter, FrameContext context)
+        {
+            Prepare(interpreter, context);
+        }
 
         public void Prepare(IInterpreter interpreter, FrameContext context)
         {

@@ -23,7 +23,6 @@ namespace CloacaInterpreter
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
             var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
-            super_wrapper.NeedsFrameContext = true;
 
             Expression<Action<PyTypeObject>> issubclass_expr = instance => Builtins.issubclass(null, null);
             var issubclass_methodInfo = ((MethodCallExpression)issubclass_expr.Body).Method;
@@ -1007,7 +1006,6 @@ namespace CloacaInterpreter
                                 Expression<Action<Interpreter>> expr = instance => builtins__build_class(null, null, null);
                                 var methodInfo = ((MethodCallExpression)expr.Body).Method;
                                 var class_builder = new WrappedCodeObject(context, "__build_class__", methodInfo, this);
-                                class_builder.NeedsFrameContext = true;
                                 context.DataStack.Push(class_builder);
                             }
                             break;
