@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -24,7 +25,7 @@ namespace LanguageImplementation.DataTypes
         {
             get
             {
-                if(__instance == null)
+                if (__instance == null)
                 {
                     __instance = new PyDictClass(null);
                 }
@@ -39,7 +40,7 @@ namespace LanguageImplementation.DataTypes
             //
             // __contains__(key, /) method of builtins.dict instance
             //     True if D has a key k, else False.
-            if(self.dict.ContainsKey(k))
+            if (self.dict.ContainsKey(k))
             {
                 return PyBool.True;
             }
@@ -70,7 +71,7 @@ namespace LanguageImplementation.DataTypes
             {
                 return self.dict[k];
             }
-            catch(KeyNotFoundException)
+            catch (KeyNotFoundException)
             {
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("KeyError: " + k);
@@ -80,7 +81,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static void __setitem__(PyDict self, PyObject k, PyObject value)
         {
-            if(self.dict.ContainsKey(k))
+            if (self.dict.ContainsKey(k))
             {
                 self.dict[k] = value;
             }
@@ -95,25 +96,25 @@ namespace LanguageImplementation.DataTypes
         public static PyBool __eq__(PyDict self, PyObject other)
         {
             var otherDict = other as PyDict;
-            if(otherDict == null)
+            if (otherDict == null)
             {
                 return PyBool.False;
             }
 
-            if(otherDict.dict.Count != self.dict.Count)
+            if (otherDict.dict.Count != self.dict.Count)
             {
                 return PyBool.False;
             }
 
-            foreach(var pair in self.dict)
+            foreach (var pair in self.dict)
             {
-                if(!otherDict.dict.ContainsKey(pair.Key))
+                if (!otherDict.dict.ContainsKey(pair.Key))
                 {
                     return PyBool.False;
                 }
 
                 var otherVal = otherDict.dict[pair.Key];
-                if(pair.Value.__eq__(otherVal).boolean == false)
+                if (pair.Value.__eq__(otherVal).boolean == false)
                 {
                     return PyBool.False;
                 }
@@ -253,6 +254,47 @@ namespace LanguageImplementation.DataTypes
             throw new NotImplementedException();
         }
 
+        private static async Task<PyString> __visit_repr(PyObject obj, IInterpreter interpreter, FrameContext context)
+        {
+            var __repr__ = obj.__dict__[PyClass.__REPR__];
+            var functionToRun = __repr__ as IPyCallable;
+
+            var returned = await functionToRun.Call(interpreter, context, new object[] { obj });
+            if (returned != null)
+            {
+                return (PyString)returned;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        [ClassMember]
+        public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asDict = (PyDict)self;
+            PyString retStr = new PyString("{");
+            int visited = 0;
+            foreach (var mapping in asDict.dict)
+            {
+                var key_repr = await __visit_repr((PyObject)mapping.Key, interpreter, context);
+                retStr = (PyString)PyStringClass.__add__(retStr, key_repr);
+                retStr = (PyString)PyStringClass.__add__(retStr, new PyString(": "));
+
+                var val_repr = await __visit_repr((PyObject)mapping.Value, interpreter, context);
+                retStr = (PyString)PyStringClass.__add__(retStr, val_repr);
+
+                // Appending commas except on last paring
+                if (visited < asDict.dict.Count - 1)
+                {
+                    retStr = (PyString)PyStringClass.__add__(retStr, new PyString(", "));
+                }
+
+                visited += 1;
+            }
+            return (PyString)PyStringClass.__add__(retStr, new PyString("}"));
+        }
     }
 
     public class PyDict : PyObject, IEnumerable

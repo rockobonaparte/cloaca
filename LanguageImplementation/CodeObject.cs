@@ -61,12 +61,14 @@ namespace LanguageImplementation
                 // This became a bigger issue when starting to work with PyList.__repr__ because it had to be
                 // async in case something it's __repr__'ing is async. It normally return PyString, which isn't
                 // allowed to be case to object when going from Task<PyString> to Task<object>. This reflection
-                // is technically slow.
+                // is technically slow. I never measured it, but this is what I gathered from online. Given that
+                // it looks like the default coroutine scheduler will take another lap around if there are any
+                // chained awaits inside the calling code, this is probably true.
                 //
                 // We'll only do this if we don't get a Task<object> in the first place. Otherwise, we start
                 // getting really high tick counts on our coroutines and fail a lot of tests expecting a single tick.
                 //
-                // TODO: Find better way to deal with these task casts.
+                // TODO: Find better way to deal with these task casts--that hopefully don't have as much of a performance impact.
                 dynamic task_result = MethodInfo.Invoke(instance, final_args);
                 if (task_result is Task<object>)
                 {
