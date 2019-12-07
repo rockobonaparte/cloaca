@@ -125,12 +125,12 @@ Following that, serialization of tasks.
      * [DONE] Properly load variable on to stack
      * Add a unit test that checks the value is on TOS
 	 * [WIP] Test for list dereference and class members too
-	 * [WIP] Start using __repr__
+	 * [DONE] Start using __repr__
 	    * [DONE] Implement for basic types
-		* [WIP] Implement for:
+		* [DONE] Implement for:
 		   * [DONE] list
-		   * dict
-		   * tuple
+		   * [DONE] dict
+		   * [DONE] tuple
   * implement dir()
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
