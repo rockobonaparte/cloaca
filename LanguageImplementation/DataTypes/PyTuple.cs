@@ -1,14 +1,23 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
-    public class PyTupleClass : PyTypeObject
+    public class PyTupleClass : PyClass
     {
         public PyTupleClass(CodeObject __init__) :
-            base("tuple", __init__)
+            base("tuple", __init__, new PyClass[0])
         {
             __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyTuple.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyTuple>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
 
         private static PyTupleClass __instance;
@@ -27,7 +36,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyBool __contains__(PyTuple self, PyObject v)
         {
-            if (Array.IndexOf(self.values, v) >= 0)
+            if (Array.IndexOf(self.Values, v) >= 0)
             {
                 return PyBool.True;
             }
@@ -42,7 +51,7 @@ namespace LanguageImplementation.DataTypes
         {
             try
             {
-                return self.values[(int)i.number];
+                return self.Values[(int)i.number];
             }
             catch (IndexOutOfRangeException)
             {
@@ -61,19 +70,47 @@ namespace LanguageImplementation.DataTypes
                 return PyBool.False;
             }
 
-            if (otherList.values.Length != self.values.Length)
+            if (otherList.Values.Length != self.Values.Length)
             {
                 return PyBool.False;
             }
 
-            for (int i = 0; i < self.values.Length; ++i)
+            for (int i = 0; i < self.Values.Length; ++i)
             {
-                if (self.values[i].__eq__(otherList.values[i]).boolean == false)
+                if (self.Values[i].__eq__(otherList.Values[i]).boolean == false)
                 {
                     return PyBool.False;
                 }
             }
             return PyBool.True;
+        }
+
+        [ClassMember]
+        public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asTuple = (PyTuple)self;
+            PyString retStr = new PyString("(");
+            for (int i = 0; i < asTuple.Values.Length; ++i)
+            {
+                var pyObj = asTuple.Values[i];
+
+                var __repr__ = pyObj.__dict__[PyClass.__REPR__];
+                var functionToRun = __repr__ as IPyCallable;
+
+                var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });
+                if (returned != null)
+                {
+                    var asPyString = (PyString)returned;
+                    retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                }
+
+                // Appending commas except on last index
+                if (i < asTuple.Values.Length - 1)
+                {
+                    retStr = (PyString)PyStringClass.__add__(retStr, new PyString(", "));
+                }
+            }
+            return (PyString)PyStringClass.__add__(retStr, new PyString(")"));
         }
 
         [ClassMember]
@@ -83,17 +120,22 @@ namespace LanguageImplementation.DataTypes
         }
     }
 
-    public class PyTuple : PyObject
+    public class PyTuple : PyObject, IEnumerable
     {
-        public PyObject[] values;
+        public PyObject[] Values;
+
+        public PyTuple()
+        {
+        }
+
         public PyTuple(List<PyObject> values)
         {
-            this.values = values.ToArray();
+            this.Values = values.ToArray();
         }
 
         public PyTuple(PyObject[] values)
         {
-            this.values = values;
+            this.Values = values;
         }
 
         public override bool Equals(object obj)
@@ -109,9 +151,15 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // Implemented mostly for the sake of using container assertions in NUnit.
+        public IEnumerator GetEnumerator()
+        {
+            return Values.GetEnumerator();
+        }
+
         public override int GetHashCode()
         {
-            return values.GetHashCode();
+            return Values.GetHashCode();
         }
 
         public override string ToString()

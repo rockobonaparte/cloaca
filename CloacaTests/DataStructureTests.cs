@@ -95,7 +95,7 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var tuple = (PyTuple) variables["a"];
-            Assert.That(tuple.values, Is.EquivalentTo(new object[] { new PyString("foo"), new PyInteger(1) }));
+            Assert.That(tuple.Values, Is.EquivalentTo(new object[] { new PyString("foo"), new PyInteger(1) }));
         }
 
         [Test]

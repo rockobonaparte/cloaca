@@ -206,7 +206,6 @@ namespace LanguageImplementation.DataTypes
             return list.GetEnumerator();
         }
 
-
         public override int GetHashCode()
         {
             return list.GetHashCode();

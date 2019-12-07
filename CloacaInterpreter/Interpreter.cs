@@ -842,12 +842,18 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var tupleCount = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                PyObject[] tuple = new PyObject[tupleCount];
-                                for (int i = tupleCount - 1; i >= 0; --i)
+                                var tupleObj = await PyTupleClass.Instance.Call(this, context, new object[0]);
+                                var tuple = (PyTuple)tupleObj;
+
+                                PyObject[] tupleArray = new PyObject[tupleCount];
+
+                                // Items come off the stack in reverse order!
+                                for (int i = 0; i < tupleCount; ++i)
                                 {
-                                    tuple[i] = (PyObject) context.DataStack.Pop();
+                                    tupleArray[tupleCount - i - 1] = (PyObject)context.DataStack.Pop();
                                 }
-                                context.DataStack.Push(new PyTuple(tuple));
+                                tuple.Values = tupleArray;
+                                context.DataStack.Push(tuple);
                             }
                             break;
                         case ByteCodes.BUILD_MAP:
@@ -886,9 +892,9 @@ namespace CloacaInterpreter
                                 context.Cursor += 2;
                                 var dict = new Dictionary<object, object>();
                                 var keyTuple = (PyTuple)context.DataStack.Pop();
-                                for (int i = keyTuple.values.Length - 1; i >= 0; --i)
+                                for (int i = keyTuple.Values.Length - 1; i >= 0; --i)
                                 {
-                                    dict[keyTuple.values[i]] = context.DataStack.Pop();
+                                    dict[keyTuple.Values[i]] = context.DataStack.Pop();
                                 }
                                 context.DataStack.Push(dict);
                             }
