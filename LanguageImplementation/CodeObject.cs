@@ -76,8 +76,23 @@ namespace LanguageImplementation
                 }
                 else
                 {
+                    // This code path is currently problematic. Builtins.dir with a Task<PyList> return type
+                    // hangs here!
+                    // TODO: Figure out how to get this to not hang with Builtins.dir returning Task<PyList>
                     var asTask = (Task)task_result;
-                    return asTask.ContinueWith(t => (object)t.GetType().GetProperty("Result").GetValue(t));
+                    return asTask.ContinueWith(t =>
+                    {
+                        // Try-catch is just for debugging for now why returning something that isn't
+                        // Task<object> seems to hang up the runtime. I don't get an exception.
+                        try
+                        {
+                            return (object)t.GetType().GetProperty("Result").GetValue(t);
+                        }
+                        catch(Exception e)
+                        {
+                            return null;
+                        }
+                    });
                 }
             }
             else

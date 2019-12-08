@@ -186,6 +186,10 @@ namespace LanguageImplementation.DataTypes
         {
             list = new List<PyObject>();
         }
+        public PyList(List<PyObject> existingList)
+        {
+            list = existingList;
+        }
 
         public override bool Equals(object obj)
         {
@@ -214,6 +218,11 @@ namespace LanguageImplementation.DataTypes
         public override string ToString()
         {
             throw new NotImplementedException();
+        }
+
+        public void SetList(List<PyObject> newList)
+        {
+            list = newList;
         }
     }
 }

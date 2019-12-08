@@ -131,7 +131,10 @@ Following that, serialization of tasks.
 		   * [DONE] list
 		   * [DONE] dict
 		   * [DONE] tuple
-  * implement dir()
+  * [WIP] implement dir()
+     * [DONE] Add to REPL
+	 * [WIP] Figure out what return Task<PyList> in dir() causes hang, but the Task<object> path works just fine.
+	 * Create REPL unit test
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
      * Cannot move cursor before current cursor position
@@ -236,6 +239,7 @@ Tech debt:
   * Make it a function instead of a keyword
 * Reconcile CodeObject and WrappedCodeObject
   * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
+* Argumentlist Call() should not require passing in new object[0]
 
 Useful bits:
 Dump a code object that comes up in a disassembly

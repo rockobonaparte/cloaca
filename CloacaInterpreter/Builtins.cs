@@ -1,5 +1,6 @@
 ﻿using System;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
@@ -88,6 +89,29 @@ namespace CloacaInterpreter
         public static bool issubclass(PyObject o, PyClass parent)
         {
             return issubclass(builtin_type(o), parent);
+        }
+
+        /// <summary>
+        /// Implements the dir() command used to dump methods and properties of this PyObject.
+        /// </summary>
+        /// <param name="o">The object to inspect</param>
+        /// <returns>A PyList of the names of the methods and properties of this PyObject.</returns>        
+        //public static async Task<PyList> dir(IInterpreter interpreter, FrameContext context, PyObject o)
+        public static async Task<object> dir(IInterpreter interpreter, FrameContext context, PyObject o)
+        {
+            // TODO: Figure out how to switch to Task<PyList> signature without everything hanging.
+            var internalList = new List<PyObject>();
+            foreach(var name in o.__dict__.Keys)
+            {
+                internalList.Add(new PyString(name));
+            }
+
+            // Alphabetize them. It's how Python does it and it is quite useful for scanning through the output anyways.
+            internalList.Sort((a, b) => a.ToString().CompareTo(b.ToString()));
+
+            var retList = (PyList) await PyListClass.Instance.Call(interpreter, context, new object[0]);
+            retList.SetList(internalList);
+            return retList;
         }
 
         public static PyClass builtin_type(PyObject obj)
