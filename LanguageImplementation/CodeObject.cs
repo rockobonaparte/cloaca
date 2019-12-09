@@ -45,6 +45,24 @@ namespace LanguageImplementation
             get; protected set;
         }
 
+        /// <summary>
+        /// Assuming that the payload is Task<T>, this will convert it to a Task<object>. We need this tedious
+        /// step because C# does not support a direct conversion. Instead, we have to write a helper to invoke
+        /// the coroutine, harvest its result, and convert that to an object. This inner coroutine is wrapped
+        /// as the Task<object> we wanted in the first place.
+        /// </summary>
+        /// <param name="final_args">The final arguments to give to the method when invoking it. This is prepared
+        /// by the injector in Call().</param>
+        /// <returns>A Task<object> where the returned object is casted from some other type that was the original
+        /// method's return type.</returns>
+        private async Task<object> InvokeAsTaskObject(object[] final_args)
+        {
+            var task = (Task) MethodInfo.Invoke(instance, final_args);
+            await task.ConfigureAwait(false);
+            var result = ((dynamic)task).Result;
+            return (object)result;
+        }
+
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             var injector = new Injector(interpreter, context);
@@ -53,46 +71,15 @@ namespace LanguageImplementation
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfo.ReturnType.IsGenericType && MethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
-                // The little bit of bizarre testing above gets us this far but we still need a Task<object>.
-                // The cast will fail if they're returning something else. At least now it'll error in a way
-                // more related to the real problem. We had a method return Task<PyClass> and it would blow
-                // up from this section when it was written more naively.
-                //
-                // This became a bigger issue when starting to work with PyList.__repr__ because it had to be
-                // async in case something it's __repr__'ing is async. It normally return PyString, which isn't
-                // allowed to be case to object when going from Task<PyString> to Task<object>. This reflection
-                // is technically slow. I never measured it, but this is what I gathered from online. Given that
-                // it looks like the default coroutine scheduler will take another lap around if there are any
-                // chained awaits inside the calling code, this is probably true.
-                //
-                // We'll only do this if we don't get a Task<object> in the first place. Otherwise, we start
-                // getting really high tick counts on our coroutines and fail a lot of tests expecting a single tick.
-                //
-                // TODO: Find better way to deal with these task casts--that hopefully don't have as much of a performance impact.
-                dynamic task_result = MethodInfo.Invoke(instance, final_args);
-                if (task_result is Task<object>)
+                // Task<object> is straightforward and we can just return it. Other return types need to go through
+                // our helper.
+                if(MethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return task_result;
+                    return (Task<object>) MethodInfo.Invoke(instance, final_args);
                 }
                 else
                 {
-                    // This code path is currently problematic. Builtins.dir with a Task<PyList> return type
-                    // hangs here!
-                    // TODO: Figure out how to get this to not hang with Builtins.dir returning Task<PyList>
-                    var asTask = (Task)task_result;
-                    return asTask.ContinueWith(t =>
-                    {
-                        // Try-catch is just for debugging for now why returning something that isn't
-                        // Task<object> seems to hang up the runtime. I don't get an exception.
-                        try
-                        {
-                            return (object)t.GetType().GetProperty("Result").GetValue(t);
-                        }
-                        catch(Exception e)
-                        {
-                            return null;
-                        }
-                    });
+                    return InvokeAsTaskObject(final_args);
                 }
             }
             else

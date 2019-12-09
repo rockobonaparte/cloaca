@@ -133,7 +133,7 @@ Following that, serialization of tasks.
 		   * [DONE] tuple
   * [WIP] implement dir()
      * [DONE] Add to REPL
-	 * [WIP] Figure out what return Task<PyList> in dir() causes hang, but the Task<object> path works just fine.
+	 * [DONE] Figure out what return Task<PyList> in dir() causes hang, but the Task<object> path works just fine.
 	 * Create REPL unit test
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
