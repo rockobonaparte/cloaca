@@ -113,6 +113,23 @@ namespace CloacaGuiDemo
                 SetCursorToEnd();
                 e.Handled = true;
             }
+            else if(e.KeyData == Keys.Left || e.KeyData == Keys.Back)
+            {
+                if(richTextBox1.SelectionStart <= lastAnchorPosition)
+                {
+                    e.Handled = true;
+                }
+            }
+            else if (e.KeyData == Keys.Down || e.KeyData == Keys.Up)
+            {
+                // Suppress up/down for now, although it might be nice to have them scroll history eventually.
+                e.Handled = true;
+            }
+            else if(e.KeyData == Keys.Home)
+            {
+                richTextBox1.SelectionStart = lastAnchorPosition;
+                e.Handled = true;
+            }
         }
     }
 }
