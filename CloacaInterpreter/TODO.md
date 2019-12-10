@@ -137,12 +137,12 @@ Following that, serialization of tasks.
 	 * Create REPL unit test
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
-     * Cannot move cursor before current cursor position
+     * [DONE] Cannot move cursor before current cursor position
 	 * Can still select text outside this area
 	 * [DONE] fixed-width font
 	 * [DONE] Print exceptions
 	 * History with arrow keys
-  * Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
+  * [DONE] Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
   * Implement quit() because you keep wanting to type it! :)
   * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
     a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
