@@ -51,7 +51,7 @@ namespace CloacaGuiDemo
             {
                 richTextBox1.Font = new Font("liberation mono", 12, FontStyle.Regular);
             }
-            else if(IsFontInstalled("lucida console"))
+            else if (IsFontInstalled("lucida console"))
             {
                 richTextBox1.Font = new Font("lucida console", 12, FontStyle.Regular);
             }
@@ -59,7 +59,7 @@ namespace CloacaGuiDemo
             repl = new Repl();
             ongoingUserProgram = new StringBuilder();
 
-            richTextBox1.Text += ">>> ";
+            richTextBox1.AppendText(">>> ");
             SetCursorToEnd();
         }
 
@@ -85,23 +85,29 @@ namespace CloacaGuiDemo
         {
             if (e.KeyData == Keys.Enter)
             {
-                richTextBox1.Text += Environment.NewLine;
+                richTextBox1.AppendText(Environment.NewLine);
                 string newUserInput = richTextBox1.Text.Substring(lastAnchorPosition, richTextBox1.Text.Length - lastAnchorPosition);
                 ongoingUserProgram.Append(newUserInput);
-
-                //richTextBox1.Text += ongoingUserProgram.ToString();
-                //SetCursorToEnd();
 
                 var output = await repl.Interpret(ongoingUserProgram.ToString());
                 if (repl.NeedsMoreInput)
                 {
-                    richTextBox1.Text += "... ";
+                    richTextBox1.AppendText("... ");
                 }
                 else
                 {
-                    richTextBox1.Text += output;
+                    if(repl.CaughtException)
+                    {
+                        richTextBox1.SelectionColor = Color.Red;
+                        richTextBox1.AppendText(output);
+                        richTextBox1.SelectionColor = richTextBox1.ForeColor;
+                    }
+                    else
+                    {
+                        richTextBox1.Text += output;
+                    }
                     ongoingUserProgram.Clear();
-                    richTextBox1.Text += Environment.NewLine + ">>> ";
+                    richTextBox1.AppendText(Environment.NewLine + ">>> ");
                 }
 
                 SetCursorToEnd();

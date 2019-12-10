@@ -25,13 +25,10 @@ namespace CloacaInterpreter
             get; private set;
         }
 
-        public bool ReplMode;
-
         public ReplParseErrorListener()
         {
             Errors = new List<string>();
             ExpectedMoreText = false;
-            ReplMode = false;
         }
 
         public void ReportAmbiguity([NotNull] Parser recognizer, [NotNull] DFA dfa, int startIndex, int stopIndex, bool exact, [Nullable] BitSet ambigAlts, [NotNull] ATNConfigSet configs)
@@ -54,8 +51,7 @@ namespace CloacaInterpreter
             if (e != null)
             {
                 var expected_tokens = e.GetExpectedTokens();
-                if (ReplMode &&
-                    (e.OffendingToken.Type == CloacaLexer.Eof ||
+                if ((e.OffendingToken.Type == CloacaLexer.Eof ||
                     (expected_tokens.Count > 0 && (expected_tokens.Contains(CloacaParser.INDENT) || expected_tokens.Contains(CloacaParser.NEWLINE)))))
                 {
                     // Eat the error if it's just complaining that it expected more text in the REPL.
@@ -96,11 +92,26 @@ namespace CloacaInterpreter
         private ReplParseErrorListener errorListener;
         private Dictionary<string, object> contextVariables;
 
+        /// <summary>
+        /// Set from Interpret() if the output is a traceback from an uncaught exception. This is particularly
+        /// useful if you intend to report the exceptions different--such as with a different color. It gets
+        /// reset on the next Interpret() call.
+        /// </summary>
+        public bool CaughtException
+        {
+            get; private set;
+        }
+
         public Repl()
         {
             errorListener = new ReplParseErrorListener();
         }
 
+        /// <summary>
+        /// Set from Interpret() if the output is the secondary prompt used to get more information. This is
+        /// a helper indicator to declare for certain that we're entering the secondary prompt. It gets
+        /// reset on the next Interpret() call.
+        /// </summary>
         public bool NeedsMoreInput
         {
             get
@@ -111,10 +122,11 @@ namespace CloacaInterpreter
 
         public async Task<string> Interpret(string input)
         {
+            CaughtException = false;
+
             var inputStream = new AntlrInputStream(input);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-            errorListener.ReplMode = true;
             errorListener.Clear();
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
@@ -166,6 +178,7 @@ namespace CloacaInterpreter
                     var inner = wrappedEscapedException.InnerExceptions[0];
                     if (inner is EscapedPyException)
                     {
+                        CaughtException = true;
                         return inner.Message;
                     }
                     else
