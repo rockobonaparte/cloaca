@@ -82,5 +82,16 @@ namespace CloacaTests
                                                 Environment.NewLine));
         }
 
+        [Test]
+        public async Task Exception()
+        {
+            var repl = new Repl();
+            string consoleOut = await repl.Interpret("raise Exception(\"Hi!\")\n");
+            Assert.That(repl.CaughtError, Is.True);
+            Assert.That(repl.NeedsMoreInput, Is.False);
+            Assert.That(consoleOut, Is.EqualTo("Traceback (most recent call list):" + Environment.NewLine +
+                                               "\tline 1, in <module>" + Environment.NewLine +
+                                               "Hi!" + Environment.NewLine));
+        }
     }
 }
