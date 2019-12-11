@@ -104,7 +104,7 @@ namespace CloacaGuiDemo
                     }
                     else
                     {
-                        richTextBox1.Text += output;
+                        richTextBox1.AppendText(output);
                     }
                     ongoingUserProgram.Clear();
                     richTextBox1.AppendText(Environment.NewLine + ">>> ");

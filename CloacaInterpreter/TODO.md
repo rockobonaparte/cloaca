@@ -121,7 +121,7 @@ Following that, serialization of tasks.
      * [DONE] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
 	 * [FIXED] "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
 	 * Catch really dumb parse errors like "]\n" by itself.
-	 * Red text doesn't stay red after next successfully-parsed statement.
+	 * [FIXED] Red text doesn't stay red after next successfully-parsed statement.
   * [DONE] Retain context between statements
   * [DONE] Print out variables by typing their name
      * [DONE] Properly load variable on to stack
