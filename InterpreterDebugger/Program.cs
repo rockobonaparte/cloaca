@@ -61,7 +61,7 @@ namespace InterpreterDebugger
             interpreter.StepMode = true;
             bool traceMode = false;
 
-            var debugRepl = new Repl("dbg> ")
+            var debugRepl = new Piksel.LibREPL.Repl("dbg> ")
             {
                 HeaderTitle = "Cloaca Interpreter Debugger",
                 HeaderSubTitle = "Debug Cloaca ByteCode Evaluation"

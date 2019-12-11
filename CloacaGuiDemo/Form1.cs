@@ -96,7 +96,7 @@ namespace CloacaGuiDemo
                 }
                 else
                 {
-                    if(repl.CaughtException)
+                    if(repl.CaughtError)
                     {
                         richTextBox1.SelectionColor = Color.Red;
                         richTextBox1.AppendText(output);

@@ -90,14 +90,18 @@ namespace CloacaInterpreter
     public class Repl
     {
         private ReplParseErrorListener errorListener;
-        private Dictionary<string, object> contextVariables;
+        
+        public Dictionary<string, object> ContextVariables
+        {
+            get; private set;
+        }
 
         /// <summary>
         /// Set from Interpret() if the output is a traceback from an uncaught exception. This is particularly
         /// useful if you intend to report the exceptions different--such as with a different color. It gets
         /// reset on the next Interpret() call.
         /// </summary>
-        public bool CaughtException
+        public bool CaughtError
         {
             get; private set;
         }
@@ -122,7 +126,7 @@ namespace CloacaInterpreter
 
         public async Task<string> Interpret(string input)
         {
-            CaughtException = false;
+            CaughtError = false;
 
             var inputStream = new AntlrInputStream(input);
             var lexer = new CloacaLexer(inputStream);
@@ -130,28 +134,30 @@ namespace CloacaInterpreter
             errorListener.Clear();
             var parser = new CloacaParser(commonTokenStream);
             parser.AddErrorListener(errorListener);
+
+            var antlrVisitorContext = parser.single_input();
             if (errorListener.Errors.Count > 0)
             {
-                StringBuilder errorBuilder = new StringBuilder("There were errors trying to compile the script. We cannot run it:");
+                CaughtError = true;
+                StringBuilder errorBuilder = new StringBuilder("There were errors trying to compile the script. We cannot run it:" + Environment.NewLine);
                 foreach (var error in errorListener.Errors)
                 {
                     errorBuilder.Append(error);
+                    errorBuilder.Append(Environment.NewLine);
                 }
                 return errorBuilder.ToString();
             }
-
-            var antlrVisitorContext = parser.single_input();
-            if (errorListener.ExpectedMoreText)
+            else if (errorListener.ExpectedMoreText)
             {
                 return "... ";
             }
 
-            if (contextVariables == null)
+            if (ContextVariables == null)
             {
-                contextVariables = new Dictionary<string, object>();
+                ContextVariables = new Dictionary<string, object>();
             }
 
-            var visitor = new CloacaBytecodeVisitor(contextVariables);
+            var visitor = new CloacaBytecodeVisitor(ContextVariables);
             visitor.Visit(antlrVisitorContext);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
@@ -161,9 +167,9 @@ namespace CloacaInterpreter
             scheduler.SetInterpreter(interpreter);
 
             var context = scheduler.Schedule(compiledProgram);
-            foreach (string varName in contextVariables.Keys)
+            foreach (string varName in ContextVariables.Keys)
             {
-                context.SetVariable(varName, contextVariables[varName]);
+                context.SetVariable(varName, ContextVariables[varName]);
             }
 
             while (!scheduler.Done)
@@ -178,7 +184,7 @@ namespace CloacaInterpreter
                     var inner = wrappedEscapedException.InnerExceptions[0];
                     if (inner is EscapedPyException)
                     {
-                        CaughtException = true;
+                        CaughtError = true;
                         return inner.Message;
                     }
                     else
@@ -212,7 +218,7 @@ namespace CloacaInterpreter
                 stack_output.Append(Environment.NewLine);
             }
 
-            contextVariables = context.DumpVariables();
+            ContextVariables = context.DumpVariables();
             return stack_output.ToString();
         }
     }
