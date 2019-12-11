@@ -116,36 +116,11 @@ Following that, serialization of tasks.
   * Wrap .NET exceptions
 * See if you can use that REPL helper module directly.
 * REPL
-  * [DONE] Reincorporate single_input, file_input, and eval_input from full Grammar spec: https://docs.python.org/3/reference/grammar.html
-  * Fixes:
-     * [DONE] Needs to prompt for one more newline for indented blocks. I can only get one indented line in before it thinks I'm done.
-	 * [FIXED] "True" getting printed as TOS when evaluating successful conditional. Shouldn't print anything.
-	 * Catch really dumb parse errors like "]\n" by itself.
-	 * [FIXED] Red text doesn't stay red after next successfully-parsed statement.
-  * [DONE] Retain context between statements
-  * [DONE] Print out variables by typing their name
-     * [DONE] Properly load variable on to stack
-     * [DONE] Add a unit test that checks the value is on TOS
-	 * [DONE] Test for list dereference and class members too
-	 * [DONE] Start using __repr__
-	    * [DONE] Implement for basic types
-		* [DONE] Implement for:
-		   * [DONE] list
-		   * [DONE] dict
-		   * [DONE] tuple
-  * [DONE] implement dir()
-     * [DONE] Add to REPL
-	 * [DONE] Figure out what return Task<PyList> in dir() causes hang, but the Task<object> path works just fine.
-	 * [DONE] Create REPL unit test
   * implement help() with a proof-of-concept implementation
   * Improve GUI interaction
-     * [DONE] Cannot move cursor before current cursor position
 	 * Can still select text outside this area
-	 * [DONE] fixed-width font
-	 * [DONE] Print exceptions
 	 * History with arrow keys
 	 * Verify copy-paste of multiline statements
-  * [DONE] Encapsulate REPL from Windows Form stuff so it can be tossed into Unity
   * Implement quit() because you keep wanting to type it! :)
   * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
     a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
