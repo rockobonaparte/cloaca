@@ -86,6 +86,12 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static Task<PyString> __str__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            return __repr__(interpreter, context, self);
+        }
+
+        [ClassMember]
         public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asTuple = (PyTuple)self;

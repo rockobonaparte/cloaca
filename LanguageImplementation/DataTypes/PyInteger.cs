@@ -138,6 +138,12 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static new PyString __str__(PyObject self)
+        {
+            return __repr__(self);
+        }
+
+        [ClassMember]
         public static new PyString __repr__(PyObject self)
         {
             return new PyString(self.ToString());

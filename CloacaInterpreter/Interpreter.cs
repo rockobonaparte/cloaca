@@ -52,6 +52,11 @@ namespace CloacaInterpreter
             this.Scheduler = scheduler;
         }
 
+        public void AddBuiltin(WrappedCodeObject toEmbed)
+        {
+            builtins.Add(toEmbed.Name, toEmbed);
+        }
+
         public bool DumpState;
 
         /// <summary>

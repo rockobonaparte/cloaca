@@ -4,6 +4,8 @@ using System.Text;
 using System.Windows.Forms;
 
 using CloacaInterpreter;
+using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaGuiDemo
 {
@@ -57,10 +59,24 @@ namespace CloacaGuiDemo
             }
 
             repl = new Repl();
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
             SetCursorToEnd();
+        }
+
+        public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
+        {
+            var str_func = (IPyCallable) to_print.__dict__[PyClass.__STR__];
+
+            var returned = await str_func.Call(interpreter, context, new object[] { to_print });
+            if (returned != null)
+            {
+                var asPyString = (PyString)returned;
+                richTextBox1.AppendText(asPyString.str);
+                SetCursorToEnd();
+            }
         }
 
         private void tabPage1_Click(object sender, EventArgs e)

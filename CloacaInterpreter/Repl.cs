@@ -109,6 +109,10 @@ namespace CloacaInterpreter
         public Repl()
         {
             errorListener = new ReplParseErrorListener();
+
+            Scheduler = new Scheduler();
+            Interpreter = new Interpreter(Scheduler);
+            Scheduler.SetInterpreter(Interpreter);
         }
 
         /// <summary>
@@ -123,6 +127,11 @@ namespace CloacaInterpreter
                 return errorListener.ExpectedMoreText;
             }
         }
+
+        // The interpreter and scheduler were made public. This was done while trying to insert additional built-ins to the
+        // interpeter. The scheduler was made public too just 'cause.
+        public Interpreter Interpreter;
+        public Scheduler Scheduler;
 
         public async Task<string> Interpret(string input)
         {
@@ -162,21 +171,17 @@ namespace CloacaInterpreter
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            var scheduler = new Scheduler();
-            var interpreter = new Interpreter(scheduler);
-            scheduler.SetInterpreter(interpreter);
-
-            var context = scheduler.Schedule(compiledProgram);
+            var context = Scheduler.Schedule(compiledProgram);
             foreach (string varName in ContextVariables.Keys)
             {
                 context.SetVariable(varName, ContextVariables[varName]);
             }
 
-            while (!scheduler.Done)
+            while (!Scheduler.Done)
             {
                 try
                 {
-                    scheduler.Tick().Wait();
+                    Scheduler.Tick().Wait();
                 }
                 catch (AggregateException wrappedEscapedException)
                 {
@@ -209,7 +214,7 @@ namespace CloacaInterpreter
                     var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
                     var functionToRun = __repr__ as IPyCallable;
 
-                    var returned = await functionToRun.Call(interpreter, context, new object[] { stack_var_obj });
+                    var returned = await functionToRun.Call(Interpreter, context, new object[] { stack_var_obj });
                     if (returned != null)
                     {
                         stack_output.Append(returned);
