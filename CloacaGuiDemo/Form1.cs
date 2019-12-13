@@ -23,6 +23,8 @@ namespace CloacaGuiDemo
         Repl repl;
         private int lastAnchorPosition;
         private StringBuilder ongoingUserProgram;
+        private bool quitSignaled;
+
         public Form1()
         {
             InitializeComponent();
@@ -60,10 +62,13 @@ namespace CloacaGuiDemo
 
             repl = new Repl();
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("quit", typeof(Form1).GetMethod("quit_func"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
             SetCursorToEnd();
+
+            quitSignaled = false;
         }
 
         public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
@@ -77,6 +82,11 @@ namespace CloacaGuiDemo
                 richTextBox1.AppendText(asPyString.str);
                 SetCursorToEnd();
             }
+        }
+
+        public async void quit_func(IInterpreter interpreter, FrameContext context)
+        {
+            quitSignaled = true;
         }
 
         private void tabPage1_Click(object sender, EventArgs e)
@@ -145,6 +155,11 @@ namespace CloacaGuiDemo
             {
                 richTextBox1.SelectionStart = lastAnchorPosition;
                 e.Handled = true;
+            }
+
+            if(quitSignaled)
+            {
+                Close();
             }
         }
     }

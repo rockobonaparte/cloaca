@@ -121,7 +121,7 @@ Following that, serialization of tasks.
 	 * Can still select text outside this area
 	 * History with arrow keys
 	 * Verify copy-paste of multiline statements
-  * Implement quit() because you keep wanting to type it! :)
+  * [DONE] Implement quit() because you keep wanting to type it! :)
   * [DONE] Implement print() (prototype)
   * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
     a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
