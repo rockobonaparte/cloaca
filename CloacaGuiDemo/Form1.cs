@@ -25,6 +25,8 @@ namespace CloacaGuiDemo
         private StringBuilder ongoingUserProgram;
         private bool quitSignaled;
 
+        private Label[] blipLabels;
+
         public Form1()
         {
             InitializeComponent();
@@ -76,6 +78,27 @@ namespace CloacaGuiDemo
                 "Radio Button 2",
                 "Radio Button 3",
             });
+
+            blipLabels = new Label[]
+            {
+                blip0,
+                blip1,
+                blip2,
+                blip3,
+            };
+
+            SetBlip(3, true);
+        }
+
+        public void SetBlip(int i, bool value)
+        {
+            blipLabels[i].Text = value == true ? "1" : "0";
+            blipLabels[i].BackColor = value == true ? Color.LightGreen : Color.Red;
+        }
+
+        public bool GetBlip(int i)
+        {
+            return blipLabels[i].Text == "1";
         }
 
         public void ClearDialogs()
