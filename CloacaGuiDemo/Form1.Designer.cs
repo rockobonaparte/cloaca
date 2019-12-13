@@ -37,22 +37,22 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.playerXLabel = new System.Windows.Forms.Label();
             this.playerYLabel = new System.Windows.Forms.Label();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.playerXLabel = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
-            this.blip0 = new System.Windows.Forms.Label();
-            this.blip1 = new System.Windows.Forms.Label();
-            this.blip2 = new System.Windows.Forms.Label();
             this.blip3 = new System.Windows.Forms.Label();
+            this.blip2 = new System.Windows.Forms.Label();
+            this.blip1 = new System.Windows.Forms.Label();
+            this.blip0 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
-            this.label5 = new System.Windows.Forms.Label();
-            this.dialogRadioFlow = new System.Windows.Forms.FlowLayoutPanel();
             this.dialogOkButton = new System.Windows.Forms.Button();
+            this.dialogRadioFlow = new System.Windows.Forms.FlowLayoutPanel();
+            this.label5 = new System.Windows.Forms.Label();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.menuStrip1.SuspendLayout();
             this.ConsoleTab.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -165,32 +165,14 @@
             this.panel1.Size = new System.Drawing.Size(493, 39);
             this.panel1.TabIndex = 0;
             // 
-            // label1
+            // playerYLabel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(4, 4);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(83, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Player\'s Position";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(3, 19);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(14, 13);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "X";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(154, 19);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(14, 13);
-            this.label3.TabIndex = 2;
-            this.label3.Text = "Y";
+            this.playerYLabel.AutoSize = true;
+            this.playerYLabel.Location = new System.Drawing.Point(174, 19);
+            this.playerYLabel.Name = "playerYLabel";
+            this.playerYLabel.Size = new System.Drawing.Size(13, 13);
+            this.playerYLabel.TabIndex = 4;
+            this.playerYLabel.Text = "0";
             // 
             // playerXLabel
             // 
@@ -201,14 +183,32 @@
             this.playerXLabel.TabIndex = 3;
             this.playerXLabel.Text = "0";
             // 
-            // playerYLabel
+            // label3
             // 
-            this.playerYLabel.AutoSize = true;
-            this.playerYLabel.Location = new System.Drawing.Point(174, 19);
-            this.playerYLabel.Name = "playerYLabel";
-            this.playerYLabel.Size = new System.Drawing.Size(13, 13);
-            this.playerYLabel.TabIndex = 4;
-            this.playerYLabel.Text = "0";
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(154, 19);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(14, 13);
+            this.label3.TabIndex = 2;
+            this.label3.Text = "Y";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(3, 19);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(14, 13);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "X";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(4, 4);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(83, 13);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Player\'s Position";
             // 
             // panel2
             // 
@@ -223,34 +223,15 @@
             this.panel2.Size = new System.Drawing.Size(493, 106);
             this.panel2.TabIndex = 1;
             // 
-            // label4
+            // blip3
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(4, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(72, 13);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Random Blips";
-            // 
-            // blip0
-            // 
-            this.blip0.AutoSize = true;
-            this.blip0.BackColor = System.Drawing.Color.Red;
-            this.blip0.Location = new System.Drawing.Point(7, 17);
-            this.blip0.Name = "blip0";
-            this.blip0.Size = new System.Drawing.Size(13, 13);
-            this.blip0.TabIndex = 1;
-            this.blip0.Text = "0";
-            // 
-            // blip1
-            // 
-            this.blip1.AutoSize = true;
-            this.blip1.BackColor = System.Drawing.Color.Red;
-            this.blip1.Location = new System.Drawing.Point(26, 17);
-            this.blip1.Name = "blip1";
-            this.blip1.Size = new System.Drawing.Size(13, 13);
-            this.blip1.TabIndex = 2;
-            this.blip1.Text = "0";
+            this.blip3.AutoSize = true;
+            this.blip3.BackColor = System.Drawing.Color.Red;
+            this.blip3.Location = new System.Drawing.Point(64, 17);
+            this.blip3.Name = "blip3";
+            this.blip3.Size = new System.Drawing.Size(13, 13);
+            this.blip3.TabIndex = 4;
+            this.blip3.Text = "0";
             // 
             // blip2
             // 
@@ -262,15 +243,34 @@
             this.blip2.TabIndex = 3;
             this.blip2.Text = "0";
             // 
-            // blip3
+            // blip1
             // 
-            this.blip3.AutoSize = true;
-            this.blip3.BackColor = System.Drawing.Color.Red;
-            this.blip3.Location = new System.Drawing.Point(64, 17);
-            this.blip3.Name = "blip3";
-            this.blip3.Size = new System.Drawing.Size(13, 13);
-            this.blip3.TabIndex = 4;
-            this.blip3.Text = "0";
+            this.blip1.AutoSize = true;
+            this.blip1.BackColor = System.Drawing.Color.Red;
+            this.blip1.Location = new System.Drawing.Point(26, 17);
+            this.blip1.Name = "blip1";
+            this.blip1.Size = new System.Drawing.Size(13, 13);
+            this.blip1.TabIndex = 2;
+            this.blip1.Text = "0";
+            // 
+            // blip0
+            // 
+            this.blip0.AutoSize = true;
+            this.blip0.BackColor = System.Drawing.Color.Red;
+            this.blip0.Location = new System.Drawing.Point(7, 17);
+            this.blip0.Name = "blip0";
+            this.blip0.Size = new System.Drawing.Size(13, 13);
+            this.blip0.TabIndex = 1;
+            this.blip0.Text = "0";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(4, 0);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(72, 13);
+            this.label4.TabIndex = 0;
+            this.label4.Text = "Random Blips";
             // 
             // panel3
             // 
@@ -283,14 +283,16 @@
             this.panel3.Size = new System.Drawing.Size(493, 411);
             this.panel3.TabIndex = 2;
             // 
-            // label5
+            // dialogOkButton
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(4, 4);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(91, 13);
-            this.label5.TabIndex = 0;
-            this.label5.Text = "Dialog Subsystem";
+            this.dialogOkButton.Enabled = false;
+            this.dialogOkButton.Location = new System.Drawing.Point(7, 128);
+            this.dialogOkButton.Name = "dialogOkButton";
+            this.dialogOkButton.Size = new System.Drawing.Size(75, 23);
+            this.dialogOkButton.TabIndex = 2;
+            this.dialogOkButton.Text = "OK";
+            this.dialogOkButton.UseVisualStyleBackColor = true;
+            this.dialogOkButton.Click += new System.EventHandler(this.WhenDialogOK_Clicked);
             // 
             // dialogRadioFlow
             // 
@@ -299,14 +301,14 @@
             this.dialogRadioFlow.Size = new System.Drawing.Size(200, 100);
             this.dialogRadioFlow.TabIndex = 1;
             // 
-            // dialogOkButton
+            // label5
             // 
-            this.dialogOkButton.Location = new System.Drawing.Point(7, 128);
-            this.dialogOkButton.Name = "dialogOkButton";
-            this.dialogOkButton.Size = new System.Drawing.Size(75, 23);
-            this.dialogOkButton.TabIndex = 2;
-            this.dialogOkButton.Text = "OK";
-            this.dialogOkButton.UseVisualStyleBackColor = true;
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(4, 4);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(91, 13);
+            this.label5.TabIndex = 0;
+            this.label5.Text = "Dialog Subsystem";
             // 
             // Form1
             // 

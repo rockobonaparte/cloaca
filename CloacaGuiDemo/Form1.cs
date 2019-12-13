@@ -69,6 +69,35 @@ namespace CloacaGuiDemo
             SetCursorToEnd();
 
             quitSignaled = false;
+
+            ShowDialogs(new string[]
+            {
+                "Radio Button 1",
+                "Radio Button 2",
+                "Radio Button 3",
+            });
+        }
+
+        public void ClearDialogs()
+        {
+            while (dialogRadioFlow.Controls.Count > 0)
+            {
+                var asRadioButton = (RadioButton)dialogRadioFlow.Controls[0];
+                dialogRadioFlow.Controls.Remove(asRadioButton);
+                asRadioButton.Dispose();
+            }
+        }
+
+        public void ShowDialogs(string[] dialogs)
+        {
+            ClearDialogs();
+            foreach(var dialog in dialogs)
+            {
+                var newRadioButton = new RadioButton() { Text = dialog };
+                newRadioButton.Click += (sender, e) => { dialogOkButton.Enabled = true; };
+                dialogRadioFlow.Controls.Add(newRadioButton);
+            }
+            dialogOkButton.Enabled = false;
         }
 
         public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
@@ -161,6 +190,12 @@ namespace CloacaGuiDemo
             {
                 Close();
             }
+        }
+
+        private void WhenDialogOK_Clicked(object sender, EventArgs e)
+        {
+            ClearDialogs();
+            dialogOkButton.Enabled = false;
         }
     }
 }
