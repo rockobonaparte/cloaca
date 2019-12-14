@@ -65,6 +65,8 @@ namespace CloacaGuiDemo
             repl = new Repl();
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("quit", typeof(Form1).GetMethod("quit_func"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_blip", typeof(Form1).GetMethod("set_blip_wrapper"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_blip", typeof(Form1).GetMethod("get_blip_wrapper"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
@@ -96,9 +98,19 @@ namespace CloacaGuiDemo
             blipLabels[i].BackColor = value == true ? Color.LightGreen : Color.Red;
         }
 
+        public void set_blip_wrapper(PyInteger i, PyBool value)
+        {
+            SetBlip((int) i.number, value.boolean);
+        }
+
         public bool GetBlip(int i)
         {
             return blipLabels[i].Text == "1";
+        }
+
+        public PyBool get_blip_wrapper(PyInteger i)
+        {
+            return new PyBool(GetBlip((int)i.number));
         }
 
         public void ClearDialogs()
