@@ -93,6 +93,12 @@ Following that, serialization of tasks.
 	 * bools
   * Object wrapping. Start with wrapping a generic object. All fields should also get boxed/unboxed which will
     likely mess around with how primitive boxing/unboxing is done.
+  * PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
+    to needing to call the class to properly create the objects.
+	  * This may be as simple as writing a factory.
+	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
+	    cause the right constructor to get invoked.
+  * Passing PyInteger where PyFloat is needed--and vice versa--shouldn't fail to invoke the wrapper
 * Serialization
   * Any test that can wait should automatically be run 
     * All the way through as usual

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using CloacaInterpreter;
@@ -67,6 +68,8 @@ namespace CloacaGuiDemo
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("quit", typeof(Form1).GetMethod("quit_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_blip", typeof(Form1).GetMethod("set_blip_wrapper"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_blip", typeof(Form1).GetMethod("get_blip_wrapper"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_pos", typeof(Form1).GetMethod("set_player_pos_wrapper"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_pos", typeof(Form1).GetMethod("get_player_pos_wrapper"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
@@ -90,6 +93,32 @@ namespace CloacaGuiDemo
             };
 
             SetBlip(3, true);
+        }
+
+        public void set_player_pos_wrapper(PyFloat x, PyFloat y)
+        {
+            playerXLabel.Text = x.number.ToString();
+            playerYLabel.Text = y.number.ToString();
+        }
+
+        // TODO: Make every part of this much easier. Creating the objects properly will need to be simplified. One-step
+        // construction with passed-in values will greatly help. This could be done with a factory, but we should investigate
+        // if we can just use the basic type constructors in some way first.
+        public async Task<PyTuple> get_player_pos_wrapper(IInterpreter interpreter, FrameContext context)
+        {
+            PyFloat f1 = (PyFloat) await PyFloatClass.Instance.Call(interpreter, context, new object[0]);
+            f1.number = Decimal.Parse(playerXLabel.Text);
+            PyFloat f2 = (PyFloat)await PyFloatClass.Instance.Call(interpreter, context, new object[0]);
+            f2.number = Decimal.Parse(playerYLabel.Text);
+
+            var tuples = new PyObject[2]
+            {
+                f1,
+                f2
+            };
+            var new_pytup = (PyTuple) await PyTupleClass.Instance.Call(interpreter, context, new object[0]);
+            new_pytup.Values = tuples;
+            return new_pytup;
         }
 
         public void SetBlip(int i, bool value)
