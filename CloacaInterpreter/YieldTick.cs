@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+
+using LanguageImplementation;
 
 namespace CloacaInterpreter
 {
     public class YieldTick : System.Runtime.CompilerServices.INotifyCompletion, ISubscheduledContinuation
     {
         private Action continuation;
-        Interpreter interpreter;
+        IScheduler scheduler;
 
         public bool IsCompleted
         {
@@ -24,9 +23,9 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public YieldTick(Interpreter interpreterToSubschedule)
+        public YieldTick(IScheduler scheduler)
         {
-            interpreter = interpreterToSubschedule;
+            this.scheduler = scheduler;
         }
 
         public Task Continue()
@@ -38,7 +37,7 @@ namespace CloacaInterpreter
         public void OnCompleted(Action continuation)
         {
             this.continuation = continuation;
-            interpreter.Scheduler.SetYielded(this);
+            scheduler.SetYielded(this);
         }
 
         public YieldTick GetAwaiter()
@@ -51,9 +50,9 @@ namespace CloacaInterpreter
             // Empty -- just needed to satisfy the rules for how custom awaiters work.
         }
 
-        public void AssignInterpreter(Interpreter interpreter)
+        public void AssignScheduler(IScheduler scheduler)
         {
-            this.interpreter = interpreter;
+            scheduler = scheduler;
         }
     }
 }

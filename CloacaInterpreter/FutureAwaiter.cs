@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LanguageImplementation;
+using System;
+using System.Threading.Tasks;
 
 namespace CloacaInterpreter
 {
@@ -10,7 +12,7 @@ namespace CloacaInterpreter
         private T result;
         private bool finished;
         private Action continuation;
-        Interpreter interpreter;
+        IScheduler scheduler;
 
         public bool IsCompleted
         {
@@ -25,22 +27,23 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public FutureAwaiter(Interpreter interpreterToSubschedule)
+        public FutureAwaiter(IScheduler scheduler)
         {
             finished = false;
-            interpreter = interpreterToSubschedule;
+            this.scheduler = scheduler;
         }
 
         public void SetResult(T result)
         {
             this.result = result;
             finished = true;
-            interpreter.Scheduler.NotifyUnblocked(this);
+            scheduler.NotifyUnblocked(this);
         }
 
-        public void Continue()
+        public Task Continue()
         {
             continuation?.Invoke();
+            return Task.FromResult(true);
         }
 
         public void OnCompleted(Action continuation)
@@ -65,9 +68,9 @@ namespace CloacaInterpreter
             return result;
         }
 
-        public void AssignInterpreter(Interpreter interpreter)
+        public void AssignScheduler(IScheduler scheduler)
         {
-            this.interpreter = interpreter;
+            this.scheduler = scheduler;
         }
     }
 
@@ -106,7 +109,7 @@ namespace CloacaInterpreter
     [Serializable]
     public class FutureVoidAwaiter : FutureAwaiter<VoidSentinel>
     {
-        public FutureVoidAwaiter(Interpreter interpreterToSubschedule) : base(interpreterToSubschedule)
+        public FutureVoidAwaiter(IScheduler scheduler) : base(scheduler)
         {
         }
 

@@ -13,7 +13,7 @@ namespace CloacaInterpreter
     public class Interpreter: IInterpreter
     {
         private Dictionary<string, object> builtins;
-        public Scheduler Scheduler
+        public IScheduler Scheduler
         {
             get; protected set;
         }
@@ -480,7 +480,7 @@ namespace CloacaInterpreter
                         case ByteCodes.WAIT:
                             {
                                 context.Cursor += 1;
-                                await new YieldTick(this);
+                                await new YieldTick(this.Scheduler);
                             }
                             break;
                         case ByteCodes.COMPARE_OP:
@@ -1087,7 +1087,7 @@ namespace CloacaInterpreter
 
                     if (StepMode)
                     {
-                        await new YieldTick(this);
+                        await new YieldTick(this.Scheduler);
                     }
                 }                
             }

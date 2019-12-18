@@ -89,6 +89,29 @@ namespace LanguageImplementation
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
         Task<object> CallInto(FrameContext context, CodeObject program, object[] args);
+        IScheduler Scheduler { get; }
+
+        /// <summary>
+        /// Runs the given frame context until it either finishes normally or yields. This actually interprets
+        /// our Python(ish) code!
+        /// 
+        /// This call is stateless; all the state changes mae happen in the FrameContext passed into Run().
+        /// 
+        /// Note that in practice, this call will have to be implemented as async.
+        /// </summary>
+        /// <param name="context">The current state of the frame and stacks to run</param>
+        /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
+        Task Run(FrameContext context);
+
+        /// <summary>
+        /// Returns true if an exception was raised and the context would not be in a position to still try to
+        /// handle it. This is used when stepping through frame context in debugging to allow the interpreter to
+        /// keep trying to process the exception. If you just test the frame context for an exception while stepping,
+        /// you'll miss out on the interpreter trying out the except (and finally) clauses that have some stuff left
+        /// to do. It also misses out on all the unrolling to properly escape.
+        /// </summary>
+        bool ExceptionEscaped(FrameContext context);
+
     }
 
     public interface IPyCallable

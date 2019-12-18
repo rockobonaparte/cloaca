@@ -21,12 +21,12 @@ namespace CloacaTests
 {
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
     {
-        private Interpreter interpreter;
+        private IScheduler scheduler;
         private Action continuation;
 
-        public void AssignInterpreter(Interpreter interpreter)
+        public void AssignScheduler(IScheduler scheduler)
         {
-            this.interpreter = interpreter;
+            this.scheduler = scheduler;
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -40,8 +40,7 @@ namespace CloacaTests
         {
             // We're just having it wait off one tick as a pause since we don't actually have something on the
             // other end of this that will block.
-            this.interpreter = (Interpreter) interpreter;
-            await new YieldTick(this.interpreter);
+            await new YieldTick(interpreter.Scheduler);
             return new PyInteger(1);                // TODO: Helpers to box/unbox between .NET and Python types.
         }
 

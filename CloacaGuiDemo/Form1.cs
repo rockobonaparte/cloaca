@@ -70,6 +70,7 @@ namespace CloacaGuiDemo
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_blip", typeof(Form1).GetMethod("get_blip_wrapper"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_pos", typeof(Form1).GetMethod("set_player_pos_wrapper"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_pos", typeof(Form1).GetMethod("get_player_pos_wrapper"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("sleep", typeof(Form1).GetMethod("sleep_wrapper"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
@@ -93,6 +94,17 @@ namespace CloacaGuiDemo
             };
 
             SetBlip(3, true);
+        }
+
+        public async void sleep_wrapper(IScheduler scheduler, PyFloat sleepTime)
+        {
+            throw new NotImplementedException("The sleep wrapper is stubbed out while we finish refactoring the futures from the test async project into Cloaca.");
+            //activeRequest = new DialogRequest(text, interpreter);
+            var activeRequest = new FutureVoidAwaiter(scheduler);
+            scheduler.NotifyBlocked(activeRequest);
+            await activeRequest;
+
+            await Task.Delay((int) (sleepTime.number * 1000.0m));
         }
 
         public void set_player_pos_wrapper(PyFloat x, PyFloat y)

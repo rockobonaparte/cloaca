@@ -44,7 +44,8 @@ namespace LanguageImplementation
                 foreach(var paramInfo in methodParams)
                 {
                     if(paramInfo.ParameterType == typeof(IInterpreter) ||
-                       paramInfo.ParameterType == typeof(FrameContext))
+                       paramInfo.ParameterType == typeof(FrameContext) ||
+                       paramInfo.ParameterType == typeof(IScheduler))
                     {
                         mustInject = true;
                         break;
@@ -72,6 +73,10 @@ namespace LanguageImplementation
                 else if(paramInfo.ParameterType == typeof(FrameContext))
                 {
                     outParams[out_param_i] = Context;
+                }
+                else if (paramInfo.ParameterType == typeof(IScheduler))
+                {
+                    outParams[out_param_i] = Interpreter.Scheduler;
                 }
                 else
                 {

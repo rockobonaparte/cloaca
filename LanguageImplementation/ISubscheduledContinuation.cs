@@ -2,7 +2,7 @@
 
 using System.Threading.Tasks;
 
-namespace CloacaInterpreter
+namespace LanguageImplementation
 {
     /// <summary>
     /// This is used by the interpreter to run scheduled tasks within its own context instead of the
@@ -40,11 +40,10 @@ namespace CloacaInterpreter
         Task Continue();
 
         /// <summary>
-        /// Gives the interpreter to this ISubscheduledContinuation. The scheduler will give this to
-        /// this activity before it runs so that it can reach the scheduler (interpreter.Scheduler) to
-        /// notify it that it is blocking.
+        /// Gives the scheduler to this ISubscheduledContinuation. This will allow this to notify that
+        /// it is blocking.
         /// </summary>
-        /// <param name="interpreter"></param>
-        void AssignInterpreter(Interpreter interpreter);
+        /// <param name="scheduler"></param>
+        void AssignScheduler(IScheduler scheduler);
     }
 }

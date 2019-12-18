@@ -88,6 +88,8 @@
     <Compile Include="FrameContext.cs" />
     <Compile Include="Injector.cs" />
     <Compile Include="Interfaces.cs" />
+    <Compile Include="IScheduler.cs" />
+    <Compile Include="ISubscheduledContinuation.cs" />
     <Compile Include="OpCodes.cs" />
     <Compile Include="ParseErrorListener.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

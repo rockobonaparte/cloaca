@@ -9,21 +9,21 @@ namespace CloacaInterpreter
 {
     public class InitialScheduledContinuation : ISubscheduledContinuation
     {
-        private Interpreter interpreter;
+        private IInterpreter interpreter;
         public FrameContext TaskletFrame
         {
             get; private set;
         }
 
-        public InitialScheduledContinuation(Interpreter interpreter, FrameContext taskletFrame)
+        public InitialScheduledContinuation(IInterpreter interpreter, FrameContext taskletFrame)
         {
-            AssignInterpreter(interpreter);
+            this.interpreter = interpreter;
             TaskletFrame = taskletFrame;
         }
 
-        public void AssignInterpreter(Interpreter interpreter)
+        public void AssignScheduler(IScheduler scheduler)
         {
-            this.interpreter = interpreter;
+            // no-op in this case; our interpreter already has the scheduler.
         }
 
         public async Task Continue()
@@ -48,9 +48,9 @@ namespace CloacaInterpreter
     /// <summary>
     /// Manages all tasklets and how they're alternated through the interpreter.
     /// </summary>
-    public class Scheduler
+    public class Scheduler : IScheduler
     {
-        private Interpreter interpreter;
+        private IInterpreter interpreter;
         public int TickCount;
 
         private List<ScheduledTaskRecord> active;
@@ -68,7 +68,7 @@ namespace CloacaInterpreter
             TickCount = 0;
         }
 
-        public void SetInterpreter(Interpreter interpreter)
+        public void SetInterpreter(IInterpreter interpreter)
         {
             this.interpreter = interpreter;
         }
@@ -105,7 +105,7 @@ namespace CloacaInterpreter
 
             newFrameStack.Push(rootFrame);
             var frame = new FrameContext(newFrameStack);
-            var initialContinuation = new InitialScheduledContinuation(interpreter, frame);
+            var initialContinuation = new InitialScheduledContinuation(this.interpreter, frame);
             return new ScheduledTaskRecord(frame, initialContinuation);
         }
 
@@ -160,7 +160,7 @@ namespace CloacaInterpreter
                     // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
                     ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException).Throw();
                 }
-                else if(interpreter.ExceptionEscaped(lastScheduled.Frame))
+                else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
                 {
                     throw new EscapedPyException(lastScheduled.Frame.CurrentException);
                 }
@@ -193,13 +193,13 @@ namespace CloacaInterpreter
 
         public async Task RunUntilDone()
         {
-            while(!Done)
+            while (!Done)
             {
                 try
                 {
                     Tick().Wait();
                 }
-                catch(AggregateException wrappedEscapedException)
+                catch (AggregateException wrappedEscapedException)
                 {
                     // Given the nature of exception handling, we should normally only have one of these!
                     ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
