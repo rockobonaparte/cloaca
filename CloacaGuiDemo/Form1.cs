@@ -96,15 +96,18 @@ namespace CloacaGuiDemo
             SetBlip(3, true);
         }
 
-        public async void sleep_wrapper(IScheduler scheduler, PyFloat sleepTime)
+        private async Task mock_sleep_subsystem_daemon(FutureVoidAwaiter future, int sleep_time)
         {
-            throw new NotImplementedException("The sleep wrapper is stubbed out while we finish refactoring the futures from the test async project into Cloaca.");
-            //activeRequest = new DialogRequest(text, interpreter);
-            var activeRequest = new FutureVoidAwaiter(scheduler);
-            scheduler.NotifyBlocked(activeRequest);
-            await activeRequest;
+            await Task.Delay(sleep_time).ConfigureAwait(false);
+            future.SignalDone();
+        }
 
-            await Task.Delay((int) (sleepTime.number * 1000.0m));
+        public async Task sleep_wrapper(IScheduler scheduler, PyFloat sleepTime)
+        {
+            var future = new FutureVoidAwaiter(scheduler);
+            scheduler.NotifyBlocked(future);
+            mock_sleep_subsystem_daemon(future, (int)(sleepTime.number * 1000.0m));
+            await future;
         }
 
         public void set_player_pos_wrapper(PyFloat x, PyFloat y)
