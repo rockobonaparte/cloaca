@@ -13,6 +13,7 @@ namespace CloacaInterpreter
         private bool finished;
         private Action continuation;
         IScheduler scheduler;
+        FrameContext context;
 
         public bool IsCompleted
         {
@@ -27,17 +28,18 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public FutureAwaiter(IScheduler scheduler)
+        public FutureAwaiter(IScheduler scheduler, FrameContext context)
         {
             finished = false;
             this.scheduler = scheduler;
+            this.context = context;
         }
 
         public void SetResult(T result)
         {
             this.result = result;
             finished = true;
-            scheduler.NotifyUnblocked(this);
+            scheduler.NotifyUnblocked(context);
         }
 
         public Task Continue()
@@ -68,7 +70,7 @@ namespace CloacaInterpreter
             return result;
         }
 
-        public void AssignScheduler(IScheduler scheduler)
+        public void AssignScheduler(Scheduler scheduler)
         {
             this.scheduler = scheduler;
         }
@@ -109,7 +111,7 @@ namespace CloacaInterpreter
     [Serializable]
     public class FutureVoidAwaiter : FutureAwaiter<VoidSentinel>
     {
-        public FutureVoidAwaiter(IScheduler scheduler) : base(scheduler)
+        public FutureVoidAwaiter(IScheduler scheduler, FrameContext context) : base(scheduler, context)
         {
         }
 

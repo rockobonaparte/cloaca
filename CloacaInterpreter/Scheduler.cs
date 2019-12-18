@@ -21,7 +21,7 @@ namespace CloacaInterpreter
             TaskletFrame = taskletFrame;
         }
 
-        public void AssignScheduler(IScheduler scheduler)
+        public void AssignScheduler(Scheduler scheduler)
         {
             // no-op in this case; our interpreter already has the scheduler.
         }
@@ -36,7 +36,7 @@ namespace CloacaInterpreter
 
     public class ScheduledTaskRecord
     {
-        public FrameContext Frame;
+        public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
         public ISubscheduledContinuation Continuation;
         public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation)
         {
@@ -66,6 +66,26 @@ namespace CloacaInterpreter
             yielded = new List<ScheduledTaskRecord>();
 
             TickCount = 0;
+        }
+
+        private int findTaskRecordIndex(FrameContext frame, List<ScheduledTaskRecord> records)
+        {
+            for(int i = 0; i < records.Count; ++i)
+            {
+                if(records[i].Frame == frame)
+                {
+                    return i;
+                }
+            }
+            throw new KeyNotFoundException("Could not find continuation record");
+        }
+
+        private void transferRecord(FrameContext frame, List<ScheduledTaskRecord> fromRecords, List<ScheduledTaskRecord> toRecords)
+        {
+            var recordIdx = findTaskRecordIndex(frame, fromRecords);
+            ScheduledTaskRecord record = fromRecords[recordIdx];
+            fromRecords.RemoveAt(recordIdx);
+            toRecords.Add(record);
         }
 
         public void SetInterpreter(IInterpreter interpreter)
@@ -111,58 +131,22 @@ namespace CloacaInterpreter
 
         // This is called when the currently-active script is blocking. Call this right before invoking
         // an awaiter from the task in which the script is running.
-        public void NotifyBlocked(ISubscheduledContinuation continuation)
+        public void NotifyBlocked(FrameContext frame)
         {
-            lastScheduled.Continuation = continuation;
-            blocked.Add(lastScheduled);
+            transferRecord(frame, active, blocked);
         }
 
         // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
-        public void NotifyUnblocked(ISubscheduledContinuation continuation)
+        public void NotifyUnblocked(FrameContext frame)
         {
-            // This is a WIP to try to unjam the REPL demo but needs to be explored deeper if it ends up working.
-            // The GUI was running sleeps that might have been coming in technically from another thread, so we
-            // couldn't assume that we were getting responses from lastScheduled. Generally, the method we were
-            // using might just not be robust enough and we'd need to do lookups anyways.
-            if(lastScheduled == null)
-            {
-                ScheduledTaskRecord record = null;
-                foreach(var candidate in blocked)
-                {
-                    if(candidate.Continuation == continuation)
-                    {
-                        record = candidate;
-                        break;
-                    }
-                }
-                if(record != null)
-                {
-                    if (blocked.Remove(record))
-                    {
-                        unblocked.Add(record);
-                    }
-                }
-                else
-                {
-                    throw new Exception("Did not find continuation in blocked queue");
-                }
-            }
-            else
-            {
-                lastScheduled.Continuation = continuation;
-                if (blocked.Remove(lastScheduled))
-                {
-                    unblocked.Add(lastScheduled);
-                }
-            }
+            transferRecord(frame, blocked, unblocked);
         }
 
-        // Use to cooperative stop running for just a single tick.
-        public void SetYielded(ISubscheduledContinuation continuation)
+        // Use to cooperatively stop running for just a single tick.
+        public void SetYielded(FrameContext frame)
         {
-            lastScheduled.Continuation = continuation;
-            yielded.Add(lastScheduled);
+            transferRecord(frame, active, yielded);
         }
 
         /// <summary>
@@ -245,6 +229,9 @@ namespace CloacaInterpreter
             }
         }
 
+        // This used to be used more in actual scheduling decision, but now it's just maintained for debugging.
+        // LastTasklet is grabbed when stepping through the interpreter interactively using the the project's
+        // debug tools.
         private ScheduledTaskRecord lastScheduled;
         public FrameContext LastTasklet
         {

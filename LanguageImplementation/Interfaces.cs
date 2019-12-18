@@ -75,6 +75,20 @@ namespace LanguageImplementation
         }
     }
 
+    public interface IScheduler
+    {
+        // This is called when the currently-active script is blocking. Call this right before invoking
+        // an awaiter from the task in which the script is running.
+        void NotifyBlocked(FrameContext frame);
+
+        // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
+        // immediately resume the script, but will set it up to be run in interpreter's tick interval.
+        void NotifyUnblocked(FrameContext frame);
+
+        // Use to cooperatively stop running for just a single tick.
+        void SetYielded(FrameContext frame);
+    }
+
     public interface IInterpreter
     {
         /// <summary>
@@ -89,7 +103,6 @@ namespace LanguageImplementation
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
         Task<object> CallInto(FrameContext context, CodeObject program, object[] args);
-        IScheduler Scheduler { get; }
 
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets
@@ -112,6 +125,11 @@ namespace LanguageImplementation
         /// </summary>
         bool ExceptionEscaped(FrameContext context);
 
+        /// <summary>
+        /// The interpreter retains a handle to the scheduler in order to steer it between tasks or set up a blocking
+        /// activity.
+        /// </summary>
+        IScheduler Scheduler { get; }
     }
 
     public interface IPyCallable

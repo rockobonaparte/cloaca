@@ -16,16 +16,18 @@ namespace LanguageImplementation
     {
         public IInterpreter Interpreter;
         public FrameContext Context;
+        public IScheduler Scheduler;
 
-        public Injector(IInterpreter interpreter, FrameContext context)
+        public Injector(IInterpreter interpreter, FrameContext context, IScheduler scheduler)
         {
-            Prepare(interpreter, context);
+            Prepare(interpreter, context, scheduler);
         }
 
-        public void Prepare(IInterpreter interpreter, FrameContext context)
+        public void Prepare(IInterpreter interpreter, FrameContext context, IScheduler scheduler)
         {
             Interpreter = interpreter;
             Context = context;
+            Scheduler = scheduler;
         }
 
         public object[] Inject(MethodInfo methodInfo, object[] args)
@@ -74,9 +76,9 @@ namespace LanguageImplementation
                 {
                     outParams[out_param_i] = Context;
                 }
-                else if (paramInfo.ParameterType == typeof(IScheduler))
+                else if(paramInfo.ParameterType == typeof(IScheduler))
                 {
-                    outParams[out_param_i] = Interpreter.Scheduler;
+                    outParams[out_param_i] = Scheduler;
                 }
                 else
                 {

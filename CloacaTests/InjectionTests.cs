@@ -52,7 +52,7 @@ namespace CloacaTests
             var scheduler = new Scheduler();
             interpreter = new Interpreter(scheduler);
             context = new FrameContext(null);
-            injector = new Injector(interpreter, context);
+            injector = new Injector(interpreter, context, scheduler);
         }
 
         [Test]

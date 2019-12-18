@@ -9,6 +9,7 @@ namespace CloacaInterpreter
     {
         private Action continuation;
         IScheduler scheduler;
+        FrameContext context;
 
         public bool IsCompleted
         {
@@ -23,9 +24,10 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public YieldTick(IScheduler scheduler)
+        public YieldTick(IScheduler scheduler, FrameContext context)
         {
             this.scheduler = scheduler;
+            this.context = context;
         }
 
         public Task Continue()
@@ -37,7 +39,7 @@ namespace CloacaInterpreter
         public void OnCompleted(Action continuation)
         {
             this.continuation = continuation;
-            scheduler.SetYielded(this);
+            scheduler.SetYielded(context);
         }
 
         public YieldTick GetAwaiter()
@@ -50,7 +52,7 @@ namespace CloacaInterpreter
             // Empty -- just needed to satisfy the rules for how custom awaiters work.
         }
 
-        public void AssignScheduler(IScheduler scheduler)
+        public void AssignScheduler(Scheduler scheduler)
         {
             scheduler = scheduler;
         }

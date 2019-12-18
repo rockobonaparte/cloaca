@@ -480,7 +480,7 @@ namespace CloacaInterpreter
                         case ByteCodes.WAIT:
                             {
                                 context.Cursor += 1;
-                                await new YieldTick(this.Scheduler);
+                                await new YieldTick(this.Scheduler, context);
                             }
                             break;
                         case ByteCodes.COMPARE_OP:
@@ -1087,7 +1087,7 @@ namespace CloacaInterpreter
 
                     if (StepMode)
                     {
-                        await new YieldTick(this.Scheduler);
+                        await new YieldTick(this.Scheduler, context);
                     }
                 }                
             }

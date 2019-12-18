@@ -65,7 +65,7 @@ namespace LanguageImplementation
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            var injector = new Injector(interpreter, context);
+            var injector = new Injector(interpreter, context, interpreter.Scheduler);
             var final_args = injector.Inject(MethodInfo, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
