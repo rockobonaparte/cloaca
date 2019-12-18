@@ -121,10 +121,40 @@ namespace CloacaInterpreter
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
         public void NotifyUnblocked(ISubscheduledContinuation continuation)
         {
-            lastScheduled.Continuation = continuation;
-            if (blocked.Remove(lastScheduled))
+            // This is a WIP to try to unjam the REPL demo but needs to be explored deeper if it ends up working.
+            // The GUI was running sleeps that might have been coming in technically from another thread, so we
+            // couldn't assume that we were getting responses from lastScheduled. Generally, the method we were
+            // using might just not be robust enough and we'd need to do lookups anyways.
+            if(lastScheduled == null)
             {
-                unblocked.Add(lastScheduled);
+                ScheduledTaskRecord record = null;
+                foreach(var candidate in blocked)
+                {
+                    if(candidate.Continuation == continuation)
+                    {
+                        record = candidate;
+                        break;
+                    }
+                }
+                if(record != null)
+                {
+                    if (blocked.Remove(record))
+                    {
+                        unblocked.Add(record);
+                    }
+                }
+                else
+                {
+                    throw new Exception("Did not find continuation in blocked queue");
+                }
+            }
+            else
+            {
+                lastScheduled.Continuation = continuation;
+                if (blocked.Remove(lastScheduled))
+                {
+                    unblocked.Add(lastScheduled);
+                }
             }
         }
 
