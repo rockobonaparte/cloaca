@@ -131,6 +131,11 @@ Following that, serialization of tasks.
   * [DONE] Implement print() (prototype)
   * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
     a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
+  * Demo needs to accept newline for sleep command before processing; looks like it hangs if we just pause before seemingly accepting
+    the newline.
+  * Figure out how to make the scheduler more robust after hangs coming from assuming the last scheduled task--which was null--was the
+    one we cared about when notifying that we unblocked.
+  * Stop putting the void sentinel on the data stack.
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!
