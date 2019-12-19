@@ -135,7 +135,7 @@ Following that, serialization of tasks.
     the newline.
   * Figure out how to make the scheduler more robust after hangs coming from assuming the last scheduled task--which was null--was the
     one we cared about when notifying that we unblocked.
-  * Stop putting the void sentinel on the data stack.
+  * [DONE] Stop putting the void sentinel on the data stack.
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!

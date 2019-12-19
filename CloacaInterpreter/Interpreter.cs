@@ -760,7 +760,7 @@ namespace CloacaInterpreter
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
                                     var returned = await functionToRun.Call(this, context, args.ToArray());
-                                    if (returned != null)
+                                    if (returned != null && !(returned is FutureVoidAwaiter))
                                     {
                                         context.DataStack.Push(returned);
                                     }
