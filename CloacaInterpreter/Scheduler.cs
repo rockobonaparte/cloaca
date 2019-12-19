@@ -21,7 +21,7 @@ namespace CloacaInterpreter
             TaskletFrame = taskletFrame;
         }
 
-        public void AssignScheduler(Scheduler scheduler)
+        public void AssignScheduler(IScheduler scheduler)
         {
             // no-op in this case; our interpreter already has the scheduler.
         }
@@ -80,10 +80,11 @@ namespace CloacaInterpreter
             throw new KeyNotFoundException("Could not find continuation record");
         }
 
-        private void transferRecord(FrameContext frame, List<ScheduledTaskRecord> fromRecords, List<ScheduledTaskRecord> toRecords)
+        private void transferRecord(FrameContext frame, List<ScheduledTaskRecord> fromRecords, List<ScheduledTaskRecord> toRecords, ISubscheduledContinuation continuation)
         {
             var recordIdx = findTaskRecordIndex(frame, fromRecords);
             ScheduledTaskRecord record = fromRecords[recordIdx];
+            record.Continuation = continuation;
             fromRecords.RemoveAt(recordIdx);
             toRecords.Add(record);
         }
@@ -131,22 +132,22 @@ namespace CloacaInterpreter
 
         // This is called when the currently-active script is blocking. Call this right before invoking
         // an awaiter from the task in which the script is running.
-        public void NotifyBlocked(FrameContext frame)
+        public void NotifyBlocked(FrameContext frame, ISubscheduledContinuation continuation)
         {
-            transferRecord(frame, active, blocked);
+            transferRecord(frame, active, blocked, continuation);
         }
 
         // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
-        public void NotifyUnblocked(FrameContext frame)
+        public void NotifyUnblocked(FrameContext frame, ISubscheduledContinuation continuation)
         {
-            transferRecord(frame, blocked, unblocked);
+            transferRecord(frame, blocked, unblocked, continuation);
         }
 
         // Use to cooperatively stop running for just a single tick.
-        public void SetYielded(FrameContext frame)
+        public void SetYielded(FrameContext frame, ISubscheduledContinuation continuation)
         {
-            transferRecord(frame, active, yielded);
+            transferRecord(frame, active, yielded, continuation);
         }
 
         /// <summary>

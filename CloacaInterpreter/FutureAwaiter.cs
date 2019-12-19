@@ -39,7 +39,7 @@ namespace CloacaInterpreter
         {
             this.result = result;
             finished = true;
-            scheduler.NotifyUnblocked(context);
+            scheduler.NotifyUnblocked(context, this);
         }
 
         public Task Continue()
@@ -70,7 +70,7 @@ namespace CloacaInterpreter
             return result;
         }
 
-        public void AssignScheduler(Scheduler scheduler)
+        public void AssignScheduler(IScheduler scheduler)
         {
             this.scheduler = scheduler;
         }

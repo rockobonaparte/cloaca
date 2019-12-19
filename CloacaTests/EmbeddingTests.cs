@@ -21,11 +21,11 @@ namespace CloacaTests
 {
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
     {
-        private Scheduler scheduler;
+        private IScheduler scheduler;
         private FrameContext context;
         private Action continuation;
 
-        public void AssignScheduler(Scheduler scheduler)
+        public void AssignScheduler(IScheduler scheduler)
         {
             this.scheduler = scheduler;
         }
@@ -90,7 +90,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Broke while integrating sleep into GUI REPL. This will be next to be addressed")]
         public void YieldForResult()
         {
             var blockedReturnMock = new MockBlockedReturnValue();

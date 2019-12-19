@@ -2,7 +2,7 @@
 
 using System.Threading.Tasks;
 
-namespace CloacaInterpreter
+namespace LanguageImplementation
 {
     /// <summary>
     /// This is used by the interpreter to run scheduled tasks within its own context instead of the
@@ -44,6 +44,6 @@ namespace CloacaInterpreter
         /// it is blocking.
         /// </summary>
         /// <param name="scheduler"></param>
-        void AssignScheduler(Scheduler scheduler);
+        void AssignScheduler(IScheduler scheduler);
     }
 }

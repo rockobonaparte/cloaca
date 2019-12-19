@@ -39,7 +39,7 @@ namespace CloacaInterpreter
         public void OnCompleted(Action continuation)
         {
             this.continuation = continuation;
-            scheduler.SetYielded(context);
+            scheduler.SetYielded(context, this);
         }
 
         public YieldTick GetAwaiter()
@@ -52,7 +52,7 @@ namespace CloacaInterpreter
             // Empty -- just needed to satisfy the rules for how custom awaiters work.
         }
 
-        public void AssignScheduler(Scheduler scheduler)
+        public void AssignScheduler(IScheduler scheduler)
         {
             scheduler = scheduler;
         }

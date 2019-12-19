@@ -79,14 +79,14 @@ namespace LanguageImplementation
     {
         // This is called when the currently-active script is blocking. Call this right before invoking
         // an awaiter from the task in which the script is running.
-        void NotifyBlocked(FrameContext frame);
+        void NotifyBlocked(FrameContext frame, ISubscheduledContinuation continuation);
 
         // Call this for a continuation that has been previously blocked with NotifyBlocked. This won't
         // immediately resume the script, but will set it up to be run in interpreter's tick interval.
-        void NotifyUnblocked(FrameContext frame);
+        void NotifyUnblocked(FrameContext frame, ISubscheduledContinuation continuation);
 
         // Use to cooperatively stop running for just a single tick.
-        void SetYielded(FrameContext frame);
+        void SetYielded(FrameContext frame, ISubscheduledContinuation continuation);
     }
 
     public interface IInterpreter
