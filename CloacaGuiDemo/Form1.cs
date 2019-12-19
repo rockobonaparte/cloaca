@@ -102,12 +102,13 @@ namespace CloacaGuiDemo
             future.SignalDone();
         }
 
-        public async Task sleep_wrapper(IScheduler scheduler, FrameContext context, PyFloat sleepTime)
+        public async Task<FutureVoidAwaiter> sleep_wrapper(IScheduler scheduler, FrameContext context, PyFloat sleepTime)
         {
             var future = new FutureVoidAwaiter(scheduler, context);
             scheduler.NotifyBlocked(context, future);
             mock_sleep_subsystem_daemon(future, (int)(sleepTime.number * 1000.0m));
             await future;
+            return future;
         }
 
         public void set_player_pos_wrapper(PyFloat x, PyFloat y)
