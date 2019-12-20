@@ -187,7 +187,7 @@ namespace LanguageImplementation.DataTypes
 
     public class PyList : PyObject, IEnumerable
     {
-        internal List<PyObject> list;
+        public List<PyObject> list;
         public PyList()
         {
             list = new List<PyObject>();

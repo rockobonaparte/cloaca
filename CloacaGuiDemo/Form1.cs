@@ -71,6 +71,7 @@ namespace CloacaGuiDemo
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_pos", typeof(Form1).GetMethod("set_player_pos_wrapper"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("get_pos", typeof(Form1).GetMethod("get_player_pos_wrapper"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("sleep", typeof(Form1).GetMethod("sleep_wrapper"), this));
+            repl.Interpreter.AddBuiltin(new WrappedCodeObject("dialog", typeof(Form1).GetMethod("dialog_wrapper"), this));
             ongoingUserProgram = new StringBuilder();
 
             richTextBox1.AppendText(">>> ");
@@ -108,6 +109,26 @@ namespace CloacaGuiDemo
             scheduler.NotifyBlocked(context, future);
             mock_sleep_subsystem_daemon(future, (int)(sleepTime.number * 1000.0m));
             await future;
+            return future;
+        }
+
+        public async Task<FutureAwaiter<PyInteger>> dialog_wrapper(IInterpreter interpreter, IScheduler scheduler, FrameContext context, PyString message, PyList choices)
+        {
+            var choicesStr = new string[choices.list.Count];
+            for(int i = 0; i < choices.list.Count; ++i)
+            {
+                var iPyStr = (PyString) choices.list[i];
+                choicesStr[i] = iPyStr.str;
+            }
+            ShowDialogs(choicesStr);
+
+            var future = new FutureAwaiter<PyInteger>(scheduler, context);
+
+            var choicePyInt = (PyInteger)await PyIntegerClass.Instance.Call(interpreter, context, new object[0]);
+            choicePyInt.number = -1;
+
+            scheduler.NotifyBlocked(context, future);
+            future.SetResult(choicePyInt);
             return future;
         }
 
