@@ -762,6 +762,10 @@ namespace CloacaInterpreter
                                     var returned = await functionToRun.Call(this, context, args.ToArray());
                                     if (returned != null && !(returned is FutureVoidAwaiter))
                                     {
+                                        if(returned is IGetsFutureAwaiterResult)
+                                        {
+                                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                        }
                                         context.DataStack.Push(returned);
                                     }
 

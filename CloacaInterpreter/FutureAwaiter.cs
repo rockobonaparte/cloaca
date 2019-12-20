@@ -4,10 +4,19 @@ using System.Threading.Tasks;
 
 namespace CloacaInterpreter
 {
+    /// <summary>
+    /// A useful helper for getting the result of the various FutureAwaiters in the interpreter w/o having to interrogate the generic
+    /// nature of the FutureAwaiter--which also gets tricky when dealing with subclasses of FutureAwaiter.
+    /// </summary>
+    public interface IGetsFutureAwaiterResult
+    {
+        object GetGenericResult();
+    }
+
     /// Custom awaiter implemented like a future connected to the scheduler.
     /// 
     [Serializable]
-    public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletion, ISubscheduledContinuation
+    public class FutureAwaiter<T> : System.Runtime.CompilerServices.INotifyCompletion, ISubscheduledContinuation, IGetsFutureAwaiterResult
     {
         private T result;
         private bool finished;
@@ -66,6 +75,11 @@ namespace CloacaInterpreter
         }
 
         public T GetResult()
+        {
+            return result;
+        }
+
+        public object GetGenericResult()
         {
             return result;
         }
