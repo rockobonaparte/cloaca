@@ -177,7 +177,7 @@ namespace CloacaInterpreter
                 context.SetVariable(varName, ContextVariables[varName]);
             }
 
-            while (!Scheduler.Done)
+            while (!Scheduler.AllBlocked)
             {
                 try
                 {
@@ -202,25 +202,31 @@ namespace CloacaInterpreter
             }
 
             var stack_output = new StringBuilder();
-            foreach (var stack_var in context.DataStack)
-            {
-                var stack_var_obj = stack_var as PyObject;
-                if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
-                {
-                    stack_output.Append(stack_var.ToString());
-                }
-                else
-                {
-                    var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
-                    var functionToRun = __repr__ as IPyCallable;
 
-                    var returned = await functionToRun.Call(Interpreter, context, new object[] { stack_var_obj });
-                    if (returned != null)
+            // Only scoop the data stack if we're actually done. If we're blocked, we don't want to pop off
+            // those variables that might end up being put to use by the script after it unblocks.
+            if (Scheduler.Done)
+            {
+                foreach (var stack_var in context.DataStack)
+                {
+                    var stack_var_obj = stack_var as PyObject;
+                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
                     {
-                        stack_output.Append(returned);
+                        stack_output.Append(stack_var.ToString());
                     }
+                    else
+                    {
+                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
+                        var functionToRun = __repr__ as IPyCallable;
+
+                        var returned = await functionToRun.Call(Interpreter, context, new object[] { stack_var_obj });
+                        if (returned != null)
+                        {
+                            stack_output.Append(returned);
+                        }
+                    }
+                    stack_output.Append(Environment.NewLine);
                 }
-                stack_output.Append(Environment.NewLine);
             }
 
             ContextVariables = context.DumpVariables();

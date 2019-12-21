@@ -230,6 +230,22 @@ namespace CloacaInterpreter
             }
         }
 
+        /// <summary>
+        /// All tasks that still exist are blocked:
+        /// 1. None are yielding tasks.
+        /// 2. There's at least one blocked task.
+        /// 3. There are no unblocked tasks.
+        /// 
+        /// Use in conjunection with Done to determine if you should stop ticking.
+        /// </summary>
+        public bool AllBlocked
+        {
+            get
+            {
+                return yielded.Count == 0 && blocked.Count > 0 && unblocked.Count == 0;
+            }
+        }
+
         // This used to be used more in actual scheduling decision, but now it's just maintained for debugging.
         // LastTasklet is grabbed when stepping through the interpreter interactively using the the project's
         // debug tools.
