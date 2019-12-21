@@ -112,6 +112,8 @@ namespace CloacaGuiDemo
             return future;
         }
 
+        private PyInteger choicePyInt;
+        private FutureAwaiter<PyInteger> dialogFuture;
         public async Task<FutureAwaiter<PyInteger>> dialog_wrapper(IInterpreter interpreter, IScheduler scheduler, FrameContext context, PyString message, PyList choices)
         {
             var choicesStr = new string[choices.list.Count];
@@ -122,14 +124,13 @@ namespace CloacaGuiDemo
             }
             ShowDialogs(choicesStr);
 
-            var future = new FutureAwaiter<PyInteger>(scheduler, context);
+            // Prep the integer since we have all the things we need to invoke the constructor right here.
+            choicePyInt = (PyInteger)await PyIntegerClass.Instance.Call(interpreter, context, new object[0]);
+            dialogFuture = new FutureAwaiter<PyInteger>(scheduler, context);
 
-            var choicePyInt = (PyInteger)await PyIntegerClass.Instance.Call(interpreter, context, new object[0]);
-            choicePyInt.number = -1;
-
-            scheduler.NotifyBlocked(context, future);
-            future.SetResult(choicePyInt);
-            return future;
+            scheduler.NotifyBlocked(context, dialogFuture);
+            //dialogFuture.SetResult(choicePyInt);
+            return dialogFuture;
         }
 
         public void set_player_pos_wrapper(PyFloat x, PyFloat y)
@@ -295,6 +296,19 @@ namespace CloacaGuiDemo
 
         private void WhenDialogOK_Clicked(object sender, EventArgs e)
         {
+            if (dialogFuture == null)
+            {
+                for(int i = 0; i < dialogRadioFlow.Controls.Count; ++i)
+                {
+                    var asButton = dialogRadioFlow.Controls[i] as RadioButton;
+                    if(asButton.Checked)
+                    {
+                        choicePyInt.number = i;
+                        dialogFuture.SetResult(choicePyInt);
+                        break;
+                    }
+                }
+            }
             ClearDialogs();
             dialogOkButton.Enabled = false;
         }

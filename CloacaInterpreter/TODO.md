@@ -242,6 +242,7 @@ Dump a code object that comes up in a disassembly
 
 
 
-
-Current notes on embedding
-PyObject dictionary should map string to PyObject
+Current notes:
+REPL hangs when running blocked code because Done() doesn't return true. There needs to be a await to stop if
+everything is blocked, and there should be a way to test for that. Furthermore, there needs to be a way to have the
+interpreter pick itself up when a blocked activity unblocks. This part might already be under control.
