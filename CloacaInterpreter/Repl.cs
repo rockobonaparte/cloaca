@@ -202,6 +202,7 @@ namespace CloacaInterpreter
                     if (inner is EscapedPyException)
                     {
                         CaughtError = true;
+                        WhenReplCommandDone(this, inner.Message);
                         return inner.Message;
                     }
                     else
