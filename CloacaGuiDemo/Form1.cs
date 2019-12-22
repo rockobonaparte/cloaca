@@ -64,6 +64,7 @@ namespace CloacaGuiDemo
             }
 
             repl = new Repl();
+            repl.WhenReplCommandDone += WhenReplDone;
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("quit", typeof(Form1).GetMethod("quit_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_blip", typeof(Form1).GetMethod("set_blip_wrapper"), this));
@@ -238,6 +239,30 @@ namespace CloacaGuiDemo
             lastAnchorPosition = richTextBox1.Text.Length;
         }
 
+        private void WhenReplDone(Repl repl, string output)
+        {
+            if (repl.NeedsMoreInput)
+            {
+                richTextBox1.AppendText("... ");
+            }
+            else
+            {
+                if (repl.CaughtError)
+                {
+                    richTextBox1.SelectionColor = Color.Red;
+                    richTextBox1.AppendText(output);
+                    richTextBox1.SelectionColor = richTextBox1.ForeColor;
+                }
+                else
+                {
+                    richTextBox1.AppendText(output);
+                }
+                ongoingUserProgram.Clear();
+                richTextBox1.AppendText(Environment.NewLine + ">>> ");
+            }
+            SetCursorToEnd();
+        }
+
         private async void WhenKeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyData == Keys.Enter)
@@ -246,28 +271,8 @@ namespace CloacaGuiDemo
                 string newUserInput = richTextBox1.Text.Substring(lastAnchorPosition, richTextBox1.Text.Length - lastAnchorPosition);
                 ongoingUserProgram.Append(newUserInput);
 
-                var output = await repl.Interpret(ongoingUserProgram.ToString());
-                if (repl.NeedsMoreInput)
-                {
-                    richTextBox1.AppendText("... ");
-                }
-                else
-                {
-                    if(repl.CaughtError)
-                    {
-                        richTextBox1.SelectionColor = Color.Red;
-                        richTextBox1.AppendText(output);
-                        richTextBox1.SelectionColor = richTextBox1.ForeColor;
-                    }
-                    else
-                    {
-                        richTextBox1.AppendText(output);
-                    }
-                    ongoingUserProgram.Clear();
-                    richTextBox1.AppendText(Environment.NewLine + ">>> ");
-                }
-
-                SetCursorToEnd();
+                // We will get the result of interpretation in the WhenReplDone handler so we don't have to await this!
+                repl.Interpret(ongoingUserProgram.ToString());
                 e.Handled = true;
             }
             else if(e.KeyData == Keys.Left || e.KeyData == Keys.Back)

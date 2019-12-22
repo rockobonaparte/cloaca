@@ -90,7 +90,7 @@ namespace CloacaInterpreter
     public class Repl
     {
         private ReplParseErrorListener errorListener;
-        
+
         public Dictionary<string, object> ContextVariables
         {
             get; private set;
@@ -128,10 +128,22 @@ namespace CloacaInterpreter
             }
         }
 
+        public bool Busy
+        {
+            get
+            {
+                return !Scheduler.Done;
+            }
+        }
+
         // The interpreter and scheduler were made public. This was done while trying to insert additional built-ins to the
         // interpeter. The scheduler was made public too just 'cause.
         public Interpreter Interpreter;
         public Scheduler Scheduler;
+
+        public delegate void ReplCommandDone(Repl repl, string message);
+
+        public event ReplCommandDone WhenReplCommandDone = (a, b) => { };
 
         public async Task<string> Interpret(string input)
         {
@@ -177,7 +189,7 @@ namespace CloacaInterpreter
                 context.SetVariable(varName, ContextVariables[varName]);
             }
 
-            while (!Scheduler.AllBlocked)
+            while (!Scheduler.AllBlocked && !Scheduler.Done)
             {
                 try
                 {
@@ -227,6 +239,8 @@ namespace CloacaInterpreter
                     }
                     stack_output.Append(Environment.NewLine);
                 }
+
+                WhenReplCommandDone(this, stack_output.ToString());
             }
 
             ContextVariables = context.DumpVariables();
