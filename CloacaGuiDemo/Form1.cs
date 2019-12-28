@@ -100,8 +100,9 @@ namespace CloacaGuiDemo
 
         private async Task mock_sleep_subsystem_daemon(FutureVoidAwaiter future, int sleep_time)
         {
-            await Task.Delay(sleep_time).ConfigureAwait(false);
+            await Task.Delay(sleep_time).ConfigureAwait(true);
             future.SignalDone();
+            repl.Run();             // TODO: Major temporality here. Need to make this more straightforward.
         }
 
         public async Task<FutureVoidAwaiter> sleep_wrapper(IScheduler scheduler, FrameContext context, PyFloat sleepTime)
@@ -131,6 +132,7 @@ namespace CloacaGuiDemo
 
             scheduler.NotifyBlocked(context, dialogFuture);
             //dialogFuture.SetResult(choicePyInt);
+            await dialogFuture;
             return dialogFuture;
         }
 
@@ -301,7 +303,7 @@ namespace CloacaGuiDemo
 
         private void WhenDialogOK_Clicked(object sender, EventArgs e)
         {
-            if (dialogFuture == null)
+            if (dialogFuture != null)
             {
                 for(int i = 0; i < dialogRadioFlow.Controls.Count; ++i)
                 {
@@ -310,6 +312,7 @@ namespace CloacaGuiDemo
                     {
                         choicePyInt.number = i;
                         dialogFuture.SetResult(choicePyInt);
+                        repl.Run();             // TODO: Major temporality here. Need to make this more straightforward.
                         break;
                     }
                 }

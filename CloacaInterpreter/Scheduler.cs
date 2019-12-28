@@ -167,7 +167,8 @@ namespace CloacaInterpreter
             {
                 lastScheduled = continued;
                 active.Add(lastScheduled);
-                await continued.Continuation.Continue();
+                var theContinuation = continued.Continuation;
+                await theContinuation.Continue();
 
                 if (lastScheduled.Frame.EscapedDotNetException != null)
                 {

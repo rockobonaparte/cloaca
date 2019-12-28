@@ -140,10 +140,77 @@ namespace CloacaInterpreter
         // interpeter. The scheduler was made public too just 'cause.
         public Interpreter Interpreter;
         public Scheduler Scheduler;
+        private FrameContext activeContext;     // TODO: Need a better management structure when we start running more than once script.
 
         public delegate void ReplCommandDone(Repl repl, string message);
 
         public event ReplCommandDone WhenReplCommandDone = (a, b) => { };
+
+        /// <summary>
+        /// Will run assuming the current activeContext is what is scheduled. This is used to continue a blocked active program that
+        /// Interpret() left due to the program getting blocked.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<string> Run()
+        {
+            while (!Scheduler.AllBlocked && !Scheduler.Done)
+            {
+                try
+                {
+                    Scheduler.Tick().Wait();
+                }
+                catch (AggregateException wrappedEscapedException)
+                {
+                    // Given the nature of exception handling, we should normally only have one of these!
+                    var inner = wrappedEscapedException.InnerExceptions[0];
+                    if (inner is EscapedPyException)
+                    {
+                        CaughtError = true;
+                        WhenReplCommandDone(this, inner.Message);
+                        return inner.Message;
+                    }
+                    else
+                    {
+                        // Rethrow exceptions that weren't part of the interpreter runtime. These are
+                        // crazy, bad exceptions that indicate internal bugs.
+                        ExceptionDispatchInfo.Capture(inner).Throw();
+                    }
+                }
+            }
+
+            var stack_output = new StringBuilder();
+
+            // Only scoop the data stack if we're actually done. If we're blocked, we don't want to pop off
+            // those variables that might end up being put to use by the script after it unblocks.
+            if (Scheduler.Done)
+            {
+                foreach (var stack_var in activeContext.DataStack)
+                {
+                    var stack_var_obj = stack_var as PyObject;
+                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
+                    {
+                        stack_output.Append(stack_var.ToString());
+                    }
+                    else
+                    {
+                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
+                        var functionToRun = __repr__ as IPyCallable;
+
+                        var returned = await functionToRun.Call(Interpreter, activeContext, new object[] { stack_var_obj });
+                        if (returned != null)
+                        {
+                            stack_output.Append(returned);
+                        }
+                    }
+                    stack_output.Append(Environment.NewLine);
+                }
+
+                WhenReplCommandDone(this, stack_output.ToString());
+            }
+
+            ContextVariables = activeContext.DumpVariables();
+            return stack_output.ToString();
+        }
 
         public async Task<string> Interpret(string input)
         {
@@ -183,69 +250,14 @@ namespace CloacaInterpreter
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            var context = Scheduler.Schedule(compiledProgram);
+            activeContext = Scheduler.Schedule(compiledProgram);
             foreach (string varName in ContextVariables.Keys)
             {
-                context.SetVariable(varName, ContextVariables[varName]);
+                activeContext.SetVariable(varName, ContextVariables[varName]);
             }
 
-            while (!Scheduler.AllBlocked && !Scheduler.Done)
-            {
-                try
-                {
-                    Scheduler.Tick().Wait();
-                }
-                catch (AggregateException wrappedEscapedException)
-                {
-                    // Given the nature of exception handling, we should normally only have one of these!
-                    var inner = wrappedEscapedException.InnerExceptions[0];
-                    if (inner is EscapedPyException)
-                    {
-                        CaughtError = true;
-                        WhenReplCommandDone(this, inner.Message);
-                        return inner.Message;
-                    }
-                    else
-                    {
-                        // Rethrow exceptions that weren't part of the interpreter runtime. These are
-                        // crazy, bad exceptions that indicate internal bugs.
-                        ExceptionDispatchInfo.Capture(inner).Throw();
-                    }
-                }
-            }
+            return await Run();
 
-            var stack_output = new StringBuilder();
-
-            // Only scoop the data stack if we're actually done. If we're blocked, we don't want to pop off
-            // those variables that might end up being put to use by the script after it unblocks.
-            if (Scheduler.Done)
-            {
-                foreach (var stack_var in context.DataStack)
-                {
-                    var stack_var_obj = stack_var as PyObject;
-                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
-                    {
-                        stack_output.Append(stack_var.ToString());
-                    }
-                    else
-                    {
-                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
-                        var functionToRun = __repr__ as IPyCallable;
-
-                        var returned = await functionToRun.Call(Interpreter, context, new object[] { stack_var_obj });
-                        if (returned != null)
-                        {
-                            stack_output.Append(returned);
-                        }
-                    }
-                    stack_output.Append(Environment.NewLine);
-                }
-
-                WhenReplCommandDone(this, stack_output.ToString());
-            }
-
-            ContextVariables = context.DumpVariables();
-            return stack_output.ToString();
         }
     }
 }
