@@ -58,7 +58,7 @@ namespace LanguageImplementation
         private async Task<object> InvokeAsTaskObject(object[] final_args)
         {
             var task = (Task) MethodInfo.Invoke(instance, final_args);
-            await task.ConfigureAwait(false);
+            await task.ConfigureAwait(true);
             var result = ((dynamic)task).Result;
             return (object)result;
         }

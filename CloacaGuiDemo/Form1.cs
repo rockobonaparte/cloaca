@@ -100,7 +100,7 @@ namespace CloacaGuiDemo
 
         private async Task mock_sleep_subsystem_daemon(FutureVoidAwaiter future, int sleep_time)
         {
-            await Task.Delay(sleep_time).ConfigureAwait(false);
+            await Task.Delay(sleep_time).ConfigureAwait(true);
             future.SignalDone();
             repl.Run();             // TODO: Major temporality here. Need to make this more straightforward.
         }
@@ -260,7 +260,14 @@ namespace CloacaGuiDemo
                     richTextBox1.AppendText(output);
                 }
                 ongoingUserProgram.Clear();
-                richTextBox1.AppendText(Environment.NewLine + ">>> ");
+                try
+                {
+                    richTextBox1.AppendText(Environment.NewLine + ">>> ");
+                }
+                catch(Exception whatTheFuck)
+                {
+                    throw whatTheFuck;
+                }
             }
             SetCursorToEnd();
         }
