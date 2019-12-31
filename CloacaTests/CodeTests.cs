@@ -104,6 +104,19 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Just added and exposed a problem. Looks like the not statement is not being properly used here")]
+        public void InvertWithNot()
+        {
+            runBasicTest("a = True\n" +
+                "b = not a\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyBool.True },
+                { "b", PyBool.False }
+            }), 1);
+        }
+
+        [Test]
         public void IsNoneIsNotNone()
         {
             runBasicTest("b = a is None\n" +
