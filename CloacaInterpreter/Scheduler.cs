@@ -163,18 +163,6 @@ namespace CloacaInterpreter
             oldUnblocked.AddRange(yielded);
             yielded.Clear();
 
-
-
-
-
-            // BOOKMARK: You want to run from ACTIVE, not UNBLOCKED. Move unblocked to active, and then run all of the active ones.
-            // Not getting into now since it's 2:41 AM and it's time to go to bed!!!! =3
-
-
-
-
-
-
             foreach (var continued in oldUnblocked)
             {
                 lastScheduled = continued;

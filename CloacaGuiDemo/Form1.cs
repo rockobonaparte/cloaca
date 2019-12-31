@@ -260,14 +260,7 @@ namespace CloacaGuiDemo
                     richTextBox1.AppendText(output);
                 }
                 ongoingUserProgram.Clear();
-                try
-                {
-                    richTextBox1.AppendText(Environment.NewLine + ">>> ");
-                }
-                catch(Exception whatTheFuck)
-                {
-                    throw whatTheFuck;
-                }
+                richTextBox1.AppendText(Environment.NewLine + ">>> ");
             }
             SetCursorToEnd();
         }
