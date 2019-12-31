@@ -139,6 +139,7 @@ Following that, serialization of tasks.
   * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
       * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
         keen on making this check less strict.
+  * Add a thread guard in the scheduler that detects if tasks are starting to run from different threads.
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!
