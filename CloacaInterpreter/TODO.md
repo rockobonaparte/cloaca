@@ -131,20 +131,23 @@ Following that, serialization of tasks.
   * [DONE] Implement print() (prototype)
   * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
     a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
-  * Demo needs to accept newline for sleep command before processing; looks like it hangs if we just pause before seemingly accepting
+  * [Fixed?] Demo needs to accept newline for sleep command before processing; looks like it hangs if we just pause before seemingly accepting
     the newline.
   * Figure out how to make the scheduler more robust after hangs coming from assuming the last scheduled task--which was null--was the
     one we cared about when notifying that we unblocked.
   * [DONE] Stop putting the void sentinel on the data stack.
   * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
-      * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
-        keen on making this check less strict.
+     * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
+       keen on making this check less strict.
   * Add a thread guard in the scheduler that detects if tasks are starting to run from different threads.
+  * REPL Demo TODO:
+     * Schedule a perpetual coroutine that flips one of the blips every few seconds.
+	    * Have scheduler call back when it needs to tick more so that more ticks can be scheduled in GUI thread.
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!
   * Expose a subsystem in REPL.
-  
+
 
 
 Part 2: First, harden the code, but keep some of this in mind while doing that.

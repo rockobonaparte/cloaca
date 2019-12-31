@@ -95,7 +95,14 @@ namespace CloacaGuiDemo
                 blip3,
             };
 
-            SetBlip(3, true);
+            // Set up some background tasks to run.
+            // TODO: Send this in through a separate mechanism that doesn't parse this in the REPL but as a regular program.
+            //repl.Interpret("while True:\n" +
+            //                "   blip = get_blip(0)\n" +
+            //                "   blip = not blip\n" +
+            //                "   set_blip(0, blip)\n" +
+            //                "   sleep(1.0)\n" +
+            //                "   set_blip(1, blip)\n\n");
         }
 
         private async Task mock_sleep_subsystem_daemon(FutureVoidAwaiter future, int sleep_time)
