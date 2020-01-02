@@ -314,7 +314,7 @@ namespace CloacaTests
                     { "a", new PyInteger(12) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(13) }
+                    { "a", new PyInteger(6) }
                 }), 1);
         }
 

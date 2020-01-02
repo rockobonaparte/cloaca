@@ -399,7 +399,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitIf_stmt([NotNull] CloacaParser.If_stmtContext context)
     {
         var conditional_block_fixups = new List<JumpOpcodeFixer>();
-        int if_cond_i = 0;
+        int if_cond_i;
         for (if_cond_i = 0; if_cond_i < context.test().Length; ++if_cond_i)
         {
             var comparison = context.test(if_cond_i);
@@ -409,7 +409,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             // We'll need this to skip other conditional blocks, but we only need this if we actually
             // have other ones:
-            if (context.test().Length > 1)
+            if (context.suite().Length > 1)
             {
                 conditional_block_fixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
             }
@@ -417,11 +417,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         // Handles the 'else' clause if we have one. The else is a suite without a comparison.
-        if (context.suite().Length > if_cond_i + 1)
+        if (context.suite().Length > if_cond_i)
         {
-            var jump_opcode_index = ActiveProgram.Code.Count - 1;
-            Visit(context.suite(if_cond_i + 1));
-            ActiveProgram.Code.SetUShort(jump_opcode_index, ActiveProgram.Code.Count);
+            Visit(context.suite(if_cond_i));
         }
 
         // Fixup any forward jumps we might have. They should all come to our current program position.
