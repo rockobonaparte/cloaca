@@ -267,7 +267,7 @@ namespace LanguageImplementation
                             break;
                         }
                     default:
-                        throw new Exception("Unexpected opcode to disassemble: " + code[cursor]);
+                        throw new Exception("Unexpected opcode to disassemble: " + code[cursor] + " (0x" + Convert.ToString(code[cursor], 16) + ")");
                 }
                 lastLineNumber = currentLineNumber;
                 bytesIntoLine += cursor - cursorBefore;
