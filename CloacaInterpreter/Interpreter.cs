@@ -267,6 +267,24 @@ namespace CloacaInterpreter
                     var opcode = (ByteCodes)context.Code[context.Cursor];
                     switch (opcode)
                     {
+                        case ByteCodes.UNARY_NOT:
+                            {
+                                var toFlip = context.DataStack.Pop() as PyBool;
+                                if(toFlip == PyBool.False)
+                                {
+                                    context.DataStack.Push(PyBool.True);
+                                }
+                                else if(toFlip == PyBool.True)
+                                {
+                                    context.DataStack.Push(PyBool.False);
+                                }
+                                else
+                                {
+                                    throw new Exception("UNARY_NOT received a PyBool that is not one of the static types.");
+                                }
+                            }
+                            context.Cursor += 1;
+                            break;
                         case ByteCodes.BINARY_ADD:
                             {
                                 dynamic right = context.DataStack.Pop();

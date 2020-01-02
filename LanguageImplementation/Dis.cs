@@ -44,6 +44,10 @@ namespace LanguageImplementation
                 var cursorBefore = cursor;
                 switch ((ByteCodes)code[cursor])
                 {
+                    case ByteCodes.UNARY_NOT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "UNARY_NOT", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.BINARY_ADD:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_ADD", null, null);
                         cursor += 1;
