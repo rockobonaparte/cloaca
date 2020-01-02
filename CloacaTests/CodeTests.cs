@@ -213,6 +213,30 @@ namespace CloacaTests
         }
 
         [Test]
+        public void IfElseInvert()
+        {
+            runBasicTest("blip = True\n" +
+                         "if blip is True:\n" +
+                         "   blip = False\n" +
+                         "else:\n" +
+                         "   blip = True\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "blip", PyBool.False }
+            }), 1);
+
+            runBasicTest("blip = False\n" +
+                         "if blip is True:\n" +
+                         "   blip = False\n" +
+                         "else:\n" +
+                         "   blip = True\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "blip", PyBool.True }
+            }), 1);
+        }
+
+        [Test]
         public void WhileBasic()
         {
             runBasicTest(

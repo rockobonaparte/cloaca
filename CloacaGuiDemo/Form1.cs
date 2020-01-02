@@ -103,6 +103,23 @@ namespace CloacaGuiDemo
             //                "   set_blip(0, blip)\n" +
             //                "   sleep(1.0)\n" +
             //                "   set_blip(1, blip)\n\n");
+
+            //repl.Interpret("while True:\n" +
+            //                "   blip = get_blip(0)\n" +
+            //                "   if blip is True:\n" +
+            //                "       blip = False\n" +
+            //                "   else:\n" +
+            //                "       blip = True\n" +
+            //                "   set_blip(0, blip)\n" +
+            //                "   sleep(1.0)\n" +
+            //                "   set_blip(1, blip)\n\n");
+
+            //repl.Interpret( "blip = get_blip(0)\n" +
+            //                "if blip is True:\n" +
+            //                "   blip = False\n" +
+            //                "else:\n" +
+            //                "   blip = True\n" +
+            //                "set_blip(0, blip)\n\n");
         }
 
         private async Task mock_sleep_subsystem_daemon(FutureVoidAwaiter future, int sleep_time)
