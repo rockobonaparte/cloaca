@@ -202,5 +202,17 @@ namespace LanguageImplementation.DataTypes
 
         public static readonly PyBool True = new PyBool(true);
         public static readonly PyBool False = new PyBool(false);
+
+        public static PyBool Create(bool fromBool)
+        {
+            if(fromBool)
+            {
+                return PyBool.True;
+            }
+            else
+            {
+                return PyBool.False;
+            }
+        }
     }
 }
