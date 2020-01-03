@@ -742,6 +742,40 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
+    public override object VisitAnd_test([NotNull] CloacaParser.And_testContext context)
+    {
+        // not_test: 'not' not_test | comparison;
+        var inner_not_tests = context.not_test();
+        if (inner_not_tests.Length == 2)
+        {
+            base.Visit(inner_not_tests[0]);
+            base.Visit(inner_not_tests[1]);
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitAnd_test(context);
+        }
+    }
+
+    public override object VisitOr_test([NotNull] CloacaParser.Or_testContext context)
+    {
+        // not_test: 'not' not_test | comparison;
+        var inner_and_tests = context.and_test();
+        if (inner_and_tests.Length == 2)
+        {
+            base.Visit(inner_and_tests[0]);
+            base.Visit(inner_and_tests[1]);
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitOr_test(context);
+        }
+    }
+
     public override object VisitSubscriptlist([NotNull] CloacaParser.SubscriptlistContext context)
     {
         base.VisitSubscriptlist(context);

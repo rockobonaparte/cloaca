@@ -269,6 +269,9 @@ namespace CloacaInterpreter
                     {
                         case ByteCodes.UNARY_NOT:
                             {
+                                // NOTE: Many of the other unary operations use functions like __and__, __or__, etc. There is NOT
+                                // one for not. There is not __not__. The __invert__ fuction implements the ~ operator, which is
+                                // distinct from not.
                                 var toFlip = context.DataStack.Pop() as PyBool;
                                 if(toFlip == PyBool.False)
                                 {
@@ -333,6 +336,32 @@ namespace CloacaInterpreter
                                 var rightInt = right as PyObject;
 
                                 PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__div__", new PyObject[] { rightInt });
+                                context.DataStack.Push(returned);
+                            }
+                            context.Cursor += 1;
+                            break;
+                        case ByteCodes.BINARY_AND:
+                            {
+                                dynamic right = context.DataStack.Pop();
+                                dynamic left = context.DataStack.Pop();
+
+                                var leftBool = left as PyObject;
+                                var rightBool = right as PyObject;
+
+                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__and__", new PyObject[] { rightBool });
+                                context.DataStack.Push(returned);
+                            }
+                            context.Cursor += 1;
+                            break;
+                        case ByteCodes.BINARY_OR:
+                            {
+                                dynamic right = context.DataStack.Pop();
+                                dynamic left = context.DataStack.Pop();
+
+                                var leftBool = left as PyObject;
+                                var rightBool = right as PyObject;
+
+                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__or__", new PyObject[] { rightBool });
                                 context.DataStack.Push(returned);
                             }
                             context.Cursor += 1;

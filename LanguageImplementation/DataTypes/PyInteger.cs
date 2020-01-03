@@ -82,6 +82,20 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static PyObject __and__(PyObject self, PyObject other)
+        {
+            var anded = PyBoolClass.extractInt(self) & PyBoolClass.extractInt(other);
+            return new PyInteger(anded);
+        }
+
+        [ClassMember]
+        public static PyObject __or__(PyObject self, PyObject other)
+        {
+            var orded = PyBoolClass.extractInt(self) & PyBoolClass.extractInt(other);
+            return new PyInteger(orded);
+        }
+
+        [ClassMember]
         public static PyBool __lt__(PyObject self, PyObject other)
         {
             PyInteger a, b;

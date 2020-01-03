@@ -52,6 +52,14 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_ADD", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.BINARY_AND:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_AND", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_OR:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_AND", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.BINARY_SUBTRACT:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_SUB", null, null);
                         cursor += 1;

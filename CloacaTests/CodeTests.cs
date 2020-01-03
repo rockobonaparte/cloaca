@@ -236,6 +236,36 @@ namespace CloacaTests
         }
 
         [Test]
+        public void LogicOperations()
+        {
+            // When first implemented, this was generated a bunch of loads
+            // and then storing the last value pushed on the stack to d.
+            runBasicTest("d = a and a or b and not c\n",
+            new Dictionary<string, object>
+            {
+                { "a", PyBool.True },
+                { "b", PyBool.True },
+                { "c", PyBool.False }
+            },
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "d", PyBool.True }
+            }), 1);
+
+            runBasicTest("d = a and a or b and not c\n",
+            new Dictionary<string, object>
+            {
+                { "a", PyBool.False },
+                { "b", PyBool.True },
+                { "c", PyBool.True }
+            },
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "d", PyBool.False }
+            }), 1);
+        }
+
+        [Test]
         public void WhileBasic()
         {
             runBasicTest(

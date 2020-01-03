@@ -31,7 +31,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        private static BigInteger extractInt(PyObject a)
+        public static BigInteger extractInt(PyObject a)
         {
             if(a is PyBool)
             {
@@ -70,6 +70,20 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __div__(PyObject self, PyObject other)
         {
             return new PyInteger(extractInt(self) / extractInt(other));
+        }
+
+        [ClassMember]
+        public static PyObject __and__(PyObject self, PyObject other)
+        {
+            var anded = extractInt(self) & extractInt(other);
+            return anded > 0 ? PyBool.True : PyBool.False;
+        }
+
+        [ClassMember]
+        public static PyObject __or__(PyObject self, PyObject other)
+        {
+            var orded = extractInt(self) | extractInt(other);
+            return orded > 0 ? PyBool.True : PyBool.False;
         }
 
         [ClassMember]
