@@ -726,6 +726,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitNot_test([NotNull] CloacaParser.Not_testContext context)
+    {
+        // not_test: 'not' not_test | comparison;
+        var inner_not_test = context.not_test();
+        if (inner_not_test != null)
+        {
+            base.Visit(inner_not_test);
+            ActiveProgram.AddInstruction(ByteCodes.UNARY_NOT, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitNot_test(context);
+        }
+    }
+
     public override object VisitSubscriptlist([NotNull] CloacaParser.SubscriptlistContext context)
     {
         base.VisitSubscriptlist(context);

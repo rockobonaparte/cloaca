@@ -104,7 +104,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Just added and exposed a problem. Looks like the not statement is not being properly used here")]
         public void InvertWithNot()
         {
             runBasicTest("a = True\n" +
