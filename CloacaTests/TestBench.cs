@@ -46,7 +46,7 @@ namespace CloacaTests
             interpreter.DumpState = true;
             scheduler.SetInterpreter(interpreter);
 
-            context = scheduler.Schedule(compiledProgram);
+            context = scheduler.Schedule(compiledProgram).Frame;
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);

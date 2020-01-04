@@ -38,10 +38,37 @@ namespace CloacaInterpreter
     {
         public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
         public ISubscheduledContinuation Continuation;
-        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation)
+        public TaskEventRecord SubmitterReceipt;
+
+        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation, TaskEventRecord submitterReceipt)
         {
             Frame = frame;
             Continuation = continuation;
+            SubmitterReceipt = submitterReceipt;
+        }
+    }
+
+    public delegate void OnTaskCompleted(TaskEventRecord record);
+
+    /// <summary>
+    /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
+    /// </summary>
+    public class TaskEventRecord
+    {
+        public FrameContext Frame { get; protected set; }
+        public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
+        public bool Completed { get; protected set; }
+         
+        public TaskEventRecord(FrameContext frame)
+        {
+            Frame = frame;
+            Completed = false;
+        }
+
+        public void NotifyCompleted()
+        {
+            Completed = true;
+            WhenTaskCompleted(this);
         }
     }
 
@@ -100,11 +127,11 @@ namespace CloacaInterpreter
         /// </summary>
         /// <param name="program">The code to schedule.</param>
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
-        public FrameContext Schedule(CodeObject program)
+        public TaskEventRecord Schedule(CodeObject program)
         {
             var scheduleState = PrepareFrameContext(program);
             unblocked.Add(scheduleState);
-            return scheduleState.Frame;
+            return scheduleState.SubmitterReceipt;
         }
 
         /// <summary>
@@ -127,7 +154,7 @@ namespace CloacaInterpreter
             newFrameStack.Push(rootFrame);
             var frame = new FrameContext(newFrameStack);
             var initialContinuation = new InitialScheduledContinuation(this.interpreter, frame);
-            return new ScheduledTaskRecord(frame, initialContinuation);
+            return new ScheduledTaskRecord(frame, initialContinuation, new TaskEventRecord(frame));
         }
 
         // This is called when the currently-active script is blocking. Call this right before invoking

@@ -250,7 +250,7 @@ namespace CloacaInterpreter
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            activeContext = Scheduler.Schedule(compiledProgram);
+            activeContext = Scheduler.Schedule(compiledProgram).Frame;
             foreach (string varName in ContextVariables.Keys)
             {
                 activeContext.SetVariable(varName, ContextVariables[varName]);

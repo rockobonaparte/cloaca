@@ -52,7 +52,7 @@ namespace InterpreterDebugger
             interpreter.DumpState = true;
             scheduler.SetInterpreter(interpreter);
 
-            var context = scheduler.Schedule(compiledProgram);
+            var context = scheduler.Schedule(compiledProgram).Frame;
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
