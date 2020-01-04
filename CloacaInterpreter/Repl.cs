@@ -141,7 +141,6 @@ namespace CloacaInterpreter
         public Interpreter Interpreter;
         public Scheduler Scheduler;
         private FrameContext activeContext;     // TODO: Need a better management structure when we start running more than once script.
-        private TaskEventRecord scheduledTaskRecord;
 
         public delegate void ReplCommandDone(Repl repl, string message);
 
@@ -152,54 +151,15 @@ namespace CloacaInterpreter
         /// Interpret() left due to the program getting blocked.
         /// </summary>
         /// <returns></returns>
-        public async Task<string> Run()
+        public void Run()
         {
             while (!Scheduler.AllBlocked && !Scheduler.Done)
             {
                 Scheduler.Tick().Wait();
-                if(scheduledTaskRecord != null && scheduledTaskRecord.EscapedException != null)
-                {
-                    CaughtError = true;
-                    WhenReplCommandDone(this, scheduledTaskRecord.EscapedException.Message);
-                    return scheduledTaskRecord.EscapedException.Message;
-                }
             }
-
-            var stack_output = new StringBuilder();
-
-            // Only scoop the data stack if we're actually done. If we're blocked, we don't want to pop off
-            // those variables that might end up being put to use by the script after it unblocks.
-            if (Scheduler.Done)
-            {
-                foreach (var stack_var in activeContext.DataStack)
-                {
-                    var stack_var_obj = stack_var as PyObject;
-                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
-                    {
-                        stack_output.Append(stack_var.ToString());
-                    }
-                    else
-                    {
-                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
-                        var functionToRun = __repr__ as IPyCallable;
-
-                        var returned = await functionToRun.Call(Interpreter, activeContext, new object[] { stack_var_obj });
-                        if (returned != null)
-                        {
-                            stack_output.Append(returned);
-                        }
-                    }
-                    stack_output.Append(Environment.NewLine);
-                }
-
-                WhenReplCommandDone(this, stack_output.ToString());
-            }
-
-            ContextVariables = activeContext.DumpVariables();
-            return stack_output.ToString();
         }
 
-        public async Task<string> Interpret(string input)
+        public string Interpret(string input)
         {
             CaughtError = false;
 
@@ -237,14 +197,51 @@ namespace CloacaInterpreter
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
+            var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
             activeContext = scheduledTaskRecord.Frame;
             foreach (string varName in ContextVariables.Keys)
             {
                 activeContext.SetVariable(varName, ContextVariables[varName]);
             }
 
-            return await Run();
+            Run();
+            return "";
+        }
+
+        private async void WhenReplTaskCompleted(TaskEventRecord scheduledTaskRecord)
+        {
+            if (scheduledTaskRecord.EscapedException != null)
+            {
+                CaughtError = true;
+                WhenReplCommandDone(this, scheduledTaskRecord.EscapedException.Message);
+            }
+            else
+            {
+                var stack_output = new StringBuilder();
+                foreach (var stack_var in scheduledTaskRecord.Frame.DataStack)
+                {
+                    var stack_var_obj = stack_var as PyObject;
+                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
+                    {
+                        stack_output.Append(stack_var.ToString());
+                    }
+                    else
+                    {
+                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
+                        var functionToRun = __repr__ as IPyCallable;
+
+                        var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[] { stack_var_obj });
+                        if (returned != null)
+                        {
+                            stack_output.Append(returned);
+                        }
+                    }
+                    stack_output.Append(Environment.NewLine);
+                }
+
+                WhenReplCommandDone(this, stack_output.ToString());
+            }
+            ContextVariables = scheduledTaskRecord.Frame.DumpVariables();
         }
 
         /// <summary>
