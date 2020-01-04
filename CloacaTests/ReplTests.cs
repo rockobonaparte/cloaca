@@ -15,7 +15,9 @@ namespace CloacaTests
         public async Task BasicRepl()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("a = 1\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.Interpret("a = 1\n");
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.Empty);
@@ -28,8 +30,10 @@ namespace CloacaTests
         public async Task SetAndQueryVariable()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("a = 1\n");
-            consoleOut = await repl.Interpret("a\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.Interpret("a = 1\n");
+            repl.Interpret("a\n");
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("1\r\n"));
@@ -42,8 +46,10 @@ namespace CloacaTests
         public async Task Dir()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("a = 1\n");
-            consoleOut = await repl.Interpret("dir(a)\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.Interpret("a = 1\n");
+            repl.Interpret("dir(a)\n");
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("[__add__, __and__, __div__, __eq__, __ge__, __gt__, __init__, __le__, __lt__, __ltgt__, __mul__, __ne__, __or__, __repr__, __str__, __sub__]\r\n"));
@@ -57,13 +63,15 @@ namespace CloacaTests
         public async Task MultilineList()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("a = [\n" +
-                                                    "1,\n" +
-                                                    "\n" +
-                                                    "2,\n" +
-                                                    "3\n" +
-                                                    "]\n");
-            consoleOut = await repl.Interpret("a\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.Interpret("a = [\n" +
+                           "1,\n" +
+                           "\n" +
+                           "2,\n" +
+                           "3\n" +
+                           "]\n");
+            repl.Interpret("a\n");
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("[1, 2, 3]\r\n"));
@@ -73,7 +81,12 @@ namespace CloacaTests
         public async Task BasicSyntaxError()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("]\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => 
+            { 
+                consoleOut = txt; 
+            };
+            repl.Interpret("]\n");
             Assert.That(repl.CaughtError, Is.True);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("There were errors trying to compile the script. We cannot run it:" +
@@ -86,7 +99,9 @@ namespace CloacaTests
         public async Task Exception()
         {
             var repl = new Repl();
-            string consoleOut = await repl.Interpret("raise Exception(\"Hi!\")\n");
+            string consoleOut = null;
+            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.Interpret("raise Exception(\"Hi!\")\n");
             Assert.That(repl.CaughtError, Is.True);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("Traceback (most recent call list):" + Environment.NewLine +
