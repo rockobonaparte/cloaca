@@ -141,6 +141,7 @@ namespace CloacaInterpreter
         public Interpreter Interpreter;
         public Scheduler Scheduler;
         private FrameContext activeContext;     // TODO: Need a better management structure when we start running more than once script.
+        private TaskEventRecord scheduledTaskRecord;
 
         public delegate void ReplCommandDone(Repl repl, string message);
 
@@ -155,26 +156,12 @@ namespace CloacaInterpreter
         {
             while (!Scheduler.AllBlocked && !Scheduler.Done)
             {
-                try
+                Scheduler.Tick().Wait();
+                if(scheduledTaskRecord != null && scheduledTaskRecord.EscapedException != null)
                 {
-                    Scheduler.Tick().Wait();
-                }
-                catch (AggregateException wrappedEscapedException)
-                {
-                    // Given the nature of exception handling, we should normally only have one of these!
-                    var inner = wrappedEscapedException.InnerExceptions[0];
-                    if (inner is EscapedPyException)
-                    {
-                        CaughtError = true;
-                        WhenReplCommandDone(this, inner.Message);
-                        return inner.Message;
-                    }
-                    else
-                    {
-                        // Rethrow exceptions that weren't part of the interpreter runtime. These are
-                        // crazy, bad exceptions that indicate internal bugs.
-                        ExceptionDispatchInfo.Capture(inner).Throw();
-                    }
+                    CaughtError = true;
+                    WhenReplCommandDone(this, scheduledTaskRecord.EscapedException.Message);
+                    return scheduledTaskRecord.EscapedException.Message;
                 }
             }
 
@@ -250,7 +237,8 @@ namespace CloacaInterpreter
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 
-            activeContext = Scheduler.Schedule(compiledProgram).Frame;
+            scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
+            activeContext = scheduledTaskRecord.Frame;
             foreach (string varName in ContextVariables.Keys)
             {
                 activeContext.SetVariable(varName, ContextVariables[varName]);

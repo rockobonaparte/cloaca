@@ -46,7 +46,8 @@ namespace CloacaTests
             interpreter.DumpState = true;
             scheduler.SetInterpreter(interpreter);
 
-            context = scheduler.Schedule(compiledProgram).Frame;
+            var receipt = scheduler.Schedule(compiledProgram);
+            context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
@@ -54,18 +55,13 @@ namespace CloacaTests
 
             // Waiting on the task makes sure we get punched in the face by any exceptions it throws.
             // But they'll come rolling in as AggregateExceptions so we'll have to unpack them.
-            try
+            var scheduler_task = scheduler.RunUntilDone();
+            scheduler_task.Wait();
+            Assert.That(receipt.Completed);
+            if(receipt.EscapedException != null)
             {
-                var scheduler_task = scheduler.RunUntilDone();
-                scheduler_task.Wait();
+                throw receipt.EscapedException;
             }
-            catch (AggregateException wrappedEscapedException)
-            {
-                // Given the nature of exception handling, we should normally only have one of these!
-                ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
-            }
-
-            var variables = new VariableMultimap(context);
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
         }

@@ -56,6 +56,7 @@ namespace CloacaInterpreter
     public class TaskEventRecord
     {
         public FrameContext Frame { get; protected set; }
+        public Exception EscapedException { get; protected set; }
         public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
         public bool Completed { get; protected set; }
          
@@ -63,11 +64,19 @@ namespace CloacaInterpreter
         {
             Frame = frame;
             Completed = false;
+            EscapedException = null;
         }
 
         public void NotifyCompleted()
         {
             Completed = true;
+            WhenTaskCompleted(this);
+        }
+
+        public void NotifyEscapedException(Exception escaped)
+        {
+            Completed = true;
+            EscapedException = escaped;
             WhenTaskCompleted(this);
         }
     }
@@ -196,17 +205,6 @@ namespace CloacaInterpreter
                 active.Add(lastScheduled);
                 var theContinuation = continued.Continuation;
                 await theContinuation.Continue();
-
-                if (lastScheduled.Frame.EscapedDotNetException != null)
-                {
-                    // We want to rethrow while retaining the original stack trace.
-                    // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
-                    ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException).Throw();
-                }
-                else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
-                {
-                    throw new EscapedPyException(lastScheduled.Frame.CurrentException);
-                }
             }
             lastScheduled = null;
 
@@ -228,6 +226,20 @@ namespace CloacaInterpreter
                    )
                 {
                     active.Add(lastScheduled);
+                }
+                else if(lastScheduled.Frame.EscapedDotNetException != null)
+                {
+                    // We want to rethrow while retaining the original stack trace.
+                    // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
+                    scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException).SourceException);
+                }
+                else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
+                {
+                    scheduled.SubmitterReceipt.NotifyEscapedException(new EscapedPyException(lastScheduled.Frame.CurrentException));
+                }
+                else
+                {
+                    scheduled.SubmitterReceipt.NotifyCompleted();
                 }
             }
 
