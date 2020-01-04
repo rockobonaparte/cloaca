@@ -159,7 +159,7 @@ namespace CloacaInterpreter
             }
         }
 
-        public string Interpret(string input)
+        public void Interpret(string input)
         {
             CaughtError = false;
 
@@ -180,11 +180,13 @@ namespace CloacaInterpreter
                     errorBuilder.Append(error);
                     errorBuilder.Append(Environment.NewLine);
                 }
-                return errorBuilder.ToString();
+                WhenReplCommandDone(this, errorBuilder.ToString());
+                return;
             }
             else if (errorListener.ExpectedMoreText)
             {
-                return "... ";
+                WhenReplCommandDone(this, "...");
+                return;
             }
 
             if (ContextVariables == null)
@@ -199,13 +201,13 @@ namespace CloacaInterpreter
 
             var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
             activeContext = scheduledTaskRecord.Frame;
+            scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
             foreach (string varName in ContextVariables.Keys)
             {
                 activeContext.SetVariable(varName, ContextVariables[varName]);
             }
 
             Run();
-            return "";
         }
 
         private async void WhenReplTaskCompleted(TaskEventRecord scheduledTaskRecord)

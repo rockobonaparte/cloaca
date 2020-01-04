@@ -82,7 +82,10 @@ namespace CloacaTests
         {
             var repl = new Repl();
             string consoleOut = null;
-            repl.WhenReplCommandDone += (ignored_repl, txt) => { consoleOut = txt; };
+            repl.WhenReplCommandDone += (ignored_repl, txt) => 
+            { 
+                consoleOut = txt; 
+            };
             repl.Interpret("]\n");
             Assert.That(repl.CaughtError, Is.True);
             Assert.That(repl.NeedsMoreInput, Is.False);
