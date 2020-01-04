@@ -97,7 +97,7 @@ namespace CloacaGuiDemo
 
             // Set up some background tasks to run.
             // TODO: Send this in through a separate mechanism that doesn't parse this in the REPL but as a regular program.
-            repl.Interpret("while True:\n" +
+            repl.RunBackground("while True:\n" +
                             "   blip = get_blip(0)\n" +
                             "   blip = not blip\n" +
                             "   set_blip(0, blip)\n" +

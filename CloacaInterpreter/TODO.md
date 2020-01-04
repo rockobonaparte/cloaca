@@ -143,6 +143,7 @@ Following that, serialization of tasks.
   * REPL Demo TODO:
      * Schedule a perpetual coroutine that flips one of the blips every few seconds.
 	    * Have scheduler call back when it needs to tick more so that more ticks can be scheduled in GUI thread.
+		* Get REPL prompt to work again. Probably need to make the coroutine go through the scheduler directly instead of the REPL.
 * First Unity embed!
   * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * Toss REPL into Unity!

@@ -257,7 +257,42 @@ namespace CloacaInterpreter
             }
 
             return await Run();
+        }
 
+        /// <summary>
+        /// Pass the script forward to be scheduled and run offline from the REPL.
+        /// </summary>
+        /// <param name="program">The code to run.</param>
+        public void RunBackground(string program)
+        {
+            var inputStream = new AntlrInputStream(program);
+            var lexer = new CloacaLexer(inputStream);
+            CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
+            var errorListener = new ParseErrorListener();
+            var parser = new CloacaParser(commonTokenStream);
+            parser.AddErrorListener(errorListener);
+            if (errorListener.Errors.Count > 0)
+            {
+                var errorText = new StringBuilder("There were errors trying to compile the script. We cannot run it.\n");
+                foreach(var error in errorListener.Errors)
+                {
+                    errorText.Append(error);
+                    errorText.Append("\n");
+                }
+
+                throw new Exception(errorText.ToString());
+            }
+
+            var antlrVisitorContext = parser.file_input();
+
+            var variablesIn = new Dictionary<string, object>();
+            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            visitor.Visit(antlrVisitorContext);
+
+            CodeObject compiledProgram = visitor.RootProgram.Build();
+
+            var context = Scheduler.Schedule(compiledProgram);
+            Scheduler.Tick();
         }
     }
 }
