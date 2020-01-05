@@ -14,6 +14,7 @@ using LanguageImplementation;
 using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation.DataTypes;
 using System.Runtime.ExceptionServices;
+using System.Runtime.CompilerServices;
 
 namespace CloacaInterpreter
 {
@@ -84,6 +85,54 @@ namespace CloacaInterpreter
         {
             Errors.Clear();
             ExpectedMoreText = false;
+        }
+    }
+
+    // A custom awaiter for the REPL's InterpretAsync() call. This is used under the hood to block
+    // until the scheduler comes back with the result of the inputted, interpreted code.
+    public class ReplInterpretationAwaiter : INotifyCompletion
+    {
+        private Action continuation;
+        private bool finished;
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return finished;
+            }
+        }
+
+        public ReplInterpretationAwaiter()
+        {
+            finished = false;
+        }
+
+        public string Text
+        {
+            get; protected set;
+        }
+
+        public Task Continue()
+        {
+            finished = true;
+            continuation?.Invoke();
+            return Task.FromResult(true);
+        }
+
+        public void OnCompleted(Action continuation)
+        {
+            this.continuation = continuation;
+        }
+
+        public ReplInterpretationAwaiter GetAwaiter()
+        {
+            return this;
+        }
+
+        public void GetResult()
+        {
+            // Empty -- just needed to satisfy the rules for how custom awaiters work.
         }
     }
 
@@ -159,6 +208,14 @@ namespace CloacaInterpreter
             }
         }
 
+        /// <summary>
+        /// Evaluates the given input and will trigger WhenReplCommandDone when it has finished. The data passed to that
+        /// event will include the result of evaluating the input--whether it was successful or unsuccessful.
+        /// 
+        /// Look at InterpretAsync if you'd like to receive the text output directly and block until evaluation has
+        /// completely finished.
+        /// </summary>
+        /// <param name="input">The code to interpret. Note that REPL code should have a trailing newline.</param>
         public void Interpret(string input)
         {
             CaughtError = false;
@@ -208,6 +265,38 @@ namespace CloacaInterpreter
             }
 
             Run();
+        }      
+
+        /// <summary>
+        /// Awaitable version of Interpret() that will block until interpretation concludes with the next text output.
+        /// Use this if you don't want to use the WhenReplCommandDone() event to get the result of a submitted script.
+        /// </summary>
+        /// <param name="consoleInput">REPL code input to be interpreted.</param>
+        /// <returns>The REPL text output from parsing and executing the console input.</returns>
+        public async Task<string> InterpretAsync(string consoleInput)
+        {
+            string output = null;
+            var awaiter = new ReplInterpretationAwaiter();
+
+            ReplCommandDone takeTextFromEvent = async(ignored, text) =>
+            {
+                output = text;
+                awaiter.Continue();
+            };
+
+            WhenReplCommandDone += takeTextFromEvent;
+
+            try
+            {
+                Interpret(consoleInput);
+                await awaiter;
+            }
+            finally
+            {
+                WhenReplCommandDone -= takeTextFromEvent;
+            }
+
+            return output;
         }
 
         private async void WhenReplTaskCompleted(TaskEventRecord scheduledTaskRecord)
