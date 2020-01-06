@@ -21,9 +21,8 @@ Following that, serialization of tasks.
   * [DONE] Parse strings
   * [DONE] Single quote
   * [DONE] Double quote
-  * Concatenate strings
   * [DONE] Strings in functions
-    * String as function argument
+    * [DONE] String as function argument
 * [DONE] Switch to a raw byte stream (one byte for opcode, two bytes for operand)
   * Verify .pyc syntax using dis.dis and hex editor
 * NoneType
@@ -36,54 +35,64 @@ Following that, serialization of tasks.
     * [DONE] Parse list
     * [DONE] Subscript read
     * [DONE] Subscript write
-    * Subscript with variable
-    * Slices
   * Tuples
     * [DONE] Parse tuple
     * Single element (trailing comma) tuple
-  * Sets
   * Dictionary
     * [DONE] Parse dictionary
     * [DONE] Set value
     * [DONE] get value
     * [DONE] Implement default using BUILD_CONST_KEY_MAP (even if not used)
     * [DONE] Implement default using BUILD_MAP
-      * You have to use this when the names are dynamically generated
-    * Subscript with variable
+    * Subscript with variable (probably just need a unit test)
 * [DONE] Booleans
   * [DONE] Basic True/false
   * Is true/false
   * Is Not true/false
-* Python number type
-  * Integer
-     * Hex
-     * Binary
-  * Floating point
-     * [DONE] Decimal point
-     * Exponential
-  * Imaginary
-  * Longs
 * Classes
   * [DONE] Constructor
   * [DONE] Access members
   * [DONE] Call functions
   * [DONE] Inheritance
-  * Wrap data types as classes
-     *  [In-progress] Integer
-     *  [In-progress] Floating-Point
-     *  Boolean
-     *  String
-     *  List
-     *  Dict
+  * [DONE] Wrap data types as classes
+     *  [DONE] Integer
+     *  [DONE] Floating-Point
+     *  [DONE] Boolean
+     *  [DONE] String
+     *  [DONE] List
+     *  [DONE] Dict
   * [DONE] Classes as objects (I think that's how it's done, right?). Need it for except classes (Exception as e, CompareException operator)
-  * __class__.__name__
-     * Add to class definitions
-     * Use in error messages
 * [DONE] Scheduler controlling interpreter to switch programs when one waits
 * Integration with parent runtime
   * [DONE] Call embedded C# function from script
-  * Call Python function through interpreter
   * [DONE-ish] Manage async call with waiting in interpreter
+* Exceptions
+  * [DONE] try-catch-finally (else?)
+  * [DONE-ish] Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
+  * [DONE] Raise from class
+* [DONE] See if you can use that REPL helper module directly.
+* REPL
+  * [DONE] Implement quit() because you keep wanting to type it! :)
+  * [DONE] Implement print() (prototype)
+  * [DONE] Demo needs to accept newline for sleep command before processing; looks like it hangs if we just pause before seemingly accepting
+    the newline.
+  * [DONE] Stop putting the void sentinel on the data stack.
+  * [DONE] REPL Demo TODO:
+     * [DONE] Schedule a perpetual coroutine that flips one of the blips every few seconds.
+	    * [DONE] Have scheduler call back when it needs to tick more so that more ticks can be scheduled in GUI thread.
+		* [DONE] Get REPL prompt to work again. Probably need to make the coroutine go through the scheduler directly instead of the REPL.
+
+Part 2: Unity embedding. See how practical this is to use in Unity.
+* First Unity embed!
+  * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
+  * Toss REPL into Unity!
+  * Expose a subsystem in REPL.
+* Serializing script state: dabble in trying to serialize a single, non-blocking script's state.
+
+
+Part 3: Hardening
+* Integration with parent runtime
+  * Call Python function through interpreter
   * Primitive Boxing/unboxing
      * Int
 	 * BigInt
@@ -99,62 +108,21 @@ Following that, serialization of tasks.
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
 	    cause the right constructor to get invoked.
   * Passing PyInteger where PyFloat is needed--and vice versa--shouldn't fail to invoke the wrapper
-* Serialization
-  * Any test that can wait should automatically be run 
-    * All the way through as usual
-    * Then with state saved and reloaded each time the interpreter stops
-* Flush out other major operators
-  * += etc
-  * Logic operators
-* Imports
-  * clr library for .NET stuff
-  * Import Unity stuff?
-* Exceptions
-  * [DONE] try-catch-finally (else?)
-  * [DONE-ish] Getting accurate stack trace (formatting doesn't yet have to be consistent with Python)
-  * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
-    * AssertionError
-  * raise from (exception chaining)
-  * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
-     * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
-       in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
-  * [DONE] Raise from class
-  * Wrap .NET exceptions
-* See if you can use that REPL helper module directly.
-* REPL
-  * implement help() with a proof-of-concept implementation
-  * Improve GUI interaction
-	 * Can still select text outside this area
-	 * History with arrow keys
-	 * Verify copy-paste of multiline statements
-  * [DONE] Implement quit() because you keep wanting to type it! :)
-  * [DONE] Implement print() (prototype)
-  * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
-    a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
-  * [Fixed?] Demo needs to accept newline for sleep command before processing; looks like it hangs if we just pause before seemingly accepting
-    the newline.
-  * Figure out how to make the scheduler more robust after hangs coming from assuming the last scheduled task--which was null--was the
-    one we cared about when notifying that we unblocked.
-  * [DONE] Stop putting the void sentinel on the data stack.
-  * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
-     * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
-       keen on making this check less strict.
-  * Add a thread guard in the scheduler that detects if tasks are starting to run from different threads.
-  * REPL Demo TODO:
-     * Schedule a perpetual coroutine that flips one of the blips every few seconds.
-	    * Have scheduler call back when it needs to tick more so that more ticks can be scheduled in GUI thread.
-		* Get REPL prompt to work again. Probably need to make the coroutine go through the scheduler directly instead of the REPL.
-* First Unity embed!
-  * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
-  * Toss REPL into Unity!
-  * Expose a subsystem in REPL.
-
-
-
-Part 2: First, harden the code, but keep some of this in mind while doing that.
-
-
+* Python number type
+  * Integer
+     * Hex
+     * Binary
+  * Floating point
+     * Exponential
+  * Imaginary
+  * Longs
+* Lists
+    * Subscript with variable (probably just need a unit test)?
+    * Slices
+  * Sets
 * Strings (part 2)
+  * str() function for various numeric/bool/other data types
+  * Concatenate strings
   * % operator
   * format command
   * unicode
@@ -165,9 +133,59 @@ Part 2: First, harden the code, but keep some of this in mind while doing that.
 * Classes
   * metaclasses
   * Multiple inheritance
-
+  * Serialization
+  * Any test that can wait should automatically be run 
+    * All the way through as usual
+    * Then with state saved and reloaded each time the interpreter stops
+  * __class__.__name__
+     * Add to class definitions
+     * Use in error messages
+* Flush out other major operators
+  * += etc
+  * Logic operators
+* Imports
+  * clr library for .NET stuff
+  * Import Unity stuff?
+* Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
 * Functions
   * Implement co_flags
+* Exceptions
+  * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
+    * AssertionError
+  * raise from (exception chaining)
+  * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
+     * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
+       in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
+  * Wrap .NET exceptions
+* REPL and REPL demo
+  * implement help() with a proof-of-concept implementation
+  * [May skip...] Improve GUI interaction
+	 * Can still select text outside this area
+	 * History with arrow keys
+	 * Verify copy-paste of multiline statements
+  * REPL tweak: strings should have single quotes on them but none of the other results. This is odd because we are getting
+    a PyString back to process and we work with a lot of PyStrings, so everything gets wrapped in quotes if we force it in PyString.
+  * Robustness from bad programs/awaits/embedding
+	* Figure out how to make the scheduler more robust after hangs coming from assuming the last scheduled task--which was null--was the
+	  one we cared about when notifying that we unblocked.
+    * Add a thread guard in the scheduler that detects if tasks are starting to run from different threads.  
+  * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
+     * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
+       keen on making this check less strict.
+
+
+Tech debt:
+* Implement BYTES_LITERAL
+* Implement full atom rule
+  * Requires yield
+* Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
+  Look at how CPython is managing them and try to reconcile
+* Reimplement WAIT
+  * Using async-await.
+  * Make it a function instead of a keyword
+* Reconcile CodeObject and WrappedCodeObject
+  * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
+* Argumentlist Call() should not require passing in new object[0]
 
 
 Getting line numbers
@@ -222,32 +240,7 @@ At this point you should start trying to embed it and suffer it.
 
 
 
-Tech debt:
-* Start to use dependency injection to manage CodeObject, FrameContext, and the like for WrappedCodeObjects instead of your chicken bits.
-  * This wasn't done at the time because I was dabbling in seeing if super() could be implemented with the frame context.
-  * I realized trying to pass the frame context too early in the process would be impossible for global built-ins because the
-    context will be constantly changing under them.
-* Implement BYTES_LITERAL
-* Implement full atom rule
-  * Requires yield
-* Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
-  Look at how CPython is managing them and try to reconcile
-* Reimplement WAIT
-  * Using async-await.
-  * Make it a function instead of a keyword
-* Reconcile CodeObject and WrappedCodeObject
-  * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
-* Argumentlist Call() should not require passing in new object[0]
-
 Useful bits:
 Dump a code object that comes up in a disassembly
 >>> import ctypes
 >>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value
-
-
-
-
-Current notes:
-REPL hangs when running blocked code because Done() doesn't return true. There needs to be a await to stop if
-everything is blocked, and there should be a way to test for that. Furthermore, there needs to be a way to have the
-interpreter pick itself up when a blocked activity unblocks. This part might already be under control.
