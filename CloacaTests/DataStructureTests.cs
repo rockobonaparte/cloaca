@@ -112,6 +112,16 @@ namespace CloacaTests
         }
 
         [Test]
+        public void DeclareSingleElementTuple()
+        {
+            var interpreter = runProgram("a = (\"foo\",)\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var tuple = (PyTuple)variables["a"];
+            Assert.That(tuple.Values, Is.EquivalentTo(new object[] { new PyString("foo") }));
+        }
+
+        [Test]
         public void DeclareBasicList()
         {
             // 2 0 LOAD_CONST               1 ('foo')

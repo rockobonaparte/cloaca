@@ -37,7 +37,7 @@ Following that, serialization of tasks.
     * [DONE] Subscript with variable (probably just need a unit test)?
   * Tuples
     * [DONE] Parse tuple
-    * Single element (trailing comma) tuple
+    * [DONE] Single element (trailing comma) tuple
   * Dictionary
     * [DONE] Parse dictionary
     * [DONE] Set value

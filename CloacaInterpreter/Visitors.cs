@@ -258,7 +258,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // For now, we're assuming an atom of parentheses is a tuple
         base.VisitAtomParens(context);
 
-        if (context.testlist_comp().test().Length > 1)
+        // testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* (',')? );
+        // If there's more than one component and it starts with a comma then we're looking at a tuple.
+        // That includes single-element tuples: ("foo",)
+        if (context.testlist_comp().children.Count > 1 && context.testlist_comp().children[1].GetText() == ",")
         {
             ActiveProgram.AddInstruction(ByteCodes.BUILD_TUPLE, context.testlist_comp().test().Length, context);
         }
