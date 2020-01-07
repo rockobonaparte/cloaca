@@ -47,8 +47,8 @@ Following that, serialization of tasks.
     * [DONE] Subscript with variable (probably just need a unit test)
 * [DONE] Booleans
   * [DONE] Basic True/false
-  * Is true/false
-  * Is Not true/false
+  * [DONE] Is true/false
+  * [DONE] Is Not true/false
 * Classes
   * [DONE] Constructor
   * [DONE] Access members

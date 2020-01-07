@@ -120,6 +120,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private void generateStoreForVariable(string variableName, ParserRuleContext context)
     {
+        if(variableName == "None")
+        {
+            throw new Exception("SyntaxError: can't assign to keyword (tried to assign to 'None')");
+        }
+
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
         {

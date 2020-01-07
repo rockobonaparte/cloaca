@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
+using LanguageImplementation;
+using System;
 
 namespace CloacaTests
 {
@@ -147,6 +150,17 @@ namespace CloacaTests
         }
 
         [Test]
+        public void CantAssignToNone()
+        {
+            FrameContext runContext = null;
+            Assert.Throws<Exception>(
+              () => {
+                  runProgram(
+                    "None = 1\n", new Dictionary<string, object>(), 1, out runContext);
+              }, "SyntaxError: can't assign to keyword (tried to assign to 'None')");
+        }
+
+        [Test]
         public void BasicWait()
         {
             runBasicTest(
@@ -262,6 +276,19 @@ namespace CloacaTests
             new VariableMultimap(new TupleList<string, object>
             {
                 { "d", PyBool.False }
+            }), 1);
+        }
+
+        [Test]
+        public void LogicIsNot()
+        {
+            // When first implemented, this was generated a bunch of loads
+            // and then storing the last value pushed on the stack to d.
+            runBasicTest("a = False\n" +
+                         "b = a is not True\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyBool.True }
             }), 1);
         }
 
