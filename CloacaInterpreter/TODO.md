@@ -24,7 +24,6 @@ Following that, serialization of tasks.
   * [DONE] Strings in functions
     * [DONE] String as function argument
 * [DONE] Switch to a raw byte stream (one byte for opcode, two bytes for operand)
-  * Verify .pyc syntax using dis.dis and hex editor
 * NoneType
   * [DONE] Base value
   * [DONE] is None
@@ -91,6 +90,7 @@ Part 2: Unity embedding. See how practical this is to use in Unity.
 
 
 Part 3: Hardening
+* Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
   * Call Python function through interpreter
   * Primitive Boxing/unboxing
@@ -172,6 +172,7 @@ Part 3: Hardening
   * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
      * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
        keen on making this check less strict.
+* Code bytes should generally take just one extra byte as an argument instead of two bytes. This apparently changed in 3.6: https://stackoverflow.com/questions/50806427/how-to-get-size-of-python-opcode. Question posted online in comp.lang.python.
 
 
 Tech debt:
