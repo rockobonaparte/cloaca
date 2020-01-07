@@ -55,6 +55,19 @@ namespace CloacaTests
             Assert.That(variables["b"], Is.EqualTo(new PyInteger(1)));
         }
 
+
+        [Test]
+        public void IndexIntoDictWithVariable()
+        {
+            var interpreter = runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
+                                         "b = \"foo\"\n" +
+                                         "c = a[b]\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("c"));
+            var element = (PyInteger)variables["c"];
+            Assert.That(element, Is.EqualTo(new PyInteger(1)));
+        }
+
         [Test]
         public void ListReadWrite()
         {
@@ -134,5 +147,16 @@ namespace CloacaTests
             Assert.That(list, Is.EquivalentTo(referenceList));
         }
 
+        [Test]
+        public void IndexIntoListWithVariable()
+        {
+            var interpreter = runProgram("a = [\"foo\", 1]\n" +
+                                         "b = 0\n" +
+                                         "c = a[b]\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("c"));
+            var element = (PyString)variables["c"];
+            Assert.That(element, Is.EqualTo(new PyString("foo")));
+        }
     }
 }

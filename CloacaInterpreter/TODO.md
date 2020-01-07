@@ -34,6 +34,7 @@ Following that, serialization of tasks.
     * [DONE] Parse list
     * [DONE] Subscript read
     * [DONE] Subscript write
+    * [DONE] Subscript with variable (probably just need a unit test)?
   * Tuples
     * [DONE] Parse tuple
     * Single element (trailing comma) tuple
@@ -43,7 +44,7 @@ Following that, serialization of tasks.
     * [DONE] get value
     * [DONE] Implement default using BUILD_CONST_KEY_MAP (even if not used)
     * [DONE] Implement default using BUILD_MAP
-    * Subscript with variable (probably just need a unit test)
+    * [DONE] Subscript with variable (probably just need a unit test)
 * [DONE] Booleans
   * [DONE] Basic True/false
   * Is true/false
@@ -117,7 +118,6 @@ Part 3: Hardening
   * Imaginary
   * Longs
 * Lists
-    * Subscript with variable (probably just need a unit test)?
     * Slices
   * Sets
 * Strings (part 2)
