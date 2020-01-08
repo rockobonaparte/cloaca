@@ -108,6 +108,9 @@ Part 3: Hardening
      * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
        keen on making this check less strict.
 * Code bytes should generally take just one extra byte as an argument instead of two bytes. This apparently changed in 3.6: https://stackoverflow.com/questions/50806427/how-to-get-size-of-python-opcode. Question posted online in comp.lang.python.
+  * All instructions are two bytes (wordcode) in 3.6+ and that includes ones that normally don't need arguments. Use the EXTENDED_ARG opcode to stage wider data. They are ordered most significant bytes to list; the first EXTENDED_ARG byte is the
+    most-significant byte in the series and the number of them determines how far we go. So the interpreter should just assume to fetch into an int and just shift that value over and continue fetching when it seeds EXTENDED_ARG. This makes things
+	prettier too since we don't have to worry about moving the cursor forward a mixed amount of times based on opcode. It's always two.
 
 
 Tech debt:
