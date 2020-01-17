@@ -19,9 +19,13 @@ Following that, serialization of tasks.
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
-  * Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
-  * Toss REPL into Unity!
-  * Expose a subsystem in REPL.
+  * [DONE] Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
+  * [DONE] Toss REPL into Unity!
+  * Final exam: start a script that works on a gameObject to do something like change its color with a delay in a loop
+     * Expose scheduler in order to execute scripts in a non-blocking way
+	 * Expose GameObject finding code in Unity
+	 * Manipulate GameObject code
+	 * Embed scene hierarchy into Unity
 * Serializing script state: dabble in trying to serialize a single, non-blocking script's state.
 
 
@@ -183,3 +187,17 @@ Useful bits:
 Dump a code object that comes up in a disassembly
 >>> import ctypes
 >>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value
+
+
+Embedding Notes:
+Current idea is to create versions of the base types that act like regular Python types but either:
+1. Are the regular PyX data type.
+2. Wrap a C# class's field
+
+We basically need something like a reference type to the wrapped object so that the underlying object sees the changes.
+So it would be something like:
+
+
+PyObject <- PyInteger <- (PurePyInteger, WrappedPyInteger)
+
+Both of the child classes would need to report as a PyInteger and satisfy type tests for that.

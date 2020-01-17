@@ -19,6 +19,22 @@ using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
+    class ReflectIntoPython
+    {
+        public int AnInteger;
+        public string AString;
+        public ReflectIntoPython(int intVal, string strVal)
+        {
+            AnInteger = intVal;
+            AString = strVal;
+        }
+
+        public void SomeMethod()
+        {
+
+        }
+    }
+
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
     {
         private IScheduler scheduler;
@@ -151,6 +167,85 @@ namespace CloacaTests
             {
                 { "a", new PyInteger(1111) }
             }), 1);
+        }
+
+        [Test]
+        public void BoxObject()
+        {
+            var pyObj = PyObjectBoxer.Box(new ReflectIntoPython(1, "Yay!"));
+        }
+    }
+
+    // Just putting this in the same place as the test for now while we explore where we all have the worry about doing this kind of thing.
+    public class PyObjectBoxer
+    {
+        public static PyInteger Box(BigInteger num)
+        {
+            return new PyInteger(num);
+        }
+
+        public static PyInteger Box(int num)
+        {
+            return new PyInteger(num);
+        }
+
+        public static PyFloat Box(float num)
+        {
+            return new PyFloat(num);
+        }
+
+        public static PyFloat Box(double num)
+        {
+            return new PyFloat(num);
+        }
+
+        public static PyFloat Box(decimal num)
+        {
+            return new PyFloat(num);
+        }
+
+        public static PyBool Box(bool boolean)
+        {
+            return PyBool.Create(boolean);
+        }
+
+        public static PyString Box(string str)
+        {
+            return new PyString(str);
+        }
+
+        public static PyObject Box(object genericObj)
+        {
+            Type objType = genericObj.GetType();
+            var po = new PyObject();
+            po.__dict__.Add("__name__", objType.Name);
+            po.__dict__.Add("__module__", null);
+            po.__dict__.Add("__qualname__", null);
+
+            // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
+            foreach(var method in objType.GetMethods())
+            {
+                po.__dict__.Add(method.Name, null);
+            }
+
+            foreach(var field in objType.GetFields())
+            {
+                if(field.FieldType == typeof(int))
+                {
+                    po.__dict__.Add(field.Name, new PyInteger((int)field.GetValue(genericObj)));
+                }
+                else if(field.FieldType == typeof(string))
+                {
+                    po.__dict__.Add(field.Name, new PyString((string)field.GetValue(genericObj)));
+                }
+            }
+
+            foreach(var eventInfo in objType.GetEvents())
+            {
+                po.__dict__.Add(eventInfo.Name, null);
+            }
+
+            return po;
         }
     }
 }
