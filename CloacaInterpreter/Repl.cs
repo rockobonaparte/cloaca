@@ -301,10 +301,10 @@ namespace CloacaInterpreter
 
         private async void WhenReplTaskCompleted(TaskEventRecord scheduledTaskRecord)
         {
-            if (scheduledTaskRecord.EscapedException != null)
+            if (scheduledTaskRecord.EscapedExceptionInfo != null)
             {
                 CaughtError = true;
-                WhenReplCommandDone(this, scheduledTaskRecord.EscapedException.Message);
+                WhenReplCommandDone(this, scheduledTaskRecord.EscapedExceptionInfo.SourceException.Message);
             }
             else
             {

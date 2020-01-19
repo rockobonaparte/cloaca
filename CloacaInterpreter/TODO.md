@@ -190,6 +190,10 @@ Dump a code object that comes up in a disassembly
 
 
 Embedding Notes:
+Examined how IronPython was doing this. It looks like they just juggle the types in their runtime without persisted
+wrappers. Where there was some kind of wrapper, they had weak references. So it looks like I should try to slap my
+objects right on the stack and look into what that would be like to use.
+
 Current idea is to create versions of the base types that act like regular Python types but either:
 1. Are the regular PyX data type.
 2. Wrap a C# class's field

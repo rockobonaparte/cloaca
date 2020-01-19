@@ -56,7 +56,7 @@ namespace CloacaInterpreter
     public class TaskEventRecord
     {
         public FrameContext Frame { get; protected set; }
-        public Exception EscapedException { get; protected set; }
+        public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
         public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
         public bool Completed { get; protected set; }
          
@@ -64,7 +64,7 @@ namespace CloacaInterpreter
         {
             Frame = frame;
             Completed = false;
-            EscapedException = null;
+            EscapedExceptionInfo = null;
         }
 
         public void NotifyCompleted()
@@ -73,10 +73,10 @@ namespace CloacaInterpreter
             WhenTaskCompleted(this);
         }
 
-        public void NotifyEscapedException(Exception escaped)
+        public void NotifyEscapedException(ExceptionDispatchInfo escapedInfo)
         {
             Completed = true;
-            EscapedException = escaped;
+            EscapedExceptionInfo = escapedInfo;
             WhenTaskCompleted(this);
         }
     }
@@ -231,11 +231,11 @@ namespace CloacaInterpreter
                 {
                     // We want to rethrow while retaining the original stack trace.
                     // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
-                    scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException).SourceException);
+                    scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException));
                 }
                 else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
                 {
-                    scheduled.SubmitterReceipt.NotifyEscapedException(new EscapedPyException(lastScheduled.Frame.CurrentException));
+                    scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(new EscapedPyException(lastScheduled.Frame.CurrentException)));
                 }
                 else
                 {

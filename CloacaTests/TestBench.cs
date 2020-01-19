@@ -58,9 +58,9 @@ namespace CloacaTests
             var scheduler_task = scheduler.RunUntilDone();
             scheduler_task.Wait();
             Assert.That(receipt.Completed);
-            if(receipt.EscapedException != null)
+            if(receipt.EscapedExceptionInfo != null)
             {
-                throw receipt.EscapedException;
+                receipt.EscapedExceptionInfo.Throw();
             }
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
