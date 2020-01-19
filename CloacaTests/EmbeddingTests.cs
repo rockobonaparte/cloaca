@@ -225,7 +225,8 @@ namespace CloacaTests
             // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
             foreach(var method in objType.GetMethods())
             {
-                po.__dict__.Add(method.Name, null);
+                // TODO: Have to deal with overloading
+                po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
             }
 
             foreach(var field in objType.GetFields())
