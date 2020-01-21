@@ -30,37 +30,19 @@ namespace LanguageImplementation
             Scheduler = scheduler;
         }
 
+        public static bool IsInjectedType(Type parameterType)
+        {
+            return parameterType == typeof(IInterpreter) ||
+               parameterType == typeof(FrameContext) ||
+               parameterType == typeof(IScheduler);
+        }
+
         public object[] Inject(MethodInfo methodInfo, object[] args)
         {
             var methodParams = methodInfo.GetParameters();
 
-            // Let's assume usually we don't need to actually do anything. In such cases, return args since it's already okay.
-            bool mustInject = false;
-            
             // If there's a params field then we have to cram an array into there.
             bool hasParamsField = methodParams.Length >= 1 && methodParams[methodParams.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
-            mustInject |= hasParamsField;
-            if (!mustInject)
-            {
-                // Okay, let's see if we need to inject an interpreter or frame context.
-                foreach(var paramInfo in methodParams)
-                {
-                    if(paramInfo.ParameterType == typeof(IInterpreter) ||
-                       paramInfo.ParameterType == typeof(FrameContext) ||
-                       paramInfo.ParameterType == typeof(IScheduler))
-                    {
-                        mustInject = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!mustInject)
-            {
-                return args;
-            }
-
-            // If we're here, then it's injection time!
 
             // Transform all arguments except for any in the params field.
             object[] outParams = new object[methodParams.Length];
@@ -82,7 +64,7 @@ namespace LanguageImplementation
                 }
                 else
                 {
-                    outParams[out_param_i] = args[in_param_i];
+                    outParams[out_param_i] = PyNetConverter.Convert(args[in_param_i], paramInfo.ParameterType);
                     ++in_param_i;
                 }
             }
@@ -103,7 +85,7 @@ namespace LanguageImplementation
                     var paramsArray = Array.CreateInstance(elementType, args.Length - in_param_i);
                     for (int i = 0; i < paramsArray.Length; ++i)
                     {
-                        paramsArray.SetValue(args[in_param_i + i], i);
+                        paramsArray.SetValue(PyNetConverter.Convert(args[in_param_i + i], elementType), i);
                     }
 
                     outParams[outParams.Length - 1] = paramsArray;

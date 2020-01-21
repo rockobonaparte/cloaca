@@ -15,4 +15,12 @@
 
         }
     }
+
+    public class NotImplemented : PyException
+    {
+        public NotImplemented(string msg) : base(msg)
+        {
+
+        }
+    }
 }

@@ -43,20 +43,22 @@ namespace CloacaTests
             }), 1);
         }
 
-        [Ignore("We'll start enabling this as an experiment")]
         [Test]
         public void AccessExternalObjProperty()
         {
+            // We currently have fields and properties figured out, but we can't assign a method or anything like that. :(
             var a = new ReflectIntoPython(1, "test");
 
-            runBasicTest("b = a.AnInteger\n",
+            runBasicTest("b = a.AnInteger\n" +
+                         "c = a.AnIntegerProperty\n",
             new Dictionary<string, object>
             {
                 { "a", a }
             },
             new VariableMultimap(new TupleList<string, object>
             {
-                { "b", 1 }
+                { "b", 1 },
+                { "c", 1 }
             }), 1);
         }
     }

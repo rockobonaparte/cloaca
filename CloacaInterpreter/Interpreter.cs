@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq.Expressions;
-using System.Numerics;
 using System.Collections.Generic;
 
 using LanguageImplementation;
@@ -516,11 +515,8 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
                                 var attrName = context.Program.Names[nameIdx];
-
-                                var obj = (PyObject)context.DataStack.Pop();
-                                var val = obj.__getattribute__(attrName);
-
-                                context.DataStack.Push(val);
+                                var rawObj = context.DataStack.Pop();
+                                context.DataStack.Push(ObjectResolver.GetValue(attrName, rawObj));
                             }
                             context.Cursor += 2;
                             break;

@@ -23,6 +23,68 @@ namespace CloacaTests
     {
         public int AnInteger;
         public string AString;
+
+        public int AnIntegerProperty
+        {
+            get { return AnInteger; }
+            set { AnInteger = value; }
+        }
+
+        public int AnOverload()
+        {
+            return AnInteger;
+        }
+
+        public int AnOverload(int an_arg)
+        {
+            AnInteger += an_arg;
+            return AnInteger;
+        }
+
+        public int AnOverload(params int[] lots_of_ints)
+        {
+            foreach(int to_add in lots_of_ints)
+            {
+                AnInteger += to_add;
+            }
+            return AnInteger;
+        }
+
+        // Same as AnOverload that takes params, but it takes an int[] as a normal field.
+        // We test if we can work with arrays that are not params. When this was added, we
+        // hadn't implemented this yet.
+        public int TakeIntArray(int[] ints_that_are_not_params)
+        {
+            foreach (int to_add in ints_that_are_not_params)
+            {
+                AnInteger += to_add;
+            }
+            return AnInteger;
+        }
+
+        // Same as TakeIntArray but we mutate it to show that we can alter the proxy.
+        public int TakeIntArrayAndChange(int[] ints_that_are_not_params)
+        {
+            for (int i = 0; i < ints_that_are_not_params.Length; ++i)
+            {
+                AnInteger += ints_that_are_not_params[i];
+                ints_that_are_not_params[i] += 1;
+            }
+            return AnInteger;
+        }
+
+        public object ReturnsNull()
+        {
+            return null;
+        }
+
+        public bool IsNull(object isItNull)
+        {
+            return isItNull == null;
+        }
+
+        public ReflectIntoPython RecursiveObject;
+
         public ReflectIntoPython(int intVal, string strVal)
         {
             AnInteger = intVal;
@@ -119,33 +181,6 @@ namespace CloacaTests
             }), 2);
         }
 
-        [Test]
-        [Ignore("Primitive boxing not yet implemented")]
-        public void EmbeddingBasicTypes()
-        {
-            runBasicTest(
-                "dest_int = src_int\n" +
-                "dest_float = src_float\n" +
-                "dest_double = src_double\n" +
-                "dest_string = src_string\n" +
-                "dest_bool = src_bool\n",
-                new Dictionary<string, object>()
-            {
-                { "src_int", 1 },        // Note that it's going in as a .NET integer, not PyInteger. It should get boxed.
-                { "src_float", 2.0f },
-                { "src_double", 3.0 },
-                { "src_string", "4" },
-                { "src_bool", true }
-            }, new VariableMultimap(new TupleList<string, object>
-            {
-                { "dest_int", new PyInteger(1) },     // Note that it *should* be a PyInteger!
-                { "dest_float", new PyFloat(2.0f) },
-                { "dest_double", new PyFloat(3.0) },
-                { "dest_string", new PyString("4") },
-                { "dest_bool", PyBool.True },
-            }), 1);
-        }
-
         class EmbeddedBasicObject
         {
             public int aNumber;
@@ -156,23 +191,139 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Object boxing not yet implemented")]
-        public void EmbedBasicObjectRead()
+        public void BoxObject()
         {
-            var embeddedInstance = new EmbeddedBasicObject();
-            runBasicTest("a = basic_object.aNumber\n", new Dictionary<string, object>()
+            var pyObj = PyObjectBoxer.Box(new ReflectIntoPython(1, "Yay!"));
+        }
+
+        [Test]
+        public void CallOverloads()
+        {
+            runBasicTest(
+                "a = obj.AnOverload()\n" +
+                "b = obj.AnOverload(raw_integer)\n",
+                new Dictionary<string, object>()
             {
-                { "blocking_call", embeddedInstance }
+                { "obj", new ReflectIntoPython(0, "doesn't matter") },
+                { "raw_integer", 1 },
             }, new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(1111) }
+                { "a", 0 },
+                { "b", 1 }
             }), 1);
         }
 
         [Test]
-        public void BoxObject()
+        [Ignore("Doesn't work yet; we don't manage nulls with conversion")]
+        public void AcceptsNoneAsNull()
         {
-            var pyObj = PyObjectBoxer.Box(new ReflectIntoPython(1, "Yay!"));
+            runBasicTest(
+                "a = obj.IsNull(None)\n" +
+                "b = obj.IsNull(1)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", true },
+                { "b", false }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("Doesn't work yet; we don't manage nulls with conversion")]
+        public void NullEqualsNone()
+        {
+            runBasicTest(
+                "a = obj.ReturnsNull() is None\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyBool.True }
+            }), 1);
+        }
+
+        [Test]
+        public void FollowTwoLevelsDeep()
+        {
+            var inner = new ReflectIntoPython(100, "inner");
+            var outer = new ReflectIntoPython(0, "outer");
+            outer.RecursiveObject = inner;
+
+            runBasicTest(
+                "a = obj.AnInteger\n" +
+                "b = obj.RecursiveObject.AnInteger\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", outer }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 0 },
+                { "b", 100 }
+            }), 1);
+        }
+
+        [Test]
+        public void PassPyIntegerToInteger()
+        {
+            runBasicTest(
+                "a = obj.AnOverload(15)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 15 }
+            }), 1);
+        }
+
+        [Test]
+        public void PassPyIntegerToParamsInteger()
+        {
+            runBasicTest(
+                "a = obj.AnOverload(1, 2, 3, 4, 5)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 1 + 2 + 3 + 4 + 5 }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("We don't yet try to convert PyList to an array.")]
+        public void PassPyIntegerToIntegerArray()
+        {
+            runBasicTest(
+                "a = obj.TakeIntArray([1, 2, 3, 4, 5])\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 1 + 2 + 3 + 4 + 5 }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("We don't yet try to convert PyList to an array. Furthermore, we don't work on mutation of the proxy yet.")]
+        public void PassPyListAndMutate()
+        {
+            var interpreter = runProgram(
+                "the_list = [1, 2]\n" +
+                "a = obj.TakeIntArray(the_list)\n",
+                new Dictionary<string, object>()
+                {
+                    { "obj", new ReflectIntoPython(0, "doesn't matter") }
+                }, 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables.ContainsKey("the_list"));
+            Assert.That(variables["the_list"], Is.EquivalentTo(new List<object> { new PyInteger(2), new PyInteger(3) }));
+            Assert.That(variables.ContainsKey("a"));
+            Assert.That(variables["a"], Is.EqualTo(new PyInteger(3)));
         }
     }
 
@@ -225,8 +376,11 @@ namespace CloacaTests
             // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
             foreach(var method in objType.GetMethods())
             {
-                // TODO: Have to deal with overloading
-                po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
+                // Overloaded methods come up more than once, but the WrappedCodeObject takes care of it the first time.
+                if (!po.__dict__.ContainsKey(method.Name))
+                {
+                    po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
+                }
             }
 
             foreach(var field in objType.GetFields())

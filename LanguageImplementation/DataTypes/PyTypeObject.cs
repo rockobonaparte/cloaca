@@ -104,7 +104,7 @@ namespace LanguageImplementation.DataTypes
                 if (this.__dict__.ContainsKey(classMember.Name))
                 {
                     var existing = this.__dict__[classMember.Name] as WrappedCodeObject;
-                    if(existing.MethodInfo.DeclaringType.IsSubclassOf(classMember.DeclaringType))
+                    if(existing.MethodInfos[0].DeclaringType.IsSubclassOf(classMember.DeclaringType))
                     {
                         continue;
                     }

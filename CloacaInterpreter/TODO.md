@@ -205,3 +205,30 @@ So it would be something like:
 PyObject <- PyInteger <- (PurePyInteger, WrappedPyInteger)
 
 Both of the child classes would need to report as a PyInteger and satisfy type tests for that.
+
+
+Wrapping overridden methods is a pain. We need to figure out which one we're invoking. That would be of a certain complexity, but we're
+freely injecting some of the variables. Hence, we need to find the signature that matches the arguments, while excluding injected arguments.
+
+1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
+   1. [DONE] Accept multiple MethodInfos
+   2. [DONE] Still have defaults for just a single one
+   3. [DONE] Determine which one is the best fit given incoming arguments
+   4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
+2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
+3. Then deal with embedded class constructors!
+4. Events
+   1. Implement necessary operators
+      1. Implement +=
+      2. Implement -=
+   2. Try to subscribe C# event handler to C# event
+   3. Try to subscribe Cloaca function to C# event
+5. Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
+6. Advanced overload: Check if there could be multiple applicable overloads
+   * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
+     typical way to manage this.
+7. More conversions: Array and Dictionary conversions from Python to .NET functions. Can I do it with some kind of subclassed wrapper?
+
+Sketch script to use as part of a final test of all this.
+
+Need to make sure that we can check and convert Python args in params field
