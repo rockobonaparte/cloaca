@@ -23,6 +23,13 @@ namespace CloacaTests
     {
         public int AnInteger;
         public string AString;
+
+        public int AnIntegerProperty
+        {
+            get { return AnInteger; }
+            set { AnInteger = value; }
+        }
+
         public ReflectIntoPython(int intVal, string strVal)
         {
             AnInteger = intVal;
