@@ -93,15 +93,22 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
         private static string extractExceptionMessage(PyObject exc)
         {
-            var b = new StringBuilder();
-            b.AppendLine("Traceback (most recent call list):");
             var tb = (PyTraceback)exc.__dict__[PyException.TracebackName];
-            b.AppendLine(tb.DumpStack());
-            if (exc.__dict__.ContainsKey("message"))
+            if (tb != null)
             {
-                b.AppendLine((string) exc.__dict__["message"]);
+                var b = new StringBuilder();
+                b.AppendLine("Traceback (most recent call list):");
+                b.AppendLine(tb.DumpStack());
+                if (exc.__dict__.ContainsKey("message"))
+                {
+                    b.AppendLine((string)exc.__dict__["message"]);
+                }
+                return b.ToString();
             }
-            return b.ToString();
+            else
+            {
+                return "No traceback available. This exception was probably created outside of a running program.";
+            }
         }
 
         /// <summary>
