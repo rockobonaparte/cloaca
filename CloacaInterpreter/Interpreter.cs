@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq.Expressions;
-using System.Numerics;
 using System.Collections.Generic;
 
 using LanguageImplementation;
@@ -516,39 +515,8 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
                                 var attrName = context.Program.Names[nameIdx];
-
                                 var rawObj = context.DataStack.Pop();
-                                var asPyObj = rawObj as PyObject;
-                                if(asPyObj != null)
-                                {
-                                    var val = asPyObj.__getattribute__(attrName);
-                                    context.DataStack.Push(val);
-                                }
-                                else
-                                {
-                                    try
-                                    {
-                                        // Try it as a field and then as a property.
-                                        var objType = rawObj.GetType();
-                                        var member = objType.GetMember(attrName);
-                                        if(member[0].MemberType == System.Reflection.MemberTypes.Property)
-                                        {
-                                            context.DataStack.Push(rawObj.GetType().GetProperty(attrName).GetValue(rawObj));
-                                        }
-                                        else if(member[0].MemberType == System.Reflection.MemberTypes.Field)
-                                        {
-                                            context.DataStack.Push(rawObj.GetType().GetField(attrName).GetValue(rawObj));
-                                        }
-                                        else
-                                        {
-                                            throw new EscapedPyException(new AttributeError("'" + rawObj.GetType().Name + "' object attribute named '" + attrName + "' is neither a field nor a property."));
-                                        }
-                                    }
-                                    catch(ArgumentException e)
-                                    {
-                                        throw new EscapedPyException(new AttributeError("'" + rawObj.GetType().Name + "' object has no attribute named '" + attrName + "'"));
-                                    }
-                                }
+                                context.DataStack.Push(ObjectResolver.GetValue(attrName, rawObj));
                             }
                             context.Cursor += 2;
                             break;
