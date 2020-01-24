@@ -20,6 +20,12 @@ namespace CloacaTests
         {
             return 101;
         }
+
+        // Will return true if the first character of the parameter type T is even. False otherwise.
+        public bool GenericMethod<T>()
+        {
+            return typeof(T).Name[0] % 2 == 0;
+        }
     }
 
     [TestFixture]
@@ -40,6 +46,13 @@ namespace CloacaTests
                 var extracted = ObjectResolver.GetValue("OverriddenMethod", new TestExtractClass());
                 Assert.IsNotNull(extracted);
             }, "'TestExtractClass' object attribute named 'OverriddenMethod' is a method overridden multiple ways, which we cannot yet wrap.");
+        }
+
+        [Test]
+        public void ExtractGenericMethod()
+        {
+            var extracted = ObjectResolver.GetValue("GenericMethod", new TestExtractClass());
+            Assert.IsNotNull(extracted);
         }
     }
 }
