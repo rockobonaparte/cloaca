@@ -205,3 +205,7 @@ So it would be something like:
 PyObject <- PyInteger <- (PurePyInteger, WrappedPyInteger)
 
 Both of the child classes would need to report as a PyInteger and satisfy type tests for that.
+
+
+Wrapping overridden methods is a pain. We need to figure out which one we're invoking. That would be of a certain complexity, but we're
+freely injecting some of the variables. Hence, we need to find the signature that matches the arguments, while excluding injected arguments.

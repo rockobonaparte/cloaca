@@ -30,6 +30,13 @@ namespace LanguageImplementation
             Scheduler = scheduler;
         }
 
+        public bool IsInjectedType(Type parameterType)
+        {
+            return parameterType == typeof(IInterpreter) ||
+               parameterType == typeof(FrameContext) ||
+               parameterType == typeof(IScheduler);
+        }
+
         public object[] Inject(MethodInfo methodInfo, object[] args)
         {
             var methodParams = methodInfo.GetParameters();
@@ -45,9 +52,7 @@ namespace LanguageImplementation
                 // Okay, let's see if we need to inject an interpreter or frame context.
                 foreach(var paramInfo in methodParams)
                 {
-                    if(paramInfo.ParameterType == typeof(IInterpreter) ||
-                       paramInfo.ParameterType == typeof(FrameContext) ||
-                       paramInfo.ParameterType == typeof(IScheduler))
+                    if(IsInjectedType(paramInfo.ParameterType))
                     {
                         mustInject = true;
                         break;

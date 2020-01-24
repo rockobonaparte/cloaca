@@ -94,7 +94,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="notes.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
