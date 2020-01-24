@@ -209,3 +209,20 @@ Both of the child classes would need to report as a PyInteger and satisfy type t
 
 Wrapping overridden methods is a pain. We need to figure out which one we're invoking. That would be of a certain complexity, but we're
 freely injecting some of the variables. Hence, we need to find the signature that matches the arguments, while excluding injected arguments.
+
+1. Current plan is to extend WrappedCodeObject to take multiple method candidates:
+   1. Accept multiple MethodInfos
+   2. Still have defaults for just a single one
+   3. Determine which one is the best fit given incoming arguments
+   4. Check if there could be multiple applicable ones and error if there's some kind of collision
+2. Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
+3. Then deal with embedded class constructors!
+4. Events
+   1. Implement necessary operators
+      1. Implement +=
+      2. Implement -=
+   2. Try to subscribe C# event handler to C# event
+   3. Try to subscribe Cloaca function to C# event
+5. Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
+
+Sketch script to use as part of a final test of all this.
