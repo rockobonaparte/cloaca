@@ -12,11 +12,11 @@ namespace CloacaTests
 
         }
 
-        public int OverriddenMethod()
+        public int OverloadedMethod()
         {
             return 100;
         }
-        public int OverriddenMethod(string dontcare)
+        public int OverloadedMethod(string dontcare)
         {
             return 101;
         }
@@ -39,13 +39,10 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ExtractOverriddenMethod()
+        public void ExtractOverloadMethod()
         {
-            Assert.Throws(typeof(EscapedPyException), () =>
-            {
-                var extracted = ObjectResolver.GetValue("OverriddenMethod", new TestExtractClass());
-                Assert.IsNotNull(extracted);
-            }, "'TestExtractClass' object attribute named 'OverriddenMethod' is a method overridden multiple ways, which we cannot yet wrap.");
+            var extracted = ObjectResolver.GetValue("OverloadedMethod", new TestExtractClass());
+            Assert.IsNotNull(extracted);
         }
 
         [Test]

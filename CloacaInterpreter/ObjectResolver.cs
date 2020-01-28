@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
@@ -32,11 +34,27 @@ namespace CloacaInterpreter
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Method)
                     {
-                        if(member.Length > 1)
+                        // If there's only one method for the given name (most common), then
+                        // let's skip all of this filtering.
+                        if(member.Length == 1)
                         {
-                            throw new EscapedPyException(new NotImplemented("'" + rawObject.GetType().Name + "' object attribute named '" + attrName + "' is a method overridden multiple ways, which we cannot yet wrap."));
+                            return new WrappedCodeObject(member[0].Name, rawObject.GetType().GetMethod(attrName), rawObject);
                         }
-                        return new WrappedCodeObject(member[0].Name, objType.GetMethod(attrName), rawObject);
+                        else
+                        {
+                            var allMethods = objType.GetMethods();
+                            var overloads = new MethodInfo[member.Length];
+                            int overload_i = 0;
+                            foreach (var methodInfo in allMethods)
+                            {
+                                if (methodInfo.Name == member[0].Name)
+                                {
+                                    overloads[overload_i] = methodInfo;
+                                    overload_i += 1;
+                                }
+                            }
+                            return new WrappedCodeObject(member[0].Name, overloads, rawObject);
+                        }
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Event)
                     {
