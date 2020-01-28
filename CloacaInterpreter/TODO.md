@@ -213,8 +213,9 @@ freely injecting some of the variables. Hence, we need to find the signature tha
 1. Current plan is to extend WrappedCodeObject to take multiple method candidates:
    1. [DONE] Accept multiple MethodInfos
    2. [DONE] Still have defaults for just a single one
-   3. [WIP] Determine which one is the best fit given incoming arguments
-   4. Check if there could be multiple applicable ones and error if there's some kind of collision
+   3. [DONE] Determine which one is the best fit given incoming arguments
+   4. Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
+   5. Check if there could be multiple applicable ones and error if there's some kind of collision
 2. Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
 3. Then deal with embedded class constructors!
 4. Events
