@@ -30,7 +30,7 @@ namespace LanguageImplementation
             Scheduler = scheduler;
         }
 
-        public bool IsInjectedType(Type parameterType)
+        public static bool IsInjectedType(Type parameterType)
         {
             return parameterType == typeof(IInterpreter) ||
                parameterType == typeof(FrameContext) ||

@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation
@@ -40,10 +43,88 @@ namespace LanguageImplementation
             return (object)result;
         }
 
+        private bool AreCompatible(Type paramType, Type argType)
+        {
+            return paramType.GetTypeInfo().IsAssignableFrom(argType.GetTypeInfo());
+        }
+
+        /// <summary>
+        /// Search all the available MethodInfos and return one that most appropriately matches the given arguments. Note that
+        /// injectable arguments will simply be skipped during consideration; it won't expect to find them in the given arguments.
+        /// </summary>
+        /// <param name="args">Arguments to call this method with</param>
+        /// <returns>The right MethodInformation to use to invoke the method.</returns>
+        private MethodInfo findBestMethodMatch(object[] args)
+        {
+            foreach(var methodInfo in MethodInfos)
+            {
+                var parameters = methodInfo.GetParameters();
+                bool found = true;
+
+                // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
+                for(int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
+                {
+                    while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
+                    {
+                        params_i += 1;
+                    }
+
+                    // Type check
+                    if(args_i < args.Length && !AreCompatible(parameters[params_i].ParameterType, args[args_i].GetType()))
+                    {
+                        // If the parameter is optional ("params") then it'll be optional and be an array. If the type we're trying to feed it is
+                        // a single element then we're okay.
+                        if(parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false) && AreCompatible(parameters[params_i].ParameterType.GetElementType(), args[args_i].GetType()))
+                        {
+                            // Still alive! The args being given exceed the number of parameters defined, but they're fitting just fine into the params
+                            // field!
+                            args_i += 1;
+                            continue;
+                        }
+
+                        found = false;
+                        break;
+                    }
+                    // Ran out of arguments for our parameters... if they aren't optional at this point ("params")
+                    else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsOptional)
+                    {
+                        found = false;
+                        break;
+                    }
+                    else
+                    {
+                        args_i += 1;
+                        params_i += 1;
+                    }
+                }
+                if(found)
+                {
+                    return methodInfo;
+                }
+            }
+
+            // Broke through to here: we couldn't find a match at all for the given arguments!
+            var errorMessage = new StringBuilder("No .NET method found to match the given arguments: ");
+            if(args.Length == 0)
+            {
+                errorMessage.Append("(no arguments)");
+            }
+            else
+            {
+                foreach(var arg in args)
+                {
+                    errorMessage.Append(String.Join(", ", from x in args select x.GetType().Name));
+                }
+            }
+
+            throw new Exception(errorMessage.ToString());
+        }
+
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
+            var methodInfo = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var final_args = injector.Inject(MethodInfos[0], args);
+            var final_args = injector.Inject(methodInfo, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
@@ -52,7 +133,7 @@ namespace LanguageImplementation
                 // our helper.
                 if (MethodInfos[0].ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)MethodInfos[0].Invoke(instance, final_args);
+                    return (Task<object>)methodInfo.Invoke(instance, final_args);
                 }
                 else
                 {
@@ -61,10 +142,11 @@ namespace LanguageImplementation
             }
             else
             {
-                return Task.FromResult(MethodInfos[0].Invoke(instance, final_args));
+                return Task.FromResult(methodInfo.Invoke(instance, final_args));
             }
         }
 
+        #region Constructors
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo[] methodInfos)
         {
             this.MethodInfos = methodInfos;
@@ -147,5 +229,7 @@ namespace LanguageImplementation
         public WrappedCodeObject(MethodInfo methodInfo, object instance) : this(new MethodInfo[] { methodInfo }, instance)
         {
         }
+
+        #endregion Constructors
     }
 }
