@@ -209,6 +209,21 @@ namespace CloacaTests
                 { "b", 1 }
             }), 1);
         }
+
+        [Test]
+        [Ignore("This is the next capability to implement.")]
+        public void PassPyIntegerToInteger()
+        {
+            runBasicTest(
+                "a = obj.AnOverload(1)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 0 }
+            }), 1);
+        }
     }
 
     // Just putting this in the same place as the test for now while we explore where we all have the worry about doing this kind of thing.
