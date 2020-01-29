@@ -30,6 +30,17 @@ namespace CloacaTests
             set { AnInteger = value; }
         }
 
+        public int AnOverload()
+        {
+            return AnInteger;
+        }
+
+        public int AnOverload(int an_arg)
+        {
+            AnInteger += an_arg;
+            return AnInteger;
+        }
+
         public ReflectIntoPython(int intVal, string strVal)
         {
             AnInteger = intVal;
@@ -180,6 +191,23 @@ namespace CloacaTests
         public void BoxObject()
         {
             var pyObj = PyObjectBoxer.Box(new ReflectIntoPython(1, "Yay!"));
+        }
+
+        [Test]
+        public void CallOverloads()
+        {
+            runBasicTest(
+                "a = obj.AnOverload()\n" +
+                "b = obj.AnOverload(raw_integer)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") },
+                { "raw_integer", 1 },
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 0 },
+                { "b", 1 }
+            }), 1);
         }
     }
 

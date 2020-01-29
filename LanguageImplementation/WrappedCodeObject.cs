@@ -70,7 +70,8 @@ namespace LanguageImplementation
                     }
 
                     // Type check
-                    if(args_i < args.Length && !AreCompatible(parameters[params_i].ParameterType, args[args_i].GetType()))
+                    if(args_i < args.Length && params_i < parameters.Length &&
+                        !AreCompatible(parameters[params_i].ParameterType, args[args_i].GetType()))
                     {
                         // If the parameter is optional ("params") then it'll be optional and be an array. If the type we're trying to feed it is
                         // a single element then we're okay.
@@ -87,6 +88,12 @@ namespace LanguageImplementation
                     }
                     // Ran out of arguments for our parameters... if they aren't optional at this point ("params")
                     else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsOptional)
+                    {
+                        found = false;
+                        break;
+                    }
+                    // Flip case: ran out of parameters for our arguments!
+                    else if (args_i < args.Length && params_i >= parameters.Length)
                     {
                         found = false;
                         break;
