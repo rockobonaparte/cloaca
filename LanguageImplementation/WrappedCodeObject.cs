@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using LanguageImplementation.DataTypes;
+using System.Numerics;
 
 namespace LanguageImplementation
 {
@@ -43,9 +45,76 @@ namespace LanguageImplementation
             return (object)result;
         }
 
+        // This will lead to some problems if some asshat decides to subclass the base types. We won't be able to look it up this way.
+        // At this point, I'm willing to dismiss that. Famous last words.
+        private static Dictionary<Tuple<Type, Type>, Func<object, object>> PyNetConverters = new Dictionary<Tuple<Type, Type>, Func<object, object>>
+        {
+            { new Tuple<Type, Type>(typeof(int), typeof(PyInteger)), (as_int) => { return new PyInteger((int)as_int); } },
+            { new Tuple<Type, Type>(typeof(short), typeof(PyInteger)), (as_short) => { return new PyInteger((short)as_short); } },
+            { new Tuple<Type, Type>(typeof(long), typeof(PyInteger)), (as_long) => { return new PyInteger((long)as_long); } },
+            { new Tuple<Type, Type>(typeof(BigInteger), typeof(PyInteger)), (as_bi) => { return new PyInteger((BigInteger)as_bi); } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(int)), (as_pi) => { return (int) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).number; } },
+        };
+
+        private object[] transformCompatibleArgs(ParameterInfo[] parameters, object[] args)
+        {
+            var returnedArgs = new object[args.Length];
+            for(int arg_i = 0; arg_i < args.Length; ++arg_i)
+            {
+                if(args[arg_i] == null)
+                {
+                    returnedArgs[arg_i] = args[arg_i];
+                    continue;
+                }
+                
+                var lookup = new Tuple<Type, Type>(args[arg_i].GetType(), parameters[arg_i].ParameterType);
+                if (PyNetConverters.ContainsKey(lookup))
+                {
+                    returnedArgs[arg_i] = PyNetConverters[lookup].Invoke(args[arg_i]);
+                }
+                else if(parameters[arg_i].IsDefined(typeof(ParamArrayAttribute), false))
+                {
+                    // That params field strikes again! We're breaking up a lot of these lookups to more easily see what's going on.
+                    var argArray = (Array)args;
+                    var paramsArray = Array.CreateInstance(parameters[arg_i].ParameterType.GetElementType(), argArray.Length);
+                    var argElementType = argArray.GetType().GetElementType();
+                    var baseArrayLookup = new Tuple<Type, Type>(argElementType, parameters[arg_i].ParameterType.GetElementType());
+                    if(PyNetConverters.ContainsKey(baseArrayLookup))
+                    {
+                        var converter = PyNetConverters[lookup];
+                        for (int params_array_i = 0; params_array_i < argArray.Length; ++params_array_i)
+                        {
+                            paramsArray.SetValue(converter.Invoke(argArray.GetValue(params_array_i)), params_array_i);
+                        }
+                        returnedArgs[arg_i] = paramsArray;
+                    }
+                    else
+                    {
+                        returnedArgs[arg_i] = args[arg_i];
+                    }
+                }
+                else
+                {
+                    returnedArgs[arg_i] = args[arg_i];
+                }
+            }
+            return returnedArgs;
+           
+        }
+
         private bool AreCompatible(Type paramType, Type argType)
         {
-            return paramType.GetTypeInfo().IsAssignableFrom(argType.GetTypeInfo());
+            if (paramType.GetTypeInfo().IsAssignableFrom(argType.GetTypeInfo()))
+            {
+                return true; 
+            }
+            else
+            {
+                return PyNetConverters.ContainsKey(new Tuple<Type, Type>(argType, paramType));
+            }
         }
 
         /// <summary>
@@ -131,7 +200,8 @@ namespace LanguageImplementation
         {
             var methodInfo = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var final_args = injector.Inject(methodInfo, args);
+            var injected_args = injector.Inject(methodInfo, args);
+            var final_args = transformCompatibleArgs(methodInfo.GetParameters(), injected_args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))

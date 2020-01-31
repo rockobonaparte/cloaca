@@ -211,17 +211,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("This is the next capability to implement.")]
+        //[Ignore("This is the next capability to implement.")]
         public void PassPyIntegerToInteger()
         {
             runBasicTest(
-                "a = obj.AnOverload(1)\n",
+                "a = obj.AnOverload(15)\n",
                 new Dictionary<string, object>()
             {
                 { "obj", new ReflectIntoPython(0, "doesn't matter") }
             }, new VariableMultimap(new TupleList<string, object>
             {
-                { "a", 0 }
+                { "a", 15 }
             }), 1);
         }
     }
@@ -275,8 +275,11 @@ namespace CloacaTests
             // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
             foreach(var method in objType.GetMethods())
             {
-                // TODO: Have to deal with overloading
-                po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
+                // Overloaded methods come up more than once, but the WrappedCodeObject takes care of it the first time.
+                if (!po.__dict__.ContainsKey(method.Name))
+                {
+                    po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
+                }
             }
 
             foreach(var field in objType.GetFields())

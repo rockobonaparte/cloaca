@@ -229,3 +229,5 @@ freely injecting some of the variables. Hence, we need to find the signature tha
      typical way to manage this.
 
 Sketch script to use as part of a final test of all this.
+
+Need to make sure that we can check and convert Python args in params field
