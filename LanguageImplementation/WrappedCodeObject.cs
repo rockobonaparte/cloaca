@@ -61,7 +61,7 @@ namespace LanguageImplementation
 
         private object[] transformCompatibleArgs(ParameterInfo[] parameters, object[] args)
         {
-            var returnedArgs = new object[args.Length];
+            var returnedArgs = new object[parameters.Length];
             for(int arg_i = 0; arg_i < args.Length; ++arg_i)
             {
                 if(args[arg_i] == null)
@@ -80,21 +80,46 @@ namespace LanguageImplementation
                     // That params field strikes again! We're breaking up a lot of these lookups to more easily see what's going on.
                     var argArray = (Array)args;
                     var paramsArray = Array.CreateInstance(parameters[arg_i].ParameterType.GetElementType(), argArray.Length);
-                    var argElementType = argArray.GetType().GetElementType();
-                    var baseArrayLookup = new Tuple<Type, Type>(argElementType, parameters[arg_i].ParameterType.GetElementType());
-                    if(PyNetConverters.ContainsKey(baseArrayLookup))
+
+                    // We'll cache our converter on the assumption that most arguments to the params fields are the same.
+                    Func<object, object> converter = null;
+                    var baseArrayType = parameters[arg_i].ParameterType.GetElementType();
+                    var paramLookup = new Tuple<Type, Type>(args[arg_i].GetType(), baseArrayType);
+
+                    if (PyNetConverters.ContainsKey(paramLookup))
                     {
-                        var converter = PyNetConverters[lookup];
-                        for (int params_array_i = 0; params_array_i < argArray.Length; ++params_array_i)
+                        converter = PyNetConverters[paramLookup];
+                    }
+
+                    // Params field is last param so we'll be doing seemingly reckless things running arg_i out here.
+                    for (int params_arg_i = 0; params_arg_i < paramsArray.Length; ++params_arg_i, ++arg_i)
+                    {
+                        // Invalidate cache
+                        if (args[arg_i].GetType() != paramLookup.Item1)
                         {
-                            paramsArray.SetValue(converter.Invoke(argArray.GetValue(params_array_i)), params_array_i);
+                            paramLookup = new Tuple<Type, Type>(args[arg_i].GetType(), baseArrayType);
+                            if (PyNetConverters.ContainsKey(paramLookup))
+                            {
+                                converter = PyNetConverters[paramLookup];
+                            }
+                            else
+                            {
+                                converter = null;
+                            }
                         }
-                        returnedArgs[arg_i] = paramsArray;
+
+                        if (converter != null)
+                        {
+                            paramsArray.SetValue(converter.Invoke(argArray.GetValue(arg_i)), params_arg_i);
+                        }
+                        else
+                        {
+                            paramsArray.SetValue(argArray.GetValue(arg_i), params_arg_i);
+                        }
                     }
-                    else
-                    {
-                        returnedArgs[arg_i] = args[arg_i];
-                    }
+
+                    // Params field is always last field.
+                    returnedArgs[returnedArgs.Length - 1] = paramsArray;
                 }
                 else
                 {
@@ -156,7 +181,7 @@ namespace LanguageImplementation
                         break;
                     }
                     // Ran out of arguments for our parameters... if they aren't optional at this point ("params")
-                    else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsOptional)
+                    else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false))
                     {
                         found = false;
                         break;
@@ -187,10 +212,7 @@ namespace LanguageImplementation
             }
             else
             {
-                foreach(var arg in args)
-                {
-                    errorMessage.Append(String.Join(", ", from x in args select x.GetType().Name));
-                }
+                errorMessage.Append(String.Join(", ", from x in args select x.GetType().Name));
             }
 
             throw new Exception(errorMessage.ToString());
@@ -200,8 +222,8 @@ namespace LanguageImplementation
         {
             var methodInfo = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var injected_args = injector.Inject(methodInfo, args);
-            var final_args = transformCompatibleArgs(methodInfo.GetParameters(), injected_args);
+            var boxed_args = transformCompatibleArgs(methodInfo.GetParameters(), args);
+            var final_args = injector.Inject(methodInfo, boxed_args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))

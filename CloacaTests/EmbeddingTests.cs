@@ -41,6 +41,15 @@ namespace CloacaTests
             return AnInteger;
         }
 
+        public int AnOverload(params int[] lots_of_ints)
+        {
+            foreach(int to_add in lots_of_ints)
+            {
+                AnInteger += to_add;
+            }
+            return AnInteger;
+        }
+
         public ReflectIntoPython(int intVal, string strVal)
         {
             AnInteger = intVal;
@@ -211,7 +220,6 @@ namespace CloacaTests
         }
 
         [Test]
-        //[Ignore("This is the next capability to implement.")]
         public void PassPyIntegerToInteger()
         {
             runBasicTest(
@@ -222,6 +230,20 @@ namespace CloacaTests
             }, new VariableMultimap(new TupleList<string, object>
             {
                 { "a", 15 }
+            }), 1);
+        }
+
+        [Test]
+        public void PassPyIntegerToParamsInteger()
+        {
+            runBasicTest(
+                "a = obj.AnOverload(1, 2, 3, 4, 5)\n",
+                new Dictionary<string, object>()
+            {
+                { "obj", new ReflectIntoPython(0, "doesn't matter") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 1 + 2 + 3 + 4 + 5 }
             }), 1);
         }
     }
