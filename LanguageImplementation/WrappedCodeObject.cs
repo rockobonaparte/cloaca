@@ -75,11 +75,12 @@ namespace LanguageImplementation
                 {
                     returnedArgs[arg_i] = PyNetConverters[lookup].Invoke(args[arg_i]);
                 }
-                else if(parameters[arg_i].IsDefined(typeof(ParamArrayAttribute), false))
+                else if (parameters[arg_i].IsDefined(typeof(ParamArrayAttribute), false))
                 {
                     // That params field strikes again! We're breaking up a lot of these lookups to more easily see what's going on.
-                    var argArray = (Array)args;
-                    var paramsArray = Array.CreateInstance(parameters[arg_i].ParameterType.GetElementType(), argArray.Length);
+                    // Params field is last param so we'll be doing seemingly reckless things running arg_i out here.
+                    var params_arg_array = (object[])args[arg_i];
+                    var paramsArray = Array.CreateInstance(parameters[arg_i].ParameterType.GetElementType(), params_arg_array.Length);
 
                     // We'll cache our converter on the assumption that most arguments to the params fields are the same.
                     Func<object, object> converter = null;
@@ -91,13 +92,12 @@ namespace LanguageImplementation
                         converter = PyNetConverters[paramLookup];
                     }
 
-                    // Params field is last param so we'll be doing seemingly reckless things running arg_i out here.
                     for (int params_arg_i = 0; params_arg_i < paramsArray.Length; ++params_arg_i, ++arg_i)
                     {
                         // Invalidate cache
-                        if (args[arg_i].GetType() != paramLookup.Item1)
+                        if (params_arg_array[params_arg_i].GetType() != paramLookup.Item1)
                         {
-                            paramLookup = new Tuple<Type, Type>(args[arg_i].GetType(), baseArrayType);
+                            paramLookup = new Tuple<Type, Type>(params_arg_array[params_arg_i].GetType(), baseArrayType);
                             if (PyNetConverters.ContainsKey(paramLookup))
                             {
                                 converter = PyNetConverters[paramLookup];
@@ -110,11 +110,11 @@ namespace LanguageImplementation
 
                         if (converter != null)
                         {
-                            paramsArray.SetValue(converter.Invoke(argArray.GetValue(arg_i)), params_arg_i);
+                            paramsArray.SetValue(converter.Invoke(params_arg_array[params_arg_i]), params_arg_i);
                         }
                         else
                         {
-                            paramsArray.SetValue(argArray.GetValue(arg_i), params_arg_i);
+                            paramsArray.SetValue(params_arg_array[params_arg_i], params_arg_i);
                         }
                     }
 
@@ -222,8 +222,10 @@ namespace LanguageImplementation
         {
             var methodInfo = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var boxed_args = transformCompatibleArgs(methodInfo.GetParameters(), args);
-            var final_args = injector.Inject(methodInfo, boxed_args);
+            var injected_args = injector.Inject(methodInfo, args);
+            var final_args = transformCompatibleArgs(methodInfo.GetParameters(), injected_args);
+            //var boxed_args = transformCompatibleArgs(methodInfo.GetParameters(), args);
+            //var final_args = injector.Inject(methodInfo, boxed_args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))

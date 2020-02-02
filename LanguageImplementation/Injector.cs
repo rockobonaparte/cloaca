@@ -98,24 +98,21 @@ namespace LanguageImplementation
             //
             if (hasParamsField)
             {
-                // We used to do more intense parameter conversion here, but transformCompatibleArgs does it now.
-                outParams[outParams.Length - 1] = args[args.Length - 1];
+                if (in_param_i >= args.Length)
+                {
+                    outParams[outParams.Length - 1] = null;
+                }
+                else
+                {
+                    var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
+                    var paramsArray = Array.CreateInstance(elementType, args.Length - in_param_i);
+                    for (int i = 0; i < paramsArray.Length; ++i)
+                    {
+                        paramsArray.SetValue(args[in_param_i + i], i);
+                    }
 
-                //if (in_param_i >= args.Length)
-                //{
-                //    outParams[outParams.Length - 1] = null;
-                //}
-                //else
-                //{
-                //    var elementType = methodParams[methodParams.Length - 1].ParameterType.GetElementType();
-                //    var paramsArray = Array.CreateInstance(elementType, args.Length - in_param_i);
-                //    for (int i = 0; i < paramsArray.Length; ++i)
-                //    {
-                //        paramsArray.SetValue(args[in_param_i + i], i);
-                //    }
-
-                //    outParams[outParams.Length - 1] = paramsArray;
-                //}
+                    outParams[outParams.Length - 1] = paramsArray;
+                }
             }
 
             return outParams;
