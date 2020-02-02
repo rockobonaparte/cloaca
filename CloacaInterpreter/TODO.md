@@ -215,7 +215,7 @@ freely injecting some of the variables. Hence, we need to find the signature tha
    2. [DONE] Still have defaults for just a single one
    3. [DONE] Determine which one is the best fit given incoming arguments
    4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
-2. Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
+2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
 3. Then deal with embedded class constructors!
 4. Events
    1. Implement necessary operators
@@ -227,6 +227,7 @@ freely injecting some of the variables. Hence, we need to find the signature tha
 6. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
+7. More conversions: Array and Dictionary conversions from Python to .NET functions. Can I do it with some kind of subclassed wrapper?
 
 Sketch script to use as part of a final test of all this.
 
