@@ -9,6 +9,42 @@ using System.Numerics;
 
 namespace LanguageImplementation
 {
+    public class PyNetConverter
+    {
+        // This will lead to some problems if some asshat decides to subclass the base types. We won't be able to look it up this way.
+        // At this point, I'm willing to dismiss that. Famous last words.
+        private static Dictionary<Tuple<Type, Type>, Func<object, object>> converters = new Dictionary<Tuple<Type, Type>, Func<object, object>>
+        {
+            { new Tuple<Type, Type>(typeof(int), typeof(PyInteger)), (as_int) => { return new PyInteger((int)as_int); } },
+            { new Tuple<Type, Type>(typeof(short), typeof(PyInteger)), (as_short) => { return new PyInteger((short)as_short); } },
+            { new Tuple<Type, Type>(typeof(long), typeof(PyInteger)), (as_long) => { return new PyInteger((long)as_long); } },
+            { new Tuple<Type, Type>(typeof(BigInteger), typeof(PyInteger)), (as_bi) => { return new PyInteger((BigInteger)as_bi); } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(int)), (as_pi) => { return (int) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).number; } },
+            { new Tuple<Type, Type>(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).number; } },
+        };
+
+        public static object Convert(object fromObj, Type toType)
+        {
+            var convert_rule = new Tuple<Type, Type>(fromObj.GetType(), toType);
+            if (converters.ContainsKey(convert_rule))
+            {
+                return converters[convert_rule].Invoke(fromObj);
+            }
+            else
+            {
+                return fromObj;
+            }
+        }
+
+        public static bool CanConvert(Type fromType, Type toType)
+        {
+            var convert_rule = new Tuple<Type, Type>(fromType, toType);
+            return converters.ContainsKey(convert_rule);
+        }
+    }
+
     /// <summary>
     /// Represents callable code outside of the scope of the interpreter.
     /// </summary>
@@ -45,91 +81,6 @@ namespace LanguageImplementation
             return (object)result;
         }
 
-        // This will lead to some problems if some asshat decides to subclass the base types. We won't be able to look it up this way.
-        // At this point, I'm willing to dismiss that. Famous last words.
-        private static Dictionary<Tuple<Type, Type>, Func<object, object>> PyNetConverters = new Dictionary<Tuple<Type, Type>, Func<object, object>>
-        {
-            { new Tuple<Type, Type>(typeof(int), typeof(PyInteger)), (as_int) => { return new PyInteger((int)as_int); } },
-            { new Tuple<Type, Type>(typeof(short), typeof(PyInteger)), (as_short) => { return new PyInteger((short)as_short); } },
-            { new Tuple<Type, Type>(typeof(long), typeof(PyInteger)), (as_long) => { return new PyInteger((long)as_long); } },
-            { new Tuple<Type, Type>(typeof(BigInteger), typeof(PyInteger)), (as_bi) => { return new PyInteger((BigInteger)as_bi); } },
-            { new Tuple<Type, Type>(typeof(PyInteger), typeof(int)), (as_pi) => { return (int) ((PyInteger)as_pi).number; } },
-            { new Tuple<Type, Type>(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).number; } },
-            { new Tuple<Type, Type>(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).number; } },
-            { new Tuple<Type, Type>(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).number; } },
-        };
-
-        private object[] transformCompatibleArgs(ParameterInfo[] parameters, object[] args)
-        {
-            var returnedArgs = new object[parameters.Length];
-            for(int arg_i = 0; arg_i < args.Length; ++arg_i)
-            {
-                if(args[arg_i] == null)
-                {
-                    returnedArgs[arg_i] = args[arg_i];
-                    continue;
-                }
-                
-                var lookup = new Tuple<Type, Type>(args[arg_i].GetType(), parameters[arg_i].ParameterType);
-                if (PyNetConverters.ContainsKey(lookup))
-                {
-                    returnedArgs[arg_i] = PyNetConverters[lookup].Invoke(args[arg_i]);
-                }
-                else if (parameters[arg_i].IsDefined(typeof(ParamArrayAttribute), false))
-                {
-                    // That params field strikes again! We're breaking up a lot of these lookups to more easily see what's going on.
-                    // Params field is last param so we'll be doing seemingly reckless things running arg_i out here.
-                    var params_arg_array = (object[])args[arg_i];
-                    var paramsArray = Array.CreateInstance(parameters[arg_i].ParameterType.GetElementType(), params_arg_array.Length);
-
-                    // We'll cache our converter on the assumption that most arguments to the params fields are the same.
-                    Func<object, object> converter = null;
-                    var baseArrayType = parameters[arg_i].ParameterType.GetElementType();
-                    var paramLookup = new Tuple<Type, Type>(args[arg_i].GetType(), baseArrayType);
-
-                    if (PyNetConverters.ContainsKey(paramLookup))
-                    {
-                        converter = PyNetConverters[paramLookup];
-                    }
-
-                    for (int params_arg_i = 0; params_arg_i < paramsArray.Length; ++params_arg_i, ++arg_i)
-                    {
-                        // Invalidate cache
-                        if (params_arg_array[params_arg_i].GetType() != paramLookup.Item1)
-                        {
-                            paramLookup = new Tuple<Type, Type>(params_arg_array[params_arg_i].GetType(), baseArrayType);
-                            if (PyNetConverters.ContainsKey(paramLookup))
-                            {
-                                converter = PyNetConverters[paramLookup];
-                            }
-                            else
-                            {
-                                converter = null;
-                            }
-                        }
-
-                        if (converter != null)
-                        {
-                            paramsArray.SetValue(converter.Invoke(params_arg_array[params_arg_i]), params_arg_i);
-                        }
-                        else
-                        {
-                            paramsArray.SetValue(params_arg_array[params_arg_i], params_arg_i);
-                        }
-                    }
-
-                    // Params field is always last field.
-                    returnedArgs[returnedArgs.Length - 1] = paramsArray;
-                }
-                else
-                {
-                    returnedArgs[arg_i] = args[arg_i];
-                }
-            }
-            return returnedArgs;
-           
-        }
-
         private bool AreCompatible(Type paramType, Type argType)
         {
             if (paramType.GetTypeInfo().IsAssignableFrom(argType.GetTypeInfo()))
@@ -138,7 +89,7 @@ namespace LanguageImplementation
             }
             else
             {
-                return PyNetConverters.ContainsKey(new Tuple<Type, Type>(argType, paramType));
+                return PyNetConverter.CanConvert(argType, paramType);
             }
         }
 
@@ -222,10 +173,7 @@ namespace LanguageImplementation
         {
             var methodInfo = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var injected_args = injector.Inject(methodInfo, args);
-            var final_args = transformCompatibleArgs(methodInfo.GetParameters(), injected_args);
-            //var boxed_args = transformCompatibleArgs(methodInfo.GetParameters(), args);
-            //var final_args = injector.Inject(methodInfo, boxed_args);
+            var final_args = injector.Inject(methodInfo, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
