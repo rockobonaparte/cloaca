@@ -290,39 +290,6 @@ namespace CloacaTests
                 { "a", 1 + 2 + 3 + 4 + 5 }
             }), 1);
         }
-
-        [Test]
-        [Ignore("We don't yet try to convert PyList to an array.")]
-        public void PassPyIntegerToIntegerArray()
-        {
-            runBasicTest(
-                "a = obj.TakeIntArray([1, 2, 3, 4, 5])\n",
-                new Dictionary<string, object>()
-            {
-                { "obj", new ReflectIntoPython(0, "doesn't matter") }
-            }, new VariableMultimap(new TupleList<string, object>
-            {
-                { "a", 1 + 2 + 3 + 4 + 5 }
-            }), 1);
-        }
-
-        [Test]
-        [Ignore("We don't yet try to convert PyList to an array. Furthermore, we don't work on mutation of the proxy yet.")]
-        public void PassPyListAndMutate()
-        {
-            var interpreter = runProgram(
-                "the_list = [1, 2]\n" +
-                "a = obj.TakeIntArray(the_list)\n",
-                new Dictionary<string, object>()
-                {
-                    { "obj", new ReflectIntoPython(0, "doesn't matter") }
-                }, 1);
-            var variables = interpreter.DumpVariables();
-            Assert.That(variables.ContainsKey("the_list"));
-            Assert.That(variables["the_list"], Is.EquivalentTo(new List<object> { new PyInteger(2), new PyInteger(3) }));
-            Assert.That(variables.ContainsKey("a"));
-            Assert.That(variables["a"], Is.EqualTo(new PyInteger(3)));
-        }
     }
 
     // Just putting this in the same place as the test for now while we explore where we all have the worry about doing this kind of thing.

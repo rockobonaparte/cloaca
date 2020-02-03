@@ -227,7 +227,6 @@ freely injecting some of the variables. Hence, we need to find the signature tha
 6. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
-7. More conversions: Array and Dictionary conversions from Python to .NET functions. Can I do it with some kind of subclassed wrapper?
 
 Sketch script to use as part of a final test of all this.
 
