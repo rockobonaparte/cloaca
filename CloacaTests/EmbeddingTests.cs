@@ -290,6 +290,25 @@ namespace CloacaTests
                 { "a", 1 + 2 + 3 + 4 + 5 }
             }), 1);
         }
+
+        // TODO: Uncomment once we can work with constructor info
+        // Also, why the hell is ConstructorInfo[] a thing and it's different from MethodInfo[]?!
+        //[Test]
+        //public void ConstructFromClass()
+        //{
+        //    runBasicTest(
+        //        "obj = ReflectIntoPython(1337, 'I did it!')\n" +
+        //        "a = obj.AnInteger\n" +
+        //        "b = obj.AString\n",
+        //        new Dictionary<string, object>()
+        //    {
+        //        { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+        //    }, new VariableMultimap(new TupleList<string, object>
+        //    {
+        //        { "a", 1337 },
+        //        { "b", "I did it!" }
+        //    }), 1);
+        //}
     }
 
     // Just putting this in the same place as the test for now while we explore where we all have the worry about doing this kind of thing.
