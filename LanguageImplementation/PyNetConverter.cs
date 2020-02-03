@@ -45,6 +45,10 @@ namespace LanguageImplementation
             cachedKey.Item1 = fromObj.GetType();
             cachedKey.Item2 = toType;
 
+            if(fromObj == NoneType.Instance)
+            {
+                return null;
+            }
             if (toType == typeof(string))
             {
                 return fromObj.ToString();

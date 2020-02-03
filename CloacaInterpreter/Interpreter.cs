@@ -811,6 +811,10 @@ namespace CloacaInterpreter
                                         }
                                         context.DataStack.Push(returned);
                                     }
+                                    else if(returned == null)
+                                    {
+                                        context.DataStack.Push(NoneType.Instance);
+                                    }
 
                                     context.Cursor += 2;
                                 }

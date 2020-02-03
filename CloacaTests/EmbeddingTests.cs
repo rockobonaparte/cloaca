@@ -214,7 +214,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Doesn't work yet; we don't manage nulls with conversion")]
         public void AcceptsNoneAsNull()
         {
             runBasicTest(
@@ -231,7 +230,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Doesn't work yet; we don't manage nulls with conversion")]
         public void NullEqualsNone()
         {
             runBasicTest(
