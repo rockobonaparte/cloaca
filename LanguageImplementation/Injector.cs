@@ -37,9 +37,9 @@ namespace LanguageImplementation
                parameterType == typeof(IScheduler);
         }
 
-        public object[] Inject(MethodInfo methodInfo, object[] args)
+        public object[] Inject(MethodBase methodBase, object[] args)
         {
-            var methodParams = methodInfo.GetParameters();
+            var methodParams = methodBase.GetParameters();
 
             // If there's a params field then we have to cram an array into there.
             bool hasParamsField = methodParams.Length >= 1 && methodParams[methodParams.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);

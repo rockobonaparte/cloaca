@@ -11,7 +11,7 @@ namespace LanguageImplementation
     /// </summary>
     public class WrappedCodeObject : IPyCallable
     {
-        public MethodInfo[] MethodInfos
+        public MethodBase[] MethodBases
         {
             get;
             private set;
@@ -36,7 +36,7 @@ namespace LanguageImplementation
         /// method's return type.</returns>
         private async Task<object> InvokeAsTaskObject(object[] final_args)
         {
-            var task = (Task)MethodInfos[0].Invoke(instance, final_args);
+            var task = (Task)MethodBases[0].Invoke(instance, final_args);
             await task.ConfigureAwait(true);
             var result = ((dynamic)task).Result;
             return (object)result;
@@ -60,11 +60,11 @@ namespace LanguageImplementation
         /// </summary>
         /// <param name="args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        private MethodInfo findBestMethodMatch(object[] args)
+        private MethodBase findBestMethodMatch(object[] args)
         {
-            foreach(var methodInfo in MethodInfos)
+            foreach(var methodBase in MethodBases)
             {
-                var parameters = methodInfo.GetParameters();
+                var parameters = methodBase.GetParameters();
                 bool found = true;
 
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
@@ -112,7 +112,7 @@ namespace LanguageImplementation
                 }
                 if(found)
                 {
-                    return methodInfo;
+                    return methodBase;
                 }
             }
 
@@ -132,18 +132,19 @@ namespace LanguageImplementation
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            var methodInfo = findBestMethodMatch(args);
+            var methodBase = findBestMethodMatch(args);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            var final_args = injector.Inject(methodInfo, args);
+            var final_args = injector.Inject(methodBase, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
-            if (MethodInfos[0].ReturnType.IsGenericType && MethodInfos[0].ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+            var asMethodInfo = MethodBases[0] as MethodInfo;
+            if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 // Task<object> is straightforward and we can just return it. Other return types need to go through
                 // our helper.
-                if (MethodInfos[0].ReturnType == typeof(Task<object>))
+                if (asMethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)methodInfo.Invoke(instance, final_args);
+                    return (Task<object>)methodBase.Invoke(instance, final_args);
                 }
                 else
                 {
@@ -152,91 +153,99 @@ namespace LanguageImplementation
             }
             else
             {
-                return Task.FromResult(methodInfo.Invoke(instance, final_args));
+                var asConstructor = methodBase as ConstructorInfo;
+                if (asConstructor != null)
+                {
+                    return Task.FromResult(asConstructor.Invoke(final_args));
+                }
+                else
+                {
+                    return Task.FromResult(methodBase.Invoke(instance, final_args));
+                }
             }
         }
 
         #region Constructors
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo[] methodInfos)
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases)
         {
-            this.MethodInfos = methodInfos;
+            this.MethodBases = methodBases;
             Name = nameInsideInterpreter;
             instance = null;
         }
 
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo) : this(context, nameInsideInterpreter, new MethodInfo[] { methodInfo })
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase })
         {
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo[] methodInfos) : this(null, nameInsideInterpreter, methodInfos)
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases) : this(null, nameInsideInterpreter, methodBases)
         {
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo) : this(null, nameInsideInterpreter, new MethodInfo[] { methodInfo })
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase) : this(null, nameInsideInterpreter, new MethodBase[] { methodBase })
         {
         }
 
-        public WrappedCodeObject(FrameContext context, MethodInfo[] methodInfos)
+        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases)
         {
-            this.MethodInfos = methodInfos;
-            Name = methodInfos[0].Name;
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
             instance = null;
         }
 
-        public WrappedCodeObject(FrameContext context, MethodInfo methodInfo) : this(context, new MethodInfo[] { methodInfo })
+        public WrappedCodeObject(FrameContext context, MethodBase methodBase) : this(context, new MethodBase[] { methodBase })
         {
         }
 
-        public WrappedCodeObject(MethodInfo[] methodInfos)
+        public WrappedCodeObject(MethodBase[] methodBases)
         {
-            this.MethodInfos = methodInfos;
-            Name = methodInfos[0].Name;
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
             instance = null;
         }
 
 
-        public WrappedCodeObject(MethodInfo methodInfo) : this(new MethodInfo[] { methodInfo })
+        public WrappedCodeObject(MethodBase methodBase) : this(new MethodBase[] { methodBase })
         {
         }
 
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo[] methodInfos, object instance)
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases, object instance)
         {
-            this.MethodInfos = methodInfos;
+            this.MethodBases = methodBases;
             Name = nameInsideInterpreter;
             this.instance = instance;
         }
 
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodInfo methodInfo, object instance) : this(context, nameInsideInterpreter, new MethodInfo[] { methodInfo }, instance)
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase, object instance) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase }, instance)
         {
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo[] methodInfos, object instance) : this(null, nameInsideInterpreter, methodInfos, instance)
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases, object instance) : this(null, nameInsideInterpreter, methodBases, instance)
         {
         }
 
-        public WrappedCodeObject(string nameInsideInterpreter, MethodInfo methodInfo, object instance) : this(null, nameInsideInterpreter, methodInfo, instance)
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase, object instance) : this(null, nameInsideInterpreter, methodBase, instance)
         {
         }
 
-        public WrappedCodeObject(FrameContext context, MethodInfo[] methodInfos, object instance)
+        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases, object instance)
         {
-            this.MethodInfos = methodInfos;
-            Name = methodInfos[0].Name;
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
             this.instance = instance;
         }
 
-        public WrappedCodeObject(FrameContext context, MethodInfo methodInfo, object instance) : this(context, new MethodInfo[] { methodInfo }, instance)
+        public WrappedCodeObject(FrameContext context, MethodBase methodBase, object instance) : this(context, new MethodBase[] { methodBase }, instance)
         {
         }
 
-        public WrappedCodeObject(MethodInfo[] methodInfos, object instance)
+        public WrappedCodeObject(MethodBase[] methodBases, object instance)
         {
-            this.MethodInfos = methodInfos;
-            Name = methodInfos[0].Name;
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
             this.instance = instance;
         }
 
-        public WrappedCodeObject(MethodInfo methodInfo, object instance) : this(new MethodInfo[] { methodInfo }, instance)
+        public WrappedCodeObject(MethodBase methodBase, object instance) : this(new MethodBase[] { methodBase }, instance)
         {
         }
 
