@@ -321,7 +321,65 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // (wait keyword) TODO: Remove when the wait keyword is turned into a function!
             if (context.testlist_star_expr(0).GetText() == "wait")
             {
-                VisitLValueTestlist_star_expr(context.testlist_star_expr()[0]);
+                VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+            }
+            else if(context.augassign() != null)
+            {
+                Visit(context.testlist());
+                string augassign = context.augassign().GetText();
+                if(augassign == "+=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_ADD, context);
+                }
+                else if(augassign == "-=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_SUBTRACT, context);
+                }
+                else if(augassign == "*=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_MULTIPLY, context);
+                }
+                else if (augassign == "/=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_TRUE_DIVIDE, context);
+                }
+                else if (augassign == "%=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_MODULO, context);
+                }
+                else if (augassign == "//=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_FLOOR_DIVIDE, context);
+                }
+                else if (augassign == "**=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_POWER, context);
+                }
+                else if (augassign == "&=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_AND, context);
+                }
+                else if (augassign == "|=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_OR, context);
+                }
+                else if (augassign == "^=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_XOR, context);
+                }
+                else if (augassign == ">>=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_RSHIFT, context);
+                }
+                else if (augassign == "<<=")
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_LSHIFT, context);
+                }
+                else
+                {
+                    throw new Exception("Unrecognized augassign: " + augassign);
+                }
+                VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
             }
             else
             {
@@ -330,18 +388,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             return null;
         }
 
+        // BOOKMARK: Try to take this for the INPLACE operations. However, you'll have to scrap passing down the testlist. See if you
+        // can use test() instead. Augassign -> testlist -> test. Then you can use that LValueTestList_star_expr, although you'll still
+        // have to figure out where to deal with the operators (probably implement VisitAugassign
+
         // RValue is testlist_star_expr[1]
         // LValue is testlist_star_expr[0]
         // Traverse the right hand side to get the assignment value on to the data stack
         // Then go down a special LValue version of the visitors for storing it.
         Visit(context.testlist_star_expr()[1]);
-        VisitLValueTestlist_star_expr(context.testlist_star_expr()[0]);
+        VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
 
         return null;
         //return base.VisitExpr_stmt(context);
     }
 
-    public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.Testlist_star_exprContext context)
+    public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
         // Okay, take a deep breath. We're going to skip most of the crap and get straight to the lvalue
         // name. We have to go through the whole cascade defined in the grammar to get to the expr.
@@ -349,9 +411,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // obvious what other kind of lvalues we could be dealing with.
 
         // TODO: Experiment with creating a tree traverser here to try to walk down to the atom.
-        var maybeAtom = context.test()[0].or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].
+        var maybeAtom = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].
             xor_expr()[0].and_expr()[0].shift_expr()[0].arith_expr()[0].term()[0].factor()[0].power().atom_expr();
-        var variableName = context.test()[0].or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
+        var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
         if (maybeAtom.trailer().Length > 0)
         {
             // Is it subscriptable?

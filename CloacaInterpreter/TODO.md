@@ -242,3 +242,15 @@ freely injecting some of the variables. Hence, we need to find the signature tha
 Sketch script to use as part of a final test of all this.
 
 Need to make sure that we can check and convert Python args in params field
+
+
+context.testlist_star_expr(0).GetText()
+a
+context.augassign().GetText()
+"+="
+context.testlist().GetText()
+"2"
+
+
+TODO:
+Check Dis.dis is properly working with wordcode. There are a lot of operations that may not be moving the pointer up enough.

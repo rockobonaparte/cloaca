@@ -72,6 +72,50 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_DIV", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.INPLACE_ADD:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_ADD", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_SUBTRACT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_SUBTRACT", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_MULTIPLY:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_MULTIPLY", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_TRUE_DIVIDE:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_TRUE_DIVIDE", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_FLOOR_DIVIDE:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_FLOOR_DIVIDE", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_POWER:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_POWER", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_AND:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_AND", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_OR:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_OR", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_XOR:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_XOR", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_RSHIFT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_RSHIFT", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.INPLACE_LSHIFT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_LSHIFT", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.LOAD_CONST:
                         cursor += 1;
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "LOAD_CONST", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));
