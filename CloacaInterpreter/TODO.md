@@ -216,13 +216,24 @@ freely injecting some of the variables. Hence, we need to find the signature tha
    3. [DONE] Determine which one is the best fit given incoming arguments
    4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
 2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
-3. Then deal with embedded class constructors!
+3. [DONE] Then deal with embedded class constructors!
 4. Events
    1. Implement necessary operators
-      1. Implement +=
-      2. Implement -=
-   2. Try to subscribe C# event handler to C# event
-   3. Try to subscribe Cloaca function to C# event
+      * INPLACE_ADD
+      * INPLACE_SUBTRACT
+   2. Assignment operator bonus round!
+      * INPLACE_MULTIPLY
+      * INPLACE_TRUE_DIVIDE
+      * INPLACE_MODULO
+      * INPLACE_FLOOR_DIVIDE
+      * INPLACE_POWER
+      * INPLACE_AND
+      * INPLACE_OR
+      * INPLACE_XOR
+      * INPLACE_RSHIFT
+      * INPLACE_LSHIFT
+   3. Try to subscribe C# event handler to C# event
+   4. Try to subscribe Cloaca function to C# event
 5. Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
 6. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a

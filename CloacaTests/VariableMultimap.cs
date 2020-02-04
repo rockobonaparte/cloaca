@@ -168,7 +168,7 @@ namespace CloacaTests
                             if(!map[name][sublookup.Key].Equals(sublookup.Value))
                             {
                                 failures += "Mismatch '" + name + "' type " + sublookup.Key + " " +
-                                    map[name][sublookup.Key].ToString() + " vs " + sublookup.Value.ToString();
+                                    map[name][sublookup.Key].ToString() + " vs " + sublookup.Value.ToString() + "\n";
                             }
                         }
                     }

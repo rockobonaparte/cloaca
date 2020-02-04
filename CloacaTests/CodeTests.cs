@@ -55,6 +55,65 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Need to implement all these operators first!")]
+        public void AssignmentOperators()
+        {
+            // https://www.w3schools.com/python/python_operators.asp
+            // +=	x += 3	x = x + 3	
+            // -=	x -= 3	x = x - 3	
+            // *=	x *= 3	x = x * 3	
+            // /=	x /= 3	x = x / 3	
+            // %=	x %= 3	x = x % 3	
+            // //=	x //= 3	x = x // 3	
+            // **=	x **= 3	x = x ** 3	
+            // &=	x &= 3	x = x & 3	
+            // |=	x |= 3	x = x | 3	
+            // ^=	x ^= 3	x = x ^ 3	
+            // >>=	x >>= 3	x = x >> 3	
+            // <<=	x <<= 3	x = x << 3
+            runBasicTest(
+                "a = 10\n" +
+                "b = 10\n" +
+                "c = 10\n" +
+                "d = 10\n" +
+                "e = 10\n" +
+                "f = 10\n" +
+                "g = 10\n" +
+                "h = 10\n" +
+                "i = 10\n" +
+                "j = 10\n" +
+                "k = 10\n" +
+                "l = 10\n" +
+                "a += 2\n" +
+                "b -= 2\n" +
+                "c *= 2\n" +
+                "d /= 2\n" +
+                "e %= 9\n" +
+                "f //= 3\n" +
+                "g **= 2\n" +
+                "h &= 2\n" +
+                "i |= 4\n" +
+                "j ^= 2\n" +
+                "k >>= 2\n" +
+                "l <<= 2\n"
+                , new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(12) },
+                { "b", new PyInteger(8) },
+                { "c", new PyInteger(20) },
+                { "d", new PyInteger(5) },
+                { "e", new PyInteger(1) },
+                { "f", new PyInteger(3) },
+                { "g", new PyInteger(100) },
+                { "h", new PyInteger(2) },
+                { "i", new PyInteger(14) },
+                { "j", new PyInteger(8) },
+                { "k", new PyInteger(2) },
+                { "l", new PyInteger(40) }
+            }), 1);
+        }
+
+        [Test]
         public void SimpleStrAssign()
         {
             runBasicTest("a = 'Hello!'\n", new VariableMultimap(new TupleList<string, object>
