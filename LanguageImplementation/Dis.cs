@@ -88,6 +88,10 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_TRUE_DIVIDE", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.INPLACE_MODULO:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_MODULO", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.INPLACE_FLOOR_DIVIDE:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_FLOOR_DIVIDE", null, null);
                         cursor += 1;
