@@ -326,6 +326,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             else if(context.augassign() != null)
             {
                 Visit(context.testlist());
+                Visit(context.testlist_star_expr(0));               // Generates load for destination
                 string augassign = context.augassign().GetText();
                 if(augassign == "+=")
                 {
@@ -379,6 +380,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 {
                     throw new Exception("Unrecognized augassign: " + augassign);
                 }
+
+                // Re-use testlist_star_expr now as an LValue to store the result
                 VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
             }
             else
