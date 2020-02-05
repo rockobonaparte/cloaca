@@ -26,10 +26,12 @@ Part 2: Unity embedding. See how practical this is to use in Unity.
 	 * Expose GameObject finding code in Unity
 	 * Manipulate GameObject code
 	 * Embed scene hierarchy into Unity
+* Expand basic opcodes to work with .NET types when possible (add, subtract... etc)
 * Serializing script state: dabble in trying to serialize a single, non-blocking script's state.
 
 
 Part 3: Hardening
+* Switch to wordcode. I thought I had already done this! Wow!
 * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
   * Call Python function through interpreter
@@ -232,6 +234,7 @@ freely injecting some of the variables. Hence, we need to find the signature tha
       * INPLACE_XOR
       * INPLACE_RSHIFT
       * INPLACE_LSHIFT
+   3. Add the __i*__ calls to applicable classes
    3. Try to subscribe C# event handler to C# event
    4. Try to subscribe Cloaca function to C# event
 5. Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
@@ -250,7 +253,3 @@ context.augassign().GetText()
 "+="
 context.testlist().GetText()
 "2"
-
-
-TODO:
-Check Dis.dis is properly working with wordcode. There are a lot of operations that may not be moving the pointer up enough.
