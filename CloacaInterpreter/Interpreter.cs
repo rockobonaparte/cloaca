@@ -300,6 +300,26 @@ namespace CloacaInterpreter
                             }
                             context.Cursor += 1;
                             break;
+                        case ByteCodes.INPLACE_ADD:
+                            {
+                                dynamic right = context.DataStack.Pop();
+                                dynamic left = context.DataStack.Pop();
+                                var leftInt = left as PyObject;
+                                var rightInt = right as PyObject;
+
+                                if(leftInt.__dict__.ContainsKey("__iadd__"))
+                                {
+                                    PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightInt });
+                                    context.DataStack.Push(returned);
+                                }
+                                else
+                                {
+                                    PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt });
+                                    context.DataStack.Push(returned);
+                                }
+                            }
+                            context.Cursor += 1;
+                            break;
                         case ByteCodes.BINARY_SUBTRACT:
                             {
                                 dynamic right = context.DataStack.Pop();
