@@ -292,10 +292,10 @@ namespace CloacaInterpreter
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
 
-                                var leftInt = left as PyObject;
-                                var rightInt = right as PyObject;
+                                var leftNum = left as PyObject;
+                                var rightNum = right as PyObject;
 
-                                PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt });
+                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
                                 context.DataStack.Push(returned);
                             }
                             context.Cursor += 1;
@@ -304,17 +304,17 @@ namespace CloacaInterpreter
                             {
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
-                                var leftInt = left as PyObject;
-                                var rightInt = right as PyObject;
+                                var leftNum = left as PyObject;
+                                var rightNum = right as PyObject;
 
-                                if(leftInt.__dict__.ContainsKey("__iadd__"))
+                                if(leftNum.__dict__.ContainsKey("__iadd__"))
                                 {
-                                    PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightInt });
+                                    PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightNum });
                                     context.DataStack.Push(returned);
                                 }
                                 else
                                 {
-                                    PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__add__", new PyObject[] { rightInt });
+                                    PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
                                     context.DataStack.Push(returned);
                                 }
                             }
@@ -325,10 +325,10 @@ namespace CloacaInterpreter
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
 
-                                var leftInt = left as PyObject;
-                                var rightInt = right as PyObject;
+                                var leftNum = left as PyObject;
+                                var rightNum = right as PyObject;
 
-                                PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightInt });
+                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightNum });
                                 context.DataStack.Push(returned);
                             }
                             context.Cursor += 1;
@@ -338,10 +338,10 @@ namespace CloacaInterpreter
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
 
-                                var leftInt = left as PyObject;
-                                var rightInt = right as PyObject;
+                                var leftNum = left as PyObject;
+                                var rightNum = right as PyObject;
 
-                                PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightInt });
+                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightNum });
                                 context.DataStack.Push(returned);
                             }
                             context.Cursor += 1;
@@ -351,10 +351,10 @@ namespace CloacaInterpreter
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
 
-                                var leftInt = left as PyObject;
-                                var rightInt = right as PyObject;
+                                var leftNum = left as PyObject;
+                                var rightNum = right as PyObject;
 
-                                PyObject returned = (PyObject)await leftInt.InvokeFromDict(this, context, "__div__", new PyObject[] { rightInt });
+                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__div__", new PyObject[] { rightNum });
                                 context.DataStack.Push(returned);
                             }
                             context.Cursor += 1;
