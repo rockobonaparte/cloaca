@@ -194,7 +194,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else if(operatorTxt == "/")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_DIVIDE, context);
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_TRUE_DIVIDE, context);
             }
             else
             {

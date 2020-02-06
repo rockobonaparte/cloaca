@@ -242,6 +242,18 @@ freely injecting some of the variables. Hence, we need to find the signature tha
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
 
+Operations to add to objects (PyInteger, PyFloat, PyBool...)
+__xor__
+__rshift__
+__lshift__
+__truediv__
+__floordiv__
+__pow__
+__mod__
+
+Double check left/right of operators
+Add tests for new operators
+
 Sketch script to use as part of a final test of all this.
 
 Need to make sure that we can check and convert Python args in params field

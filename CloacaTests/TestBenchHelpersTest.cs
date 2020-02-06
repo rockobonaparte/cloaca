@@ -72,7 +72,7 @@ namespace CloacaTests
             }
             catch (Exception e)
             {
-                if(e.Message != "Mismatch 'foo' type System.String bar vs butt")
+                if(e.Message != "Mismatch 'foo' type System.String bar vs butt\n")
                 {
                     Assert.Fail(e.Message);
                 }
@@ -86,7 +86,7 @@ namespace CloacaTests
             }
             catch (Exception e)
             {
-                if (e.Message != "Mismatch 'foo' type System.String butt vs bar")
+                if (e.Message != "Mismatch 'foo' type System.String butt vs bar\n")
                 {
                     Assert.Fail(e.Message);
                 }
@@ -114,7 +114,7 @@ namespace CloacaTests
             }
             catch (Exception e)
             {
-                if (e.Message != "Missing record for 'foo' of type System.Int32")
+                if (e.Message != "Missing record for 'foo' of type System.Int32\n")
                 {
                     Assert.Fail(e.Message);
                 }
@@ -128,7 +128,7 @@ namespace CloacaTests
             }
             catch (Exception e)
             {
-                if (e.Message != "Missing record for 'foo' of type System.String")
+                if (e.Message != "Missing record for 'foo' of type System.String\n")
                 {
                     Assert.Fail(e.Message);
                 }

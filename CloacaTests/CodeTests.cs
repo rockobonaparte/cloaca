@@ -41,7 +41,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10 * (2 + 4) / 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(20) }
+                { "a", new PyFloat(20.0) }
             }), 1);
         }
 
@@ -55,7 +55,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Need to implement all these operators first!")]
+        //[Ignore("Need to implement all these operators first!")]
         public void AssignmentOperators()
         {
             // https://www.w3schools.com/python/python_operators.asp
@@ -92,7 +92,7 @@ namespace CloacaTests
                 "f //= 3\n" +
                 "g **= 2\n" +
                 "h &= 2\n" +
-                "i |= 4\n" +
+                "i |= 14\n" +
                 "j ^= 2\n" +
                 "k >>= 2\n" +
                 "l <<= 2\n"
@@ -101,7 +101,7 @@ namespace CloacaTests
                 { "a", new PyInteger(12) },
                 { "b", new PyInteger(8) },
                 { "c", new PyInteger(20) },
-                { "d", new PyInteger(5) },
+                { "d", new PyFloat(5.0) },
                 { "e", new PyInteger(1) },
                 { "f", new PyInteger(3) },
                 { "g", new PyInteger(100) },
@@ -227,8 +227,8 @@ namespace CloacaTests
                 "wait\n" +
                 "b = a + 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(20) },
-                { "b", new PyInteger(23) }
+                { "a", new PyFloat(20.0) },
+                { "b", new PyFloat(23.0) }
             }), 2);
         }
 

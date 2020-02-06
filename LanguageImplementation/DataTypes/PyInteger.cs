@@ -64,6 +64,16 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static PyObject __pow__(PyObject self, PyObject other)
+        {
+            PyInteger a, b;
+            castOperands(self, other, out a, out b, "exponent");
+            double doubleExp = Math.Pow((double) a.number, (double) b.number);
+            var newPyInteger = new PyInteger((BigInteger) doubleExp);
+            return newPyInteger;
+        }
+
+        [ClassMember]
         public static PyObject __sub__(PyObject self, PyObject other)
         {
             PyInteger a, b;
@@ -73,11 +83,29 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __div__(PyObject self, PyObject other)
+        public static PyObject __truediv__(PyObject self, PyObject other)
         {
             PyInteger a, b;
-            castOperands(self, other, out a, out b, "division");
+            castOperands(self, other, out a, out b, "true division");
+            var newPyFloat = new PyFloat(((Decimal) a.number) / ((Decimal) b.number));
+            return newPyFloat;
+        }
+
+        [ClassMember]
+        public static PyObject __floordiv__(PyObject self, PyObject other)
+        {
+            PyInteger a, b;
+            castOperands(self, other, out a, out b, "floor division");
             var newPyInteger = new PyInteger(a.number / b.number);
+            return newPyInteger;
+        }
+
+        [ClassMember]
+        public static PyObject __mod__(PyObject self, PyObject other)
+        {
+            PyInteger a, b;
+            castOperands(self, other, out a, out b, "modulo");
+            var newPyInteger = new PyInteger(a.number % b.number);
             return newPyInteger;
         }
 
@@ -91,9 +119,32 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyObject __or__(PyObject self, PyObject other)
         {
-            var orded = PyBoolClass.extractInt(self) & PyBoolClass.extractInt(other);
+            var orded = PyBoolClass.extractInt(self) | PyBoolClass.extractInt(other);
             return new PyInteger(orded);
         }
+
+        [ClassMember]
+        public static PyObject __xor__(PyObject self, PyObject other)
+        {
+            var orded = PyBoolClass.extractInt(self) ^ PyBoolClass.extractInt(other);
+            return new PyInteger(orded);
+        }
+
+        // TODO: Might need to come up with a larger numeric type to handle shifting larger numbers.
+        [ClassMember]
+        public static PyObject __rshift__(PyObject self, PyObject other)
+        {
+            var orded = (int) PyBoolClass.extractInt(self) >> (int) PyBoolClass.extractInt(other);
+            return new PyInteger(orded);
+        }
+
+        [ClassMember]
+        public static PyObject __lshift__(PyObject self, PyObject other)
+        {
+            var orded = (int)PyBoolClass.extractInt(self) << (int)PyBoolClass.extractInt(other);
+            return new PyInteger(orded);
+        }
+
 
         [ClassMember]
         public static PyBool __lt__(PyObject self, PyObject other)

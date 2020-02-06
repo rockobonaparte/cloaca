@@ -100,12 +100,30 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __div__(PyObject self, PyObject other)
+        public static PyObject __truediv__(PyObject self, PyObject other)
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "division");
             var newPyFloat = new PyFloat(a.number / b.number);
             return newPyFloat;
+        }
+
+        [ClassMember]
+        public static PyObject __floordiv__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "floor division");
+            var newPyInteger = new PyFloat(Math.Floor(a.number / b.number));
+            return newPyInteger;
+        }
+        
+        [ClassMember]
+        public static PyObject __mod__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "modulo");
+            var newPyInteger = new PyFloat(a.number % b.number);
+            return newPyInteger;
         }
 
         [ClassMember]

@@ -161,7 +161,7 @@ namespace CloacaTests
                     {
                         if(!map[name].ContainsKey(sublookup.Key))
                         {
-                            failures += "Missing record for '" + name + "' of type " + sublookup.Key;
+                            failures += "Missing record for '" + name + "' of type " + sublookup.Key + "\n";
                         }
                         else
                         {

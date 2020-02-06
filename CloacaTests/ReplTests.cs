@@ -46,7 +46,7 @@ namespace CloacaTests
             consoleOut = await repl.InterpretAsync("dir(a)\n");
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
-            Assert.That(consoleOut, Is.EqualTo("[__add__, __and__, __div__, __eq__, __ge__, __gt__, __init__, __le__, __lt__, __ltgt__, __mul__, __ne__, __or__, __repr__, __str__, __sub__]\r\n"));
+            Assert.That(consoleOut, Is.EqualTo("[__add__, __and__, __eq__, __floordiv__, __ge__, __gt__, __init__, __le__, __lshift__, __lt__, __ltgt__, __mod__, __mul__, __ne__, __or__, __pow__, __repr__, __rshift__, __str__, __sub__, __truediv__, __xor__]\r\n"));
         }
 
         // This is a fussy situation related to parsing from single_input. The ANTLR grammar we are using strips

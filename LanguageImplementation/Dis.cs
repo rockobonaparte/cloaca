@@ -72,6 +72,14 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_DIV", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.BINARY_TRUE_DIVIDE:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_TRUE_DIV", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_FLOOR_DIVIDE:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_FLOOR_DIVIDE", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.INPLACE_ADD:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_ADD", null, null);
                         cursor += 1;
