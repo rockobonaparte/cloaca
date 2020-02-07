@@ -265,3 +265,10 @@ context.augassign().GetText()
 "+="
 context.testlist().GetText()
 "2"
+
+
+
+BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
+do some cute jump opcode logic to mimick them.
+
+Try a test with multiples of an operator to make sure they generate correctly when you have more than one (multiple shifts, for example)

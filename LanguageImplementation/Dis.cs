@@ -57,7 +57,11 @@ namespace LanguageImplementation
                         cursor += 1;
                         break;
                     case ByteCodes.BINARY_OR:
-                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_AND", null, null);
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_OR", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_XOR:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_XOR", null, null);
                         cursor += 1;
                         break;
                     case ByteCodes.BINARY_SUBTRACT:
@@ -78,6 +82,22 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.BINARY_FLOOR_DIVIDE:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_FLOOR_DIVIDE", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_MODULO:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_MODULO", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_POWER:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_POWER", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_RSHIFT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_RSHIFT", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.BINARY_LSHIFT:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_LSHIFT", null, null);
                         cursor += 1;
                         break;
                     case ByteCodes.INPLACE_ADD:

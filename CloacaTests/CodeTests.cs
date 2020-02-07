@@ -55,7 +55,40 @@ namespace CloacaTests
         }
 
         [Test]
-        //[Ignore("Need to implement all these operators first!")]
+        public void ComprehensiveArithmeticOperators()
+        {
+            runBasicTest(
+                "x = 10\n" +
+                "a = x + 2\n" +
+                "b = x - 2\n" +
+                "c = x * 2\n" +
+                "d = x / 2\n" +
+                "e = x % 9\n" +
+                "f = x // 3\n" +
+                "g = x ** 2\n" +
+                "h = x & 2\n" +
+                "i = x | 14\n" +
+                "j = x ^ 2\n" +
+                "k = x >> 2\n" +
+                "l = x << 2\n"
+                , new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new PyInteger(12) },
+                { "b", new PyInteger(8) },
+                { "c", new PyInteger(20) },
+                { "d", new PyFloat(5.0) },
+                { "e", new PyInteger(1) },
+                { "f", new PyInteger(3) },
+                { "g", new PyInteger(100) },
+                { "h", new PyInteger(2) },
+                { "i", new PyInteger(14) },
+                { "j", new PyInteger(8) },
+                { "k", new PyInteger(2) },
+                { "l", new PyInteger(40) }
+            }), 1);
+        }
+
+        [Test]
         public void AssignmentOperators()
         {
             // https://www.w3schools.com/python/python_operators.asp

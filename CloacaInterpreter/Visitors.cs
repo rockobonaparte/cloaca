@@ -188,13 +188,24 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             Visit(context.children[child_i]);
             string operatorTxt = context.children[child_i - 1].GetText();
-            if(operatorTxt == "*")
+
+            // term: factor (('*'|'@'|'/'|'%'|'//') factor)*;
+            // Soooo I have no idea what that @ operator is all about.
+            if (operatorTxt == "*")
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_MULTIPLY, context);
             }
             else if(operatorTxt == "/")
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_TRUE_DIVIDE, context);
+            }
+            else if(operatorTxt == "%")
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_MODULO, context);
+            }
+            else if(operatorTxt == "//")
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_FLOOR_DIVIDE, context);
             }
             else
             {
@@ -815,6 +826,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
+    // TODO: This should not be BINARY_ADD, which should be x & y
+    // This appears to be implemented using some jump opcodes
     public override object VisitAnd_test([NotNull] CloacaParser.And_testContext context)
     {
         // not_test: 'not' not_test | comparison;
@@ -832,6 +845,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
+    // TODO: This should not be BINARY_OR, which should be x | y
+    // This appears to be implemented using some jump opcodes
     public override object VisitOr_test([NotNull] CloacaParser.Or_testContext context)
     {
         // not_test: 'not' not_test | comparison;
@@ -847,6 +862,92 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             return base.VisitOr_test(context);
         }
+    }
+
+    public override object VisitExpr([NotNull] CloacaParser.ExprContext context)
+    {
+        var inner_and_tests = context.xor_expr();
+        if (inner_and_tests.Length == 2)
+        {
+            base.Visit(inner_and_tests[0]);
+            base.Visit(inner_and_tests[1]);
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitExpr(context);
+        }
+    }
+
+    public override object VisitXor_expr([NotNull] CloacaParser.Xor_exprContext context)
+    {
+        var inner_and_tests = context.and_expr();
+        if (inner_and_tests.Length == 2)
+        {
+            base.Visit(inner_and_tests[0]);
+            base.Visit(inner_and_tests[1]);
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_XOR, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitXor_expr(context);
+        }
+    }
+
+    public override object VisitAnd_expr([NotNull] CloacaParser.And_exprContext context)
+    {
+        var inner_and_tests = context.shift_expr();
+        if (inner_and_tests.Length == 2)
+        {
+            base.Visit(inner_and_tests[0]);
+            base.Visit(inner_and_tests[1]);
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+            return null;
+        }
+        else
+        {
+            return base.VisitAnd_expr(context);
+        }
+    }
+
+    public override object VisitPower([NotNull] CloacaParser.PowerContext context)
+    {
+        if (context.factor() != null)
+        {
+            base.Visit(context.atom_expr());
+            base.Visit(context.factor());
+            ActiveProgram.AddInstruction(ByteCodes.BINARY_POWER, context);
+        }
+        else
+        {
+            base.Visit(context.atom_expr());
+        }
+        return null;
+    }
+
+    public override object VisitShift_expr([NotNull] CloacaParser.Shift_exprContext context)
+    {
+        base.Visit(context.arith_expr(0));
+        for (int child_i = 2; child_i < context.children.Count; child_i += 2)
+        {
+            Visit(context.children[child_i]);
+            string operatorTxt = context.children[child_i - 1].GetText();
+            if (operatorTxt == "<<")
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_LSHIFT, context);
+            }
+            else if (operatorTxt == ">>")
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_RSHIFT, context);
+            }
+            else
+            {
+                throw new Exception("The Cloaca VisitArith_expr cannot generate code for term rule operator: " + operatorTxt + " yet");
+            }
+        }
+        return null;
     }
 
     public override object VisitSubscriptlist([NotNull] CloacaParser.SubscriptlistContext context)
