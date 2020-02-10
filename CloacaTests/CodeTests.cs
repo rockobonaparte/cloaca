@@ -89,7 +89,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Doesn't work yet. Not surprised though!")]
         public void RepeatedArithmeticOperators()
         {
             // Making sure that we're properly parsing and generating all of these when there's multiples of the operator.
@@ -98,7 +97,7 @@ namespace CloacaTests
                 "a = x + 2 + 3\n" +
                 "b = x - 2 - 3\n" +
                 "c = x * 2 * 3\n" +
-                "d = x / 2 / 3\n" +
+                "d = x / 4 / 2\n" +
                 "e = x % 9 % 3\n" +
                 "f = x // 2 // 3\n" +
                 "g = x ** 2 ** 3\n" +
@@ -112,10 +111,10 @@ namespace CloacaTests
                 { "a", new PyInteger(100 + 2 + 3) },
                 { "b", new PyInteger(100 - 2 - 3) },
                 { "c", new PyInteger(100 * 2 * 3) },
-                { "d", new PyFloat(100.0 / 2.0 / 3.0) },
+                { "d", new PyFloat(100.0 / 4.0 / 2.0) },
                 { "e", new PyInteger(100 % 9 % 3) },
                 { "f", new PyInteger(100 / 2 / 3) },
-                { "g", new PyInteger((int) Math.Pow(100.0 * 100.0, 3.0)) },
+                { "g", new PyInteger((BigInteger) Math.Pow(100.0, 8.0)) },          // 2 ** 3 gets evaluated first and becomes 8. This is what CPython does too!
                 { "h", new PyInteger(100 & 3 & 2) },
                 { "i", new PyInteger(100 | 13 | 1) },
                 { "j", new PyInteger(100 ^ 2 ^ 1) },

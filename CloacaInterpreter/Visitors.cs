@@ -867,27 +867,36 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitExpr([NotNull] CloacaParser.ExprContext context)
     {
         var inner_and_tests = context.xor_expr();
-        if (inner_and_tests.Length == 2)
+        if (inner_and_tests.Length >= 2)
         {
             base.Visit(inner_and_tests[0]);
-            base.Visit(inner_and_tests[1]);
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+            for (int child_i = 2; child_i < context.children.Count; child_i += 2)
+            {
+                Visit(context.children[child_i]);
+                Visit(context.children[child_i - 1]);
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+            }
             return null;
         }
         else
         {
             return base.VisitExpr(context);
         }
+
     }
 
     public override object VisitXor_expr([NotNull] CloacaParser.Xor_exprContext context)
     {
         var inner_and_tests = context.and_expr();
-        if (inner_and_tests.Length == 2)
+        if (inner_and_tests.Length >= 2)
         {
             base.Visit(inner_and_tests[0]);
-            base.Visit(inner_and_tests[1]);
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_XOR, context);
+            for (int child_i = 2; child_i < context.children.Count; child_i += 2)
+            {
+                Visit(context.children[child_i]);
+                Visit(context.children[child_i - 1]);
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_XOR, context);
+            }
             return null;
         }
         else
@@ -899,11 +908,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitAnd_expr([NotNull] CloacaParser.And_exprContext context)
     {
         var inner_and_tests = context.shift_expr();
-        if (inner_and_tests.Length == 2)
+        if (inner_and_tests.Length >= 2)
         {
             base.Visit(inner_and_tests[0]);
-            base.Visit(inner_and_tests[1]);
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+            for (int child_i = 2; child_i < context.children.Count; child_i += 2)
+            {
+                Visit(context.children[child_i]);
+                Visit(context.children[child_i-1]);
+                ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+            }
             return null;
         }
         else
