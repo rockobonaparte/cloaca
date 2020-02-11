@@ -19,10 +19,12 @@ using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
+    public delegate void SimpleIntEvent(int something);
     class ReflectIntoPython
     {
         public int AnInteger;
         public string AString;
+        public event SimpleIntEvent IntEvent;
 
         public int AnIntegerProperty
         {
@@ -39,6 +41,17 @@ namespace CloacaTests
         {
             AnInteger += an_arg;
             return AnInteger;
+        }
+
+        // Two of these are defined so they can be subscribed separately as events and kept distinct.
+        public void SubscribeSetAnInteger1(int newInteger)
+        {
+            AnInteger = newInteger;
+        }
+
+        public void SubscribeSetAnInteger2(int newInteger)
+        {
+            AnInteger += newInteger;
         }
 
         public int AnOverload(params int[] lots_of_ints)
@@ -95,6 +108,11 @@ namespace CloacaTests
         {
 
         }
+
+        public void TriggerIntEvent(int intArg)
+        {
+            IntEvent(intArg);
+        }
     }
 
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
@@ -149,7 +167,6 @@ namespace CloacaTests
         {
             calledCount += 1;
         }
-
 
         [Test]
         public void EmbeddedVoid()
@@ -305,6 +322,27 @@ namespace CloacaTests
             {
                 { "a", 1337 },
                 { "b", "I did it!" }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("Event subscription/unsubscription don't work yet")]
+        public void EventDotNet()
+        {
+            runBasicTest(
+                "obj = ReflectIntoPython(1337, 'I did it!')\n" +
+                "obj.IntEvent += obj.EventSetAnInteger1\n" +
+                "obj.IntEvent += obj.EventSetAnInteger2\n" +
+                "obj.TriggerIntEvent(111)\n" +          // Set 111 and then add 111 = 222
+                "obj.IntEvent -= obj.SetAnInteger1\n" + // Event #2 remains so next one will still += AnInteger
+                "obj.TriggerIntEvent(111)\n" +          // 222 + 111 = 333
+                "a = obj.AnInteger\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 333 },
             }), 1);
         }
     }
