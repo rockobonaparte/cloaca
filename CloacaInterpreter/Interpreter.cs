@@ -224,7 +224,7 @@ namespace CloacaInterpreter
             var leftObj = left as PyObject;
             var rightObj = right as PyObject;
 
-            if (leftObj.__dict__.ContainsKey("dunder"))
+            if (leftObj.__dict__.ContainsKey(idunder))
             {
                 PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
                 context.DataStack.Push(returned);
@@ -244,7 +244,7 @@ namespace CloacaInterpreter
             var leftObj = left as PyObject;
             var rightObj = right as PyObject;
 
-            if (leftObj.__dict__.ContainsKey("dunder"))
+            if (leftObj.__dict__.ContainsKey(idunder))
             {
                 PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
                 context.DataStack.Push(returned);
