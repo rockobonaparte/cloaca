@@ -5,8 +5,12 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaTests
 {
+    public delegate void SomeEventType(int aNumber);
+
     public class TestExtractClass
     {
+        public event SomeEventType SomeEvent;
+
         public void SimpleMethod()
         {
 
@@ -49,6 +53,13 @@ namespace CloacaTests
         public void ExtractGenericMethod()
         {
             var extracted = ObjectResolver.GetValue("GenericMethod", new TestExtractClass());
+            Assert.IsNotNull(extracted);
+        }
+
+        [Test]
+        public void ExtractEvent()
+        {
+            var extracted = ObjectResolver.GetValue("SomeEvent", new TestExtractClass());
             Assert.IsNotNull(extracted);
         }
     }

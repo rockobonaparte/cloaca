@@ -58,7 +58,7 @@ namespace CloacaInterpreter
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Event)
                     {
-                        throw new EscapedPyException(new NotImplemented("'" + rawObject.GetType().Name + "' object attribute named '" + attrName + "' is an event, which we cannot yet extract."));
+                        return rawObject.GetType().GetEvent(attrName);
                     }
                     else
                     {
