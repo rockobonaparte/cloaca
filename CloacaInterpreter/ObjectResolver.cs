@@ -24,6 +24,11 @@ namespace CloacaInterpreter
                     // Try it as a field and then as a property.
                     var objType = rawObject.GetType();
                     var member = objType.GetMember(attrName);
+                    if(member.Length == 0)
+                    {
+                        // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
+                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                    }
                     if (member[0].MemberType == System.Reflection.MemberTypes.Property)
                     {
                         return rawObject.GetType().GetProperty(attrName).GetValue(rawObject);
