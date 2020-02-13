@@ -326,15 +326,15 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Event subscription/unsubscription don't work yet")]
+        [Ignore("Event subscription/unsubscription doesn't work yet")]
         public void EventDotNet()
         {
             runBasicTest(
                 "obj = ReflectIntoPython(1337, 'I did it!')\n" +
-                "obj.IntEvent += obj.EventSetAnInteger1\n" +
-                "obj.IntEvent += obj.EventSetAnInteger2\n" +
+                "obj.IntEvent += obj.SubscribeSetAnInteger1\n" +
+                "obj.IntEvent += obj.SubscribeSetAnInteger2\n" +
                 "obj.TriggerIntEvent(111)\n" +          // Set 111 and then add 111 = 222
-                "obj.IntEvent -= obj.SetAnInteger1\n" + // Event #2 remains so next one will still += AnInteger
+                "obj.IntEvent -= obj.SubscribeSetAnInteger1\n" + // Event #2 remains so next one will still += AnInteger
                 "obj.TriggerIntEvent(111)\n" +          // 222 + 111 = 333
                 "a = obj.AnInteger\n",
                 new Dictionary<string, object>()

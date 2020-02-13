@@ -19,6 +19,11 @@ namespace LanguageImplementation
 
         private object instance;
 
+        public object GetObjectInstance()
+        {
+            return instance;
+        }
+
         public string Name
         {
             get; protected set;

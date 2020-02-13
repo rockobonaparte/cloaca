@@ -6,6 +6,7 @@ using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 using System.Threading.Tasks;
+using System.Reflection;
 
 namespace CloacaInterpreter
 {
@@ -341,7 +342,63 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_ADD:
-                            await leftRightOperation(context, "__iadd__", "__add__");
+                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            // await leftRightOperation(context, "__iadd__", "__add__");
+                            {
+                                dynamic left = context.DataStack.Pop();
+                                dynamic right = context.DataStack.Pop();
+
+                                var leftEvent = left as EventInfo;
+                                var rightCall = right as WrappedCodeObject;
+
+                                // The event subscribe code is currently dead. It doesn't work yet.
+                                if (leftEvent != null)
+                                {
+                                    // It's coming in as a WrappedCodeObject so we have to turn it into a call that can accept the arguments we're expecting. We'll pencil in
+                                    // the interpreter and the frame. This should then break down the function into something that just takes the arguments we originally expect.
+                                    // BTW That frame could be an issue since maybe it won't tell us the right place when we actually trigger it. Stay tuned.
+                                    MethodInfo rightCurriedMethodInfo;
+                                    var eventMethodInfo = leftEvent.EventHandlerType.GetMethod("Invoke");       // Return signature is probably void but we gotta make sure.
+                                    if (eventMethodInfo.ReturnType == typeof(void))
+                                    {
+                                        rightCurriedMethodInfo = (new Action<object[]>(args =>
+                                        {
+                                            rightCall.Call(this, context, args);
+                                        })).Method;
+                                    }
+                                    else
+                                    {
+                                        // Oh wow! It wasn't a void function!
+                                        rightCurriedMethodInfo = (new Func<object[], object>(args =>
+                                        {
+                                            return rightCall.Call(this, context, args);
+                                        })).Method;
+                                    }
+
+                                    // ArgumentException "Cannot bind to the target method because its signature or security transparency is not compatible with that of the delegate type."
+                                    // This is because I'm trying to attach my object[] wrapped call to the real signature.
+                                    var rightDelegate = Delegate.CreateDelegate(leftEvent.EventHandlerType, rightCall.GetObjectInstance(), rightCurriedMethodInfo);
+                                    leftEvent.AddEventHandler(left, rightDelegate);
+                                }
+                                else
+                                {
+
+                                    var leftObj = left as PyObject;
+                                    var rightObj = right as PyObject;
+
+                                    if (leftObj.__dict__.ContainsKey("__iadd__"))
+                                    {
+                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightObj });
+                                        context.DataStack.Push(returned);
+                                    }
+                                    else
+                                    {
+                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__add__", new PyObject[] { rightObj });
+                                        context.DataStack.Push(returned);
+                                    }
+                                    context.Cursor += 1;
+                                }
+                            }
                             break;
                         case ByteCodes.BINARY_SUBTRACT:
                             {
