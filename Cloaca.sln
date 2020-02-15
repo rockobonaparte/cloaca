@@ -28,6 +28,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OriginalPythonLanguage", "O
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python3ParseTest", "Python3ParseTest\Python3ParseTest.csproj", "{878B4537-317D-414A-A6E0-ACEEB027728D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloacaNative", "CloacaNative\CloacaNative.csproj", "{54ADB507-A3E2-4BC5-B2CF-535993E74225}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloacaNativeTests", "CloacaNativeTests\CloacaNativeTests.csproj", "{3B6EE779-AEC9-41CC-885F-4A4097E63C10}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +82,14 @@ Global
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54ADB507-A3E2-4BC5-B2CF-535993E74225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54ADB507-A3E2-4BC5-B2CF-535993E74225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54ADB507-A3E2-4BC5-B2CF-535993E74225}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54ADB507-A3E2-4BC5-B2CF-535993E74225}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B6EE779-AEC9-41CC-885F-4A4097E63C10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B6EE779-AEC9-41CC-885F-4A4097E63C10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B6EE779-AEC9-41CC-885F-4A4097E63C10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B6EE779-AEC9-41CC-885F-4A4097E63C10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
