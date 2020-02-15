@@ -51,6 +51,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BootstrapTests.cs" />
+    <Compile Include="DefaultFileProviderTests.cs" />
+    <Compile Include="NativeResourceManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NativeTestBench.cs" />
   </ItemGroup>

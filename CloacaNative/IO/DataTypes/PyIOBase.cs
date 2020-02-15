@@ -11,17 +11,21 @@ using LanguageImplementation.DataTypes;
 
 namespace CloacaNative.IO.DataTypes
 {
-    public abstract class PyIOBaseClass : PyClass
+    public class PyIOBaseClass : PyClass
     {
+        protected PyIOBaseClass(CodeObject __init__)
+            : base("IOBase", __init__, new PyClass[0])
+        {
+            __instance = this;
+        }
+
+        private static PyIOBaseClass __instance;
+        public static PyIOBaseClass Instance => __instance ?? (__instance = new PyIOBaseClass(null));
+
         [ClassMember]
         public static PyInteger fileno(PyIOBase self)
         {
             return new PyInteger(new BigInteger(self.ResourceHandle.Descriptor));
-        }
-
-        protected PyIOBaseClass(string name, CodeObject __init__, PyClass[] bases)
-            : base(name, __init__, bases)
-        {
         }
     }
 

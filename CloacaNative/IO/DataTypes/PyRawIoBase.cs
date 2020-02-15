@@ -9,11 +9,11 @@ using LanguageImplementation.DataTypes;
 
 namespace CloacaNative.IO.DataTypes
 {
-  public class PyRawIoBaseClass : PyIOBaseClass
-  {
-      public PyRawIoBaseClass(string name, CodeObject __init__, PyClass[] bases) 
-          : base(name, __init__, bases)
-      {
-      }
-  }
+  //public class PyRawIoBaseClass : PyIOBaseClass
+  //{
+  //    public PyRawIoBaseClass(string name, CodeObject __init__, PyClass[] bases) 
+  //        : base(name, __init__, bases)
+  //    {
+  //    }
+  //}
 }

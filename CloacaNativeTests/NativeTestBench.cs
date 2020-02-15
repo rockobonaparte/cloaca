@@ -12,9 +12,8 @@ using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Sharpen;
 using NUnit.Framework;
 using System.Runtime.ExceptionServices;
-using CloacaInterpreter.Native;
-using CloacaInterpreter.Native.IO;
 using CloacaNative;
+using CloacaNative.IO;
 using CloacaTests;
 
 namespace CloacaNativeTests

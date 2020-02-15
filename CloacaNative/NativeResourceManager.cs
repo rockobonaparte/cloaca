@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CloacaInterpreter;
-using CloacaInterpreter.Native;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
@@ -65,7 +64,7 @@ namespace CloacaNative
             return NoneType.Instance;
         }
 
-        public Handle CreateResourceHandle()
+        private Handle CreateResourceHandle()
         {
             return new Handle(this, _nextDescriptor++);
         }

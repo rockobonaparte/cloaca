@@ -6,8 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using CloacaNative;
 using CloacaNative.IO.DataTypes;
+using CloacaInterpreter;
 
-namespace CloacaInterpreter.Native.IO
+namespace CloacaNative.IO
 {
   public class DefaultFileProvider : INativeFileProvider
   {

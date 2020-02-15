@@ -50,9 +50,9 @@
     <Compile Include="IO\DataTypes\PyBufferedIOBase.cs" />
     <Compile Include="IO\DataTypes\PyBufferedReader.cs" />
     <Compile Include="IO\DataTypes\PyBufferedWriter.cs" />
-    <Compile Include="IO\DataTypes\PyIOBaseClass.cs" />
-    <Compile Include="IO\DataTypes\PyRawIoBaseClass.cs" />
-    <Compile Include="IO\DataTypes\PyTextIOBaseClass.cs" />
+    <Compile Include="IO\DataTypes\PyIOBase.cs" />
+    <Compile Include="IO\DataTypes\PyRawIoBase.cs" />
+    <Compile Include="IO\DataTypes\PyTextIOBase.cs" />
     <Compile Include="IO\DataTypes\PyTextIOWrapper.cs" />
     <Compile Include="NativeResourceManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -10,13 +10,14 @@ using LanguageImplementation.DataTypes;
 
 namespace CloacaNative.IO.DataTypes
 {
-    public class PyTextIOWrapperClass : PyTextIOBaseClass
+    public class PyTextIOWrapperClass : PyClass
     {
         public PyTextIOWrapperClass(CodeObject __init__) :
-            base("TextIOWrapper", __init__, new PyClass[0])
+            base("TextIOWrapper", __init__, new[] { PyTextIOBaseClass.Instance })
         {
             __instance = this;
-            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyInteger>(null);
+
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyTextIOWrapper>(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
