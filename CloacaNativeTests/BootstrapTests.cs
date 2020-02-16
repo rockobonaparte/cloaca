@@ -16,6 +16,7 @@ namespace CloacaNativeTests
     {
         private void CreateTestFile()
         {
+            if (File.Exists("test.dat")) return;
             using (var writer = new StreamWriter("test.dat"))
             {
                 writer.WriteLine("Look at my waistcoat.");
@@ -30,6 +31,17 @@ namespace CloacaNativeTests
             runBasicTest(
                 "s = open(\"test.dat\", \"r\")\n" +
                 "line = s.readline()\n",
+                new VariableMultimap(new TupleList<string, object>())
+                , 1);
+        }
+
+        [Test]
+        public void Inheritance()
+        {
+            CreateTestFile();
+            runBasicTest(
+                "s = open(\"test.dat\", \"r\")\n" +
+                "line = s.test()\n",
                 new VariableMultimap(new TupleList<string, object>())
                 , 1);
         }

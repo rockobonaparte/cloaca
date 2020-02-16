@@ -21,6 +21,12 @@ namespace CloacaNative.IO.DataTypes
         private static PyTextIOBaseClass __instance;
         public static PyTextIOBaseClass Instance => __instance ?? (__instance = new PyTextIOBaseClass(null));
 
+        [ClassMember]
+        public static void test()
+        {
+            int x = 0;
+        }
+
     }
 
     public abstract class PyTextIOBase : PyIOBase

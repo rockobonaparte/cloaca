@@ -27,6 +27,7 @@ namespace CloacaNative.IO.DataTypes
         {
             return new PyInteger(new BigInteger(self.ResourceHandle.Descriptor));
         }
+
     }
 
     public abstract class PyIOBase : PyObject

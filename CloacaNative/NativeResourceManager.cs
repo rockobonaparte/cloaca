@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CloacaInterpreter;
+using CloacaNative.IO.DataTypes;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
@@ -51,17 +52,15 @@ namespace CloacaNative
                 this));
         }
 
-        public object open_func(string fileName, string fileMode)
+        public Task<PyIOBase> open_func(IInterpreter interpreter, FrameContext context, string fileName, string fileMode)
         {
             if (TryGetProvider<INativeFileProvider>(out INativeFileProvider provider))
             {
                 var handle = CreateResourceHandle();
                 _activeHandles.Add(handle);
-                return provider.Open(handle, fileName, fileMode);
+                return provider.Open(interpreter, context, handle, fileName, fileMode);
             }
-
-            //TODO: Confirm spec behavior when open fails
-            return NoneType.Instance;
+            throw new Exception("Missing provider.");
         }
 
         private Handle CreateResourceHandle()

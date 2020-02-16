@@ -28,7 +28,7 @@ namespace CloacaNative.IO.DataTypes
 
         // I don't seem to be able to add a self parameter here the argument doesn't get passed through to Injector.Inject 
         [ClassMember]
-        public static PyString readline(PyObject self)
+        public static PyString readline(PyTextIOWrapper self)
         {
             return new PyString("Got this far.");
             //return new PyString(self._reader.ReadLine());
