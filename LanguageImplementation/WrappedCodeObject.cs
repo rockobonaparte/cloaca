@@ -29,6 +29,11 @@ namespace LanguageImplementation
             get; protected set;
         }
 
+        public WrappedCodeObject CloneForInstance(object instance)
+        {
+            return new WrappedCodeObject(Name, MethodBases, instance);
+        }
+
         /// <summary>
         /// Assuming that the payload is Task<T>, this will convert it to a Task<object>. We need this tedious
         /// step because C# does not support a direct conversion. Instead, we have to write a helper to invoke
@@ -138,7 +143,7 @@ namespace LanguageImplementation
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             var methodBase = findBestMethodMatch(args);
-            var injector = new Injector(interpreter, context, interpreter.Scheduler);
+            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);          // Unit tests like to come in with a null interpreter.
             var final_args = injector.Inject(methodBase, args);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.

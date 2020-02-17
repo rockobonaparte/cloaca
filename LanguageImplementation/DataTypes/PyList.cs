@@ -160,7 +160,7 @@ namespace LanguageImplementation.DataTypes
         public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asList = (PyList)self;
-            PyString retStr = new PyString("[");
+            PyString retStr = PyString.Create("[");
             for(int i = 0; i < asList.list.Count; ++i)
             {
                 var pyObj = asList.list[i];
@@ -168,7 +168,7 @@ namespace LanguageImplementation.DataTypes
                 var __repr__ = pyObj.__dict__[PyClass.__REPR__];
                 var functionToRun = __repr__ as IPyCallable;
 
-                var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });
+                var returned = await functionToRun.Call(interpreter, context, new object[0]);
                 if (returned != null)
                 {
                     var asPyString = (PyString)returned;
@@ -178,10 +178,10 @@ namespace LanguageImplementation.DataTypes
                 // Appending commas except on last index
                 if (i < asList.list.Count - 1)
                 {
-                    retStr = (PyString)PyStringClass.__add__(retStr, new PyString(", "));
+                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(", "));
                 }
             }
-            return (PyString) PyStringClass.__add__(retStr, new PyString("]"));
+            return (PyString) PyStringClass.__add__(retStr, PyString.Create("]"));
         }
     }
 

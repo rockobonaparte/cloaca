@@ -66,7 +66,7 @@ namespace CloacaTests
         {
             var context = new MockContext("\"Hello\"");
             PyString result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo(new PyString("Hello")));
+            Assert.That(result, Is.EqualTo(PyString.Create("Hello")));
         }
 
         [Test]
@@ -74,7 +74,7 @@ namespace CloacaTests
         {
             var context = new MockContext("'Hello'");
             PyString result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo(new PyString("Hello")));
+            Assert.That(result, Is.EqualTo(PyString.Create("Hello")));
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace CloacaTests
         {
             var context = new MockContext("\"\"\"Hello\"\"\"");
             PyString result = ConstantsFactory.CreateString(context);
-            Assert.That(result, Is.EqualTo(new PyString("Hello")));
+            Assert.That(result, Is.EqualTo(PyString.Create("Hello")));
         }
 
         [Test]

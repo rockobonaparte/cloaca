@@ -65,9 +65,10 @@ namespace LanguageImplementation.DataTypes
             foreach(var key in toNew.__dict__.Keys)
             {
                 var val = toNew.__dict__[key];
-                if(val is CodeObject)
+                var asCallable = val as IPyCallable;
+                if(asCallable != null)
                 {
-                    methods.Add(new PyMethod(toNew, val as CodeObject));
+                    methods.Add(new PyMethod(toNew, asCallable));
                     methodKeys.Add(key);
                 }
             }

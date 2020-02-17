@@ -48,21 +48,21 @@ namespace LanguageImplementation.DataTypes
             var rightInt = other as PyInteger;
             if (rightInt != null)
             {
-                otherOut = new PyFloat((decimal)rightInt.number);
+                otherOut = PyFloat.Create((decimal)rightInt.number);
                 return;
             }
 
             var rightBool = other as PyBool;
             if (rightBool != null)
             {
-                otherOut = new PyFloat(rightBool.boolean ? 1.0 : 0.0);
+                otherOut = PyFloat.Create(rightBool.boolean ? 1.0 : 0.0);
                 return;
             }
 
             var rightStr = other as PyString;
             if (rightStr != null)
             {
-                otherOut = new PyFloat(Decimal.Parse(rightStr.str));
+                otherOut = PyFloat.Create(Decimal.Parse(rightStr.str));
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "addition");
-            var newPyFloat = new PyFloat(a.number + b.number);
+            var newPyFloat = PyFloat.Create(a.number + b.number);
             return newPyFloat;
         }
 
@@ -86,7 +86,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "multiplication");
-            var newPyFloat = new PyFloat(a.number * b.number);
+            var newPyFloat = PyFloat.Create(a.number * b.number);
             return newPyFloat;
         }
 
@@ -95,7 +95,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "subtract");
-            var newPyFloat = new PyFloat(a.number - b.number);
+            var newPyFloat = PyFloat.Create(a.number - b.number);
             return newPyFloat;
         }
 
@@ -104,7 +104,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "division");
-            var newPyFloat = new PyFloat(a.number / b.number);
+            var newPyFloat = PyFloat.Create(a.number / b.number);
             return newPyFloat;
         }
 
@@ -113,7 +113,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "floor division");
-            var newPyInteger = new PyFloat(Math.Floor(a.number / b.number));
+            var newPyInteger = PyFloat.Create(Math.Floor(a.number / b.number));
             return newPyInteger;
         }
         
@@ -122,7 +122,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "modulo");
-            var newPyInteger = new PyFloat(a.number % b.number);
+            var newPyInteger = PyFloat.Create(a.number % b.number);
             return newPyInteger;
         }
 
@@ -191,7 +191,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static new PyString __repr__(PyObject self)
         {
-            return new PyString(((PyFloat)self).ToString());
+            return PyString.Create(((PyFloat)self).ToString());
         }
     }
 
@@ -211,6 +211,25 @@ namespace LanguageImplementation.DataTypes
         public PyFloat()
         {
             number = 0;
+        }
+
+        public static PyFloat Create()
+        {
+            return PyTypeObject.DefaultNew<PyFloat>(PyFloatClass.Instance);
+        }
+
+        public static PyFloat Create(Decimal value)
+        {
+            var pyFloat = PyTypeObject.DefaultNew<PyFloat>(PyFloatClass.Instance);
+            pyFloat.number = value;
+            return pyFloat;
+        }
+
+        public static PyFloat Create(double value)
+        {
+            var pyFloat = PyTypeObject.DefaultNew<PyFloat>(PyFloatClass.Instance);
+            pyFloat.number = new Decimal(value);
+            return pyFloat;
         }
 
         public override bool Equals(object obj)

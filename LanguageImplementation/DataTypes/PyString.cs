@@ -50,7 +50,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "concatenation");
-            var newPyString = new PyString(a.str + b.str);
+            var newPyString = PyString.Create(a.str + b.str);
             return newPyString;
         }
 
@@ -71,7 +71,7 @@ namespace LanguageImplementation.DataTypes
                 // TODO: Try to realize this as a real TypeError object in some way.
                 throw new Exception("TypeError: can't multiply sequence by non-int of type 'str'");
             }
-            var newPyString = new PyString(string.Concat(Enumerable.Repeat(a.str, (int) b.number)));
+            var newPyString = PyString.Create(string.Concat(Enumerable.Repeat(a.str, (int) b.number)));
             return newPyString;
         }
 
@@ -155,7 +155,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static new PyString __repr__(PyObject self)
         {
-            return new PyString(((PyString)self).ToString());
+            return PyString.Create(((PyString)self).ToString());
         }
     }
 
@@ -170,6 +170,18 @@ namespace LanguageImplementation.DataTypes
         public PyString()
         {
             str = "";
+        }
+
+        public static PyString Create()
+        {
+            return PyTypeObject.DefaultNew<PyString>(PyStringClass.Instance);
+        }
+
+        public static PyString Create(string value)
+        {
+            var pyString = PyTypeObject.DefaultNew<PyString>(PyStringClass.Instance);
+            pyString.str = value;
+            return pyString;
         }
 
         public override bool Equals(object obj)

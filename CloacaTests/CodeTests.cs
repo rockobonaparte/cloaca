@@ -18,7 +18,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(10) }
+                { "a", PyInteger.Create(10) }
             }), 1);
         }
 
@@ -32,7 +32,7 @@ namespace CloacaTests
             runBasicTest("a = 10\n" +
                          "a\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(10) }
+                { "a", PyInteger.Create(10) }
             }), 1);
         }
 
@@ -41,7 +41,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10 * (2 + 4) / 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyFloat(20.0) }
+                { "a", PyFloat.Create(20.0) }
             }), 1);
         }
 
@@ -50,7 +50,7 @@ namespace CloacaTests
         {
             runBasicTest("a = 10.0 * (2.0 + 4.0) / 3.0\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyFloat(20.0) }
+                { "a", PyFloat.Create(20.0) }
             }), 1);
         }
 
@@ -73,18 +73,18 @@ namespace CloacaTests
                 "l = x << 2\n"
                 , new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(12) },
-                { "b", new PyInteger(8) },
-                { "c", new PyInteger(20) },
-                { "d", new PyFloat(5.0) },
-                { "e", new PyInteger(1) },
-                { "f", new PyInteger(3) },
-                { "g", new PyInteger(100) },
-                { "h", new PyInteger(2) },
-                { "i", new PyInteger(14) },
-                { "j", new PyInteger(8) },
-                { "k", new PyInteger(2) },
-                { "l", new PyInteger(40) }
+                { "a", PyInteger.Create(12) },
+                { "b", PyInteger.Create(8) },
+                { "c", PyInteger.Create(20) },
+                { "d", PyFloat.Create(5.0) },
+                { "e", PyInteger.Create(1) },
+                { "f", PyInteger.Create(3) },
+                { "g", PyInteger.Create(100) },
+                { "h", PyInteger.Create(2) },
+                { "i", PyInteger.Create(14) },
+                { "j", PyInteger.Create(8) },
+                { "k", PyInteger.Create(2) },
+                { "l", PyInteger.Create(40) }
             }), 1);
         }
 
@@ -108,18 +108,18 @@ namespace CloacaTests
                 "l = x << 2 << 3\n"
                 , new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(100 + 2 + 3) },
-                { "b", new PyInteger(100 - 2 - 3) },
-                { "c", new PyInteger(100 * 2 * 3) },
-                { "d", new PyFloat(100.0 / 4.0 / 2.0) },
-                { "e", new PyInteger(100 % 9 % 3) },
-                { "f", new PyInteger(100 / 2 / 3) },
-                { "g", new PyInteger((BigInteger) Math.Pow(100.0, 8.0)) },          // 2 ** 3 gets evaluated first and becomes 8. This is what CPython does too!
-                { "h", new PyInteger(100 & 3 & 2) },
-                { "i", new PyInteger(100 | 13 | 1) },
-                { "j", new PyInteger(100 ^ 2 ^ 1) },
-                { "k", new PyInteger(100 >> 2 >> 3) },
-                { "l", new PyInteger(100 << 2 << 3) }
+                { "a", PyInteger.Create(100 + 2 + 3) },
+                { "b", PyInteger.Create(100 - 2 - 3) },
+                { "c", PyInteger.Create(100 * 2 * 3) },
+                { "d", PyFloat.Create(100.0 / 4.0 / 2.0) },
+                { "e", PyInteger.Create(100 % 9 % 3) },
+                { "f", PyInteger.Create(100 / 2 / 3) },
+                { "g", PyInteger.Create((BigInteger) Math.Pow(100.0, 8.0)) },          // 2 ** 3 gets evaluated first and becomes 8. This is what CPython does too!
+                { "h", PyInteger.Create(100 & 3 & 2) },
+                { "i", PyInteger.Create(100 | 13 | 1) },
+                { "j", PyInteger.Create(100 ^ 2 ^ 1) },
+                { "k", PyInteger.Create(100 >> 2 >> 3) },
+                { "l", PyInteger.Create(100 << 2 << 3) }
             }), 1);
         }
 
@@ -166,18 +166,18 @@ namespace CloacaTests
                 "l <<= 2\n"
                 , new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(12) },
-                { "b", new PyInteger(8) },
-                { "c", new PyInteger(20) },
-                { "d", new PyFloat(5.0) },
-                { "e", new PyInteger(1) },
-                { "f", new PyInteger(3) },
-                { "g", new PyInteger(100) },
-                { "h", new PyInteger(2) },
-                { "i", new PyInteger(14) },
-                { "j", new PyInteger(8) },
-                { "k", new PyInteger(2) },
-                { "l", new PyInteger(40) }
+                { "a", PyInteger.Create(12) },
+                { "b", PyInteger.Create(8) },
+                { "c", PyInteger.Create(20) },
+                { "d", PyFloat.Create(5.0) },
+                { "e", PyInteger.Create(1) },
+                { "f", PyInteger.Create(3) },
+                { "g", PyInteger.Create(100) },
+                { "h", PyInteger.Create(2) },
+                { "i", PyInteger.Create(14) },
+                { "j", PyInteger.Create(8) },
+                { "k", PyInteger.Create(2) },
+                { "l", PyInteger.Create(40) }
             }), 1);
         }
 
@@ -186,12 +186,12 @@ namespace CloacaTests
         {
             runBasicTest("a = 'Hello!'\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyString("Hello!") }
+                { "a", PyString.Create("Hello!") }
             }), 1);
 
             runBasicTest("a = \"Hello!\"\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyString("Hello!") }
+                { "a", PyString.Create("Hello!") }
             }), 1);
         }
 
@@ -222,7 +222,7 @@ namespace CloacaTests
                 "h = a <> 10\n",
                 new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(10) },
+                { "a", PyInteger.Create(10) },
                 { "b", PyBool.False },
                 { "c", PyBool.True },
                 { "d", PyBool.False },
@@ -266,11 +266,11 @@ namespace CloacaTests
                 "c = a is not None\n",
             new Dictionary<string, object>
             {
-                { "a", new PyInteger(10) }
+                { "a", PyInteger.Create(10) }
             },
             new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(10) },
+                { "a", PyInteger.Create(10) },
                 { "b", PyBool.False },
                 { "c", PyBool.True }
             }), 1);
@@ -295,8 +295,8 @@ namespace CloacaTests
                 "wait\n" +
                 "b = a + 3\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyFloat(20.0) },
-                { "b", new PyFloat(23.0) }
+                { "a", PyFloat.Create(20.0) },
+                { "b", PyFloat.Create(23.0) }
             }), 2);
         }
 
@@ -309,7 +309,7 @@ namespace CloacaTests
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(2) }
+                { "a", PyInteger.Create(2) }
             }), 1);
         }
 
@@ -322,7 +322,7 @@ namespace CloacaTests
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(2) }
+                { "a", PyInteger.Create(2) }
             }), 1);
         }
 
@@ -335,7 +335,7 @@ namespace CloacaTests
                 "if a == 10:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(9) }
+                { "a", PyInteger.Create(9) }
             }), 1);
         }
 
@@ -348,7 +348,7 @@ namespace CloacaTests
                 "   a = 1\n" +
                 "a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(11) }
+                { "a", PyInteger.Create(11) }
             }), 1);
         }
 
@@ -427,7 +427,7 @@ namespace CloacaTests
                 "while a < 3:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(3) }
+                { "a", PyInteger.Create(3) }
             }), 1);
         }
 
@@ -444,20 +444,20 @@ namespace CloacaTests
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new PyInteger(0) }
+                    { "a", PyInteger.Create(0) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(103) }
+                    { "a", PyInteger.Create(103) }
                 }), 1);
 
             // Skips the while loop, runs the else clause
             runBasicTest(program,
                 new Dictionary<string, object> 
                 {
-                    { "a", new PyInteger(10) }
+                    { "a", PyInteger.Create(10) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(110) }
+                    { "a", PyInteger.Create(110) }
                 }), 1);
         }
 
@@ -476,28 +476,28 @@ namespace CloacaTests
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new PyInteger(10) }
+                    { "a", PyInteger.Create(10) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(2) }
+                    { "a", PyInteger.Create(2) }
                 }), 1);
 
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new PyInteger(11) }
+                    { "a", PyInteger.Create(11) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(4) }
+                    { "a", PyInteger.Create(4) }
                 }), 1);
 
             runBasicTest(program,
                 new Dictionary<string, object>
                 {
-                    { "a", new PyInteger(12) }
+                    { "a", PyInteger.Create(12) }
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(6) }
+                    { "a", PyInteger.Create(6) }
                 }), 1);
         }
 
@@ -518,7 +518,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(1) }
+                    { "a", PyInteger.Create(1) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -534,7 +534,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(1) }
+                    { "a", PyInteger.Create(1) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -551,7 +551,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(2) }
+                    { "a", PyInteger.Create(2) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -568,7 +568,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(2) }
+                    { "a", PyInteger.Create(2) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -583,7 +583,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(4) }
+                    { "a", PyInteger.Create(4) }
                 }), 1, new string[] { "foo" });
         }
 
@@ -599,7 +599,7 @@ namespace CloacaTests
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", new PyInteger(4) }
+                    { "a", PyInteger.Create(4) }
                 }), 1, new string[] { "foo" });
         }
     }

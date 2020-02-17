@@ -21,7 +21,7 @@ namespace CloacaTests
             Assert.That(consoleOut, Is.Empty);
             var variables = repl.ContextVariables;
             Assert.That(variables.Count, Is.EqualTo(1));
-            Assert.That(variables["a"], Is.EqualTo(new PyInteger(1)));
+            Assert.That(variables["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace CloacaTests
             Assert.That(consoleOut, Is.EqualTo("1\r\n"));
             var variables = repl.ContextVariables;
             Assert.That(variables.Count, Is.EqualTo(1));
-            Assert.That(variables["a"], Is.EqualTo(new PyInteger(1)));
+            Assert.That(variables["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
