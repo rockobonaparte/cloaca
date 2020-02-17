@@ -51,25 +51,25 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyObject __add__(PyObject self, PyObject other)
         {
-            return new PyInteger(extractInt(self) + extractInt(other));
+            return PyInteger.Create(extractInt(self) + extractInt(other));
         }
 
         [ClassMember]
         public static PyObject __mul__(PyObject self, PyObject other)
         {
-            return new PyInteger(extractInt(self) * extractInt(other));
+            return PyInteger.Create(extractInt(self) * extractInt(other));
         }
 
         [ClassMember]
         public static PyObject __sub__(PyObject self, PyObject other)
         {
-            return new PyInteger(extractInt(self) - extractInt(other));
+            return PyInteger.Create(extractInt(self) - extractInt(other));
         }
 
         [ClassMember]
         public static PyObject __div__(PyObject self, PyObject other)
         {
-            return new PyInteger(extractInt(self) / extractInt(other));
+            return PyInteger.Create(extractInt(self) / extractInt(other));
         }
 
         [ClassMember]
@@ -139,7 +139,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static new PyString __repr__(PyObject self)
         {
-            return new PyString(((PyBool)self).ToString());
+            return PyString.Create(((PyBool)self).ToString());
         }
     }
 
@@ -200,8 +200,15 @@ namespace LanguageImplementation.DataTypes
             return rhs.boolean;
         }
 
-        public static readonly PyBool True = new PyBool(true);
-        public static readonly PyBool False = new PyBool(false);
+        private static PyBool _makeInstance(bool value)
+        {
+            var instance = PyTypeObject.DefaultNew<PyBool>(PyBoolClass.Instance);
+            instance.boolean = value;
+            return instance;
+        }
+        
+        public static readonly PyBool True = _makeInstance(true);
+        public static readonly PyBool False = _makeInstance(false);
 
         public static PyBool Create(bool fromBool)
         {

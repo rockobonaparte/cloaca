@@ -280,13 +280,13 @@ namespace LanguageImplementation.DataTypes
         public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asDict = (PyDict)self;
-            PyString retStr = new PyString("{");
+            PyString retStr = PyString.Create("{");
             int visited = 0;
             foreach (var mapping in asDict.dict)
             {
                 var key_repr = await __visit_repr((PyObject)mapping.Key, interpreter, context);
                 retStr = (PyString)PyStringClass.__add__(retStr, key_repr);
-                retStr = (PyString)PyStringClass.__add__(retStr, new PyString(": "));
+                retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(": "));
 
                 var val_repr = await __visit_repr((PyObject)mapping.Value, interpreter, context);
                 retStr = (PyString)PyStringClass.__add__(retStr, val_repr);
@@ -294,12 +294,12 @@ namespace LanguageImplementation.DataTypes
                 // Appending commas except on last paring
                 if (visited < asDict.dict.Count - 1)
                 {
-                    retStr = (PyString)PyStringClass.__add__(retStr, new PyString(", "));
+                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(", "));
                 }
 
                 visited += 1;
             }
-            return (PyString)PyStringClass.__add__(retStr, new PyString("}"));
+            return (PyString)PyStringClass.__add__(retStr, PyString.Create("}"));
         }
     }
 

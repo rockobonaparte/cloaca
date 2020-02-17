@@ -139,7 +139,7 @@ namespace CloacaTests
             // We're just having it wait off one tick as a pause since we don't actually have something on the
             // other end of this that will block.
             await new YieldTick(((Interpreter) interpreter).Scheduler, context);
-            return new PyInteger(1);                // TODO: Helpers to box/unbox between .NET and Python types.
+            return PyInteger.Create(1);                // TODO: Helpers to box/unbox between .NET and Python types.
         }
 
         // Needed by ISubscheduledContinuation
@@ -194,7 +194,7 @@ namespace CloacaTests
                 { "blocking_call", blockedReturnMock }
             }, new VariableMultimap(new TupleList<string, object>
             {
-                { "a", new PyInteger(1) }
+                { "a", PyInteger.Create(1) }
             }), 2);
         }
 
@@ -352,27 +352,27 @@ namespace CloacaTests
     {
         public static PyInteger Box(BigInteger num)
         {
-            return new PyInteger(num);
+            return PyInteger.Create(num);
         }
 
         public static PyInteger Box(int num)
         {
-            return new PyInteger(num);
+            return PyInteger.Create(num);
         }
 
         public static PyFloat Box(float num)
         {
-            return new PyFloat(num);
+            return PyFloat.Create(num);
         }
 
         public static PyFloat Box(double num)
         {
-            return new PyFloat(num);
+            return PyFloat.Create(num);
         }
 
         public static PyFloat Box(decimal num)
         {
-            return new PyFloat(num);
+            return PyFloat.Create(num);
         }
 
         public static PyBool Box(bool boolean)
@@ -382,7 +382,7 @@ namespace CloacaTests
 
         public static PyString Box(string str)
         {
-            return new PyString(str);
+            return PyString.Create(str);
         }
 
         public static PyObject Box(object genericObj)
@@ -407,11 +407,11 @@ namespace CloacaTests
             {
                 if(field.FieldType == typeof(int))
                 {
-                    po.__dict__.Add(field.Name, new PyInteger((int)field.GetValue(genericObj)));
+                    po.__dict__.Add(field.Name, PyInteger.Create((int)field.GetValue(genericObj)));
                 }
                 else if(field.FieldType == typeof(string))
                 {
-                    po.__dict__.Add(field.Name, new PyString((string)field.GetValue(genericObj)));
+                    po.__dict__.Add(field.Name, PyString.Create((string)field.GetValue(genericObj)));
                 }
             }
 

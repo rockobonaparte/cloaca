@@ -1214,7 +1214,7 @@ namespace CloacaInterpreter
                                         throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
                                     }
 
-                                    var returned = await functionToRun.Call(this, context, new object[] { containerPyObject, indexPyObject });
+                                    var returned = await functionToRun.Call(this, context, new object[] { indexPyObject });
                                     if (returned != null)
                                     {
                                         context.DataStack.Push(returned);
@@ -1262,7 +1262,7 @@ namespace CloacaInterpreter
                                         throw new Exception("TypeError: '" + containerPyObject.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
                                     }
 
-                                    var returned = await functionToRun.Call(this, context, new object[] { containerPyObject, idxAsPyObject, toStore });
+                                    var returned = await functionToRun.Call(this, context, new object[] { idxAsPyObject, toStore });
                                     if (returned != null)
                                     {
                                         context.DataStack.Push(returned);

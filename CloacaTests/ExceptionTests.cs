@@ -35,7 +35,7 @@ namespace CloacaTests
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(10)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(10)));
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace CloacaTests
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(10)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(10)));
         }
 
         [Test]
@@ -78,7 +78,7 @@ namespace CloacaTests
                 "  a = 10\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(10)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(10)));
         }
         [Test]
         public void TryExceptFinally()
@@ -93,7 +93,7 @@ namespace CloacaTests
                 "  a = a + 1\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(11)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(11)));
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace CloacaTests
 
             var variables = new VariableMultimap(runContext);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(1)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace CloacaTests
                 "  a = a + 100\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(101)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(101)));
         }
 
         [Test]
@@ -147,7 +147,7 @@ namespace CloacaTests
                 "  a = a + 1000\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(1101)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1101)));
         }
 
         [Test]
@@ -179,7 +179,7 @@ namespace CloacaTests
                 "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(1)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
@@ -198,7 +198,7 @@ namespace CloacaTests
                 "  a = e.number\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var a = (PyInteger)variables.Get("a");
-            Assert.That(a, Is.EqualTo(new PyInteger(1)));
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
         }
     }
 

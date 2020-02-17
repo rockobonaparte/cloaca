@@ -103,7 +103,7 @@ namespace CloacaInterpreter
             var internalList = new List<PyObject>();
             foreach(var name in o.__dict__.Keys)
             {
-                internalList.Add(new PyString(name));
+                internalList.Add(PyString.Create(name));
             }
 
             // Alphabetize them. It's how Python does it and it is quite useful for scanning through the output anyways.

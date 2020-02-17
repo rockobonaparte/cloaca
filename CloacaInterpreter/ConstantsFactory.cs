@@ -23,18 +23,18 @@ namespace CloacaInterpreter
             var match = LongStringDoubleQuoteRegex.Match(rawText);
             if(match.Success)
             {
-                return new PyString(match.Groups[1].Value);
+                return PyString.Create(match.Groups[1].Value);
             }
 
             match = LongStringSingleQuoteRegex.Match(rawText);
             if (match.Success)
             {
-                return new PyString(match.Groups[1].Value);
+                return PyString.Create(match.Groups[1].Value);
             }
 
             // At this point, just assume quotes on each end and clip them off.
             string finalString = rawText.Substring(1, rawText.Length - 2);
-            return new PyString(finalString);
+            return PyString.Create(finalString);
         }
 
         public static object CreateNumber(IParseTree context)
@@ -42,9 +42,9 @@ namespace CloacaInterpreter
             string rawText = context.GetText();
             if (DecimalPointNumberRegex.Match(rawText).Success)
             {
-                return new PyFloat(Decimal.Parse(rawText));
+                return PyFloat.Create(Decimal.Parse(rawText));
             }
-            return new PyInteger(BigInteger.Parse(context.GetText()));
+            return PyInteger.Create(BigInteger.Parse(context.GetText()));
         }
 
         public static PyBool CreateBool(IParseTree context)

@@ -47,12 +47,12 @@ namespace CloacaTests
     public class WrappedCodeObjectTests
     {
         [Test]
-        [Ignore("Just prototyped here for now to show the existence of the problem. We need to get the self pointer associated with the WrappedCodeObject")]
         public void InvokingWrappedMethod()
         {
             var wrapper = new WrappedCodeObject("hello_void", typeof(TestPythonClass).GetMethod("hello_void"), this);
-            var instance = new TestPythonObject();
-            wrapper.Call(null, null, new object[0]);
+            var instance = PyTypeObject.DefaultNew<TestPythonObject>(TestPythonClass.Instance);
+            var method = instance.__dict__["hello_void"] as IPyCallable;
+            method.Call(null, null, new object[0]);
         }
     }
 }

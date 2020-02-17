@@ -18,7 +18,7 @@
             // TODO: Switch to __class__.__name__
             // TODO: Switch to an internal Python object ID (probably when doing something like object subpooling)
             // Using the hashcode is definitely not the same as what Python is using.
-            return new PyString("<" + self.GetType().Name + " object at " + self.GetHashCode() + ">");
+            return PyString.Create("<" + self.GetType().Name + " object at " + self.GetHashCode() + ">");
         }
 
         public const string __STR__ = "__str__";

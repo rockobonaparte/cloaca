@@ -1,6 +1,16 @@
 ﻿Cloaca TODO
 ===========
 
+Keep your eyes peeled for bad code that's adding the self pointer even though it's supposed to be getting wrapped. This had been broken for a long
+time due to a botched refactor so a lot of code started to self-heal by adding the self to invocations directly. This is now wrong. Unit tests
+and basic GUI demo tests looks okay. If you see:
+
+```
+new object[] { something_that_looks_like_a_self_instance, ... }
+```
+
+then it might be a problem.
+
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
@@ -209,8 +219,11 @@ PyObject <- PyInteger <- (PurePyInteger, WrappedPyInteger)
 Both of the child classes would need to report as a PyInteger and satisfy type tests for that.
 
 
-Wrapping overridden methods is a pain. We need to figure out which one we're invoking. That would be of a certain complexity, but we're
-freely injecting some of the variables. Hence, we need to find the signature that matches the arguments, while excluding injected arguments.
+
+
+
+Consider updating DefaultNew so we can pass constructor args in one step to objects we're creating on-the-fly if it isn't a huge pain.
+Add Create() calls to all the other Python types even if we don't directly construct them (yet). Just get in the habit of having them. Make it part of interface?
 
 1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
    1. [DONE] Accept multiple MethodInfos

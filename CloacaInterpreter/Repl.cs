@@ -321,7 +321,7 @@ namespace CloacaInterpreter
                         var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
                         var functionToRun = __repr__ as IPyCallable;
 
-                        var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[] { stack_var_obj });
+                        var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
                         if (returned != null)
                         {
                             stack_output.Append(returned);

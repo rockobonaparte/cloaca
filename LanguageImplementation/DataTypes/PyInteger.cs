@@ -50,7 +50,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "addition");
-            var newPyInteger = new PyInteger(a.number + b.number);
+            var newPyInteger = PyInteger.Create(a.number + b.number);
             return newPyInteger;
         }
 
@@ -59,7 +59,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "multiplication");
-            var newPyInteger = new PyInteger(a.number * b.number);
+            var newPyInteger = PyInteger.Create(a.number * b.number);
             return newPyInteger;
         }
 
@@ -69,7 +69,7 @@ namespace LanguageImplementation.DataTypes
             PyInteger a, b;
             castOperands(self, other, out a, out b, "exponent");
             double doubleExp = Math.Pow((double) a.number, (double) b.number);
-            var newPyInteger = new PyInteger((BigInteger) doubleExp);
+            var newPyInteger = PyInteger.Create((BigInteger) doubleExp);
             return newPyInteger;
         }
 
@@ -78,7 +78,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "subtraction");
-            var newPyInteger = new PyInteger(a.number - b.number);
+            var newPyInteger = PyInteger.Create(a.number - b.number);
             return newPyInteger;
         }
 
@@ -87,7 +87,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "true division");
-            var newPyFloat = new PyFloat(((Decimal) a.number) / ((Decimal) b.number));
+            var newPyFloat = PyFloat.Create(((Decimal) a.number) / ((Decimal) b.number));
             return newPyFloat;
         }
 
@@ -96,7 +96,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "floor division");
-            var newPyInteger = new PyInteger(a.number / b.number);
+            var newPyInteger = PyInteger.Create(a.number / b.number);
             return newPyInteger;
         }
 
@@ -105,7 +105,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "modulo");
-            var newPyInteger = new PyInteger(a.number % b.number);
+            var newPyInteger = PyInteger.Create(a.number % b.number);
             return newPyInteger;
         }
 
@@ -113,21 +113,21 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __and__(PyObject self, PyObject other)
         {
             var anded = PyBoolClass.extractInt(self) & PyBoolClass.extractInt(other);
-            return new PyInteger(anded);
+            return PyInteger.Create(anded);
         }
 
         [ClassMember]
         public static PyObject __or__(PyObject self, PyObject other)
         {
             var orded = PyBoolClass.extractInt(self) | PyBoolClass.extractInt(other);
-            return new PyInteger(orded);
+            return PyInteger.Create(orded);
         }
 
         [ClassMember]
         public static PyObject __xor__(PyObject self, PyObject other)
         {
             var orded = PyBoolClass.extractInt(self) ^ PyBoolClass.extractInt(other);
-            return new PyInteger(orded);
+            return PyInteger.Create(orded);
         }
 
         // TODO: Might need to come up with a larger numeric type to handle shifting larger numbers.
@@ -135,14 +135,14 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __rshift__(PyObject self, PyObject other)
         {
             var orded = (int) PyBoolClass.extractInt(self) >> (int) PyBoolClass.extractInt(other);
-            return new PyInteger(orded);
+            return PyInteger.Create(orded);
         }
 
         [ClassMember]
         public static PyObject __lshift__(PyObject self, PyObject other)
         {
             var orded = (int)PyBoolClass.extractInt(self) << (int)PyBoolClass.extractInt(other);
-            return new PyInteger(orded);
+            return PyInteger.Create(orded);
         }
 
 
@@ -211,7 +211,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static new PyString __repr__(PyObject self)
         {
-            return new PyString(self.ToString());
+            return PyString.Create(self.ToString());
         }
     }
 
@@ -226,6 +226,18 @@ namespace LanguageImplementation.DataTypes
         public PyInteger()
         {
             number = 0;
+        }
+
+        public static PyInteger Create()
+        {
+            return PyTypeObject.DefaultNew<PyInteger>(PyIntegerClass.Instance);
+        }
+
+        public static PyInteger Create(BigInteger value)
+        {
+            var pyInt = PyTypeObject.DefaultNew<PyInteger>(PyIntegerClass.Instance);
+            pyInt.number = value;
+            return pyInt;
         }
 
         public override bool Equals(object obj)
