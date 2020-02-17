@@ -7,6 +7,7 @@ using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Reflection.Emit;
 
 namespace CloacaInterpreter
 {
@@ -357,23 +358,34 @@ namespace CloacaInterpreter
                                     // It's coming in as a WrappedCodeObject so we have to turn it into a call that can accept the arguments we're expecting. We'll pencil in
                                     // the interpreter and the frame. This should then break down the function into something that just takes the arguments we originally expect.
                                     // BTW That frame could be an issue since maybe it won't tell us the right place when we actually trigger it. Stay tuned.
-                                    MethodInfo rightCurriedMethodInfo;
-                                    var eventMethodInfo = leftEvent.EventHandlerType.GetMethod("Invoke");       // Return signature is probably void but we gotta make sure.
-                                    if (eventMethodInfo.ReturnType == typeof(void))
+                                    //MethodInfo rightCurriedMethodInfo;
+                                    //var eventMethodInfo = leftEvent.EventHandlerType.GetMethod("Invoke");       // Return signature is probably void but we gotta make sure.
+                                    //if (eventMethodInfo.ReturnType == typeof(void))
+                                    //{
+                                    //    rightCurriedMethodInfo = (new Action<object[]>(args =>
+                                    //    {
+                                    //        rightCall.Call(this, context, args);
+                                    //    })).Method;
+                                    //}
+                                    //else
+                                    //{
+                                    //    // Oh wow! It wasn't a void function!
+                                    //    rightCurriedMethodInfo = (new Func<object[], object>(args =>
+                                    //    {
+                                    //        return rightCall.Call(this, context, args);
+                                    //    })).Method;
+                                    //}
+
+                                    // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
+                                    MethodInfo eventInvoke = leftEvent.EventHandlerType.GetMethod("Invoke");
+                                    var eventInvokeParamInfos = eventInvoke.GetParameters();
+                                    var eventInvokeParamTypes = new Type[eventInvokeParamInfos.Length];
+                                    for(int i = 0; i < eventInvokeParamInfos.Length; ++i)
                                     {
-                                        rightCurriedMethodInfo = (new Action<object[]>(args =>
-                                        {
-                                            rightCall.Call(this, context, args);
-                                        })).Method;
+                                        eventInvokeParamTypes[i] = eventInvokeParamInfos[i].ParameterType;
                                     }
-                                    else
-                                    {
-                                        // Oh wow! It wasn't a void function!
-                                        rightCurriedMethodInfo = (new Func<object[], object>(args =>
-                                        {
-                                            return rightCall.Call(this, context, args);
-                                        })).Method;
-                                    }
+                                    var wrapper = new DynamicMethod(rightCall.Name + "_eventwrapper", eventInvoke.ReturnType, eventInvokeParamTypes);
+                                    
 
                                     // ArgumentException "Cannot bind to the target method because its signature or security transparency is not compatible with that of the delegate type."
                                     // This is because I'm trying to attach my object[] wrapped call to the real signature.

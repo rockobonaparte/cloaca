@@ -272,3 +272,8 @@ BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should
 do some cute jump opcode logic to mimick them.
 
 Try a test with multiples of an operator to make sure they generate correctly when you have more than one (multiple shifts, for example)
+
+
+
+Current problem has to do with binding a WrappedCodeObject to a .NET method or event. The problem is that the .NET method/event expects a specific signature, while
+the code object just takes an array of objects for the arguments and returns an object (if necessary).
