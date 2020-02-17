@@ -59,6 +59,7 @@
     <Compile Include="TestBench.cs" />
     <Compile Include="TestBenchHelpersTest.cs" />
     <Compile Include="VariableMultimap.cs" />
+    <Compile Include="WrappedCodeObjectTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
