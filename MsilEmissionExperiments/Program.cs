@@ -9,10 +9,11 @@ namespace MsilEmissionExperiments
 {
     public delegate void WrapperDelegate(int arg1, string arg2);
     public delegate void NoArgs();
+    public delegate void CallsOnProgramInstance(Program prog);
 
     public class Program
     {
-        public static void SimplestCall()
+        public void SimplestCall()
         {
             Console.WriteLine("Made it through simplest call!");
         }
@@ -29,7 +30,7 @@ namespace MsilEmissionExperiments
 //            Call(args);
         }
 
-        public static void CallSimplestCall()
+        public void CallSimplestCall()
         {
             SimplestCall();
         }
@@ -56,7 +57,7 @@ namespace MsilEmissionExperiments
             // IL_001C:  pop         
             // IL_001D:  ret
             //var wrapper = new DynamicMethod("ThisIsAWrapper_generated", typeof(void), new Type[] { typeof(int), typeof(string) });
-            var wrapper = new DynamicMethod("ThisIsAWrapper_generated", typeof(void), new Type[0]);
+            var wrapper = new DynamicMethod("ThisIsAWrapper_generated", typeof(void), new Type[] { typeof(Program) });
             var gen = wrapper.GetILGenerator();
             //gen.Emit(OpCodes.Nop);                              // IL_0000:  nop       
             //gen.Emit(OpCodes.Ldc_I4_2);                         // IL_0001:  ldc.i4.2    
@@ -85,13 +86,14 @@ namespace MsilEmissionExperiments
             // IL_0008:  pop         
             // IL_0009:  ret  
             var SimplestCallMInfo = typeof(Program).GetMethod("SimplestCall");
-            gen.Emit(OpCodes.Call, SimplestCallMInfo);          // call        SimplestCall
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Callvirt, SimplestCallMInfo);      // call        SimplestCall
             gen.Emit(OpCodes.Ret);                              // ret
 
             //var asDelegate = (WrapperDelegate) wrapper.CreateDelegate(typeof(WrapperDelegate));
             //asDelegate(1, "Wee!");
-            var asDelegate = (NoArgs)wrapper.CreateDelegate(typeof(NoArgs));
-            asDelegate();
+            var asDelegate = (CallsOnProgramInstance)wrapper.CreateDelegate(typeof(CallsOnProgramInstance));
+            asDelegate(this);
         }
 
        static void Main(string[] args)
