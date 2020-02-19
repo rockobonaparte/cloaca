@@ -355,20 +355,44 @@ namespace CloacaInterpreter
                                 // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
-                                    // It's coming in as a WrappedCodeObject so we have to turn it into a call that can accept the arguments we're expecting. We'll pencil in
-                                    // the interpreter and the frame. This should then break down the function into something that just takes the arguments we originally expect.
-                                    // BTW That frame could be an issue since maybe it won't tell us the right place when we actually trigger it. Stay tuned.
+                                    //// It's coming in as a WrappedCodeObject so we have to turn it into a call that can accept the arguments we're expecting. We'll pencil in
+                                    //// the interpreter and the frame. This should then break down the function into something that just takes the arguments we originally expect.
+                                    //// BTW That frame could be an issue since maybe it won't tell us the right place when we actually trigger it. Stay tuned.
                                     //MethodInfo rightCurriedMethodInfo;
                                     //var eventMethodInfo = leftEvent.EventHandlerType.GetMethod("Invoke");       // Return signature is probably void but we gotta make sure.
+                                    //var methodParams = eventMethodInfo.GetParameters();
                                     //if (eventMethodInfo.ReturnType == typeof(void))
                                     //{
-                                    //    rightCurriedMethodInfo = (new Action<object[]>(args =>
+                                    //    if (methodParams.Length == 0)
                                     //    {
-                                    //        rightCall.Call(this, context, args);
-                                    //    })).Method;
+                                    //        Action voidAct = () =>
+                                    //        {
+                                    //            rightCall.Call(this, context, new object[0]);
+                                    //        };
+                                    //        rightCurriedMethodInfo = voidAct.Method;
+                                    //    }
+                                    //    else if(methodParams.Length == 1)
+                                    //    {
+                                    //        rightCurriedMethodInfo = new Action<object>(arg1 =>
+                                    //        {
+                                    //            rightCall.Call(this, context, new object[] { arg1 });
+                                    //        }).Method;
+                                    //    }
+                                    //    else if (methodParams.Length == 2)
+                                    //    {
+                                    //        rightCurriedMethodInfo = new Action<object, object>((arg1, arg2) =>
+                                    //        {
+                                    //            rightCall.Call(this, context, new object[] { arg1, arg2 });
+                                    //        }).Method;
+                                    //    }
+                                    //    else
+                                    //    {
+                                    //        throw new Exception("We can only wrap up to two event arguments right now (it's an experiment).");
+                                    //    }
                                     //}
                                     //else
                                     //{
+                                    //    throw new Exception("We don't yet wrap events that have a return value (it's an experiment).");
                                     //    // Oh wow! It wasn't a void function!
                                     //    rightCurriedMethodInfo = (new Func<object[], object>(args =>
                                     //    {
@@ -380,17 +404,16 @@ namespace CloacaInterpreter
                                     MethodInfo eventInvoke = leftEvent.EventHandlerType.GetMethod("Invoke");
                                     var eventInvokeParamInfos = eventInvoke.GetParameters();
                                     var eventInvokeParamTypes = new Type[eventInvokeParamInfos.Length];
-                                    for(int i = 0; i < eventInvokeParamInfos.Length; ++i)
+                                    for (int i = 0; i < eventInvokeParamInfos.Length; ++i)
                                     {
                                         eventInvokeParamTypes[i] = eventInvokeParamInfos[i].ParameterType;
                                     }
                                     var wrapper = new DynamicMethod(rightCall.Name + "_eventwrapper", eventInvoke.ReturnType, eventInvokeParamTypes);
-                                    
 
-                                    // ArgumentException "Cannot bind to the target method because its signature or security transparency is not compatible with that of the delegate type."
-                                    // This is because I'm trying to attach my object[] wrapped call to the real signature.
-                                    var rightDelegate = Delegate.CreateDelegate(leftEvent.EventHandlerType, rightCall.GetObjectInstance(), rightCurriedMethodInfo);
-                                    leftEvent.AddEventHandler(left, rightDelegate);
+                                    //// ArgumentException "Cannot bind to the target method because its signature or security transparency is not compatible with that of the delegate type."
+                                    //// This is because I'm trying to attach my object[] wrapped call to the real signature.
+                                    //var rightDelegate = Delegate.CreateDelegate(leftEvent.EventHandlerType, rightCall.GetObjectInstance(), rightCurriedMethodInfo);
+                                    //leftEvent.AddEventHandler(left, rightDelegate);
                                 }
                                 else
                                 {

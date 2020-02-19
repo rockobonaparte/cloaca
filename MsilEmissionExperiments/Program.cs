@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MsilEmissionExperiments
@@ -10,6 +12,76 @@ namespace MsilEmissionExperiments
     public delegate void WrapperDelegate(int arg1, string arg2);
     public delegate void NoArgs();
     public delegate void CallsOnProgramInstance(Program prog);
+
+    public class WrappedCodeObject
+    {
+        public object Call(object[] args)
+        {
+            Console.WriteLine("Yay! Made it into Call!");
+            return null;
+        }
+
+        public DynamicMethod GenerateDotNetWrapper(MethodInfo dotNetMethod)
+        {
+            AppDomain myDomain = Thread.GetDomain();
+            AssemblyName myAsmName = new AssemblyName();
+            myAsmName.Name = "DynamicAssemblyForCloacaDotNetWrappers";
+
+            AssemblyBuilder myAsmBuilder = myDomain.DefineDynamicAssembly(
+                                myAsmName,
+                                AssemblyBuilderAccess.Run);
+            ModuleBuilder myModBuilder = myAsmBuilder.DefineDynamicModule(
+                                "MyJumpTableDemo");
+
+            TypeBuilder myTypeBuilder = myModBuilder.DefineType("JumpTableDemo",
+                                    TypeAttributes.Public);
+
+            var dotNetMethodParamInfos = dotNetMethod.GetParameters();
+            var dotNetMethodParamTypes = new Type[dotNetMethodParamInfos.Length];
+            for (int i = 0; i < dotNetMethodParamInfos.Length; ++i)
+            {
+                dotNetMethodParamTypes[i] = dotNetMethodParamInfos[i].ParameterType;
+            }
+            MethodBuilder myMthdBuilder = myTypeBuilder.DefineMethod(dotNetMethod.Name + "_generated_wrapper",
+                                     MethodAttributes.Public, dotNetMethod.ReturnType, dotNetMethodParamTypes);
+
+            ILGenerator gen = myMthdBuilder.GetILGenerator();
+
+
+            //var wrapper = new DynamicMethod("ThisIsAWrapper_generated", typeof(void), new Type[] { typeof(Program) });
+            //var gen = wrapper.GetILGenerator();
+            //gen.Emit(OpCodes.Nop);                              // IL_0000:  nop       
+            //gen.Emit(OpCodes.Ldc_I4_2);                         // IL_0001:  ldc.i4.2    
+            //gen.Emit(OpCodes.Newarr, typeof(System.Object));    // IL_0002:  newarr      System.Object
+            //gen.Emit(OpCodes.Dup);                              // IL_0007:  dup  
+            //gen.Emit(OpCodes.Ldc_I4_0);                         // IL_0008:  ldc.i4.0    
+            //gen.Emit(OpCodes.Ldarg_1);                          // IL_0009:  ldarg.1 
+            //gen.Emit(OpCodes.Box, typeof(System.Int32));        // IL_000A:  box         System.Int32
+            //gen.Emit(OpCodes.Stelem_Ref);                       // IL_000F:  stelem.ref  
+            //gen.Emit(OpCodes.Dup);                              // IL_0010:  dup         
+            //gen.Emit(OpCodes.Ldc_I4_1);                         // IL_0011:  ldc.i4.1  
+            //gen.Emit(OpCodes.Ldarg_2);                          // IL_0012:  ldarg.2    
+            //gen.Emit(OpCodes.Stelem_Ref);                       // IL_0013:  stelem.ref  
+            //gen.Emit(OpCodes.Stloc_0);                          // IL_0014:  stloc.0     // args
+            //gen.Emit(OpCodes.Ldarg_0);                          // IL_0015:  ldarg.0     
+            //gen.Emit(OpCodes.Ldloc_0);                          // IL_0016:  ldloc.0     // args
+            //gen.Emit(OpCodes.Call, typeof(Program).GetMethod("Call"));      // IL_0017:  call        UserQuery+Program.Call
+            //gen.Emit(OpCodes.Pop);                              // IL_001C:  pop       
+            //gen.Emit(OpCodes.Ret);                              // IL_001D:  ret
+
+            // Trying to just call Call with null
+            // IL_0000:  nop         
+            // IL_0001:  ldarg.0     
+            // IL_0002:  ldnull      
+            // IL_0003:  call        UserQuery+Program.Call
+            // IL_0008:  pop         
+            // IL_0009:  ret  
+            gen.Emit(OpCodes.Ldarg_0);
+            gen.Emit(OpCodes.Callvirt, dotNetMethod);           // call        (call target)
+            gen.Emit(OpCodes.Ret);                              // ret
+            return wrapper;
+        }
+    }
 
     public class Program
     {
