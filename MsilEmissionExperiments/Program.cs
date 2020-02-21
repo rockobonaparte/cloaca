@@ -15,26 +15,40 @@ namespace MsilEmissionExperiments
 
     public class WrappedCodeObject
     {
-        public object Call(object[] args)
+        public void Call()
         {
             Console.WriteLine("Yay! Made it into Call!");
-            return null;
+            //return null;
         }
 
-        public DynamicMethod GenerateDotNetWrapper(MethodInfo dotNetMethod)
+        public void GenerateDotNetWrapper(MethodInfo dotNetMethod)
         {
             AppDomain myDomain = Thread.GetDomain();
             AssemblyName myAsmName = new AssemblyName();
-            myAsmName.Name = "DynamicAssemblyForCloacaDotNetWrappers";
+            myAsmName.Name = "CloacaDynamicAssembly";
 
             AssemblyBuilder myAsmBuilder = myDomain.DefineDynamicAssembly(
                                 myAsmName,
                                 AssemblyBuilderAccess.Run);
+            
             ModuleBuilder myModBuilder = myAsmBuilder.DefineDynamicModule(
-                                "MyJumpTableDemo");
+                                "CloacaDotNetWrappers");
 
-            TypeBuilder myTypeBuilder = myModBuilder.DefineType("JumpTableDemo",
+            TypeBuilder myTypeBuilder = myModBuilder.DefineType("WrappedCodeObject_" + dotNetMethod.Name,
                                     TypeAttributes.Public);
+
+            // Define a field in the class that'll contain the WrappedCodeObject
+            var wrappedCodefieldBuilder = myTypeBuilder.DefineField("wrappedCodeObject", typeof(WrappedCodeObject), FieldAttributes.Private);
+
+            // Define the constructor that'll take the WrappedCodeObject and keep it internally
+            ConstructorBuilder constructorBuilder =
+                myTypeBuilder.DefineConstructor(MethodAttributes.Public,
+                      CallingConventions.Standard, new Type[] { typeof(WrappedCodeObject) });
+            var ctorGen = constructorBuilder.GetILGenerator();
+            ctorGen.Emit(OpCodes.Ldarg_0);
+            ctorGen.Emit(OpCodes.Ldarg_1);
+            ctorGen.Emit(OpCodes.Stfld, wrappedCodefieldBuilder);
+            ctorGen.Emit(OpCodes.Ret);
 
             var dotNetMethodParamInfos = dotNetMethod.GetParameters();
             var dotNetMethodParamTypes = new Type[dotNetMethodParamInfos.Length];
@@ -42,10 +56,11 @@ namespace MsilEmissionExperiments
             {
                 dotNetMethodParamTypes[i] = dotNetMethodParamInfos[i].ParameterType;
             }
-            MethodBuilder myMthdBuilder = myTypeBuilder.DefineMethod(dotNetMethod.Name + "_generated_wrapper",
-                                     MethodAttributes.Public, dotNetMethod.ReturnType, dotNetMethodParamTypes);
 
-            ILGenerator gen = myMthdBuilder.GetILGenerator();
+            string methodName = dotNetMethod.Name + "_generated_wrapper";
+            MethodBuilder myMthdBuilder = myTypeBuilder.DefineMethod(methodName, MethodAttributes.Public, dotNetMethod.ReturnType, dotNetMethodParamTypes);
+
+            ILGenerator wrapGen = myMthdBuilder.GetILGenerator();
 
 
             //var wrapper = new DynamicMethod("ThisIsAWrapper_generated", typeof(void), new Type[] { typeof(Program) });
@@ -76,10 +91,24 @@ namespace MsilEmissionExperiments
             // IL_0003:  call        UserQuery+Program.Call
             // IL_0008:  pop         
             // IL_0009:  ret  
-            gen.Emit(OpCodes.Ldarg_0);
-            gen.Emit(OpCodes.Callvirt, dotNetMethod);           // call        (call target)
-            gen.Emit(OpCodes.Ret);                              // ret
-            return wrapper;
+
+            var wrappedCodeInnerCall = typeof(WrappedCodeObject).GetMethod("Call");
+
+            wrapGen.Emit(OpCodes.Ldarg_0);
+            wrapGen.Emit(OpCodes.Ldfld, wrappedCodefieldBuilder);
+            wrapGen.Emit(OpCodes.Callvirt, wrappedCodeInnerCall);   // call        (call target)
+            wrapGen.Emit(OpCodes.Ret);                              // ret
+
+            Type finalizedType = myTypeBuilder.CreateType();
+            var attachableMethod = finalizedType.GetMethod(methodName);
+
+            object instance = Activator.CreateInstance(finalizedType, new object[] { new WrappedCodeObject() });
+            attachableMethod.Invoke(instance, new object[0]);
+        }
+
+        public void DoNothingCall()
+        {
+
         }
     }
 
@@ -168,10 +197,12 @@ namespace MsilEmissionExperiments
             asDelegate(this);
         }
 
-       static void Main(string[] args)
-       {
-            var p = new Program();
-            p.GenerateDynamicMethod();
+        static void Main(string[] args)
+        {
+            //var p = new Program();
+            //p.GenerateDynamicMethod();
+            var wco = new WrappedCodeObject();
+            wco.GenerateDotNetWrapper(typeof(WrappedCodeObject).GetMethod("DoNothingCall"));
             Console.Read();
         }
     }
