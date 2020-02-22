@@ -10,13 +10,14 @@ using System.Threading.Tasks;
 namespace MsilEmissionExperiments
 {
     public delegate void WrapperDelegate(int arg1, string arg2);
+    public delegate void OneArgNoReturn(int arg1);
+    public delegate object OneArgOneReturn(int arg1);
     public delegate void NoArgs();
     public delegate void CallsOnProgramInstance(Program prog);
 
     //////////////////////////////////
     /// This block is for mimicking the generated code so I can compare the diassembly the C# compiler makes
-    /// to what I'm generating using MSIL manually
-    
+    /// to what I'm generating using MSIL manually    
     public class ReferenceWrapper
     {
         private WrappedCodeObject wco;
@@ -39,6 +40,102 @@ namespace MsilEmissionExperiments
         {
             Console.WriteLine("Yay! Made it into Call!");
             return null;
+        }
+
+        public RetVal GenericWrapperReturns<Arg1, RetVal>()
+        {
+            return (RetVal)Call(new object[0]);
+        }
+
+        public RetVal GenericWrapperReturns<Arg1, RetVal>(Arg1 arg1)
+        {
+            return (RetVal) Call(new object[] { arg1 });
+        }
+
+        public RetVal GenericWrapperReturns<Arg1, Arg2, RetVal>(Arg1 arg1, Arg2 arg2)
+        {
+            return (RetVal)Call(new object[] { arg1, arg2 });
+        }
+
+        public RetVal GenericWrapperReturns<Arg1, Arg2, Arg3, RetVal>(Arg1 arg1, Arg2 arg2, Arg3 arg3)
+        {
+            return (RetVal)Call(new object[] { arg1, arg2, arg3 });
+        }
+
+        public RetVal GenericWrapperReturns<Arg1, Arg2, Arg3, Arg4, RetVal>(Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4)
+        {
+            return (RetVal)Call(new object[] { arg1, arg2, arg3, arg4 });
+        }
+
+        public void GenericWrapperVoid<Arg1>()
+        {
+            Call(new object[0]);
+        }
+
+        public void GenericWrapperVoid<Arg1>(Arg1 arg1)
+        {
+            Call(new object[] { arg1 });
+        }
+
+        public void GenericWrapperVoid<Arg1, Arg2>(Arg1 arg1, Arg2 arg2)
+        {
+            Call(new object[] { arg1, arg2 });
+        }
+
+        public void GenericWrapperVoid<Arg1, Arg2, Arg3>(Arg1 arg1, Arg2 arg2, Arg3 arg3)
+        {
+            Call(new object[] { arg1, arg2, arg3 });
+        }
+        public void GenericWrapperVoid<Arg1, Arg2, Arg3, Arg4>(Arg1 arg1, Arg2 arg2, Arg3 arg3, Arg4 arg4)
+        {
+            Call(new object[] { arg1, arg2, arg3, arg4 });
+        }
+
+        public void WrapWithGeneric(MethodInfo dotNetMethod, Type delegateType)
+        {
+            var dotNetMethodParamInfos = dotNetMethod.GetParameters();
+
+            if(dotNetMethodParamInfos.Length > 4)
+            {
+                throw new NotImplementedException("We have only created templates for generic wrappers up to 4 arguments");
+            }
+
+            Delegate asDelegate;
+            Type[] delegateArgs;
+            MethodInfo genericWrapper;
+
+            // An ugly amount of copypasta. If we have a return type, then we need an array one element longer to put in RetVal at the end.
+            // We also need to find the method matching the name of the right return type and accommodate the existing of a return value into
+            // the number of generic parameters required for the right binding.
+            if (dotNetMethod.ReturnType == typeof(void))
+            {
+                delegateArgs = new Type[dotNetMethodParamInfos.Length];
+                for(int i = 0; i < dotNetMethodParamInfos.Length; ++i)
+                {
+                    delegateArgs[i] = dotNetMethodParamInfos[i].ParameterType;
+                }
+                genericWrapper = typeof(WrappedCodeObject).GetMethods()
+                                        .Where(x => x.Name == "GenericWrapperVoid" && x.GetParameters().Length == delegateArgs.Length)
+                                        .First();
+            }
+            else
+            {
+                delegateArgs = new Type[dotNetMethodParamInfos.Length + 1];
+                for (int i = 0; i < dotNetMethodParamInfos.Length; ++i)
+                {
+                    delegateArgs[i] = dotNetMethodParamInfos[i].ParameterType;
+                }
+
+                // Last template parameter is the return type.
+                delegateArgs[delegateArgs.Length - 1] = dotNetMethod.ReturnType;
+                genericWrapper = typeof(WrappedCodeObject).GetMethods()
+                                        .Where(x => x.Name == "GenericWrapperReturns" && x.GetParameters().Length + 1 == delegateArgs.Length)
+                                        .First();
+            }
+
+            var realizedWrapper = genericWrapper.MakeGenericMethod(delegateArgs);
+            asDelegate = Delegate.CreateDelegate(delegateType, this, realizedWrapper);
+            asDelegate.DynamicInvoke(1);
         }
 
         public void GenerateDotNetWrapper(MethodInfo dotNetMethod)
@@ -115,6 +212,11 @@ namespace MsilEmissionExperiments
         public void DoNothingCall(int takes_an_int)
         {
 
+        }
+
+        public object DoNothingCallReturns(int takes_an_int)
+        {
+            return null;
         }
     }
 
@@ -208,7 +310,8 @@ namespace MsilEmissionExperiments
             //var p = new Program();
             //p.GenerateDynamicMethod();
             var wco = new WrappedCodeObject();
-            wco.GenerateDotNetWrapper(typeof(WrappedCodeObject).GetMethod("DoNothingCall"));
+            //wco.GenerateDotNetWrapper(typeof(WrappedCodeObject).GetMethod("DoNothingCall"));
+            wco.WrapWithGeneric(typeof(WrappedCodeObject).GetMethod("DoNothingCallReturns"), typeof(OneArgOneReturn));
             Console.Read();
         }
     }
