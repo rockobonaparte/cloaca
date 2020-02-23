@@ -19,15 +19,101 @@ namespace LanguageImplementation
 
         private object instance;
 
+        public string Name
+        {
+            get; protected set;
+        }
+
+        #region Constructors
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases)
+        {
+            this.MethodBases = methodBases;
+            Name = nameInsideInterpreter;
+            instance = null;
+        }
+
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase })
+        {
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases) : this(null, nameInsideInterpreter, methodBases)
+        {
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase) : this(null, nameInsideInterpreter, new MethodBase[] { methodBase })
+        {
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases)
+        {
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
+            instance = null;
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodBase methodBase) : this(context, new MethodBase[] { methodBase })
+        {
+        }
+
+        public WrappedCodeObject(MethodBase[] methodBases)
+        {
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
+            instance = null;
+        }
+
+
+        public WrappedCodeObject(MethodBase methodBase) : this(new MethodBase[] { methodBase })
+        {
+        }
+
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases, object instance)
+        {
+            this.MethodBases = methodBases;
+            Name = nameInsideInterpreter;
+            this.instance = instance;
+        }
+
+        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase, object instance) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase }, instance)
+        {
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases, object instance) : this(null, nameInsideInterpreter, methodBases, instance)
+        {
+        }
+
+        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase, object instance) : this(null, nameInsideInterpreter, methodBase, instance)
+        {
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases, object instance)
+        {
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
+            this.instance = instance;
+        }
+
+        public WrappedCodeObject(FrameContext context, MethodBase methodBase, object instance) : this(context, new MethodBase[] { methodBase }, instance)
+        {
+        }
+
+        public WrappedCodeObject(MethodBase[] methodBases, object instance)
+        {
+            this.MethodBases = methodBases;
+            Name = methodBases[0].Name;
+            this.instance = instance;
+        }
+
+        public WrappedCodeObject(MethodBase methodBase, object instance) : this(new MethodBase[] { methodBase }, instance)
+        {
+        }
+
+        #endregion Constructors
         public object GetObjectInstance()
         {
             return instance;
         }
 
-        public string Name
-        {
-            get; protected set;
-        }
 
         public WrappedCodeObject CloneForInstance(object instance)
         {
@@ -175,90 +261,5 @@ namespace LanguageImplementation
             }
         }
 
-        #region Constructors
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases)
-        {
-            this.MethodBases = methodBases;
-            Name = nameInsideInterpreter;
-            instance = null;
-        }
-
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase })
-        {
-        }
-
-        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases) : this(null, nameInsideInterpreter, methodBases)
-        {
-        }
-
-        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase) : this(null, nameInsideInterpreter, new MethodBase[] { methodBase })
-        {
-        }
-
-        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases)
-        {
-            this.MethodBases = methodBases;
-            Name = methodBases[0].Name;
-            instance = null;
-        }
-
-        public WrappedCodeObject(FrameContext context, MethodBase methodBase) : this(context, new MethodBase[] { methodBase })
-        {
-        }
-
-        public WrappedCodeObject(MethodBase[] methodBases)
-        {
-            this.MethodBases = methodBases;
-            Name = methodBases[0].Name;
-            instance = null;
-        }
-
-
-        public WrappedCodeObject(MethodBase methodBase) : this(new MethodBase[] { methodBase })
-        {
-        }
-
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases, object instance)
-        {
-            this.MethodBases = methodBases;
-            Name = nameInsideInterpreter;
-            this.instance = instance;
-        }
-
-        public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase, object instance) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase }, instance)
-        {
-        }
-
-        public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases, object instance) : this(null, nameInsideInterpreter, methodBases, instance)
-        {
-        }
-
-        public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase, object instance) : this(null, nameInsideInterpreter, methodBase, instance)
-        {
-        }
-
-        public WrappedCodeObject(FrameContext context, MethodBase[] methodBases, object instance)
-        {
-            this.MethodBases = methodBases;
-            Name = methodBases[0].Name;
-            this.instance = instance;
-        }
-
-        public WrappedCodeObject(FrameContext context, MethodBase methodBase, object instance) : this(context, new MethodBase[] { methodBase }, instance)
-        {
-        }
-
-        public WrappedCodeObject(MethodBase[] methodBases, object instance)
-        {
-            this.MethodBases = methodBases;
-            Name = methodBases[0].Name;
-            this.instance = instance;
-        }
-
-        public WrappedCodeObject(MethodBase methodBase, object instance) : this(new MethodBase[] { methodBase }, instance)
-        {
-        }
-
-        #endregion Constructors
     }
 }
