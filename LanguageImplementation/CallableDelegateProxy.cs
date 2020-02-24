@@ -96,19 +96,19 @@ namespace LanguageImplementation
             return (RetVal)retVal;
         }
 
-        private async Task GenericWrapperVoid<Arg1>()
+        private void GenericWrapperVoid()
         {
-            await callable.Call(interpreter, contextToUseForCall, new object[0]);
+            callable.Call(interpreter, contextToUseForCall, new object[0]);
         }
 
-        private async Task GenericWrapperVoid<Arg1>(Arg1 arg1)
+        private void GenericWrapperVoid<Arg1>(Arg1 arg1)
         {
-            var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1 });
+            callable.Call(interpreter, contextToUseForCall, new object[] { arg1 });
         }
 
-        private async Task GenericWrapperVoid<Arg1, Arg2>(Arg1 arg1, Arg2 arg2)
+        private void GenericWrapperVoid<Arg1, Arg2>(Arg1 arg1, Arg2 arg2)
         {
-            await callable.Call(interpreter, contextToUseForCall, new object[] { arg1, arg2 });
+            callable.Call(interpreter, contextToUseForCall, new object[] { arg1, arg2 });
         }
     }
 }
