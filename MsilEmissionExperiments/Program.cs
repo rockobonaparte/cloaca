@@ -91,7 +91,7 @@ namespace MsilEmissionExperiments
             Call(new object[] { arg1, arg2, arg3, arg4 });
         }
 
-        public void WrapWithGeneric(MethodInfo dotNetMethod, Type delegateType)
+        public Delegate WrapWithGeneric(MethodInfo dotNetMethod, Type delegateType)
         {
             var dotNetMethodParamInfos = dotNetMethod.GetParameters();
 
@@ -135,7 +135,7 @@ namespace MsilEmissionExperiments
 
             var realizedWrapper = genericWrapper.MakeGenericMethod(delegateArgs);
             asDelegate = Delegate.CreateDelegate(delegateType, this, realizedWrapper);
-            asDelegate.DynamicInvoke(1);
+            return asDelegate;
         }
 
         public void GenerateDotNetWrapper(MethodInfo dotNetMethod)
@@ -218,6 +218,11 @@ namespace MsilEmissionExperiments
         {
             return null;
         }
+    }
+
+    public static class EmitsEvents
+    {
+        public static OneArgNoReturn IntEvent;
     }
 
     public class Program
@@ -311,7 +316,12 @@ namespace MsilEmissionExperiments
             //p.GenerateDynamicMethod();
             var wco = new WrappedCodeObject();
             //wco.GenerateDotNetWrapper(typeof(WrappedCodeObject).GetMethod("DoNothingCall"));
-            wco.WrapWithGeneric(typeof(WrappedCodeObject).GetMethod("DoNothingCallReturns"), typeof(OneArgOneReturn));
+
+            // DoNothingCall matches signature so we'll just rip it here.
+            var d = wco.WrapWithGeneric(typeof(WrappedCodeObject).GetMethod("DoNothingCall"), typeof(OneArgNoReturn));
+
+            // BOOKMARK: Try to do this with reflection and AddEventHandler. See the generic attach.
+            EmitsEvents.IntEvent += (OneArgNoReturn) d;
             Console.Read();
         }
     }

@@ -349,16 +349,17 @@ namespace CloacaInterpreter
                                 dynamic left = context.DataStack.Pop();
                                 dynamic right = context.DataStack.Pop();
 
-                                var leftEvent = left as EventInfo;
+                                var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
 
                                 // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
                                     // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
-                                    MethodInfo eventInvoke = leftEvent.EventHandlerType.GetMethod("Invoke");
-                                    var proxyDelegate = CallableDelegateProxy.Create(eventInvoke, leftEvent.EventHandlerType, rightCall, this, context);
-                                    leftEvent.AddEventHandler(left, proxyDelegate);
+                                    MethodInfo eventInvoke = leftEvent.EventInfo.EventHandlerType.GetMethod("Invoke");
+                                    var proxyDelegate = CallableDelegateProxy.Create(eventInvoke, leftEvent.EventInfo.EventHandlerType, rightCall, this, context);
+                                    leftEvent.EventInfo.AddEventHandler(leftEvent.OwnerObject, proxyDelegate);
+                                    context.Cursor += 1;
                                 }
                                 else
                                 {

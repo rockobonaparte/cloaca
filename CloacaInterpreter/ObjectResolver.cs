@@ -7,6 +7,17 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
+    public class EventInstance
+    {
+        public object OwnerObject { get; private set; }
+        public EventInfo EventInfo { get; private set; }
+        public EventInstance(object ownerObject, EventInfo eventInfo)
+        {
+            this.OwnerObject = ownerObject;
+            this.EventInfo = eventInfo;
+        }
+    }
+
     public class ObjectResolver
     {
         public static object GetValue(string attrName, object rawObject)
@@ -63,7 +74,8 @@ namespace CloacaInterpreter
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Event)
                     {
-                        return rawObject.GetType().GetEvent(attrName);
+                        return new EventInstance(rawObject, rawObject.GetType().GetEvent(attrName));
+                        //return rawObject.GetType().GetEvent(attrName);
                     }
                     else
                     {
