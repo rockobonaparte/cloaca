@@ -54,7 +54,7 @@ namespace LanguageImplementation
                 {
                     delegateArgs[i] = dotNetMethodParamInfos[i].ParameterType;
                 }
-                genericWrapper = typeof(WrappedCodeObject).GetMethods()
+                genericWrapper = typeof(CallableDelegateProxy).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                                         .Where(x => x.Name == "GenericWrapperVoid" && x.GetParameters().Length == delegateArgs.Length)
                                         .First();
             }
@@ -68,7 +68,7 @@ namespace LanguageImplementation
 
                 // Last template parameter is the return type.
                 delegateArgs[delegateArgs.Length - 1] = dotNetMethod.ReturnType;
-                genericWrapper = typeof(WrappedCodeObject).GetMethods()
+                genericWrapper = typeof(CallableDelegateProxy).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                                         .Where(x => x.Name == "GenericWrapperReturns" && x.GetParameters().Length + 1 == delegateArgs.Length)
                                         .First();
             }
@@ -78,35 +78,35 @@ namespace LanguageImplementation
             return asDelegate;
         }
 
-        public async Task<RetVal> GenericWrapperReturns<RetVal>()
+        private async Task<RetVal> GenericWrapperReturns<RetVal>()
         {
             var retVal = await callable.Call(interpreter, contextToUseForCall, new object[0]);
             return (RetVal) retVal;
         }
 
-        public async Task<RetVal>GenericWrapperReturns<Arg1, RetVal>(Arg1 arg1)
+        private async Task<RetVal>GenericWrapperReturns<Arg1, RetVal>(Arg1 arg1)
         {
             var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1 });
             return (RetVal)retVal;
         }
 
-        public async Task<RetVal>GenericWrapperReturns<Arg1, Arg2, RetVal>(Arg1 arg1, Arg2 arg2)
+        private async Task<RetVal>GenericWrapperReturns<Arg1, Arg2, RetVal>(Arg1 arg1, Arg2 arg2)
         {
             var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1, arg2 });
             return (RetVal)retVal;
         }
 
-        public async Task GenericWrapperVoid<Arg1>()
+        private async Task GenericWrapperVoid<Arg1>()
         {
             await callable.Call(interpreter, contextToUseForCall, new object[0]);
         }
 
-        public async Task GenericWrapperVoid<Arg1>(Arg1 arg1)
+        private async Task GenericWrapperVoid<Arg1>(Arg1 arg1)
         {
             var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1 });
         }
 
-        public async Task GenericWrapperVoid<Arg1, Arg2>(Arg1 arg1, Arg2 arg2)
+        private async Task GenericWrapperVoid<Arg1, Arg2>(Arg1 arg1, Arg2 arg2)
         {
             await callable.Call(interpreter, contextToUseForCall, new object[] { arg1, arg2 });
         }
