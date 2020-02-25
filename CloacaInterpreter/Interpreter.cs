@@ -359,6 +359,14 @@ namespace CloacaInterpreter
                                     MethodInfo eventInvoke = leftEvent.EventInfo.EventHandlerType.GetMethod("Invoke");
                                     var proxyDelegate = CallableDelegateProxy.Create(eventInvoke, leftEvent.EventInfo.EventHandlerType, rightCall, this, context);
                                     leftEvent.EventInfo.AddEventHandler(leftEvent.OwnerObject, proxyDelegate);
+
+                                    // Put the EventInfo back on the stack. This seems odd at first glance but we have to consider that Python
+                                    // parlance for += is that it's basically just a normal addition operation and it will put a result on the
+                                    // stack. So there will be a STORE_ATTR after this expecting *something*. We will only know that there's an
+                                    // object to store something to. What we'll have is the event info that we can then catch in STORE_ATTR and
+                                    // suppress.
+                                    context.DataStack.Push(leftEvent);
+
                                     context.Cursor += 1;
                                 }
                                 else
@@ -640,15 +648,28 @@ namespace CloacaInterpreter
                                 var attrName = context.Program.Names[nameIdx];
 
                                 var rawObject = context.DataStack.Pop();
+                                var val = context.DataStack.Pop();
                                 var rawPyObject = rawObject as PyObject;
                                 if (rawPyObject != null)
                                 {
-                                    var val = context.DataStack.Pop();
                                     rawPyObject.__setattr__(attrName, val);
                                 }
                                 else
                                 {
-                                    throw new NotImplementedException("Cannot use STORE_ATTR on non-PyObjects yet, although we do need it for .NET object members");
+                                    // This is a .NET instance. If we're assigning an event, then this is a residual of doing a 
+                                    // += or -=. We can suppress the assignment because we already completed the operation in
+                                    // the INPLACE_X opcode. We just put the EventInstance back on the stack to signal later that's
+                                    // what happened. This isn't *that* hacky; regular INPLACE_ operations also put their result
+                                    // on the stack like a regular BINARY opcode!
+                                    var asEventInstance = val as EventInstance;
+                                    if(asEventInstance == null)
+                                    {
+                                        throw new NotImplementedException("Cannot use STORE_ATTR on non-PyObjects yet, although we do need it for .NET object members");
+                                    }
+                                    else
+                                    {
+                                        // Suppressing!
+                                    }
                                 }
                             }
                             context.Cursor += 2;
