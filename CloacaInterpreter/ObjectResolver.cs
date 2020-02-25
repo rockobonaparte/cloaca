@@ -11,10 +11,16 @@ namespace CloacaInterpreter
     {
         public object OwnerObject { get; private set; }
         public EventInfo EventInfo { get; private set; }
-        public EventInstance(object ownerObject, EventInfo eventInfo)
+
+        public MulticastDelegate EventDelegate { get; private set; }
+
+        public EventInstance(object ownerObject, string attrName)
         {
             this.OwnerObject = ownerObject;
-            this.EventInfo = eventInfo;
+            this.EventInfo = ownerObject.GetType().GetEvent(attrName);
+            this.EventDelegate = (MulticastDelegate)ownerObject.GetType()
+                .GetField(attrName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                .GetValue(ownerObject);
         }
     }
 
@@ -74,7 +80,7 @@ namespace CloacaInterpreter
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Event)
                     {
-                        return new EventInstance(rawObject, rawObject.GetType().GetEvent(attrName));
+                        return new EventInstance(rawObject, attrName);
                         //return rawObject.GetType().GetEvent(attrName);
                     }
                     else

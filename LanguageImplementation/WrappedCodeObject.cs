@@ -24,6 +24,45 @@ namespace LanguageImplementation
             get; protected set;
         }
 
+        public override bool Equals(object other)
+        {
+            var asWco = other as WrappedCodeObject;
+            if(asWco == null)
+            {
+                return false;
+            }
+            else
+            {
+                if(!(instance.Equals(asWco.instance) && Name.Equals(asWco.Name)))
+                {
+                    return false;
+                }
+                if(MethodBases.Length != asWco.MethodBases.Length)
+                {
+                    return false;
+                }
+                for(int i = 0; i < MethodBases.Length; ++i)
+                {
+                    if(!MethodBases[i].Equals(asWco.MethodBases[i]))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = Name.GetHashCode();
+            hash ^= instance.GetHashCode();
+            foreach(var methodBase in MethodBases)
+            {
+                hash ^= methodBase.GetHashCode();
+            }
+            return hash;
+        }
+
         #region Constructors
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases)
         {

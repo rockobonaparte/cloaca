@@ -30,6 +30,11 @@ namespace LanguageImplementation
             this.contextToUseForCall = contextToUseForCall;
         }
 
+        public bool MatchesTarget(IPyCallable callable)
+        {
+            return this.callable.Equals(callable);
+        }
+
         public static Delegate Create(MethodInfo dotNetMethod, Type delegateType, IPyCallable callable, IInterpreter interpreter, FrameContext contextToUseForCall)
         {
             var proxy = new CallableDelegateProxy(callable, interpreter, contextToUseForCall);
