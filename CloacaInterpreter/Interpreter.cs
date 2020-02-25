@@ -639,10 +639,17 @@ namespace CloacaInterpreter
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
                                 var attrName = context.Program.Names[nameIdx];
 
-                                var obj = (PyObject)context.DataStack.Pop();
-                                var val = context.DataStack.Pop();
-
-                                obj.__setattr__(attrName, val);
+                                var rawObject = context.DataStack.Pop();
+                                var rawPyObject = rawObject as PyObject;
+                                if (rawPyObject != null)
+                                {
+                                    var val = context.DataStack.Pop();
+                                    rawPyObject.__setattr__(attrName, val);
+                                }
+                                else
+                                {
+                                    throw new NotImplementedException("Cannot use STORE_ATTR on non-PyObjects yet, although we do need it for .NET object members");
+                                }
                             }
                             context.Cursor += 2;
                             break;
