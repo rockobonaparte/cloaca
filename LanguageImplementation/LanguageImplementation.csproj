@@ -69,6 +69,7 @@
     <Compile Include="..\Language\obj\Debug\CloacaVisitor.cs">
       <Link>GeneratedFiles\CloacaVisitor.cs</Link>
     </Compile>
+    <Compile Include="CallableDelegateProxy.cs" />
     <Compile Include="CodeContainers.cs" />
     <Compile Include="CodeObject.cs" />
     <Compile Include="DataTypes\Exceptions\PyException.cs" />

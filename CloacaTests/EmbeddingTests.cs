@@ -326,7 +326,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Event subscription/unsubscription doesn't work yet")]
         public void EventDotNet()
         {
             runBasicTest(

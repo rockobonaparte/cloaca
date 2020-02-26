@@ -7,6 +7,7 @@ using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Reflection.Emit;
 
 namespace CloacaInterpreter
 {
@@ -343,42 +344,29 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.INPLACE_ADD:
                             // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
-                            // await leftRightOperation(context, "__iadd__", "__add__");
                             {
                                 dynamic left = context.DataStack.Pop();
                                 dynamic right = context.DataStack.Pop();
 
-                                var leftEvent = left as EventInfo;
+                                var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
 
                                 // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
-                                    // It's coming in as a WrappedCodeObject so we have to turn it into a call that can accept the arguments we're expecting. We'll pencil in
-                                    // the interpreter and the frame. This should then break down the function into something that just takes the arguments we originally expect.
-                                    // BTW That frame could be an issue since maybe it won't tell us the right place when we actually trigger it. Stay tuned.
-                                    MethodInfo rightCurriedMethodInfo;
-                                    var eventMethodInfo = leftEvent.EventHandlerType.GetMethod("Invoke");       // Return signature is probably void but we gotta make sure.
-                                    if (eventMethodInfo.ReturnType == typeof(void))
-                                    {
-                                        rightCurriedMethodInfo = (new Action<object[]>(args =>
-                                        {
-                                            rightCall.Call(this, context, args);
-                                        })).Method;
-                                    }
-                                    else
-                                    {
-                                        // Oh wow! It wasn't a void function!
-                                        rightCurriedMethodInfo = (new Func<object[], object>(args =>
-                                        {
-                                            return rightCall.Call(this, context, args);
-                                        })).Method;
-                                    }
+                                    // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
+                                    MethodInfo eventInvoke = leftEvent.EventInfo.EventHandlerType.GetMethod("Invoke");
+                                    var proxyDelegate = CallableDelegateProxy.Create(eventInvoke, leftEvent.EventInfo.EventHandlerType, rightCall, this, context);
+                                    leftEvent.EventInfo.AddEventHandler(leftEvent.OwnerObject, proxyDelegate);
 
-                                    // ArgumentException "Cannot bind to the target method because its signature or security transparency is not compatible with that of the delegate type."
-                                    // This is because I'm trying to attach my object[] wrapped call to the real signature.
-                                    var rightDelegate = Delegate.CreateDelegate(leftEvent.EventHandlerType, rightCall.GetObjectInstance(), rightCurriedMethodInfo);
-                                    leftEvent.AddEventHandler(left, rightDelegate);
+                                    // Put the EventInfo back on the stack. This seems odd at first glance but we have to consider that Python
+                                    // parlance for += is that it's basically just a normal addition operation and it will put a result on the
+                                    // stack. So there will be a STORE_ATTR after this expecting *something*. We will only know that there's an
+                                    // object to store something to. What we'll have is the event info that we can then catch in STORE_ATTR and
+                                    // suppress.
+                                    context.DataStack.Push(leftEvent);
+
+                                    context.Cursor += 1;
                                 }
                                 else
                                 {
@@ -414,7 +402,53 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_SUBTRACT:
-                            await rightLeftOperation(context, "__isub__", "__sub__");
+                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            {
+                                dynamic left = context.DataStack.Pop();
+                                dynamic right = context.DataStack.Pop();
+
+                                var leftEvent = left as EventInstance;
+                                var rightCall = right as WrappedCodeObject;
+
+                                // The event subscribe code is currently dead. It doesn't work yet.
+                                if (leftEvent != null)
+                                {
+                                    var listeners = leftEvent.EventDelegate.GetInvocationList();
+                                    
+                                    // Apparently we could have used foreach; I guess the invocation list is a copy.
+                                    for(int i = 0; i < listeners.Length; ++i)                                    
+                                    {
+                                        var listener = listeners[i];
+                                        var target = listener.Target;
+                                        var asProxy = target as CallableDelegateProxy;
+                                        if(asProxy != null && asProxy.MatchesTarget(rightCall))
+                                        {
+                                            leftEvent.EventInfo.RemoveEventHandler(leftEvent.OwnerObject, listener);
+                                        }
+                                    }
+                                    
+                                    context.DataStack.Push(leftEvent);
+                                    context.Cursor += 1;
+                                }
+                                else
+                                {
+
+                                    var leftObj = left as PyObject;
+                                    var rightObj = right as PyObject;
+
+                                    if (leftObj.__dict__.ContainsKey("__isub__"))
+                                    {
+                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
+                                        context.DataStack.Push(returned);
+                                    }
+                                    else
+                                    {
+                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
+                                        context.DataStack.Push(returned);
+                                    }
+                                    context.Cursor += 1;
+                                }
+                            }
                             break;
                         case ByteCodes.BINARY_MULTIPLY:
                             {
@@ -658,10 +692,30 @@ namespace CloacaInterpreter
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
                                 var attrName = context.Program.Names[nameIdx];
 
-                                var obj = (PyObject)context.DataStack.Pop();
+                                var rawObject = context.DataStack.Pop();
                                 var val = context.DataStack.Pop();
-
-                                obj.__setattr__(attrName, val);
+                                var rawPyObject = rawObject as PyObject;
+                                if (rawPyObject != null)
+                                {
+                                    rawPyObject.__setattr__(attrName, val);
+                                }
+                                else
+                                {
+                                    // This is a .NET instance. If we're assigning an event, then this is a residual of doing a 
+                                    // += or -=. We can suppress the assignment because we already completed the operation in
+                                    // the INPLACE_X opcode. We just put the EventInstance back on the stack to signal later that's
+                                    // what happened. This isn't *that* hacky; regular INPLACE_ operations also put their result
+                                    // on the stack like a regular BINARY opcode!
+                                    var asEventInstance = val as EventInstance;
+                                    if(asEventInstance == null)
+                                    {
+                                        throw new NotImplementedException("Cannot use STORE_ATTR on non-PyObjects yet, although we do need it for .NET object members");
+                                    }
+                                    else
+                                    {
+                                        // Suppressing!
+                                    }
+                                }
                             }
                             context.Cursor += 2;
                             break;
