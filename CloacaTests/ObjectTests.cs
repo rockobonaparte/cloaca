@@ -199,5 +199,22 @@ namespace CloacaTests
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(1)));
             Assert.That(bar.__dict__["b"], Is.EqualTo(PyInteger.Create(2)));
         }
+
+        [Test]
+        [Ignore("Exposed as a problem by bamyazi in their dev branch. Solution TBD. Need to properly chain bases " +
+                "and look at parent class __dict__. PyObject needs to expose its base methods as class members too. " +
+                "PyInteger/etc need to properly chain to PyObject and declare its class as a base.")]
+        public void ObjectCallsBaseMethods()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   pass\n" +
+                                         "\n" +
+                                         "f = Foo()\n" +
+                                         "testing = f.__eq__(f)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(interpreter);
+            var testing = (PyBool)variables.Get("testing");
+            Assert.That(testing, Is.EqualTo(PyBool.True));
+        }
+
     }
 }
