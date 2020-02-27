@@ -21,9 +21,9 @@ namespace LanguageImplementation.DataTypes
             throw new NotImplementedException();
         }
 
-        public void __delattr__()
+        public void __delattr__(string name)
         {
-            throw new NotImplementedException();
+            PyClass.__delattr__(this, name);
         }
 
         // I don't fully understand the difference between __getattribute__ and __getattr__
