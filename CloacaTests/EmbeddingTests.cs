@@ -20,11 +20,13 @@ using LanguageImplementation.DataTypes;
 namespace CloacaTests
 {
     public delegate void SimpleIntEvent(int something);
+    public delegate int ReturnIntEvent(int something);
     class ReflectIntoPython
     {
         public int AnInteger;
         public string AString;
         public event SimpleIntEvent IntEvent;
+        public event ReturnIntEvent ReturnIntTakeIntEvent;
 
         public int AnIntegerProperty
         {
@@ -52,6 +54,12 @@ namespace CloacaTests
         public void SubscribeSetAnInteger2(int newInteger)
         {
             AnInteger += newInteger;
+        }
+
+        public int SubscribeReturnInteger(int newInteger)
+        {
+            AnInteger += newInteger;
+            return AnInteger;
         }
 
         public int AnOverload(params int[] lots_of_ints)
@@ -112,6 +120,11 @@ namespace CloacaTests
         public void TriggerIntEvent(int intArg)
         {
             IntEvent(intArg);
+        }
+
+        public int TriggerReturningIntEvent(int intArg)
+        {
+            return ReturnIntTakeIntEvent(intArg);
         }
     }
 
@@ -343,6 +356,32 @@ namespace CloacaTests
             {
                 { "a", 333 },
             }), 1);
+        }
+
+        // Test coverage TODO:
+        // 1. Call .NET event directly
+        // 2. Attach/detach IPyCallable
+        // 3. Maybe see what happens when an exception happens during event invocation.
+        // 4. Get mad if you try to attach an event to another event using +=/-=. It's stupid but you did it once and the null pointer
+        //    exception isn't enough to call it out.
+        [Test]
+        public void ReturningEventDotNet()
+        {
+            FrameContext runContext = null;
+            Assert.Throws<Exception>(
+                () =>
+                {
+                    runProgram("obj = ReflectIntoPython(1337, 'I did it!')\n" +
+                               "obj.ReturnIntTakeIntEvent += obj.SubscribeReturnInteger\n" +
+                               "obj.TriggerReturningIntEvent(111)\n" +
+                               "obj.ReturnIntTakeIntEvent -= obj.SubscribeReturnInteger\n" +
+                               "a = obj.AnInteger\n", new Dictionary<string, object>()
+                               {
+                                   { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+                               }, 1, out runContext);
+                }, "Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
+                    "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
+                    "a return type anyways?");
         }
     }
 

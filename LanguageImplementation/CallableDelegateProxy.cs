@@ -65,42 +65,14 @@ namespace LanguageImplementation
             }
             else
             {
-                delegateArgs = new Type[dotNetMethodParamInfos.Length + 1];
-                for (int i = 0; i < dotNetMethodParamInfos.Length; ++i)
-                {
-                    delegateArgs[i] = dotNetMethodParamInfos[i].ParameterType;
-                }
-
-                // Last template parameter is the return type.
-                delegateArgs[delegateArgs.Length - 1] = dotNetMethod.ReturnType;
-                genericWrapper = typeof(CallableDelegateProxy).GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
-                                        .Where(x => x.Name == "GenericWrapperReturns" && x.GetParameters().Length + 1 == delegateArgs.Length)
-                                        .First();
+                throw new Exception("Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
+                    "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
+                    "a return type anyways?");
             }
 
             var realizedWrapper = genericWrapper.MakeGenericMethod(delegateArgs);
             asDelegate = Delegate.CreateDelegate(delegateType, proxy, realizedWrapper);
             return asDelegate;
-        }
-
-        // Note that the wrappers that have a return value haven't been tested yet. We don't know if Task<RetVal> will bind
-        // to an event expecting RetVal.
-        private async Task<RetVal> GenericWrapperReturns<RetVal>()
-        {
-            var retVal = await callable.Call(interpreter, contextToUseForCall, new object[0]);
-            return (RetVal) retVal;
-        }
-
-        private async Task<RetVal>GenericWrapperReturns<Arg1, RetVal>(Arg1 arg1)
-        {
-            var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1 });
-            return (RetVal)retVal;
-        }
-
-        private async Task<RetVal>GenericWrapperReturns<Arg1, Arg2, RetVal>(Arg1 arg1, Arg2 arg2)
-        {
-            var retVal = await callable.Call(interpreter, contextToUseForCall, new object[] { arg1, arg2 });
-            return (RetVal)retVal;
         }
 
         private void GenericWrapperVoid()
