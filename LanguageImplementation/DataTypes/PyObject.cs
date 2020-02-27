@@ -85,10 +85,6 @@ namespace LanguageImplementation.DataTypes
                 {
                     throw new Exception(name + " is not callable.");
                 }
-                //PyObject[] argsWithSelf = new PyObject[args.Length + 1];
-                //argsWithSelf[0] = this;
-                //Array.Copy(args, 0, argsWithSelf, 1, args.Length);
-                //return toCall.Call(interpreter, context, argsWithSelf);
                 return toCall.Call(interpreter, context, args);
             }
             else
