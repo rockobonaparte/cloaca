@@ -23,6 +23,10 @@ namespace LanguageImplementation.DataTypes
 
         // I don't fully understand the difference between __getattribute__ and __getattr__
         // yet, but I believe I default to __getattribute__
+        //
+        // Apparently you fall back on __getattr__ if the attribute is not found. For now, I'm
+        // not implementing it at all and I'll come back to it after I have attributes working
+        // in at least the "normal" way.
         [ClassMember]
         public static object __getattr__(PyObject self, string name)
         {

@@ -285,3 +285,4 @@ BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should
 do some cute jump opcode logic to mimick them.
 
 Need to implement __hash__ and use it in our data types.
+Need to implement __getattr__ properly as the alternative to __getattribute__
