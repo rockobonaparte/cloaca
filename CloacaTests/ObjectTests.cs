@@ -67,7 +67,7 @@ namespace CloacaTests
                                          "bar = Foo(2)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace CloacaTests
                                          "bar = Foo()\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject) variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(1)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace CloacaTests
                                          "bar.a = 2\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace CloacaTests
                                          "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace CloacaTests
                                          "bar.change_a(1)\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
@@ -196,8 +196,8 @@ namespace CloacaTests
                                          "bar = Bar()\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
             var bar = (PyObject)variables.Get("bar");
-            Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(1)));
-            Assert.That(bar.__dict__["b"], Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(bar.internal_dict["a"], Is.EqualTo(PyInteger.Create(1)));
+            Assert.That(bar.internal_dict["b"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]

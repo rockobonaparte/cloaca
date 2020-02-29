@@ -121,11 +121,11 @@ namespace CloacaInterpreter
                 var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
                 if (nameIdx >= 0)
                 {
-                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[nameIdx]);
+                    pyclass.internal_dict.AddOrSet(classMemberName, classFrame.Locals[nameIdx]);
                 }
                 else
                 {
-                    pyclass.__dict__.AddOrSet(classMemberName, context.GetVariable(classMemberName));
+                    pyclass.internal_dict.AddOrSet(classMemberName, context.GetVariable(classMemberName));
                 }
             }
             
@@ -226,7 +226,7 @@ namespace CloacaInterpreter
             var leftObj = left as PyObject;
             var rightObj = right as PyObject;
 
-            if (leftObj.__dict__.ContainsKey(idunder))
+            if (leftObj.internal_dict.ContainsKey(idunder))
             {
                 PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
                 context.DataStack.Push(returned);
@@ -246,7 +246,7 @@ namespace CloacaInterpreter
             var leftObj = left as PyObject;
             var rightObj = right as PyObject;
 
-            if (leftObj.__dict__.ContainsKey(idunder))
+            if (leftObj.internal_dict.ContainsKey(idunder))
             {
                 PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
                 context.DataStack.Push(returned);
@@ -374,7 +374,7 @@ namespace CloacaInterpreter
                                     var leftObj = left as PyObject;
                                     var rightObj = right as PyObject;
 
-                                    if (leftObj.__dict__.ContainsKey("__iadd__"))
+                                    if (leftObj.internal_dict.ContainsKey("__iadd__"))
                                     {
                                         PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightObj });
                                         context.DataStack.Push(returned);
@@ -436,7 +436,7 @@ namespace CloacaInterpreter
                                     var leftObj = left as PyObject;
                                     var rightObj = right as PyObject;
 
-                                    if (leftObj.__dict__.ContainsKey("__isub__"))
+                                    if (leftObj.internal_dict.ContainsKey("__isub__"))
                                     {
                                         PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
                                         context.DataStack.Push(returned);
@@ -1260,7 +1260,7 @@ namespace CloacaInterpreter
 
                                 try
                                 {
-                                    var getter = containerPyObject.__dict__["__getitem__"];
+                                    var getter = containerPyObject.internal_dict["__getitem__"];
                                     var functionToRun = getter as IPyCallable;
 
                                     if(functionToRun == null)
@@ -1308,7 +1308,7 @@ namespace CloacaInterpreter
 
                                 try
                                 {
-                                    var setter = containerPyObject.__dict__["__setitem__"];
+                                    var setter = containerPyObject.internal_dict["__setitem__"];
                                     var functionToRun = setter as IPyCallable;
 
                                     if (functionToRun == null)
@@ -1361,16 +1361,16 @@ namespace CloacaInterpreter
                                 }
 
                                 var offendingFrame = context.callStack.Peek();
-                                if (theException.__dict__.ContainsKey(PyException.TracebackName))
+                                if (theException.internal_dict.ContainsKey(PyException.TracebackName))
                                 {
-                                    theException.__dict__[PyException.TracebackName] =
-                                        new PyTraceback((PyTraceback)theException.__dict__[PyException.TracebackName],
+                                    theException.internal_dict[PyException.TracebackName] =
+                                        new PyTraceback((PyTraceback)theException.internal_dict[PyException.TracebackName],
                                         offendingFrame,
                                         offendingFrame.Program.GetCodeLine(context.Cursor));
                                 }
                                 else
                                 {
-                                    theException.__dict__.Add(PyException.TracebackName,
+                                    theException.internal_dict.Add(PyException.TracebackName,
                                         new PyTraceback(null,
                                         offendingFrame,
                                         offendingFrame.Program.GetCodeLine(context.Cursor)));

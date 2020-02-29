@@ -51,7 +51,7 @@ namespace CloacaTests
         {
             var wrapper = new WrappedCodeObject("hello_void", typeof(TestPythonClass).GetMethod("hello_void"), this);
             var instance = PyTypeObject.DefaultNew<TestPythonObject>(TestPythonClass.Instance);
-            var method = instance.__dict__["hello_void"] as IPyCallable;
+            var method = instance.internal_dict["hello_void"] as IPyCallable;
             method.Call(null, null, new object[0]);
         }
     }

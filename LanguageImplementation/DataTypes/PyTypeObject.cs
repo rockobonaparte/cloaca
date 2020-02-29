@@ -54,7 +54,7 @@ namespace LanguageImplementation.DataTypes
 
         public static void DefaultNewPyObject(PyObject toNew, PyTypeObject classObj)
         {
-            toNew.__dict__ = new Dictionary<string, object>(classObj.__dict__);
+            toNew.internal_dict = new Dictionary<string, object>(classObj.internal_dict);
             toNew.__class__ = (PyClass) classObj;
 
             // Class functions become bound methods when we have an instance.
@@ -62,9 +62,9 @@ namespace LanguageImplementation.DataTypes
             // TODO: Is the default __new__ actually the properly place to put this?
             var methods = new List<PyMethod>();
             var methodKeys = new List<string>();            
-            foreach(var key in toNew.__dict__.Keys)
+            foreach(var key in toNew.internal_dict.Keys)
             {
-                var val = toNew.__dict__[key];
+                var val = toNew.internal_dict[key];
                 var asCallable = val as IPyCallable;
                 if(asCallable != null)
                 {
@@ -75,16 +75,16 @@ namespace LanguageImplementation.DataTypes
 
             for(int i = 0; i < methods.Count; ++i)
             {
-                toNew.__dict__[methodKeys[i]] = methods[i];
+                toNew.internal_dict[methodKeys[i]] = methods[i];
             }
         }
 
         public PyTypeObject(string name, CodeObject __init__)
         {
-            __dict__ = new Dictionary<string, object>();
+            internal_dict = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
-            __dict__["__init__"] = this.__init__;
+            internal_dict["__init__"] = this.__init__;
 
             // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
@@ -102,15 +102,15 @@ namespace LanguageImplementation.DataTypes
                 // 1. Test if we already declared a WrappedCodeObject for this method
                 // 2. If we did, check if it's declaring class is a child of the new candidate
                 // 3. If so, disregard the candidate; we have the better one already.
-                if (this.__dict__.ContainsKey(classMember.Name))
+                if (this.internal_dict.ContainsKey(classMember.Name))
                 {
-                    var existing = this.__dict__[classMember.Name] as WrappedCodeObject;
+                    var existing = this.internal_dict[classMember.Name] as WrappedCodeObject;
                     if(existing.MethodBases[0].DeclaringType.IsSubclassOf(classMember.DeclaringType))
                     {
                         continue;
                     }
                 }
-                this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
+                this.internal_dict[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
             }
         }
 

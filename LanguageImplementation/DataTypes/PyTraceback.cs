@@ -10,11 +10,11 @@
         {
             get
             {
-                return (PyTraceback) __dict__[NextName];
+                return (PyTraceback) internal_dict[NextName];
             }
             set
             {
-                __dict__[NextName] = value;
+                internal_dict[NextName] = value;
             }
         }
 
@@ -22,11 +22,11 @@
         {
             get
             {
-                return (Frame)__dict__[FrameName];
+                return (Frame)internal_dict[FrameName];
             }
             set
             {
-                __dict__[FrameName] = value;
+                internal_dict[FrameName] = value;
             }
         }
 
@@ -34,11 +34,11 @@
         {
             get
             {
-                return (int)__dict__[LineNumberName];
+                return (int)internal_dict[LineNumberName];
             }
             set
             {
-                __dict__[LineNumberName] = value;
+                internal_dict[LineNumberName] = value;
             }
         }
 

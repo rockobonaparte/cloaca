@@ -100,7 +100,7 @@ namespace LanguageImplementation.DataTypes
             {
                 var pyObj = asTuple.Values[i];
 
-                var __repr__ = pyObj.__dict__[PyClass.__REPR__];
+                var __repr__ = pyObj.internal_dict[PyClass.__REPR__];
                 var functionToRun = __repr__ as IPyCallable;
 
                 var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });

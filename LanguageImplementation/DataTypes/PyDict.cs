@@ -256,7 +256,7 @@ namespace LanguageImplementation.DataTypes
 
         private static async Task<PyString> __visit_repr(PyObject obj, IInterpreter interpreter, FrameContext context)
         {
-            var __repr__ = obj.__dict__[PyClass.__REPR__];
+            var __repr__ = obj.internal_dict[PyClass.__REPR__];
             var functionToRun = __repr__ as IPyCallable;
 
             var returned = await functionToRun.Call(interpreter, context, new object[] { obj });

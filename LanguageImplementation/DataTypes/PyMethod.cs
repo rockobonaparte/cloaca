@@ -15,7 +15,7 @@ namespace LanguageImplementation.DataTypes
         public PyMethod(PyObject self, IPyCallable callable)
         {
             selfHandle = self;
-            __dict__.Add("__call__", callable);
+            internal_dict.Add("__call__", callable);
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -24,7 +24,7 @@ namespace LanguageImplementation.DataTypes
             massagedArgs[0] = selfHandle;
             Array.Copy(args, 0, massagedArgs, 1, args.Length);
 
-            return ((IPyCallable) __dict__["__call__"]).Call(interpreter, context, massagedArgs);
+            return ((IPyCallable) internal_dict["__call__"]).Call(interpreter, context, massagedArgs);
         }
     }
 }
