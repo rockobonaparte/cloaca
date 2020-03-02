@@ -26,8 +26,6 @@ namespace LanguageImplementation.DataTypes
             throw new NotImplementedException();
         }
 
-        // I don't fully understand the difference between __getattribute__ and __getattr__
-        // yet, but I believe I default to __getattribute__
         public object __getattr__(string name)
         {
             throw new NotImplementedException();
@@ -35,24 +33,12 @@ namespace LanguageImplementation.DataTypes
 
         public object __getattribute__(string name)
         {
-            if (!__dict__.ContainsKey(name))
-            {
-                var className = __class__ != null ? __class__.Name : "(Null Class!)";
-                throw new EscapedPyException(new AttributeError("'" + className + "' object has no attribute named '" + name + "'"));
-            }
-            return __dict__[name];
+            return PyClass.__getattribute__(this, name);
         }
 
         public void __setattr__(string name, object value)
         {
-            if (__dict__.ContainsKey(name))
-            {
-                __dict__[name] = value;
-            }
-            else
-            {
-                __dict__.Add(name, value);
-            }
+            PyClass.__setattr__(this, name, value);
         }
 
         public PyBool __eq__(PyObject other)

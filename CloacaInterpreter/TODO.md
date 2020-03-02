@@ -284,4 +284,12 @@ context.testlist().GetText()
 BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
 do some cute jump opcode logic to mimick them.
 
-Try a test with multiples of an operator to make sure they generate correctly when you have more than one (multiple shifts, for example)
+* Need to implement __hash__ and use it in our data types.
+* Need to implement __getattr__ properly as the alternative to __getattribute__
+
+Class/object data model is incorrect. PyTypeObject.DefaultNewPyObject copies in all the callables from
+the class being instantiated, wraps them in local PyMethods, and puts them in the local __dict__. This
+is inconsistent with how Python is doing it from what I have seen and discussed so far. The class functions
+should stay in the class' __dict__. I'm still trying to figure out how the method wrappers are born. The
+PyMethod thing I have is not far off from what is done in practice to make these functions work as
+methods, but I don't know when they are created and where they are stuffed after creation.

@@ -46,6 +46,23 @@ namespace LanguageImplementation
             LocalNames.Add(name);
             Locals.Add(value);
         }
+
+        /// <summary>
+        /// Added as a helper when it was discovered that null versions of locals were getting thrown in.
+        /// Why null versions of locals were also getting added unnecessarily is a different issue.
+        /// 
+        /// This will only add the local if it hasn't already been added. This makes sure that our call
+        /// helpers don't pad with null unnecessarily as a final resort.
+        /// </summary>
+        /// <param name="name">The name of the local to add</param>
+        /// <param name="value">The </param>
+        public void AddOnlyNewLocal(string name, object value)
+        {
+            if(!Locals.Contains(name))
+            {
+                AddLocal(name, value);
+            }
+        }
     }
 
     // Traditional block in Python has: frame, opcode, handler (pointer to next instruction outside of the loop), value stack size

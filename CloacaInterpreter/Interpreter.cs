@@ -172,7 +172,7 @@ namespace CloacaInterpreter
             }
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
-                frame.AddLocal(frame.Program.VarNames[varIndex], null);
+                frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
