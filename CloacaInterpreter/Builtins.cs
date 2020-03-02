@@ -101,7 +101,7 @@ namespace CloacaInterpreter
         {
             // TODO: Figure out how to switch to Task<PyList> signature without everything hanging.
             var internalList = new List<PyObject>();
-            foreach(var name in o.internal_dict.Keys)
+            foreach(var name in o.__dict__.Keys)
             {
                 internalList.Add(PyString.Create(name));
             }

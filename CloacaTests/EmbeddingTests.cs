@@ -427,17 +427,17 @@ namespace CloacaTests
         {
             Type objType = genericObj.GetType();
             var po = new PyObject();
-            po.internal_dict.Add("__name__", objType.Name);
-            po.internal_dict.Add("__module__", null);
-            po.internal_dict.Add("__qualname__", null);
+            po.__dict__.Add("__name__", objType.Name);
+            po.__dict__.Add("__module__", null);
+            po.__dict__.Add("__qualname__", null);
 
             // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
             foreach(var method in objType.GetMethods())
             {
                 // Overloaded methods come up more than once, but the WrappedCodeObject takes care of it the first time.
-                if (!po.internal_dict.ContainsKey(method.Name))
+                if (!po.__dict__.ContainsKey(method.Name))
                 {
-                    po.internal_dict.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
+                    po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
                 }
             }
 
@@ -445,17 +445,17 @@ namespace CloacaTests
             {
                 if(field.FieldType == typeof(int))
                 {
-                    po.internal_dict.Add(field.Name, PyInteger.Create((int)field.GetValue(genericObj)));
+                    po.__dict__.Add(field.Name, PyInteger.Create((int)field.GetValue(genericObj)));
                 }
                 else if(field.FieldType == typeof(string))
                 {
-                    po.internal_dict.Add(field.Name, PyString.Create((string)field.GetValue(genericObj)));
+                    po.__dict__.Add(field.Name, PyString.Create((string)field.GetValue(genericObj)));
                 }
             }
 
             foreach(var eventInfo in objType.GetEvents())
             {
-                po.internal_dict.Add(eventInfo.Name, null);
+                po.__dict__.Add(eventInfo.Name, null);
             }
 
             return po;

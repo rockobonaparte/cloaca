@@ -6,13 +6,10 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyClass : PyTypeObject
     {
-        public Dictionary<string, object> __dict__;
-
         public PyClass(string name, CodeObject __init__, PyClass[] bases) :
             base(name, __init__)
         {
             __bases__ = bases;
-            __dict__ = new Dictionary<string, object>();
         }
 
         public const string __REPR__ = "__repr__";
@@ -61,7 +58,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static object __getattribute__(PyObject self, string name)
         {
-            if (!self.internal_dict.ContainsKey(name))
+            if (!self.__dict__.ContainsKey(name))
             {
                 bool found = false;
                 var fromClasses = __getattribute__(self.__class__, name, out found);
@@ -75,19 +72,19 @@ namespace LanguageImplementation.DataTypes
                     return fromClasses;
                 }
             }
-            return self.internal_dict[name];
+            return self.__dict__[name];
         }
 
         [ClassMember]
         public static void __setattr__(PyObject self, string name, object value)
         {
-            if (self.internal_dict.ContainsKey(name))
+            if (self.__dict__.ContainsKey(name))
             {
-                self.internal_dict[name] = value;
+                self.__dict__[name] = value;
             }
             else
             {
-                self.internal_dict.Add(name, value);
+                self.__dict__.Add(name, value);
             }
         }
 

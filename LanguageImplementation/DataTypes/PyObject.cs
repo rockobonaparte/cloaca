@@ -10,7 +10,7 @@ namespace LanguageImplementation.DataTypes
     public class PyObject
     {
         // TODO: Make map of string to PyObject
-        public Dictionary<string, object> internal_dict;
+        public Dictionary<string, object> __dict__;
         public PyClass __class__;
         public string __doc__;
         public IPyCallable __new__;
@@ -53,20 +53,20 @@ namespace LanguageImplementation.DataTypes
 
         public PyObject()
         {
-            internal_dict = new Dictionary<string, object>();
+            __dict__ = new Dictionary<string, object>();
         }
 
         public PyObject(PyTypeObject fromType)
         {
             // TODO: Determine if there needs to be additional properties.
-            internal_dict = fromType.internal_dict;
+            __dict__ = fromType.__dict__;
         }        
 
         public Task<object> InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
         {
-            if (internal_dict.ContainsKey(name))
+            if (__dict__.ContainsKey(name))
             {
-                IPyCallable toCall = internal_dict[name] as IPyCallable;
+                IPyCallable toCall = __dict__[name] as IPyCallable;
                 if (toCall == null)
                 {
                     throw new Exception(name + " is not callable.");

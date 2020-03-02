@@ -17,11 +17,11 @@ namespace LanguageImplementation.DataTypes.Exceptions
         {
             get
             {
-                return (PyTraceback)internal_dict[TracebackName];
+                return (PyTraceback)__dict__[TracebackName];
             }
             set
             {
-                internal_dict[TracebackName] = value;
+                __dict__[TracebackName] = value;
             }
         }
 
@@ -29,11 +29,11 @@ namespace LanguageImplementation.DataTypes.Exceptions
         {
             get
             {
-                return (string) this.internal_dict["message"];
+                return (string) this.__dict__["message"];
             }
             set
             {
-                this.internal_dict["message"] = value;
+                this.__dict__["message"] = value;
             }
         }
 
@@ -93,15 +93,15 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
         private static string extractExceptionMessage(PyObject exc)
         {
-            var tb = (PyTraceback)exc.internal_dict[PyException.TracebackName];
+            var tb = (PyTraceback)exc.__dict__[PyException.TracebackName];
             if (tb != null)
             {
                 var b = new StringBuilder();
                 b.AppendLine("Traceback (most recent call list):");
                 b.AppendLine(tb.DumpStack());
-                if (exc.internal_dict.ContainsKey("message"))
+                if (exc.__dict__.ContainsKey("message"))
                 {
-                    b.AppendLine((string)exc.internal_dict["message"]);
+                    b.AppendLine((string)exc.__dict__["message"]);
                 }
                 return b.ToString();
             }

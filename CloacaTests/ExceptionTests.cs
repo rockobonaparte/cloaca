@@ -240,8 +240,8 @@ namespace CloacaTests
         [Test]
         public void TraceBackObject()
         {
-            Assert.That(escaped.OriginalException.internal_dict, Contains.Key(PyException.TracebackName));
-            var tb = escaped.OriginalException.internal_dict[PyException.TracebackName];
+            Assert.That(escaped.OriginalException.__dict__, Contains.Key(PyException.TracebackName));
+            var tb = escaped.OriginalException.__dict__[PyException.TracebackName];
         }
 
         [Test]

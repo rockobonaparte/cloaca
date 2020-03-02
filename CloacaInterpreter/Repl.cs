@@ -312,13 +312,13 @@ namespace CloacaInterpreter
                 foreach (var stack_var in scheduledTaskRecord.Frame.DataStack)
                 {
                     var stack_var_obj = stack_var as PyObject;
-                    if (stack_var_obj == null || !stack_var_obj.internal_dict.ContainsKey(PyClass.__REPR__))
+                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
                     {
                         stack_output.Append(stack_var.ToString());
                     }
                     else
                     {
-                        var __repr__ = stack_var_obj.internal_dict[PyClass.__REPR__];
+                        var __repr__ = stack_var_obj.__dict__[PyClass.__REPR__];
                         var functionToRun = __repr__ as IPyCallable;
 
                         var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
