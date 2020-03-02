@@ -213,17 +213,13 @@ namespace CloacaTests
             Assert.That(testing, Is.EqualTo(PyBool.True));
         }
 
-        // ObjectCallsBaseMethods was enabled but this underlying thing is still a problem.
         [Test]
-        [Ignore("Exposed as a problem by bamyazi in their dev branch. Solution TBD. Need to properly chain bases " +
-                "and look at parent class __dict__. PyObject needs to expose its base methods as class members too. " +
-                "PyInteger/etc need to properly chain to PyObject and declare its class as a base.")]
         public void IntCallsBaseMethods()
         {
             var interpreter = runProgram("f = 1\n" +
                                          "lt = f.__getattribute__('__lt__')\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(interpreter);
-            var testing = (PyBool)variables.Get("testing");
+            var testing = variables.Get("lt");
             Assert.That(testing, Is.Not.Null);
         }
     }
