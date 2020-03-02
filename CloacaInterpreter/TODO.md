@@ -284,13 +284,12 @@ New code debt and stuff found along the way:
 BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
 do some cute jump opcode logic to mimick them.
 
-Need to implement __hash__ and use it in our data types.
-Need to implement __getattr__ properly as the alternative to __getattribute__
+* Need to implement __hash__ and use it in our data types.
+* Need to implement __getattr__ properly as the alternative to __getattribute__
 
-
-
-
-Short-term todo for __dict__ consolidation:
-* Renaming the PyObject to actually be __dict__ causes some crazy bugs!
-* Noticed AccessClassMethod local variable names has self listed twice with one of them as null. This chokes when renaming PyObject's
-  dictionary to be __dict__. Maybe fix this first before doing the refactor.
+Class/object data model is incorrect. PyTypeObject.DefaultNewPyObject copies in all the callables from
+the class being instantiated, wraps them in local PyMethods, and puts them in the local __dict__. This
+is inconsistent with how Python is doing it from what I have seen and discussed so far. The class functions
+should stay in the class' __dict__. I'm still trying to figure out how the method wrappers are born. The
+PyMethod thing I have is not far off from what is done in practice to make these functions work as
+methods, but I don't know when they are created and where they are stuffed after creation.
