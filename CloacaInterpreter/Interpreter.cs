@@ -172,7 +172,7 @@ namespace CloacaInterpreter
             }
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
-                frame.AddLocal(frame.Program.VarNames[varIndex], null);
+                frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
@@ -1129,6 +1129,11 @@ namespace CloacaInterpreter
                                             args.Insert(0, self);
                                             await functionToRun.Call(this, context, args.ToArray());
                                             context.DataStack.Push(self);
+                                        }
+
+                                        if (functionToRun.Name == "change_a")
+                                        {
+                                            functionToRun.Name = "change_a";
                                         }
 
                                         // We're assuming it's a good-old-fashioned CodeObject
