@@ -1131,11 +1131,6 @@ namespace CloacaInterpreter
                                             context.DataStack.Push(self);
                                         }
 
-                                        if (functionToRun.Name == "change_a")
-                                        {
-                                            functionToRun.Name = "change_a";
-                                        }
-
                                         // We're assuming it's a good-old-fashioned CodeObject
                                         var returned = await CallInto(context, functionToRun, args.ToArray());
                                         context.DataStack.Push(returned);

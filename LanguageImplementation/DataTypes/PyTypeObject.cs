@@ -57,11 +57,6 @@ namespace LanguageImplementation.DataTypes
             toNew.__dict__ = new Dictionary<string, object>(classObj.__dict__);
             toNew.__class__ = (PyClass) classObj;
 
-            if(classObj.Name == "Foo")
-            {
-
-            }
-
             // Class functions become bound methods when we have an instance.
             // Gotta love how you can't modify dictionaries while iterating them...
             // TODO: Is the default __new__ actually the properly place to put this?
@@ -70,10 +65,6 @@ namespace LanguageImplementation.DataTypes
             foreach(var key in toNew.__dict__.Keys)
             {
                 var val = toNew.__dict__[key];
-                if(key == "change_a")
-                {
-                    // Debug breakpoint
-                }
                 var asCallable = val as IPyCallable;
                 if(asCallable != null)
                 {
