@@ -286,3 +286,11 @@ do some cute jump opcode logic to mimick them.
 
 Need to implement __hash__ and use it in our data types.
 Need to implement __getattr__ properly as the alternative to __getattribute__
+
+
+
+
+Short-term todo for __dict__ consolidation:
+* Renaming the PyObject to actually be __dict__ causes some crazy bugs!
+* Noticed AccessClassMethod local variable names has self listed twice with one of them as null. This chokes when renaming PyObject's
+  dictionary to be __dict__. Maybe fix this first before doing the refactor.
