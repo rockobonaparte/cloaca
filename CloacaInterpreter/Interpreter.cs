@@ -178,6 +178,11 @@ namespace CloacaInterpreter
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
 
+            if(context.EscapedDotNetException != null)
+            {
+                throw context.EscapedDotNetException;
+            }
+
             if (context.DataStack.Count > 0)
             {
                 return context.DataStack.Pop();
