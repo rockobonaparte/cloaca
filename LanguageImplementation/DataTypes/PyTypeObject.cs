@@ -56,27 +56,6 @@ namespace LanguageImplementation.DataTypes
         {
             toNew.__dict__ = new Dictionary<string, object>(classObj.__dict__);
             toNew.__class__ = (PyClass) classObj;
-
-            // Class functions become bound methods when we have an instance.
-            // Gotta love how you can't modify dictionaries while iterating them...
-            // TODO: Is the default __new__ actually the properly place to put this?
-            var methods = new List<PyMethod>();
-            var methodKeys = new List<string>();            
-            foreach(var key in toNew.__dict__.Keys)
-            {
-                var val = toNew.__dict__[key];
-                var asCallable = val as IPyCallable;
-                if(asCallable != null)
-                {
-                    methods.Add(new PyMethod(toNew, asCallable));
-                    methodKeys.Add(key);
-                }
-            }
-
-            for(int i = 0; i < methods.Count; ++i)
-            {
-                toNew.__dict__[methodKeys[i]] = methods[i];
-            }
         }
 
         public PyTypeObject(string name, CodeObject __init__)

@@ -1265,7 +1265,7 @@ namespace CloacaInterpreter
 
                                 try
                                 {
-                                    var getter = containerPyObject.__dict__["__getitem__"];
+                                    var getter = containerPyObject.__getattribute__("__getitem__");
                                     var functionToRun = getter as IPyCallable;
 
                                     if(functionToRun == null)
@@ -1313,7 +1313,7 @@ namespace CloacaInterpreter
 
                                 try
                                 {
-                                    var setter = containerPyObject.__dict__["__setitem__"];
+                                    var setter = containerPyObject.__getattribute__("__setitem__");
                                     var functionToRun = setter as IPyCallable;
 
                                     if (functionToRun == null)

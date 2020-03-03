@@ -16,6 +16,11 @@ namespace LanguageImplementation.DataTypes
         public IPyCallable __new__;
         public BigInteger __sizeof__;
         public PyClass[] __bases__;
+
+        /// <summary>
+        /// Gets a list of all the classes that are the direct CHILD of this class. Yes, CHILD.
+        /// </summary>
+        /// <returns>List of subclasses of this class.</returns>
         public List<PyClass> __subclasses__()
         {
             throw new NotImplementedException();
@@ -64,20 +69,12 @@ namespace LanguageImplementation.DataTypes
 
         public Task<object> InvokeFromDict(IInterpreter interpreter, FrameContext context, string name, params PyObject[] args)
         {
-            if (__dict__.ContainsKey(name))
+            var toCall = __getattribute__(name) as IPyCallable;
+            if (toCall == null)
             {
-                IPyCallable toCall = __dict__[name] as IPyCallable;
-                if (toCall == null)
-                {
-                    throw new Exception(name + " is not callable.");
-                }
-                return toCall.Call(interpreter, context, args);
+                throw new Exception(name + " is not callable.");
             }
-            else
-            {
-                throw new NotImplementedException("This object does not implement " + name);
-            }
+            return toCall.Call(interpreter, context, args);
         }
     }
-
 }

@@ -58,6 +58,9 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static object __getattribute__(PyObject self, string name)
         {
+            // Python data model states that PyMethods are created EACH TIME we look one up.
+            // https://docs.python.org/3/reference/datamodel.html ("instance methods")
+            object retval = null;
             if (!self.__dict__.ContainsKey(name))
             {
                 bool found = false;
@@ -69,12 +72,25 @@ namespace LanguageImplementation.DataTypes
                 }
                 else
                 {
-                    return fromClasses;
+                    retval = fromClasses;
                 }
             }
-            return self.__dict__[name];
-        }
+            else
+            {
+                retval = self.__dict__[name];
+            }
 
+            var asCallable = retval as IPyCallable;
+            if (asCallable != null)
+            {
+                return new PyMethod(self, asCallable);
+            }
+            else
+            {
+                return retval;
+            }
+        }
+    
         [ClassMember]
         public static void __setattr__(PyObject self, string name, object value)
         {

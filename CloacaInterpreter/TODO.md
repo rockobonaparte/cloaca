@@ -293,3 +293,24 @@ is inconsistent with how Python is doing it from what I have seen and discussed 
 should stay in the class' __dict__. I'm still trying to figure out how the method wrappers are born. The
 PyMethod thing I have is not far off from what is done in practice to make these functions work as
 methods, but I don't know when they are created and where they are stuffed after creation.
+
+According to the data model, what I should be doing is creating a PyMethod each time I access one of the
+class functions that needs an instance. Wow.
+
+A whole ton of __dict__ lookups need to be replaced with __getattribute__ (and set as necessary)
+
+
+
+Current issue is that super().__init__() is passing the class, not self. How do I infer that I need to give
+it self?!
+
+According to the data model:
+Once the class namespace has been populated by executing the class body, the class object is created by
+calling metaclass(name, bases, namespace, **kwds) (the additional keywords passed here are the same as those
+passed to __prepare__).
+
+This class object is the one that will be referenced by the zero-argument form of super(). __class__ is an
+implicit closure reference created by the compiler if any methods in a class body refer to either __class__
+or super. This allows the zero argument form of super() to correctly identify the class being defined based
+on lexical scoping, while the class or instance that was used to make the current call is identified based
+on the first argument passed to the method.
