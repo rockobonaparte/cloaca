@@ -86,6 +86,7 @@
     <Compile Include="DataTypes\PyObject.cs" />
     <Compile Include="DataTypes\PyTraceback.cs" />
     <Compile Include="DataTypes\PyTuple.cs" />
+    <Compile Include="DataTypes\PySuperType.cs" />
     <Compile Include="DataTypes\PyTypeObject.cs" />
     <Compile Include="Dis.cs" />
     <Compile Include="Extensions.cs" />

@@ -16,8 +16,8 @@ namespace CloacaInterpreter
         /// does it too!
         /// </summary>
         /// <param name="context">The frame that has invoked super()</param>
-        /// <returns>This class' superclass. Exceptions will be raised if this cannot be deduced.</returns>
-        public static PyClass super(FrameContext context)
+        /// <returns>PySuperType wrapping the self for this class and its class type (per Python data model).</returns>
+        public static PySuper super(FrameContext context)
         {
             // Believe it or not, this is very similar to how CPython does this! It grabs the code object and the frame and just
             // infers self from it.
@@ -42,7 +42,9 @@ namespace CloacaInterpreter
             {
                 throw new Exception("getSuperClass could not find a superclass for the current context.");
             }
-            return self.__class__.__bases__[0];
+
+            // TODO: Yeah this needs to deal with multiple bases and method resolution order.
+            return PySuper.Create(self, self.__class__.__bases__[0]);
         }
 
         public static bool isinstance(PyObject obj, PyClass _class)
