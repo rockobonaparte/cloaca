@@ -314,3 +314,43 @@ implicit closure reference created by the compiler if any methods in a class bod
 or super. This allows the zero argument form of super() to correctly identify the class being defined based
 on lexical scoping, while the class or instance that was used to make the current call is identified based
 on the first argument passed to the method.
+
+super() puts a class on the stack
+LOAD_ATTR gets it as an attribute, and thinks the PyMethod should use the class, not the self, as the variable. Shit.
+Something somewhere needs to know to get the self PyObject.
+I think I asked about super() before, so I should go back and see what I can find.
+
+Super is some kind of special object. There is something like a PySuperType
+```
+>>> class Foo(butt):
+...    def __init__(self):
+...       super().__init__()
+...       self.super_handle = super()
+...
+>>> f = Foo()
+>>> f.super_handle
+<super: <class 'Foo'>, <Foo object>>
+>>> isinstance(super, object)
+True
+>>> f.super_handle.__dict__
+{'super_handle': <super: <class 'Foo'>, <Foo object>>}
+>>> f.super_handle.super_handle
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'super' object has no attribute 'super_handle'
+>>> f.super_handle.__dict__.keys()
+dict_keys(['super_handle'])
+>>> f.super_handle.__dict__["super_handle"]
+<super: <class 'Foo'>, <Foo object>>
+>>> dir(f.super_handle)
+['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__self__', '__self_class__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__thisclass__', 'super_handle']
+```
+
+In particular, you need:
+__self__: The self reference
+__self_class__: The class of self
+__this_class__: The type invoking super(); may be none
+
+
+
+NoneType needs to be formalized as an object and type.
