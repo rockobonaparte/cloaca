@@ -43,7 +43,8 @@ namespace CloacaInterpreter
                 throw new Exception("getSuperClass could not find a superclass for the current context.");
             }
 
-            return PySuper.Create(self, self.__class__);
+            // TODO: Yeah this needs to deal with multiple bases and method resolution order.
+            return PySuper.Create(self, self.__class__.__bases__[0]);
         }
 
         public static bool isinstance(PyObject obj, PyClass _class)

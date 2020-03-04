@@ -354,3 +354,68 @@ __this_class__: The type invoking super(); may be none
 
 
 NoneType needs to be formalized as an object and type.
+
+
+PySuperType requires more work than I have right now. I'm kind of faking it with the overridden __getattribute__
+1. It should implement __getattr__ although it won't report as such if you looked. getattr on the super type will give the parent's methods
+2. ...which implies a custom __dir__
+3. Also how does this work with multiple bases?! Right now we just hard-code for the first base
+
+```
+class Parent:
+    def __init__(self):
+        print("Parent __init__!")
+        self.a = 1
+
+    def stuff(self):
+        print("Parent stuff!")
+
+
+class Child(Parent):
+    def __init__(self):
+        super().__init__()
+        print("Child __init__!")
+        self.b = 2
+        self.super_instance = super()
+
+    def stuff(self):
+        print("Child stuff!")
+
+    def only_in_child(self):
+        print("Only in child!")
+
+
+c = Child()
+c.super_instance.__init__()
+c.stuff()
+c.super_instance.stuff()
+print(c.__init__)
+print(c.super_instance.__init__)
+print(c.__getattribute__)
+print(c.super_instance.__getattribute__)
+print(dir(c))
+print(dir(c.super_instance))
+print(c.__dict__ == c.super_instance.__dict__)
+print(getattr(c, "__init__"))
+print(getattr(c.super_instance, "__init__"))
+print(c.__getattribute__("__init__"))
+print(c.super_instance.__getattribute__("__init__"))
+
+
+Parent __init__!
+Child __init__!
+Parent __init__!
+Child stuff!
+Parent stuff!
+<bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+<bound method Parent.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+<method-wrapper '__getattribute__' of Child object at 0x000001FC5AFF9828>
+<method-wrapper '__getattribute__' of Child object at 0x000001FC5AFF9828>
+['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'a', 'b', 'only_in_child', 'stuff', 'super_instance']
+['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__self__', '__self_class__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__thisclass__', 'a', 'b', 'super_instance']
+True
+<bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+<bound method Parent.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+<bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+<bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
+```

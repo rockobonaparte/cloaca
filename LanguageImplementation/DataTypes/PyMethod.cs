@@ -11,7 +11,7 @@ namespace LanguageImplementation.DataTypes
     /// </summary>
     public class PyMethod : PyObject, IPyCallable
     {
-        PyObject selfHandle;
+        public PyObject selfHandle;
         public PyMethod(PyObject self, IPyCallable callable)
         {
             var asSuper = self as PySuper;

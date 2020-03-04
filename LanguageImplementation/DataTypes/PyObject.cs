@@ -15,7 +15,6 @@ namespace LanguageImplementation.DataTypes
         public string __doc__;
         public IPyCallable __new__;
         public BigInteger __sizeof__;
-        public PyClass[] __bases__;
 
         /// <summary>
         /// Gets a list of all the classes that are the direct CHILD of this class. Yes, CHILD.
@@ -36,8 +35,9 @@ namespace LanguageImplementation.DataTypes
             throw new NotImplementedException();
         }
 
-        public object __getattribute__(string name)
+        public virtual object __getattribute__(string name)
         {
+            // First marked this virtual when PySuper had to create a hacked __getattribute__
             return PyClass.__getattribute__(this, name);
         }
 
