@@ -287,71 +287,7 @@ do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.
 * Need to implement __getattr__ properly as the alternative to __getattribute__
 
-Class/object data model is incorrect. PyTypeObject.DefaultNewPyObject copies in all the callables from
-the class being instantiated, wraps them in local PyMethods, and puts them in the local __dict__. This
-is inconsistent with how Python is doing it from what I have seen and discussed so far. The class functions
-should stay in the class' __dict__. I'm still trying to figure out how the method wrappers are born. The
-PyMethod thing I have is not far off from what is done in practice to make these functions work as
-methods, but I don't know when they are created and where they are stuffed after creation.
-
-According to the data model, what I should be doing is creating a PyMethod each time I access one of the
-class functions that needs an instance. Wow.
-
 A whole ton of __dict__ lookups need to be replaced with __getattribute__ (and set as necessary)
-
-
-
-Current issue is that super().__init__() is passing the class, not self. How do I infer that I need to give
-it self?!
-
-According to the data model:
-Once the class namespace has been populated by executing the class body, the class object is created by
-calling metaclass(name, bases, namespace, **kwds) (the additional keywords passed here are the same as those
-passed to __prepare__).
-
-This class object is the one that will be referenced by the zero-argument form of super(). __class__ is an
-implicit closure reference created by the compiler if any methods in a class body refer to either __class__
-or super. This allows the zero argument form of super() to correctly identify the class being defined based
-on lexical scoping, while the class or instance that was used to make the current call is identified based
-on the first argument passed to the method.
-
-super() puts a class on the stack
-LOAD_ATTR gets it as an attribute, and thinks the PyMethod should use the class, not the self, as the variable. Shit.
-Something somewhere needs to know to get the self PyObject.
-I think I asked about super() before, so I should go back and see what I can find.
-
-Super is some kind of special object. There is something like a PySuperType
-```
->>> class Foo(butt):
-...    def __init__(self):
-...       super().__init__()
-...       self.super_handle = super()
-...
->>> f = Foo()
->>> f.super_handle
-<super: <class 'Foo'>, <Foo object>>
->>> isinstance(super, object)
-True
->>> f.super_handle.__dict__
-{'super_handle': <super: <class 'Foo'>, <Foo object>>}
->>> f.super_handle.super_handle
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-AttributeError: 'super' object has no attribute 'super_handle'
->>> f.super_handle.__dict__.keys()
-dict_keys(['super_handle'])
->>> f.super_handle.__dict__["super_handle"]
-<super: <class 'Foo'>, <Foo object>>
->>> dir(f.super_handle)
-['__class__', '__delattr__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__get__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__self__', '__self_class__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__thisclass__', 'super_handle']
-```
-
-In particular, you need:
-__self__: The self reference
-__self_class__: The class of self
-__this_class__: The type invoking super(); may be none
-
-
 
 NoneType needs to be formalized as an object and type.
 
