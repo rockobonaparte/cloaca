@@ -32,7 +32,7 @@ namespace LanguageImplementation.DataTypes
             massagedArgs[0] = selfHandle;
             Array.Copy(args, 0, massagedArgs, 1, args.Length);
 
-            return ((IPyCallable) __dict__["__call__"]).Call(interpreter, context, massagedArgs);
+            return ((IPyCallable) __getattribute__("__call__")).Call(interpreter, context, massagedArgs);
         }
     }
 }

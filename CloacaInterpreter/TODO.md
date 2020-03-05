@@ -36,11 +36,12 @@ Part 2: Unity embedding. See how practical this is to use in Unity.
 	 * Expose GameObject finding code in Unity
 	 * Manipulate GameObject code
 	 * Embed scene hierarchy into Unity
-* Expand basic opcodes to work with .NET types when possible (add, subtract... etc)
+* [IN-PROGRESS] Expand basic opcodes to work with .NET types when possible (add, subtract... etc)
 * Serializing script state: dabble in trying to serialize a single, non-blocking script's state.
 
 
 Part 3: Hardening
+* NoneType needs to be formalized as an object and type.
 * Switch to wordcode. I thought I had already done this! Wow!
 * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
@@ -103,6 +104,7 @@ Part 3: Hardening
 * Exceptions
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
     * AssertionError
+  * Message should by PyString, not string
   * raise from (exception chaining)
   * Improve exception creation process (need class to construct self pointer. Can I be more direct?)
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
@@ -287,9 +289,6 @@ do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.
 * Need to implement __getattr__ properly as the alternative to __getattribute__
 
-A whole ton of __dict__ lookups need to be replaced with __getattribute__ (and set as necessary)
-
-NoneType needs to be formalized as an object and type.
 
 
 PySuperType requires more work than I have right now. I'm kind of faking it with the overridden __getattribute__

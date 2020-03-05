@@ -231,7 +231,7 @@ namespace CloacaGuiDemo
 
         public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
         {
-            var str_func = (IPyCallable) to_print.__dict__[PyClass.__STR__];
+            var str_func = (IPyCallable) to_print.__getattribute__(PyClass.__STR__);
 
             var returned = await str_func.Call(interpreter, context, new object[] { to_print });
             if (returned != null)

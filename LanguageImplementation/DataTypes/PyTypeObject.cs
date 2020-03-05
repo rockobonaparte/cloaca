@@ -63,7 +63,7 @@ namespace LanguageImplementation.DataTypes
             __dict__ = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
-            __dict__["__init__"] = this.__init__;
+            __setattr__("__init__", this.__init__);
 
             // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
@@ -89,7 +89,7 @@ namespace LanguageImplementation.DataTypes
                         continue;
                     }
                 }
-                this.__dict__[classMember.Name] = new WrappedCodeObject(classMember.Name, classMember);
+                __setattr__(classMember.Name, new WrappedCodeObject(classMember.Name, classMember));
             }
         }
 

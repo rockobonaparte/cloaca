@@ -10,11 +10,11 @@
         {
             get
             {
-                return (PyTraceback) __dict__[NextName];
+                return (PyTraceback) __getattribute__(NextName);
             }
             set
             {
-                __dict__[NextName] = value;
+                __setattr__(NextName, value);
             }
         }
 
@@ -22,11 +22,11 @@
         {
             get
             {
-                return (Frame)__dict__[FrameName];
+                return (Frame)__getattribute__(FrameName);
             }
             set
             {
-                __dict__[FrameName] = value;
+                __setattr__(FrameName, value);
             }
         }
 
@@ -34,11 +34,11 @@
         {
             get
             {
-                return (int)__dict__[LineNumberName];
+                return (int)__getattribute__(LineNumberName);
             }
             set
             {
-                __dict__[LineNumberName] = value;
+                __setattr__(LineNumberName, value);
             }
         }
 
