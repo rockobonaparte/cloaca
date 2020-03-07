@@ -227,12 +227,6 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BoxObject()
-        {
-            var pyObj = PyObjectBoxer.Box(new ReflectIntoPython(1, "Yay!"));
-        }
-
-        [Test]
         public void CallOverloads()
         {
             runBasicTest(
@@ -404,83 +398,6 @@ namespace CloacaTests
             {
                 { "a", PyInteger.Create(3) },
             }), 1);
-        }
-    }
-
-    // Just putting this in the same place as the test for now while we explore where we all have the worry about doing this kind of thing.
-    public class PyObjectBoxer
-    {
-        public static PyInteger Box(BigInteger num)
-        {
-            return PyInteger.Create(num);
-        }
-
-        public static PyInteger Box(int num)
-        {
-            return PyInteger.Create(num);
-        }
-
-        public static PyFloat Box(float num)
-        {
-            return PyFloat.Create(num);
-        }
-
-        public static PyFloat Box(double num)
-        {
-            return PyFloat.Create(num);
-        }
-
-        public static PyFloat Box(decimal num)
-        {
-            return PyFloat.Create(num);
-        }
-
-        public static PyBool Box(bool boolean)
-        {
-            return PyBool.Create(boolean);
-        }
-
-        public static PyString Box(string str)
-        {
-            return PyString.Create(str);
-        }
-
-        public static PyObject Box(object genericObj)
-        {
-            Type objType = genericObj.GetType();
-            var po = new PyObject();
-            po.__dict__.Add("__name__", objType.Name);
-            po.__dict__.Add("__module__", null);
-            po.__dict__.Add("__qualname__", null);
-
-            // TODO: Autoconvert stuff like HashCode, Equals, and ToString to Python equivalents.
-            foreach(var method in objType.GetMethods())
-            {
-                // Overloaded methods come up more than once, but the WrappedCodeObject takes care of it the first time.
-                if (!po.__dict__.ContainsKey(method.Name))
-                {
-                    po.__dict__.Add(method.Name, new WrappedCodeObject(method.Name, method, genericObj));
-                }
-            }
-
-            foreach(var field in objType.GetFields())
-            {
-                if(field.FieldType == typeof(int))
-                {
-                    po.__dict__.Add(field.Name, PyInteger.Create((int)field.GetValue(genericObj)));
-                }
-                else if(field.FieldType == typeof(string))
-                {
-                    po.__dict__.Add(field.Name, PyString.Create((string)field.GetValue(genericObj)));
-                }
-            }
-
-            foreach(var eventInfo in objType.GetEvents())
-            {
-                po.__dict__.Add(eventInfo.Name, null);
-            }
-
-            return po;
         }
     }
 }
