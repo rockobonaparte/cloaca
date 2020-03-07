@@ -21,6 +21,7 @@ namespace CloacaTests
 {
     public delegate void SimpleIntEvent(int something);
     public delegate int ReturnIntEvent(int something);
+
     class ReflectIntoPython
     {
         public int AnInteger;
@@ -125,6 +126,11 @@ namespace CloacaTests
         public int TriggerReturningIntEvent(int intArg)
         {
             return ReturnIntTakeIntEvent(intArg);
+        }
+
+        public T GenericMethod<T>(T arg)
+        {
+            return arg;
         }
     }
 
@@ -382,6 +388,22 @@ namespace CloacaTests
                 }, "Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
                     "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
                     "a return type anyways?");
+        }
+
+        [Test]
+        [Ignore("Need to add the ability to invoke generic methods.")]
+        public void CallGenericMethod()
+        {
+            runBasicTest(
+                "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
+                "a = obj.GenericMethod(3)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(3) },
+            }), 1);
         }
     }
 

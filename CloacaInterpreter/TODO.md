@@ -31,6 +31,7 @@ Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
   * [DONE] Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * [DONE] Toss REPL into Unity!
+  * Add support for invoking generic methods (so you can call GetComponent<T>)
   * Final exam: start a script that works on a gameObject to do something like change its color with a delay in a loop
      * Expose scheduler in order to execute scripts in a non-blocking way
 	 * Expose GameObject finding code in Unity
