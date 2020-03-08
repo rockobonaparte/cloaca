@@ -384,8 +384,15 @@ namespace CloacaTests
                     "a return type anyways?");
         }
 
+        // TODO: Add generic support. Invoking a generic in Python should have all generic args passed first.
+        // findBestMethodMatch
+        // 1. Get number of generic args and put into numGenericArgs
+        // 2. Start argument matching from numGenericArgs index.
+        //
+        // Update injector to work this way too.
+        //
+        // Actual invocation will then take numGenericArgs as arguments for creating generic and then use rest to invoke.
         [Test]
-        [Ignore("Need to add the ability to invoke generic methods.")]
         public void CallGenericMethod()
         {
             runBasicTest(
