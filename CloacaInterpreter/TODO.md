@@ -355,3 +355,10 @@ True
 <bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
 <bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
 ```
+
+
+Notes with generics:
+Classes are getting interpreted as WrappedCodeObjects, but I need them to be classes. If it's a .NET class, I think I should
+just toss that class around. If I'm chucking the type around, then I should be able to get the PyClass. So one test is that I
+should be able to look at the __dict__ for a class in code and not have it puke. Maybe WrappedCodeObject has to double as a PyClass
+it wraps?
