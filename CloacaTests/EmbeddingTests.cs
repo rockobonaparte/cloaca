@@ -392,12 +392,19 @@ namespace CloacaTests
         // Update injector to work this way too.
         //
         // Actual invocation will then take numGenericArgs as arguments for creating generic and then use rest to invoke.
+        //
+        // Another TODO concern is being able to pass int to a generic and get a PyInteger to properly circulate. We can't pass
+        // int as a generic argument right now without it getting all mixed up between PyClass, PyInteger, and .NET integer.
+        //
+        // Current problem is that generic arguments are coming in as a generic, reflected type; they don't come in as their actual
+        // type.
         [Test]
+        //[Ignore("Work in progress to enable generic methods.")]
         public void CallGenericMethod()
         {
             runBasicTest(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
-                "a = obj.GenericMethod(3)\n",
+                "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }

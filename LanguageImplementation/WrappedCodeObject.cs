@@ -189,21 +189,130 @@ namespace LanguageImplementation
             }
         }
 
+        //private bool AreCompatibleGeneric(MethodBase methodBase, Type paramType, Type argType)
+        //{
+        //    // TODO: Don't create this every time. Make it one level up.
+        //    Type[] genericParams = null;
+        //    if(methodBase.IsGenericMethod)
+        //    {
+        //        genericParams = methodBase.GetGenericArguments();
+        //    }
+
+        //    if(paramType.IsGenericParameter)
+        //    {
+        //        for (int generic_i = 0; generic_i < genericParams.Length; ++generic_i)
+        //        {
+        //            var generic = genericParams[generic_i];
+        //            if (generic.IsAssignableFrom(argType))
+        //            {
+        //                paramType = generic.
+        //            }
+        //        }
+        //        paramType.
+        //    }
+
+        //    if (paramType.GetTypeInfo().IsAssignableFrom(argType.GetTypeInfo()))
+        //    {
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        return PyNetConverter.CanConvert(argType, paramType);
+        //    }
+        //}
+
+        /// <summary>
+        /// Replace generic parameters with their actual values from the method base. If the method is generic, this just
+        /// returns the normal parameters to begin with.
+        /// </summary>
+        /// <param name="methodBase">The MethodBase to replace generics with real types</param>
+        /// <returns>Parameters with generic types replaced by given values for this invocation.</returns>
+        //private ParameterInfo[] DeGenerifyParameters(MethodBase methodBase)
+        //{
+        //    if(methodBase.IsGenericMethod)
+        //    {
+        //        var parameters = methodBase.GetParameters();
+        //        var generics = methodBase.GetGenericArguments();
+
+        //        // Oh no! An n^2 lookup! I'll never get hired by Google! =(
+        //        for(int param_i = 0; param_i < parameters.Length; ++param_i)
+        //        {
+        //            var parameter = parameters[param_i].ParameterType;
+        //            if(parameter.IsGenericParameter)
+        //            {
+        //                for(int generic_i = 0; generic_i < generics.Length; ++generic_i)
+        //                {
+        //                    var generic = generics[generic_i];
+        //                    if(generic.IsAssignableFrom(parameter))
+        //                    {
+        //                        parameters[param_i]. = ;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        return parameters;
+        //    }
+        //    else
+        //    {
+        //        return methodBase.GetParameters();
+        //    }
+        //}
+
         /// <summary>
         /// Search all the available MethodInfos and return one that most appropriately matches the given arguments. Note that
         /// injectable arguments will simply be skipped during consideration; it won't expect to find them in the given arguments.
         /// </summary>
-        /// <param name="args">Arguments to call this method with</param>
+        /// <param name="in_args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        private MethodBase findBestMethodMatch(object[] args)
+        private MethodBase findBestMethodMatch(object[] in_args)
         {
-            foreach(var methodBase in MethodBases)
+            foreach(var methodBase_itr in MethodBases)
             {
-                var parameters = methodBase.GetParameters();
+                var methodBase = methodBase_itr;        // Might plow over this with the realized generic method.
+                var args = in_args;             // We might tweak this if the arguments are for a generic.
+                var genericsCount = methodBase_itr.IsConstructor ? 0 : methodBase_itr.GetGenericArguments().Length;
+                var parameters = methodBase_itr.GetParameters();
                 bool found = true;
 
+                // We change all the rules if this is a generic. We'll realize the generic and use that information for
+                // comparisons, so don't get to attached to the args and parameters defined above.
+                if (methodBase_itr.IsGenericMethod)
+                {
+                    var asMethodInfo = methodBase_itr as MethodInfo;
+                    if (asMethodInfo == null)
+                    {
+                        throw new Exception("Cannot find matching methods for " + methodBase_itr.Name + " since it is not a MethodInfo. For example, we don't support generic constructors (does .NET even support it?)");
+                    }
+                    
+                    var genericTypes = new Type[genericsCount];
+                    args = new object[in_args.Length - genericsCount];
+                    if (in_args.Length - genericTypes.Length < parameters.Length)
+                    {
+                        // Between generic args and arguments we got, we can't fill in for this one so don't even try.
+                        continue;
+                    }
+
+                    // Can't Array.Copy the actual objects to an array of their types.
+                    for(int i = 0; i < genericsCount; ++i)
+                    {
+                        var in_type = in_args[i].GetType();
+                        if(in_type is WrappedCodeObject)
+                        {
+                            // TODO: Need to cast this to the actual class or something. Shit!
+                            var wrappedCode = (WrappedCodeObject)in_type;
+                        }
+                        genericTypes[i] = in_type;
+                    }
+                    Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
+
+                    var realizedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
+                    methodBase = realizedMethod;
+                    parameters = methodBase.GetParameters();
+                }
+
+
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
-                for(int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
+                for (int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
                 {
                     while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
                     {
@@ -253,13 +362,13 @@ namespace LanguageImplementation
 
             // Broke through to here: we couldn't find a match at all for the given arguments!
             var errorMessage = new StringBuilder("No .NET method found to match the given arguments: ");
-            if(args.Length == 0)
+            if(in_args.Length == 0)
             {
                 errorMessage.Append("(no arguments)");
             }
             else
             {
-                errorMessage.Append(String.Join(", ", from x in args select x.GetType().Name));
+                errorMessage.Append(String.Join(", ", from x in in_args select x.GetType().Name));
             }
 
             throw new Exception(errorMessage.ToString());
