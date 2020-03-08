@@ -393,6 +393,7 @@ namespace CloacaTests
         //
         // Actual invocation will then take numGenericArgs as arguments for creating generic and then use rest to invoke.
         [Test]
+        [Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
             runBasicTest(
