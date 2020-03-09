@@ -1119,58 +1119,39 @@ namespace CloacaInterpreter
 
                                     context.Cursor += 2;
                                 }
-                                else
+                                else if(abstractFunctionToRun is CodeObject)
                                 {
-                                    CodeObject functionToRun = null;
-                                    if (abstractFunctionToRun is PyClass)
-                                    {
-                                        // To create a class:
-                                        // 1. Get a self reference from __new__
-                                        // 2. Pass it to __init__
-                                        // 3. Return the self reference                                    
-                                        var asClass = (PyClass)abstractFunctionToRun;
-                                        PyObject self = null;
-                                        var returned = await asClass.__new__.Call(this, context, new object[] { asClass });
-                                        self = returned as PyObject;
+                                    // Could still be a constructor!
+                                    CodeObject functionToRun = (CodeObject)abstractFunctionToRun;
 
+                                    if (functionToRun.Name == "__init__")
+                                    {
+                                        // Yeap, it's a user-specified constructor. We'll still use our internal __new__
+                                        // to make the stub since we don't support overridding __new__ yet.
+                                        // TODO: Reconcile this with stubbed __new__. This is such a mess.
+                                        // Oh wait, this might be a superconstructor!!!
+                                        PyObject self = null;
+                                        if (context.Locals.Count > 0 && context.Locals[0] is PyObject)
+                                        {
+                                            self = context.Locals[0] as PyObject;
+                                        }
+                                        else
+                                        {
+                                            self = new PyObject();      // This is the default __new__ for now.
+                                        }
                                         args.Insert(0, self);
-                                        await asClass.__init__.Call(this, context, args.ToArray());
+                                        await functionToRun.Call(this, context, args.ToArray());
                                         context.DataStack.Push(self);
                                     }
-                                    else if(abstractFunctionToRun is CodeObject)
-                                    {
-                                        // Could still be a constructor!
-                                        functionToRun = (CodeObject)abstractFunctionToRun;
 
-                                        if (functionToRun.Name == "__init__")
-                                        {
-                                            // Yeap, it's a user-specified constructor. We'll still use our internal __new__
-                                            // to make the stub since we don't support overridding __new__ yet.
-                                            // TODO: Reconcile this with stubbed __new__. This is such a mess.
-                                            // Oh wait, this might be a superconstructor!!!
-                                            PyObject self = null;
-                                            if (context.Locals.Count > 0 && context.Locals[0] is PyObject)
-                                            {
-                                                self = context.Locals[0] as PyObject;
-                                            }
-                                            else
-                                            {
-                                                self = new PyObject();      // This is the default __new__ for now.
-                                            }
-                                            args.Insert(0, self);
-                                            await functionToRun.Call(this, context, args.ToArray());
-                                            context.DataStack.Push(self);
-                                        }
-
-                                        // We're assuming it's a good-old-fashioned CodeObject
-                                        var returned = await CallInto(context, functionToRun, args.ToArray());
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
-                                    }
+                                    // We're assuming it's a good-old-fashioned CodeObject
+                                    var returned = await CallInto(context, functionToRun, args.ToArray());
+                                    context.DataStack.Push(returned);
                                     context.Cursor += 2;                    // Resume at next instruction in this program.                                
+                                }
+                                else
+                                {
+                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
                                 }
                                 break;
                             }
