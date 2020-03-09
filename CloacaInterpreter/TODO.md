@@ -376,3 +376,6 @@ we're calling.
 ```
 
 __call__ is a hidden method. For what we need, just having PyTypeObject implement as our constructor should be good enough.
+
+We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
+to pull out __call__. We will probably have to expand from there when we try to support static methods.
