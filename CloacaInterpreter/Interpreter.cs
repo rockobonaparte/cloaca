@@ -1097,17 +1097,10 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                if (abstractFunctionToRun is CodeObject)
-                                {
-                                    // Could still be a constructor!
-                                    CodeObject functionToRun = (CodeObject)abstractFunctionToRun;
-
-                                    // We're assuming it's a good-old-fashioned CodeObject
-                                    var returned = await CallInto(context, functionToRun, args.ToArray());
-                                    context.DataStack.Push(returned);
-                                    context.Cursor += 2;                    // Resume at next instruction in this program.                                
-                                }
-                                else if (abstractFunctionToRun is IPyCallable)
+                                // Treat this kind of like an else if. We don't do that literally because we have
+                                // to test for __call__ in the PyObject, and also because it might not be a PyObject
+                                // to begin with.
+                                if (abstractFunctionToRun is IPyCallable)
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
