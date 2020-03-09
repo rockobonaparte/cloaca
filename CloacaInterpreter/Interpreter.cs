@@ -1097,9 +1097,17 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                // if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
-                                if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 
-                                    (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject) && !(abstractFunctionToRun is PyClass)))
+                                if (abstractFunctionToRun is CodeObject)
+                                {
+                                    // Could still be a constructor!
+                                    CodeObject functionToRun = (CodeObject)abstractFunctionToRun;
+
+                                    // We're assuming it's a good-old-fashioned CodeObject
+                                    var returned = await CallInto(context, functionToRun, args.ToArray());
+                                    context.DataStack.Push(returned);
+                                    context.Cursor += 2;                    // Resume at next instruction in this program.                                
+                                }
+                                else if (abstractFunctionToRun is IPyCallable)
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
@@ -1118,16 +1126,6 @@ namespace CloacaInterpreter
                                     }
 
                                     context.Cursor += 2;
-                                }
-                                else if(abstractFunctionToRun is CodeObject)
-                                {
-                                    // Could still be a constructor!
-                                    CodeObject functionToRun = (CodeObject)abstractFunctionToRun;
-
-                                    // We're assuming it's a good-old-fashioned CodeObject
-                                    var returned = await CallInto(context, functionToRun, args.ToArray());
-                                    context.DataStack.Push(returned);
-                                    context.Cursor += 2;                    // Resume at next instruction in this program.                                
                                 }
                                 else
                                 {
