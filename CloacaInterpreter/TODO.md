@@ -362,3 +362,6 @@ Classes are getting interpreted as WrappedCodeObjects, but I need them to be cla
 just toss that class around. If I'm chucking the type around, then I should be able to get the PyClass. So one test is that I
 should be able to look at the __dict__ for a class in code and not have it puke. Maybe WrappedCodeObject has to double as a PyClass
 it wraps?
+
+I should expose the class with a __call__ that invokes the constructor. We should be using __call__ as the default for any Python object
+we're calling.
