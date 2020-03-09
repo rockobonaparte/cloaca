@@ -1065,6 +1065,37 @@ namespace CloacaInterpreter
                                 }
 
                                 object abstractFunctionToRun = context.DataStack.Pop();
+                                var asPyObject = abstractFunctionToRun as PyObject;
+
+                                if(asPyObject != null)
+                                {
+                                    try
+                                    {
+                                        var __call__ = asPyObject.__getattribute__("__call__");
+                                        var functionToRun = (IPyCallable)__call__;
+
+                                        // Copypasta from next if clause. Hopefully this will replace it!
+                                        var returned = await functionToRun.Call(this, context, args.ToArray());
+                                        if (returned != null && !(returned is FutureVoidAwaiter))
+                                        {
+                                            if (returned is IGetsFutureAwaiterResult)
+                                            {
+                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                            }
+                                            context.DataStack.Push(returned);
+                                        }
+                                        else if (returned == null)
+                                        {
+                                            context.DataStack.Push(NoneType.Instance);
+                                        }
+                                        context.Cursor += 2;
+                                        break;
+                                    }
+                                    catch (EscapedPyException e)
+                                    {
+                                        // We'll just proceed as usual.
+                                    }
+                                }
 
                                 // if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
                                 if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 

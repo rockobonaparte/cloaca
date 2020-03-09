@@ -28,6 +28,16 @@ namespace CloacaTests
         }
 
         [Test]
+        public void DeclareAndCreateClassFrom__call__()
+        {
+            var interpreter = runProgram("class Foo:\n" +
+                                         "   pass\n" +
+                                         "bar = Foo.__call__()\n", new Dictionary<string, object>(), 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables, Contains.Key("bar"));
+        }
+
+        [Test]
         public void DeclareAndCreateClassDefaultConstructor()
         {
             var interpreter = runProgram("class Foo:\n" +

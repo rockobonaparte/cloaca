@@ -64,6 +64,7 @@ namespace LanguageImplementation.DataTypes
             Name = name;
             this.__init__ = __init__;
             __setattr__("__init__", this.__init__);
+            __setattr__("__call__", this);
 
             // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
@@ -117,7 +118,10 @@ namespace LanguageImplementation.DataTypes
 
             if (__init__ != null)
             {
-                await __init__.Call(interpreter, context, new object[] { self });
+                var args_with_self = new object[args.Length + 1];
+                args_with_self[0] = self;
+                Array.Copy(args, 0, args_with_self, 1, args.Length);
+                await __init__.Call(interpreter, context, args_with_self);
             }
             return self;
         }

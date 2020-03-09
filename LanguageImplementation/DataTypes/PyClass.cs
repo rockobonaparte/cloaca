@@ -82,8 +82,12 @@ namespace LanguageImplementation.DataTypes
                 retval = self.__dict__[name];
             }
 
+            // Fun technicality here: We don't want to wrap up __call__ when it's being invoked
+            // on a class. Otherwise, we end up infinitely recursing __call__ into __call__ inside
+            // PyMethod. We __call__ the class when we want to create an instance of the class.
+            // TODO: Probably have to expand logic here when we start dealing with static methods.
             var asCallable = retval as IPyCallable;
-            if (asCallable != null)
+            if (asCallable != null && name != "__call__")
             {
                 return new PyMethod(self, asCallable);
             }
