@@ -1097,8 +1097,7 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                // if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
-                                if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 
+                                if (abstractFunctionToRun is WrappedCodeObject ||
                                     (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject) && !(abstractFunctionToRun is PyClass)))
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
@@ -1106,52 +1105,32 @@ namespace CloacaInterpreter
                                     var returned = await functionToRun.Call(this, context, args.ToArray());
                                     if (returned != null && !(returned is FutureVoidAwaiter))
                                     {
-                                        if(returned is IGetsFutureAwaiterResult)
+                                        if (returned is IGetsFutureAwaiterResult)
                                         {
                                             returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
                                         }
                                         context.DataStack.Push(returned);
                                     }
-                                    else if(returned == null)
+                                    else if (returned == null)
                                     {
                                         context.DataStack.Push(NoneType.Instance);
                                     }
 
                                     context.Cursor += 2;
                                 }
+                                if (abstractFunctionToRun is CodeObject)
+                                {
+                                    CodeObject functionToRun = (CodeObject)abstractFunctionToRun;
+
+                                    // We're assuming it's a good-old-fashioned CodeObject
+                                    var returned = await CallInto(context, functionToRun, args.ToArray());
+                                    context.DataStack.Push(returned);
+                                }
                                 else
                                 {
-                                    CodeObject functionToRun = null;
-                                    if (abstractFunctionToRun is PyClass)
-                                    {
-                                        // To create a class:
-                                        // 1. Get a self reference from __new__
-                                        // 2. Pass it to __init__
-                                        // 3. Return the self reference                                    
-                                        var asClass = (PyClass)abstractFunctionToRun;
-                                        PyObject self = null;
-                                        var returned = await asClass.__new__.Call(this, context, new object[] { asClass });
-                                        self = returned as PyObject;
-
-                                        args.Insert(0, self);
-                                        await asClass.__init__.Call(this, context, args.ToArray());
-                                        context.DataStack.Push(self);
-                                    }
-                                    else if(abstractFunctionToRun is CodeObject)
-                                    {
-                                        // Could still be a constructor!
-                                        functionToRun = (CodeObject)abstractFunctionToRun;
-
-                                        // We're assuming it's a good-old-fashioned CodeObject
-                                        var returned = await CallInto(context, functionToRun, args.ToArray());
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
-                                    }
-                                    context.Cursor += 2;                    // Resume at next instruction in this program.                                
+                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
                                 }
+                                context.Cursor += 2;                    // Resume at next instruction in this program.                                
                                 break;
                             }
                         case ByteCodes.RETURN_VALUE:
