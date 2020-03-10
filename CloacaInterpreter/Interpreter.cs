@@ -1097,9 +1097,40 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                // if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject)
-                                if (abstractFunctionToRun is PyMethod || abstractFunctionToRun is WrappedCodeObject || 
-                                    (abstractFunctionToRun is IPyCallable && !(abstractFunctionToRun is CodeObject) && !(abstractFunctionToRun is PyClass)))
+                                if(asPyObject != null)
+                                {
+                                    try
+                                    {
+                                        var __call__ = asPyObject.__getattribute__("__call__");
+                                        var functionToRun = (IPyCallable)__call__;
+
+                                        // Copypasta from next if clause. Hopefully this will replace it!
+                                        var returned = await functionToRun.Call(this, context, args.ToArray());
+                                        if (returned != null && !(returned is FutureVoidAwaiter))
+                                        {
+                                            if (returned is IGetsFutureAwaiterResult)
+                                            {
+                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                            }
+                                            context.DataStack.Push(returned);
+                                        }
+                                        else if (returned == null)
+                                        {
+                                            context.DataStack.Push(NoneType.Instance);
+                                        }
+                                        context.Cursor += 2;
+                                        break;
+                                    }
+                                    catch (EscapedPyException e)
+                                    {
+                                        // We'll just proceed as usual.
+                                    }
+                                }
+
+                                // Treat this kind of like an else if. We don't do that literally because we have
+                                // to test for __call__ in the PyObject, and also because it might not be a PyObject
+                                // to begin with.
+                                if (abstractFunctionToRun is IPyCallable)
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
@@ -1121,56 +1152,7 @@ namespace CloacaInterpreter
                                 }
                                 else
                                 {
-                                    CodeObject functionToRun = null;
-                                    if (abstractFunctionToRun is PyClass)
-                                    {
-                                        // To create a class:
-                                        // 1. Get a self reference from __new__
-                                        // 2. Pass it to __init__
-                                        // 3. Return the self reference                                    
-                                        var asClass = (PyClass)abstractFunctionToRun;
-                                        PyObject self = null;
-                                        var returned = await asClass.__new__.Call(this, context, new object[] { asClass });
-                                        self = returned as PyObject;
-
-                                        args.Insert(0, self);
-                                        await asClass.__init__.Call(this, context, args.ToArray());
-                                        context.DataStack.Push(self);
-                                    }
-                                    else if(abstractFunctionToRun is CodeObject)
-                                    {
-                                        // Could still be a constructor!
-                                        functionToRun = (CodeObject)abstractFunctionToRun;
-
-                                        if (functionToRun.Name == "__init__")
-                                        {
-                                            // Yeap, it's a user-specified constructor. We'll still use our internal __new__
-                                            // to make the stub since we don't support overridding __new__ yet.
-                                            // TODO: Reconcile this with stubbed __new__. This is such a mess.
-                                            // Oh wait, this might be a superconstructor!!!
-                                            PyObject self = null;
-                                            if (context.Locals.Count > 0 && context.Locals[0] is PyObject)
-                                            {
-                                                self = context.Locals[0] as PyObject;
-                                            }
-                                            else
-                                            {
-                                                self = new PyObject();      // This is the default __new__ for now.
-                                            }
-                                            args.Insert(0, self);
-                                            await functionToRun.Call(this, context, args.ToArray());
-                                            context.DataStack.Push(self);
-                                        }
-
-                                        // We're assuming it's a good-old-fashioned CodeObject
-                                        var returned = await CallInto(context, functionToRun, args.ToArray());
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
-                                    }
-                                    context.Cursor += 2;                    // Resume at next instruction in this program.                                
+                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
                                 }
                                 break;
                             }
