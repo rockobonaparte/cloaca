@@ -379,3 +379,25 @@ __call__ is a hidden method. For what we need, just having PyTypeObject implemen
 
 We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
 to pull out __call__. We will probably have to expand from there when we try to support static methods.
+
+```
+        [Test]
+        public void ConstructFromClass()
+        {
+            runBasicTest(
+                "obj = ReflectIntoPython(1337, 'I did it!')\n" +
+                "a = obj.AnInteger\n" +
+                "b = obj.AString\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 1337 },
+                { "b", "I did it!" }
+            }), 1);
+        }
+```
+Need to replace that WrappedCodeObject on the constructor with a .NET type proxy. The __call__ for it should look up the constructor.
+Probably need to override attribute lookup and setting. Consider a dunder for the actual .NET type that I can use for reflection.
+Check if we can subclass from this proxy with a Python class. Consider further implementing interfaces with a Python class.

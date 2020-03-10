@@ -58,7 +58,7 @@ namespace LanguageImplementation.DataTypes
             toNew.__class__ = (PyClass) classObj;
         }
 
-        public PyTypeObject(string name, CodeObject __init__)
+        public PyTypeObject(string name, IPyCallable __init__)
         {
             __dict__ = new Dictionary<string, object>();
             Name = name;
