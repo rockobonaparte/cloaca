@@ -202,13 +202,16 @@ namespace LanguageImplementation
             {
                 var methodBase = methodBase_itr;        // Might plow over this with the monomorphized generic method.
                 var args = in_args;             // We might tweak this if the arguments are for a generic.
-                var genericsCount = methodBase_itr.IsConstructor ? 0 : methodBase_itr.GetGenericArguments().Length;
+
+                // Test for IsGenericMethodDefinition in case we're making internal calls to stuff like DefaultNew and the
+                // generic arguments are already filled in.
+                var genericsCount = methodBase_itr.IsGenericMethodDefinition ? methodBase_itr.GetGenericArguments().Length : 0;
                 var parameters = methodBase_itr.GetParameters();
                 bool found = true;
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
-                if (methodBase_itr.IsGenericMethod)
+                if (methodBase_itr.IsGenericMethodDefinition)
                 {
                     var asMethodInfo = methodBase_itr as MethodInfo;
                     if (asMethodInfo == null)
@@ -313,8 +316,12 @@ namespace LanguageImplementation
             var methodBase = findBestMethodMatch(args);
 
             // Strip generic arguments (if any).
+            // Note this is kind of hacky! We get a monomorphized generic method back whether or not
+            // we started out that way already. Current hack is to see if we have more arguments than
+            // the method needs. If we do, then we strip the excess in front since they were used to
+            // monomorphize the generic.
             var noGenericArgs = args;
-            if(methodBase.IsGenericMethod)
+            if(methodBase.IsGenericMethod && args.Length > methodBase.GetParameters().Length)
             {
                 var numGenerics = methodBase.GetGenericArguments().Length;
                 noGenericArgs = new object[args.Length - numGenerics];
