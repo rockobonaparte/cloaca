@@ -330,7 +330,7 @@ namespace CloacaTests
                 "b = obj.AString\n",
                 new Dictionary<string, object>()
             {
-                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
             }, new VariableMultimap(new TupleList<string, object>
             {
                 { "a", 1337 },
