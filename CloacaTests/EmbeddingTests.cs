@@ -330,7 +330,7 @@ namespace CloacaTests
                 "b = obj.AString\n",
                 new Dictionary<string, object>()
             {
-                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
             }, new VariableMultimap(new TupleList<string, object>
             {
                 { "a", 1337 },
@@ -399,7 +399,7 @@ namespace CloacaTests
         // Current problem is that generic arguments are coming in as a generic, reflected type; they don't come in as their actual
         // type.
         [Test]
-        //[Ignore("Work in progress to enable generic methods.")]
+        [Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
             runBasicTest(

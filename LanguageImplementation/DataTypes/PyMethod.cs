@@ -12,8 +12,11 @@ namespace LanguageImplementation.DataTypes
     public class PyMethod : PyObject, IPyCallable
     {
         public PyObject selfHandle;
+        private IPyCallable callable;
+
         public PyMethod(PyObject self, IPyCallable callable)
         {
+            this.callable = callable;
             var asSuper = self as PySuper;
             if(asSuper != null)
             {
@@ -23,7 +26,7 @@ namespace LanguageImplementation.DataTypes
             {
                 selfHandle = self;
             }
-            __dict__.Add("__call__", callable);
+            __setattr__("__call__", this);
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -32,7 +35,7 @@ namespace LanguageImplementation.DataTypes
             massagedArgs[0] = selfHandle;
             Array.Copy(args, 0, massagedArgs, 1, args.Length);
 
-            return ((IPyCallable) __getattribute__("__call__")).Call(interpreter, context, massagedArgs);
+            return callable.Call(interpreter, context, massagedArgs);
         }
     }
 }

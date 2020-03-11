@@ -356,8 +356,12 @@ True
 <bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
 ```
 
+Notes about PyClass on the stack:
 
-Notes with generics:
+We ran into a problem with using Python classes as generic arguments. What the generic receives is a WrappedCodeObject, which isn't
+what we want! So we need to start treating classes as their own types and not automatically wrap them. Put the constructor in the
+class' __call__. Or more specifically, on the base PyObject's __call__, I think.
+
 Classes are getting interpreted as WrappedCodeObjects, but I need them to be classes. If it's a .NET class, I think I should
 just toss that class around. If I'm chucking the type around, then I should be able to get the PyClass. So one test is that I
 should be able to look at the __dict__ for a class in code and not have it puke. Maybe WrappedCodeObject has to double as a PyClass
@@ -365,3 +369,13 @@ it wraps?
 
 I should expose the class with a __call__ that invokes the constructor. We should be using __call__ as the default for any Python object
 we're calling.
+
+```
+>>> getattr(Foo.__class__, "__call__")
+<slot wrapper '__call__' of 'type' objects>
+```
+
+__call__ is a hidden method. For what we need, just having PyTypeObject implement as our constructor should be good enough.
+
+We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
+to pull out __call__. We will probably have to expand from there when we try to support static methods.

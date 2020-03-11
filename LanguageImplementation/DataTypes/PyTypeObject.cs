@@ -58,12 +58,13 @@ namespace LanguageImplementation.DataTypes
             toNew.__class__ = (PyClass) classObj;
         }
 
-        public PyTypeObject(string name, CodeObject __init__)
+        public PyTypeObject(string name, IPyCallable __init__)
         {
             __dict__ = new Dictionary<string, object>();
             Name = name;
             this.__init__ = __init__;
             __setattr__("__init__", this.__init__);
+            __setattr__("__call__", this);
 
             // DefaultNew doesn't invoking any asynchronous code so we won't pass along its context to the wrapper.
             Expression<Action<PyTypeObject>> expr = instance => DefaultNew(null);
@@ -103,7 +104,7 @@ namespace LanguageImplementation.DataTypes
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
         /// <param name="args">Arguments given to this class's call.</param>
         /// <returns>A fully-initialized instance of this type, with __new__ and __init__ invoked.</returns>
-        public async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public virtual async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             // Right now, __new__ is hard-coded because we don't have abstraction to 
             // call either Python code or built-in code.
@@ -117,7 +118,10 @@ namespace LanguageImplementation.DataTypes
 
             if (__init__ != null)
             {
-                await __init__.Call(interpreter, context, new object[] { self });
+                var args_with_self = new object[args.Length + 1];
+                args_with_self[0] = self;
+                Array.Copy(args, 0, args_with_self, 1, args.Length);
+                await __init__.Call(interpreter, context, args_with_self);
             }
             return self;
         }
