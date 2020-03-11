@@ -410,7 +410,7 @@ namespace CloacaTests
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
             }, new VariableMultimap(new TupleList<string, object>
             {
-                { "a", PyInteger.Create(3) },
+                { "a", PyInteger.Create(3) },       // This test will of course fail as-is. Need to compare to obj or something.
             }), 1);
         }
     }

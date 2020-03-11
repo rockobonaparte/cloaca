@@ -269,13 +269,13 @@ namespace LanguageImplementation
         {
             foreach(var methodBase_itr in MethodBases)
             {
-                var methodBase = methodBase_itr;        // Might plow over this with the realized generic method.
+                var methodBase = methodBase_itr;        // Might plow over this with the monomorphized generic method.
                 var args = in_args;             // We might tweak this if the arguments are for a generic.
                 var genericsCount = methodBase_itr.IsConstructor ? 0 : methodBase_itr.GetGenericArguments().Length;
                 var parameters = methodBase_itr.GetParameters();
                 bool found = true;
 
-                // We change all the rules if this is a generic. We'll realize the generic and use that information for
+                // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
                 if (methodBase_itr.IsGenericMethod)
                 {
@@ -308,8 +308,8 @@ namespace LanguageImplementation
                     }
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 
-                    var realizedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
-                    methodBase = realizedMethod;
+                    var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
+                    methodBase = monomorphedMethod;
                     parameters = methodBase.GetParameters();
                 }
 

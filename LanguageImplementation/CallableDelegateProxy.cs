@@ -13,7 +13,7 @@ namespace LanguageImplementation
     /// 1. Create lots of variations of the same generic call that accepts <Arg1, Arg2, Arg3..., ArgN, ...ReturnVal>
     /// 2. Find which one of these matches the delegate we're trying to bind
     /// 3. Fill the generic method matching the signature with the parameter types from the delegate we're trying to bind
-    /// 4. Return a delegate as the desired type calling into the realized generic method.
+    /// 4. Return a delegate as the desired type calling into the monomorphized generic method.
     /// 
     /// When the delegate is finally called, all the arguments from the call are packed into the object[] and dumped into Call as normal.
     /// </summary>
@@ -70,8 +70,8 @@ namespace LanguageImplementation
                     "a return type anyways?");
             }
 
-            var realizedWrapper = genericWrapper.MakeGenericMethod(delegateArgs);
-            asDelegate = Delegate.CreateDelegate(delegateType, proxy, realizedWrapper);
+            var monomorphizedWrapper = genericWrapper.MakeGenericMethod(delegateArgs);
+            asDelegate = Delegate.CreateDelegate(delegateType, proxy, monomorphizedWrapper);
             return asDelegate;
         }
 
