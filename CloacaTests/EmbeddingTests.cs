@@ -402,16 +402,19 @@ namespace CloacaTests
         //[Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
-            runBasicTest(
+            FrameContext runContext = null;
+            runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
-            }, new VariableMultimap(new TupleList<string, object>
-            {
-                { "a", PyInteger.Create(3) },       // This test will of course fail as-is. Need to compare to obj or something.
-            }), 1);
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var aInstance = (ReflectIntoPython)variables["a"];
+            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
+            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
         }
     }
 }

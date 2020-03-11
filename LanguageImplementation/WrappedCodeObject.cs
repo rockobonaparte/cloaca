@@ -380,11 +380,23 @@ namespace LanguageImplementation
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             var methodBase = findBestMethodMatch(args);
-            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);          // Unit tests like to come in with a null interpreter.
-            var final_args = injector.Inject(methodBase, args);
+
+            // Strip generic arguments (if any).
+            var noGenericArgs = args;
+            if(methodBase.IsGenericMethod)
+            {
+                var numGenerics = methodBase.GetGenericArguments().Length;
+                noGenericArgs = new object[args.Length - numGenerics];
+                Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
+            }
+
+            // Inject internal types, convert .NET/Cloaca types.
+            // Unit tests like to come in with a null interpreter so we have to test for it.
+            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
+            var final_args = injector.Inject(methodBase, noGenericArgs);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
-            var asMethodInfo = MethodBases[0] as MethodInfo;
+            var asMethodInfo = methodBase as MethodInfo;
             if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 // Task<object> is straightforward and we can just return it. Other return types need to go through
