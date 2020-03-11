@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -193,17 +194,62 @@ namespace LanguageImplementation
         /// Search all the available MethodInfos and return one that most appropriately matches the given arguments. Note that
         /// injectable arguments will simply be skipped during consideration; it won't expect to find them in the given arguments.
         /// </summary>
-        /// <param name="args">Arguments to call this method with</param>
+        /// <param name="in_args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        private MethodBase findBestMethodMatch(object[] args)
+        private MethodBase findBestMethodMatch(object[] in_args)
         {
-            foreach(var methodBase in MethodBases)
+            foreach(var methodBase_itr in MethodBases)
             {
-                var parameters = methodBase.GetParameters();
+                var methodBase = methodBase_itr;        // Might plow over this with the monomorphized generic method.
+                var args = in_args;             // We might tweak this if the arguments are for a generic.
+
+                // Test for IsGenericMethodDefinition in case we're making internal calls to stuff like DefaultNew and the
+                // generic arguments are already filled in.
+                var genericsCount = methodBase_itr.IsGenericMethodDefinition ? methodBase_itr.GetGenericArguments().Length : 0;
+                var parameters = methodBase_itr.GetParameters();
                 bool found = true;
 
+                // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
+                // comparisons, so don't get to attached to the args and parameters defined above.
+                if (methodBase_itr.IsGenericMethodDefinition)
+                {
+                    var asMethodInfo = methodBase_itr as MethodInfo;
+                    if (asMethodInfo == null)
+                    {
+                        throw new Exception("Cannot find matching methods for " + methodBase_itr.Name + " since it is not a MethodInfo. For example, we don't support generic constructors (does .NET even support it?)");
+                    }
+                    
+                    var genericTypes = new Type[genericsCount];
+                    args = new object[in_args.Length - genericsCount];
+                    if (in_args.Length - genericTypes.Length < parameters.Length)
+                    {
+                        // Between generic args and arguments we got, we can't fill in for this one so don't even try.
+                        continue;
+                    }
+
+                    // Can't Array.Copy the actual objects to an array of their types.
+                    for(int i = 0; i < genericsCount; ++i)
+                    {                        
+                        if(in_args[i] is PyDotNetClassProxy)
+                        {
+                            var asProxy = (PyDotNetClassProxy)in_args[i];
+                            genericTypes[i] = (Type) asProxy.__getattribute__(PyDotNetClassProxy.__dotnettype__);
+                        }
+                        else
+                        {
+                            genericTypes[i] = in_args[i].GetType();
+                        }                        
+                    }
+                    Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
+
+                    var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
+                    methodBase = monomorphedMethod;
+                    parameters = methodBase.GetParameters();
+                }
+
+
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
-                for(int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
+                for (int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
                 {
                     while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
                     {
@@ -253,13 +299,13 @@ namespace LanguageImplementation
 
             // Broke through to here: we couldn't find a match at all for the given arguments!
             var errorMessage = new StringBuilder("No .NET method found to match the given arguments: ");
-            if(args.Length == 0)
+            if(in_args.Length == 0)
             {
                 errorMessage.Append("(no arguments)");
             }
             else
             {
-                errorMessage.Append(String.Join(", ", from x in args select x.GetType().Name));
+                errorMessage.Append(String.Join(", ", from x in in_args select x.GetType().Name));
             }
 
             throw new Exception(errorMessage.ToString());
@@ -268,11 +314,27 @@ namespace LanguageImplementation
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
             var methodBase = findBestMethodMatch(args);
-            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);          // Unit tests like to come in with a null interpreter.
-            var final_args = injector.Inject(methodBase, args);
+
+            // Strip generic arguments (if any).
+            // Note this is kind of hacky! We get a monomorphized generic method back whether or not
+            // we started out that way already. Current hack is to see if we have more arguments than
+            // the method needs. If we do, then we strip the excess in front since they were used to
+            // monomorphize the generic.
+            var noGenericArgs = args;
+            if(methodBase.IsGenericMethod && args.Length > methodBase.GetParameters().Length)
+            {
+                var numGenerics = methodBase.GetGenericArguments().Length;
+                noGenericArgs = new object[args.Length - numGenerics];
+                Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
+            }
+
+            // Inject internal types, convert .NET/Cloaca types.
+            // Unit tests like to come in with a null interpreter so we have to test for it.
+            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
+            var final_args = injector.Inject(methodBase, noGenericArgs);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
-            var asMethodInfo = MethodBases[0] as MethodInfo;
+            var asMethodInfo = methodBase as MethodInfo;
             if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 // Task<object> is straightforward and we can just return it. Other return types need to go through

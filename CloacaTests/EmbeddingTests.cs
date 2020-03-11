@@ -392,20 +392,29 @@ namespace CloacaTests
         // Update injector to work this way too.
         //
         // Actual invocation will then take numGenericArgs as arguments for creating generic and then use rest to invoke.
+        //
+        // Another TODO concern is being able to pass int to a generic and get a PyInteger to properly circulate. We can't pass
+        // int as a generic argument right now without it getting all mixed up between PyClass, PyInteger, and .NET integer.
+        //
+        // Current problem is that generic arguments are coming in as a generic, reflected type; they don't come in as their actual
+        // type.
         [Test]
-        [Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
+        //[Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
-            runBasicTest(
+            FrameContext runContext = null;
+            runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
-                "a = obj.GenericMethod(3)\n",
+                "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
                 new Dictionary<string, object>()
             {
-                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
-            }, new VariableMultimap(new TupleList<string, object>
-            {
-                { "a", PyInteger.Create(3) },
-            }), 1);
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var aInstance = (ReflectIntoPython)variables["a"];
+            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
+            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
         }
     }
 }

@@ -130,6 +130,9 @@ Part 3: Hardening
   * All instructions are two bytes (wordcode) in 3.6+ and that includes ones that normally don't need arguments. Use the EXTENDED_ARG opcode to stage wider data. They are ordered most significant bytes to list; the first EXTENDED_ARG byte is the
     most-significant byte in the series and the number of them determines how far we go. So the interpreter should just assume to fetch into an int and just shift that value over and continue fetching when it seeds EXTENDED_ARG. This makes things
 	prettier too since we don't have to worry about moving the cursor forward a mixed amount of times based on opcode. It's always two.
+* More .NET integration
+  * Generic class support.
+  * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
 
 
 Tech debt:
@@ -361,11 +364,6 @@ Notes about PyClass on the stack:
 We ran into a problem with using Python classes as generic arguments. What the generic receives is a WrappedCodeObject, which isn't
 what we want! So we need to start treating classes as their own types and not automatically wrap them. Put the constructor in the
 class' __call__. Or more specifically, on the base PyObject's __call__, I think.
-
-Classes are getting interpreted as WrappedCodeObjects, but I need them to be classes. If it's a .NET class, I think I should
-just toss that class around. If I'm chucking the type around, then I should be able to get the PyClass. So one test is that I
-should be able to look at the __dict__ for a class in code and not have it puke. Maybe WrappedCodeObject has to double as a PyClass
-it wraps?
 
 I should expose the class with a __call__ that invokes the constructor. We should be using __call__ as the default for any Python object
 we're calling.

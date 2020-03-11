@@ -49,13 +49,17 @@ namespace LanguageImplementation
             {
                 return null;
             }
-            if (toType == typeof(string))
+            else if (toType == typeof(string))
             {
                 return fromObj.ToString();
             }
             else if (converters.ContainsKey(cachedKey))
             {
                 return converters[cachedKey].Invoke(fromObj);
+            }
+            else if(fromObj is PyDotNetClassProxy)
+            {
+                return ((PyDotNetClassProxy)fromObj).__getattribute__(PyDotNetClassProxy.__dotnettype__);
             }
             else
             {
