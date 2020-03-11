@@ -399,7 +399,7 @@ namespace CloacaTests
         // Current problem is that generic arguments are coming in as a generic, reflected type; they don't come in as their actual
         // type.
         [Test]
-        [Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
+        //[Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
             runBasicTest(
@@ -407,7 +407,7 @@ namespace CloacaTests
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
                 new Dictionary<string, object>()
             {
-                { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
             }, new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyInteger.Create(3) },

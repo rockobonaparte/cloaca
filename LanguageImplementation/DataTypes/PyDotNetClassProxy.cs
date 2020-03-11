@@ -15,6 +15,7 @@ namespace LanguageImplementation.DataTypes
             base(dotNetType.Name, new WrappedCodeObject(dotNetType.GetConstructors()))
         {
             this.dotNetType = dotNetType;
+            __setattr__(__dotnettype__, dotNetType);
         }
 
         [ClassMember]

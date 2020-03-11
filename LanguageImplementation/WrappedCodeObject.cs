@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -294,14 +295,16 @@ namespace LanguageImplementation
 
                     // Can't Array.Copy the actual objects to an array of their types.
                     for(int i = 0; i < genericsCount; ++i)
-                    {
-                        var in_type = in_args[i].GetType();
-                        if(in_type is WrappedCodeObject)
+                    {                        
+                        if(in_args[i] is PyDotNetClassProxy)
                         {
-                            // TODO: Need to cast this to the actual class or something. Shit!
-                            var wrappedCode = (WrappedCodeObject)in_type;
+                            var asProxy = (PyDotNetClassProxy)in_args[i];
+                            genericTypes[i] = (Type) asProxy.__getattribute__(PyDotNetClassProxy.__dotnettype__);
                         }
-                        genericTypes[i] = in_type;
+                        else
+                        {
+                            genericTypes[i] = in_args[i].GetType();
+                        }                        
                     }
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 
