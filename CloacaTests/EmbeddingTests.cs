@@ -416,5 +416,106 @@ namespace CloacaTests
             Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
             Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
         }
+
+        // Cousin to Basics.ComprehensiveArithmeticOperators. This tests with a .NET integer!
+        [Test]
+        [Ignore("Need to implement with .NET types")]
+        public void ComprehensiveArithmeticOperators()
+        {
+            runBasicTest(
+                "a = x + 2\n" +
+                "b = x - 2\n" +
+                "c = x * 2\n" +
+                "d = x / 2\n" +
+                "e = x % 9\n" +
+                "f = x // 3\n" +
+                "g = x ** 2\n" +
+                "h = x & 2\n" +
+                "i = x | 14\n" +
+                "j = x ^ 2\n" +
+                "k = x >> 2\n" +
+                "l = x << 2\n", 
+            new Dictionary<string, object>()
+            {
+                { "x", 10 }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", 12 },
+                { "b", 8 },
+                { "c", 20 },
+                { "d", PyFloat.Create(5.0) },
+                { "e", 1 },
+                { "f", 3 },
+                { "g", 100 },
+                { "h", 2 },
+                { "i", 14 },
+                { "j", 8 },
+                { "k", 2 },
+                { "l", 40 }
+            }), 1);
+        }
+
+        // Cousin to Basics.AssignmentOperators. This tests with a .NET integer!
+        [Test]
+        [Ignore("Need to implement with .NET types")]
+        public void AssignmentOperators()
+        {
+            // https://www.w3schools.com/python/python_operators.asp
+            // +=	x += 3	x = x + 3	
+            // -=	x -= 3	x = x - 3	
+            // *=	x *= 3	x = x * 3	
+            // /=	x /= 3	x = x / 3	
+            // %=	x %= 3	x = x % 3	
+            // //=	x //= 3	x = x // 3	
+            // **=	x **= 3	x = x ** 3	
+            // &=	x &= 3	x = x & 3	
+            // |=	x |= 3	x = x | 3	
+            // ^=	x ^= 3	x = x ^ 3	
+            // >>=	x >>= 3	x = x >> 3	
+            // <<=	x <<= 3	x = x << 3
+            runBasicTest(
+                "a += 2\n" +
+                "b -= 2\n" +
+                "c *= 2\n" +
+                "d /= 2\n" +
+                "e %= 9\n" +
+                "f //= 3\n" +
+                "g **= 2\n" +
+                "h &= 2\n" +
+                "i |= 14\n" +
+                "j ^= 2\n" +
+                "k >>= 2\n" +
+                "l <<= 2\n",
+                new Dictionary<string, object>()
+                {
+                    { "a", 10 },
+                    { "b", 10 },
+                    { "c", 10 },
+                    { "d", 10 },
+                    { "e", 10 },
+                    { "f", 10 },
+                    { "g", 10 },
+                    { "h", 10 },
+                    { "i", 10 },
+                    { "j", 10 },
+                    { "k", 10 },
+                    { "l", 10 },
+                }, new VariableMultimap(new TupleList<string, object>
+                {
+                { "a", PyInteger.Create(12) },
+                { "b", PyInteger.Create(8) },
+                { "c", PyInteger.Create(20) },
+                { "d", PyFloat.Create(5.0) },
+                { "e", PyInteger.Create(1) },
+                { "f", PyInteger.Create(3) },
+                { "g", PyInteger.Create(100) },
+                { "h", PyInteger.Create(2) },
+                { "i", PyInteger.Create(14) },
+                { "j", PyInteger.Create(8) },
+                { "k", PyInteger.Create(2) },
+                { "l", PyInteger.Create(40) }
+            }), 1);
+        }
+
     }
 }
