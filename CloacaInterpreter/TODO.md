@@ -1,37 +1,58 @@
 ﻿Cloaca TODO
 ===========
 
-Keep your eyes peeled for bad code that's adding the self pointer even though it's supposed to be getting wrapped. This had been broken for a long
-time due to a botched refactor so a lot of code started to self-heal by adding the self to invocations directly. This is now wrong. Unit tests
-and basic GUI demo tests looks okay. If you see:
-
-```
-new object[] { something_that_looks_like_a_self_instance, ... }
-```
-
-then it might be a problem.
-
-
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
-Next, focusing on turning basic types into PyObjects. The interpreter loop and code generation need to
-get rid of their schizophrenic ways ot managing these data types. Some known issues:
-1. Array subscripts are inconsistent.
-2. Some attempts to consolidate lookups are messy.
-3. Where consolidation wasn't done, it's even messier!
-4. There amount of foreachs on continuations that happen now is obnoxious and it's time to investigate async-await
-5. PyFloat has not been implemented anywhere as near as PyInteger
-6. PyInteger itself isn't even finished!
-7. What's the dunder supposed to be for <>?
+Embedding Notes:
+Consider updating DefaultNew so we can pass constructor args in one step to objects we're creating on-the-fly if it isn't a huge pain.
+Add Create() calls to all the other Python types even if we don't directly construct them (yet). Just get in the habit of having them. Make it part of interface?
 
-Following that, serialization of tasks.
+Work that has boiled to the top while working on Unity embedding:
+1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
+   1. [DONE] Accept multiple MethodInfos
+   2. [DONE] Still have defaults for just a single one
+   3. [DONE] Determine which one is the best fit given incoming arguments
+   4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
+2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
+3. [DONE] Then deal with embedded class constructors!
+4. [WIP?] Events
+   1. [DONE] Implement necessary operators
+      * [DONE] INPLACE_ADD
+      * [DONE] INPLACE_SUBTRACT
+   2. [DONE] Try to subscribe C# event handler to C# event
+   3. Try to subscribe Cloaca function to C# event (maybe move to hardening)
+5. [DONE] Assignment operator bonus round!
+    * [DONE] INPLACE_MULTIPLY
+    * [DONE] INPLACE_TRUE_DIVIDE
+    * [DONE] INPLACE_MODULO
+    * [DONE] INPLACE_FLOOR_DIVIDE
+    * [DONE] INPLACE_POWER
+    * [DONE] INPLACE_AND
+    * [DONE] INPLACE_OR
+    * [DONE] INPLACE_XOR
+    * [DONE] INPLACE_RSHIFT
+    * [DONE] INPLACE_LSHIFT
+   3. Add the __i*__ calls to applicable classes
+5. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
+6. Advanced overload: Check if there could be multiple applicable overloads
+   * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
+     typical way to manage this.
+7. More dunders to add to objects (PyInteger, PyFloat, PyBool...)
+   * __xor__
+   * __rshift__
+   * __lshift__
+   * __truediv__
+   * __floordiv__
+   * __pow__
+   * __mod__
+8. Need to make sure that we can check and convert Python args in params field
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
   * [DONE] Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
   * [DONE] Toss REPL into Unity!
-  * Add support for invoking generic methods (so you can call GetComponent<T>)
+  * [DONE] Add support for invoking generic methods (so you can call GetComponent<T>)
   * Final exam: start a script that works on a gameObject to do something like change its color with a delay in a loop
      * Expose scheduler in order to execute scripts in a non-blocking way
 	 * Expose GameObject finding code in Unity
@@ -133,6 +154,10 @@ Part 3: Hardening
 * More .NET integration
   * Generic class support.
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
+* Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
+  do some cute jump opcode logic to mimick them.
+* Need to implement __hash__ and use it in our data types.
+* Need to implement __getattr__ properly as the alternative to __getattribute__
 
 
 Tech debt:
@@ -207,93 +232,6 @@ Dump a code object that comes up in a disassembly
 >>> c = ctypes.cast(0x10cabda50, ctypes.py_object).value
 
 
-Embedding Notes:
-Examined how IronPython was doing this. It looks like they just juggle the types in their runtime without persisted
-wrappers. Where there was some kind of wrapper, they had weak references. So it looks like I should try to slap my
-objects right on the stack and look into what that would be like to use.
-
-Current idea is to create versions of the base types that act like regular Python types but either:
-1. Are the regular PyX data type.
-2. Wrap a C# class's field
-
-We basically need something like a reference type to the wrapped object so that the underlying object sees the changes.
-So it would be something like:
-
-
-PyObject <- PyInteger <- (PurePyInteger, WrappedPyInteger)
-
-Both of the child classes would need to report as a PyInteger and satisfy type tests for that.
-
-
-
-
-
-Consider updating DefaultNew so we can pass constructor args in one step to objects we're creating on-the-fly if it isn't a huge pain.
-Add Create() calls to all the other Python types even if we don't directly construct them (yet). Just get in the habit of having them. Make it part of interface?
-
-1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
-   1. [DONE] Accept multiple MethodInfos
-   2. [DONE] Still have defaults for just a single one
-   3. [DONE] Determine which one is the best fit given incoming arguments
-   4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
-2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
-3. [DONE] Then deal with embedded class constructors!
-4. Events
-   1. Implement necessary operators
-      * INPLACE_ADD
-      * INPLACE_SUBTRACT
-   2. Assignment operator bonus round!
-      * INPLACE_MULTIPLY
-      * INPLACE_TRUE_DIVIDE
-      * INPLACE_MODULO
-      * INPLACE_FLOOR_DIVIDE
-      * INPLACE_POWER
-      * INPLACE_AND
-      * INPLACE_OR
-      * INPLACE_XOR
-      * INPLACE_RSHIFT
-      * INPLACE_LSHIFT
-   3. Add the __i*__ calls to applicable classes
-   3. Try to subscribe C# event handler to C# event
-   4. Try to subscribe Cloaca function to C# event
-5. Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
-6. Advanced overload: Check if there could be multiple applicable overloads
-   * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
-     typical way to manage this.
-
-Operations to add to objects (PyInteger, PyFloat, PyBool...)
-__xor__
-__rshift__
-__lshift__
-__truediv__
-__floordiv__
-__pow__
-__mod__
-
-Double check left/right of operators
-Add tests for new operators
-
-Sketch script to use as part of a final test of all this.
-
-Need to make sure that we can check and convert Python args in params field
-
-
-context.testlist_star_expr(0).GetText()
-a
-context.augassign().GetText()
-"+="
-context.testlist().GetText()
-"2"
-
-
-
-BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
-do some cute jump opcode logic to mimick them.
-
-* Need to implement __hash__ and use it in our data types.
-* Need to implement __getattr__ properly as the alternative to __getattribute__
-
-
 
 PySuperType requires more work than I have right now. I'm kind of faking it with the overridden __getattribute__
 1. It should implement __getattr__ although it won't report as such if you looked. getattr on the super type will give the parent's methods
@@ -358,22 +296,6 @@ True
 <bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
 <bound method Child.__init__ of <__main__.Child object at 0x000001FC5AFF9828>>
 ```
-
-Notes about PyClass on the stack:
-
-We ran into a problem with using Python classes as generic arguments. What the generic receives is a WrappedCodeObject, which isn't
-what we want! So we need to start treating classes as their own types and not automatically wrap them. Put the constructor in the
-class' __call__. Or more specifically, on the base PyObject's __call__, I think.
-
-I should expose the class with a __call__ that invokes the constructor. We should be using __call__ as the default for any Python object
-we're calling.
-
-```
->>> getattr(Foo.__class__, "__call__")
-<slot wrapper '__call__' of 'type' objects>
-```
-
-__call__ is a hidden method. For what we need, just having PyTypeObject implement as our constructor should be good enough.
 
 We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
 to pull out __call__. We will probably have to expand from there when we try to support static methods.
