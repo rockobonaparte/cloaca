@@ -224,44 +224,55 @@ namespace CloacaInterpreter
             return context.CurrentException != null && context.BlockStack.Count == 0;
         }
 
-        private async Task leftRightOperation(FrameContext context, string idunder, string fallback)
+        // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
+        private async Task DynamicDispatchOperation(FrameContext context, dynamic a, dynamic b,
+            string op_dunder, string op_fallback, 
+            Func<object, dynamic, dynamic> dotNetOp)
         {
-            dynamic right = context.DataStack.Pop();
-            dynamic left = context.DataStack.Pop();
-            var leftObj = left as PyObject;
-            var rightObj = right as PyObject;
+            var leftObj = a as PyObject;
+            var rightObj = b as PyObject;
 
-            if (leftObj.__dict__.ContainsKey(idunder))
+            if (leftObj == null && rightObj == null)
             {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
+                context.DataStack.Push(dotNetOp(a, b));
+            }
+            else if (leftObj == null)
+            {
+                context.DataStack.Push(dotNetOp(a, b.number));
+            }
+            else if (rightObj == null)
+            {
+                context.DataStack.Push(dotNetOp(a.number, b));
             }
             else
             {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, fallback, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
+                if (leftObj.__dict__.ContainsKey(op_dunder))
+                {
+                    PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, op_dunder, new PyObject[] { rightObj });
+                    context.DataStack.Push(returned);
+                }
+                else
+                {
+                    PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, op_fallback, new PyObject[] { rightObj });
+                    context.DataStack.Push(returned);
+                }
             }
             context.Cursor += 1;
         }
 
-        private async Task rightLeftOperation(FrameContext context, string idunder, string fallback)
+
+        private async Task leftRightOperation(FrameContext context, string op_dunder, string op_fallback, Func<object, dynamic, dynamic> dotNetOp)
+        {
+            dynamic right = context.DataStack.Pop();
+            dynamic left = context.DataStack.Pop();
+            await DynamicDispatchOperation(context, left, right, op_dunder, op_fallback, dotNetOp);
+        }
+
+        private async Task rightLeftOperation(FrameContext context, string op_dunder, string op_fallback, Func<object, dynamic, dynamic> dotNetOp)
         {
             dynamic left = context.DataStack.Pop();
             dynamic right = context.DataStack.Pop();
-            var leftObj = left as PyObject;
-            var rightObj = right as PyObject;
-
-            if (leftObj.__dict__.ContainsKey(idunder))
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
-            }
-            else
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, fallback, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
-            }
-            context.Cursor += 1;
+            await DynamicDispatchOperation(context, left, right, op_dunder, op_fallback, dotNetOp);
         }
 
         /// <summary>
@@ -335,28 +346,14 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.BINARY_ADD:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__add__", null,
+                                (left, right) => { return (dynamic) left + (dynamic) right; });
                             break;
                         case ByteCodes.INPLACE_ADD:
-                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            await rightLeftOperation(context, "__iadd__", "__add__", (left, right) =>
                             {
-                                dynamic left = context.DataStack.Pop();
-                                dynamic right = context.DataStack.Pop();
-
                                 var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
-
-                                // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
                                     // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
@@ -369,251 +366,126 @@ namespace CloacaInterpreter
                                     // stack. So there will be a STORE_ATTR after this expecting *something*. We will only know that there's an
                                     // object to store something to. What we'll have is the event info that we can then catch in STORE_ATTR and
                                     // suppress.
-                                    context.DataStack.Push(leftEvent);
-
-                                    context.Cursor += 1;
+                                    return leftEvent;
                                 }
                                 else
                                 {
-
-                                    var leftObj = left as PyObject;
-                                    var rightObj = right as PyObject;
-
-                                    if (leftObj.__dict__.ContainsKey("__iadd__"))
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__add__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    context.Cursor += 1;
+                                    return (dynamic)left + (dynamic)right;
                                 }
-                            }
+                            });
                             break;
                         case ByteCodes.BINARY_SUBTRACT:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__sub__", null,
+                                (left, right) => { return (dynamic)left - (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_SUBTRACT:
-                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            await rightLeftOperation(context, "__isub__", "__sub__", (left, right) =>
                             {
-                                dynamic left = context.DataStack.Pop();
-                                dynamic right = context.DataStack.Pop();
-
                                 var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
-
-                                // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
                                     var listeners = leftEvent.EventDelegate.GetInvocationList();
-                                    
+
                                     // Apparently we could have used foreach; I guess the invocation list is a copy.
-                                    for(int i = 0; i < listeners.Length; ++i)                                    
+                                    for (int i = 0; i < listeners.Length; ++i)
                                     {
                                         var listener = listeners[i];
                                         var target = listener.Target;
                                         var asProxy = target as CallableDelegateProxy;
-                                        if(asProxy != null && asProxy.MatchesTarget(rightCall))
+                                        if (asProxy != null && asProxy.MatchesTarget(rightCall))
                                         {
                                             leftEvent.EventInfo.RemoveEventHandler(leftEvent.OwnerObject, listener);
                                         }
                                     }
-                                    
-                                    context.DataStack.Push(leftEvent);
-                                    context.Cursor += 1;
+
+                                    return leftEvent;
                                 }
                                 else
                                 {
-
-                                    var leftObj = left as PyObject;
-                                    var rightObj = right as PyObject;
-
-                                    if (leftObj.__dict__.ContainsKey("__isub__"))
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    context.Cursor += 1;
+                                    return (dynamic)left - (dynamic)right;
                                 }
-                            }
+                            });
                             break;
                         case ByteCodes.BINARY_MULTIPLY:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__mul__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__mul__", null,
+                                (left, right) => { return (dynamic)left * (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_MULTIPLY:
-                            await leftRightOperation(context, "__imul__", "__mul__");
+                            await leftRightOperation(context, "__imul__", "__mul__",
+                                (left, right) => { return (dynamic)left * (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_POWER:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__pow__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__pow__", null,
+                                (left, right) => { return Math.Pow((double) (dynamic) left, (double) (dynamic) right); });
                             break;
                         case ByteCodes.INPLACE_POWER:
-                            await rightLeftOperation(context, "__ipow__", "__pow__");
+                            await rightLeftOperation(context, "__ipow__", "__pow__",
+                                (left, right) => { return Math.Pow((double)(dynamic)left, (double)(dynamic)right); });
                             break;
                         case ByteCodes.BINARY_TRUE_DIVIDE:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__truediv__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__truediv__", null,
+                                (left, right) => { return ((decimal) (dynamic)left) / ((decimal) (dynamic)right); });
                             break;
                         case ByteCodes.INPLACE_TRUE_DIVIDE:
-                            await rightLeftOperation(context, "__itruediv__", "__truediv__");
+                            await rightLeftOperation(context, "__itruediv__", "__truediv__",
+                                (left, right) => { return ((decimal)(dynamic)left) / ((decimal)(dynamic)right); });
                             break;
                         case ByteCodes.BINARY_FLOOR_DIVIDE:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__floordiv__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__floordiv__", null,
+                                (left, right) => { return (dynamic)left / (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_FLOOR_DIVIDE:
-                            await rightLeftOperation(context, "__ifloordiv__", "__floordiv__");
+                            await rightLeftOperation(context, "__ifloordiv__", "__floordiv__",
+                                (left, right) => { return (dynamic)left / (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_MODULO:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__mod__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__mod__", null,
+                                (left, right) => { return (dynamic)left % (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_MODULO:
-                            await rightLeftOperation(context, "__imod__", "__mod__");
+                            await rightLeftOperation(context, "__imod__", "__mod__",
+                                (left, right) => { return (dynamic)left % (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_AND:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftBool = left as PyObject;
-                                var rightBool = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__and__", new PyObject[] { rightBool });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__and__", null,
+                                (left, right) => { return (dynamic)left & (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_AND:
-                            await leftRightOperation(context, "__iand__", "__and__");
+                            await leftRightOperation(context, "__iand__", "__and__",
+                                (left, right) => { return (dynamic)left & (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_OR:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftBool = left as PyObject;
-                                var rightBool = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__or__", new PyObject[] { rightBool });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__or__", null,
+                                (left, right) => { return (dynamic)left | (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_OR:
-                            await rightLeftOperation(context, "__ior__", "__or__");
+                            await rightLeftOperation(context, "__ior__", "__or__",
+                                (left, right) => { return (dynamic)left | (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_XOR:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftBool = left as PyObject;
-                                var rightBool = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__xor__", new PyObject[] { rightBool });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__xor__", null,
+                                (left, right) => { return (dynamic)left ^ (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_XOR:
-                            await leftRightOperation(context, "__ixor__", "__xor__");
+                            await leftRightOperation(context, "__ixor__", "__xor__",
+                                (left, right) => { return (dynamic)left ^ (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_RSHIFT:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftBool = left as PyObject;
-                                var rightBool = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__rshift__", new PyObject[] { rightBool });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__rshift__", null,
+                                (left, right) => { return (int) (dynamic) left >> (int) (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_RSHIFT:
-                            await rightLeftOperation(context, "__irshift__", "__rshift__");
+                            await rightLeftOperation(context, "__irshift__", "__rshift__",
+                                (left, right) => { return (int) (dynamic)left >> (int) (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_LSHIFT:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftBool = left as PyObject;
-                                var rightBool = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftBool.InvokeFromDict(this, context, "__lshift__", new PyObject[] { rightBool });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__lshift__", null,
+                                (left, right) => { return (int) (dynamic)left << (int) (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_LSHIFT:
-                            await rightLeftOperation(context, "__ilshift__", "__lshift__");
+                            await rightLeftOperation(context, "__ilshift__", "__lshift__",
+                                (left, right) => { return (int) (dynamic)left << (int) (dynamic)right; });
                             break;
                         case ByteCodes.LOAD_CONST:
                             {
