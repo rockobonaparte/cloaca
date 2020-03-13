@@ -342,8 +342,24 @@ namespace CloacaInterpreter
                                 var leftNum = left as PyObject;
                                 var rightNum = right as PyObject;
 
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
+                                // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
+                                if(leftNum == null && rightNum == null)
+                                {
+                                    context.DataStack.Push(left + right);
+                                }
+                                else if(leftNum == null)
+                                {
+                                    context.DataStack.Push(left + right.number);
+                                }
+                                else if(rightNum == null)
+                                {
+                                    context.DataStack.Push(left.number + right);
+                                }
+                                else
+                                {
+                                    PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
+                                    context.DataStack.Push(returned);
+                                }
                             }
                             context.Cursor += 1;
                             break;
