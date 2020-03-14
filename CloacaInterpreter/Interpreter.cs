@@ -225,72 +225,54 @@ namespace CloacaInterpreter
         }
 
         // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
-        private async Task DynamicDispatchOperation(FrameContext context, string op_dunder, Func<object, dynamic, dynamic> dotNetOp)
+        private async Task DynamicDispatchOperation(FrameContext context, dynamic a, dynamic b,
+            string op_dunder, string op_fallback, 
+            Func<object, dynamic, dynamic> dotNetOp)
         {
-            dynamic right = context.DataStack.Pop();
-            dynamic left = context.DataStack.Pop();
+            var leftObj = a as PyObject;
+            var rightObj = b as PyObject;
 
-            var leftNum = left as PyObject;
-            var rightNum = right as PyObject;
-
-            if (leftNum == null && rightNum == null)
+            if (leftObj == null && rightObj == null)
             {
-                context.DataStack.Push(dotNetOp(left, right));
+                context.DataStack.Push(dotNetOp(a, b));
             }
-            else if (leftNum == null)
+            else if (leftObj == null)
             {
-                context.DataStack.Push(dotNetOp(left, right.number));
+                context.DataStack.Push(dotNetOp(a, b.number));
             }
-            else if (rightNum == null)
+            else if (rightObj == null)
             {
-                context.DataStack.Push(dotNetOp(left.number, right));
+                context.DataStack.Push(dotNetOp(a.number, b));
             }
             else
             {
-                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, op_dunder, new PyObject[] { rightNum });
-                context.DataStack.Push(returned);
-            }
-        }
-
-
-        private async Task leftRightOperation(FrameContext context, string idunder, string fallback)
-        {
-            dynamic right = context.DataStack.Pop();
-            dynamic left = context.DataStack.Pop();
-            var leftObj = left as PyObject;
-            var rightObj = right as PyObject;
-
-            if (leftObj.__dict__.ContainsKey(idunder))
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
-            }
-            else
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, fallback, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
+                if (leftObj.__dict__.ContainsKey(op_dunder))
+                {
+                    PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, op_dunder, new PyObject[] { rightObj });
+                    context.DataStack.Push(returned);
+                }
+                else
+                {
+                    PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, op_fallback, new PyObject[] { rightObj });
+                    context.DataStack.Push(returned);
+                }
             }
             context.Cursor += 1;
         }
 
-        private async Task rightLeftOperation(FrameContext context, string idunder, string fallback)
+
+        private async Task leftRightOperation(FrameContext context, string op_dunder, string op_fallback, Func<object, dynamic, dynamic> dotNetOp)
+        {
+            dynamic right = context.DataStack.Pop();
+            dynamic left = context.DataStack.Pop();
+            await DynamicDispatchOperation(context, left, right, op_dunder, op_fallback, dotNetOp);
+        }
+
+        private async Task rightLeftOperation(FrameContext context, string op_dunder, string op_fallback, Func<object, dynamic, dynamic> dotNetOp)
         {
             dynamic left = context.DataStack.Pop();
             dynamic right = context.DataStack.Pop();
-            var leftObj = left as PyObject;
-            var rightObj = right as PyObject;
-
-            if (leftObj.__dict__.ContainsKey(idunder))
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, idunder, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
-            }
-            else
-            {
-                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, fallback, new PyObject[] { rightObj });
-                context.DataStack.Push(returned);
-            }
-            context.Cursor += 1;
+            await DynamicDispatchOperation(context, left, right, op_dunder, op_fallback, dotNetOp);
         }
 
         /// <summary>
@@ -365,9 +347,9 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_ADD:
                             {
-                                await DynamicDispatchOperation(context, "__add__", (left, right) => { return (dynamic) left + (dynamic) right; });
+                                await leftRightOperation(context, "__add__", null,
+                                    (left, right) => { return (dynamic) left + (dynamic) right; });
                             }
-                            context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_ADD:
                             // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
@@ -491,7 +473,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_MULTIPLY:
-                            await leftRightOperation(context, "__imul__", "__mul__");
+                            await leftRightOperation(context, "__imul__", "__mul__",
+                                (left, right) => { return (dynamic)left * (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_POWER:
                             {
@@ -507,7 +490,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_POWER:
-                            await rightLeftOperation(context, "__ipow__", "__pow__");
+                            await rightLeftOperation(context, "__ipow__", "__pow__",
+                                (left, right) => { return Math.Pow((dynamic)left, +(dynamic)right); });
                             break;
                         case ByteCodes.BINARY_TRUE_DIVIDE:
                             {
@@ -523,7 +507,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_TRUE_DIVIDE:
-                            await rightLeftOperation(context, "__itruediv__", "__truediv__");
+                            await rightLeftOperation(context, "__itruediv__", "__truediv__",
+                                (left, right) => { return (double)left / (double)right; });
                             break;
                         case ByteCodes.BINARY_FLOOR_DIVIDE:
                             {
@@ -539,7 +524,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_FLOOR_DIVIDE:
-                            await rightLeftOperation(context, "__ifloordiv__", "__floordiv__");
+                            await rightLeftOperation(context, "__ifloordiv__", "__floordiv__",
+                                (left, right) => { return (dynamic)left / (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_MODULO:
                             {
@@ -555,7 +541,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_MODULO:
-                            await rightLeftOperation(context, "__imod__", "__mod__");
+                            await rightLeftOperation(context, "__imod__", "__mod__",
+                                (left, right) => { return (dynamic)left % (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_AND:
                             {
@@ -571,7 +558,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_AND:
-                            await leftRightOperation(context, "__iand__", "__and__");
+                            await leftRightOperation(context, "__iand__", "__and__",
+                                (left, right) => { return (dynamic)left & (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_OR:
                             {
@@ -587,7 +575,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_OR:
-                            await rightLeftOperation(context, "__ior__", "__or__");
+                            await rightLeftOperation(context, "__ior__", "__or__",
+                                (left, right) => { return (dynamic)left | (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_XOR:
                             {
@@ -603,7 +592,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_XOR:
-                            await leftRightOperation(context, "__ixor__", "__xor__");
+                            await leftRightOperation(context, "__ixor__", "__xor__",
+                                (left, right) => { return (dynamic)left ^ (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_RSHIFT:
                             {
@@ -619,7 +609,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_RSHIFT:
-                            await rightLeftOperation(context, "__irshift__", "__rshift__");
+                            await rightLeftOperation(context, "__irshift__", "__rshift__",
+                                (left, right) => { return (dynamic)left >> (dynamic)right; });
                             break;
                         case ByteCodes.BINARY_LSHIFT:
                             {
@@ -635,7 +626,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.INPLACE_LSHIFT:
-                            await rightLeftOperation(context, "__ilshift__", "__lshift__");
+                            await rightLeftOperation(context, "__ilshift__", "__lshift__",
+                                (left, right) => { return (dynamic)left << (dynamic)right; });
                             break;
                         case ByteCodes.LOAD_CONST:
                             {
