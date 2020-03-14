@@ -346,10 +346,8 @@ namespace CloacaInterpreter
                             context.Cursor += 1;
                             break;
                         case ByteCodes.BINARY_ADD:
-                            {
-                                await leftRightOperation(context, "__add__", null,
-                                    (left, right) => { return (dynamic) left + (dynamic) right; });
-                            }
+                            await leftRightOperation(context, "__add__", null,
+                                (left, right) => { return (dynamic) left + (dynamic) right; });
                             break;
                         case ByteCodes.INPLACE_ADD:
                             // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
@@ -398,17 +396,8 @@ namespace CloacaInterpreter
                             }
                             break;
                         case ByteCodes.BINARY_SUBTRACT:
-                            {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightNum });
-                                context.DataStack.Push(returned);
-                            }
-                            context.Cursor += 1;
+                            await leftRightOperation(context, "__sub__", null,
+                                (left, right) => { return (dynamic)left - (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_SUBTRACT:
                             // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
