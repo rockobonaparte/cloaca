@@ -419,7 +419,7 @@ namespace CloacaTests
 
         // Cousin to Basics.ComprehensiveArithmeticOperators. This tests with a .NET integer!
         [Test]
-        //[Ignore("Need to implement with .NET types")]
+        [Ignore("Need to implement with .NET types")]
         public void ComprehensiveArithmeticOperators()
         {
             runBasicTest(

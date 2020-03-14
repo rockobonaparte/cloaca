@@ -224,6 +224,35 @@ namespace CloacaInterpreter
             return context.CurrentException != null && context.BlockStack.Count == 0;
         }
 
+        // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
+        private async Task DynamicDispatchOperation(FrameContext context, string op_dunder, Func<object, dynamic, dynamic> dotNetOp)
+        {
+            dynamic right = context.DataStack.Pop();
+            dynamic left = context.DataStack.Pop();
+
+            var leftNum = left as PyObject;
+            var rightNum = right as PyObject;
+
+            if (leftNum == null && rightNum == null)
+            {
+                context.DataStack.Push(dotNetOp(left, right));
+            }
+            else if (leftNum == null)
+            {
+                context.DataStack.Push(dotNetOp(left, right.number));
+            }
+            else if (rightNum == null)
+            {
+                context.DataStack.Push(dotNetOp(left.number, right));
+            }
+            else
+            {
+                PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, op_dunder, new PyObject[] { rightNum });
+                context.DataStack.Push(returned);
+            }
+        }
+
+
         private async Task leftRightOperation(FrameContext context, string idunder, string fallback)
         {
             dynamic right = context.DataStack.Pop();
@@ -336,30 +365,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_ADD:
                             {
-                                dynamic right = context.DataStack.Pop();
-                                dynamic left = context.DataStack.Pop();
-
-                                var leftNum = left as PyObject;
-                                var rightNum = right as PyObject;
-
-                                // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
-                                if(leftNum == null && rightNum == null)
-                                {
-                                    context.DataStack.Push(left + right);
-                                }
-                                else if(leftNum == null)
-                                {
-                                    context.DataStack.Push(left + right.number);
-                                }
-                                else if(rightNum == null)
-                                {
-                                    context.DataStack.Push(left.number + right);
-                                }
-                                else
-                                {
-                                    PyObject returned = (PyObject)await leftNum.InvokeFromDict(this, context, "__add__", new PyObject[] { rightNum });
-                                    context.DataStack.Push(returned);
-                                }
+                                await DynamicDispatchOperation(context, "__add__", (left, right) => { return (dynamic) left + (dynamic) right; });
                             }
                             context.Cursor += 1;
                             break;
