@@ -419,7 +419,6 @@ namespace CloacaTests
 
         // Cousin to Basics.ComprehensiveArithmeticOperators. This tests with a .NET integer!
         [Test]
-        [Ignore("Need to implement with .NET types")]
         public void ComprehensiveArithmeticOperators()
         {
             runBasicTest(
@@ -440,18 +439,18 @@ namespace CloacaTests
                 { "x", 10 }
             }, new VariableMultimap(new TupleList<string, object>
             {
-                { "a", 12 },
-                { "b", 8 },
-                { "c", 20 },
-                { "d", PyFloat.Create(5.0) },
-                { "e", 1 },
-                { "f", 3 },
-                { "g", 100 },
-                { "h", 2 },
-                { "i", 14 },
-                { "j", 8 },
-                { "k", 2 },
-                { "l", 40 }
+                { "a", (BigInteger) 12 },
+                { "b", (BigInteger) 8 },
+                { "c", (BigInteger) 20 },
+                { "d", (decimal) 5.0 },
+                { "e", (BigInteger) 1 },
+                { "f", (BigInteger) 3 },
+                { "g", 100.0 },
+                { "h", (BigInteger) 2 },
+                { "i", (BigInteger) 14 },
+                { "j", (BigInteger) 8 },
+                { "k", (int) 2 },
+                { "l", (int) 40 }
             }), 1);
         }
 
