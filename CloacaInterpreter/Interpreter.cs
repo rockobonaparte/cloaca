@@ -350,15 +350,10 @@ namespace CloacaInterpreter
                                 (left, right) => { return (dynamic) left + (dynamic) right; });
                             break;
                         case ByteCodes.INPLACE_ADD:
-                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            await rightLeftOperation(context, "__iadd__", "__add__", (left, right) =>
                             {
-                                dynamic left = context.DataStack.Pop();
-                                dynamic right = context.DataStack.Pop();
-
                                 var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
-
-                                // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
                                     // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
@@ -371,82 +366,46 @@ namespace CloacaInterpreter
                                     // stack. So there will be a STORE_ATTR after this expecting *something*. We will only know that there's an
                                     // object to store something to. What we'll have is the event info that we can then catch in STORE_ATTR and
                                     // suppress.
-                                    context.DataStack.Push(leftEvent);
-
-                                    context.Cursor += 1;
+                                    return leftEvent;
                                 }
                                 else
                                 {
-
-                                    var leftObj = left as PyObject;
-                                    var rightObj = right as PyObject;
-
-                                    if (leftObj.__dict__.ContainsKey("__iadd__"))
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__iadd__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__add__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    context.Cursor += 1;
+                                    return (dynamic)left + (dynamic)right;
                                 }
-                            }
+                            });
                             break;
                         case ByteCodes.BINARY_SUBTRACT:
                             await leftRightOperation(context, "__sub__", null,
                                 (left, right) => { return (dynamic)left - (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_SUBTRACT:
-                            // Previous we used leftRightOperation here but it became more complicated when += could also be used to subscribe a .NET event.
+                            await rightLeftOperation(context, "__isub__", "__sub__", (left, right) =>
                             {
-                                dynamic left = context.DataStack.Pop();
-                                dynamic right = context.DataStack.Pop();
-
                                 var leftEvent = left as EventInstance;
                                 var rightCall = right as WrappedCodeObject;
-
-                                // The event subscribe code is currently dead. It doesn't work yet.
                                 if (leftEvent != null)
                                 {
                                     var listeners = leftEvent.EventDelegate.GetInvocationList();
-                                    
+
                                     // Apparently we could have used foreach; I guess the invocation list is a copy.
-                                    for(int i = 0; i < listeners.Length; ++i)                                    
+                                    for (int i = 0; i < listeners.Length; ++i)
                                     {
                                         var listener = listeners[i];
                                         var target = listener.Target;
                                         var asProxy = target as CallableDelegateProxy;
-                                        if(asProxy != null && asProxy.MatchesTarget(rightCall))
+                                        if (asProxy != null && asProxy.MatchesTarget(rightCall))
                                         {
                                             leftEvent.EventInfo.RemoveEventHandler(leftEvent.OwnerObject, listener);
                                         }
                                     }
-                                    
-                                    context.DataStack.Push(leftEvent);
-                                    context.Cursor += 1;
+
+                                    return leftEvent;
                                 }
                                 else
                                 {
-
-                                    var leftObj = left as PyObject;
-                                    var rightObj = right as PyObject;
-
-                                    if (leftObj.__dict__.ContainsKey("__isub__"))
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else
-                                    {
-                                        PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, "__sub__", new PyObject[] { rightObj });
-                                        context.DataStack.Push(returned);
-                                    }
-                                    context.Cursor += 1;
+                                    return (dynamic)left - (dynamic)right;
                                 }
-                            }
+                            });
                             break;
                         case ByteCodes.BINARY_MULTIPLY:
                             await leftRightOperation(context, "__mul__", null,
