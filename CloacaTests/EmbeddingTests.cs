@@ -515,5 +515,23 @@ namespace CloacaTests
             }), 1);
         }
 
+        // Cousin to DataStructureTests.ListReadWrite
+        [Test]
+        [Ignore("Subscript with .NET arrays doesn't work yet.")]
+        public void ListReadWrite()
+        {
+            var interpreter = runProgram(
+                "b = a[0]\n" +
+                "a[1] = 200\n", new Dictionary<string, object>()
+                {
+                    { "a", new int[] {1, 2} },
+                }, 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables["b"], Is.EqualTo(1));
+            Assert.That(variables.ContainsKey("a"));
+            Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 2 }));
+            Assert.That(variables.ContainsKey("b"));
+        }
+
     }
 }

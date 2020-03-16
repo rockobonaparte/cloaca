@@ -34,11 +34,14 @@ Work that has boiled to the top while working on Unity embedding:
     * [DONE] INPLACE_RSHIFT
     * [DONE] INPLACE_LSHIFT
    3. Add the __i*__ calls to applicable classes
-5. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
-6. Advanced overload: Check if there could be multiple applicable overloads
+6. Subscripting
+    * Lists
+	* Dictionaries
+7. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
+8. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
-7. More dunders to add to objects (PyInteger, PyFloat, PyBool...)
+9. More dunders to add to objects (PyInteger, PyFloat, PyBool...). Just do a dir on them beforehand to see if they fit in.
    * __xor__
    * __rshift__
    * __lshift__
@@ -46,7 +49,7 @@ Work that has boiled to the top while working on Unity embedding:
    * __floordiv__
    * __pow__
    * __mod__
-8. Need to make sure that we can check and convert Python args in params field
+10. Need to make sure that we can check and convert Python args in params field
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
