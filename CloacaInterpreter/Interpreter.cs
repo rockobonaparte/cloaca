@@ -425,19 +425,15 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_TRUE_DIVIDE:
                             await leftRightOperation(context, "__truediv__", null,
-                                (left, right) => {
-                                    return ((decimal) (dynamic)left) / ((decimal) (dynamic)right); 
-                                });
+                                (left, right) => { return ((decimal) (dynamic)left) / ((decimal) (dynamic)right); });
                             break;
                         case ByteCodes.INPLACE_TRUE_DIVIDE:
                             await rightLeftOperation(context, "__itruediv__", "__truediv__",
-                                (left, right) => { return (decimal)left / (decimal)right; });
+                                (left, right) => { return ((decimal)(dynamic)left) / ((decimal)(dynamic)right); });
                             break;
                         case ByteCodes.BINARY_FLOOR_DIVIDE:
                             await leftRightOperation(context, "__floordiv__", null,
-                                (left, right) => {
-                                    return (dynamic)left / (dynamic)right;
-                                });
+                                (left, right) => { return (dynamic)left / (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_FLOOR_DIVIDE:
                             await rightLeftOperation(context, "__ifloordiv__", "__floordiv__",
@@ -445,9 +441,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_MODULO:
                             await leftRightOperation(context, "__mod__", null,
-                                (left, right) => {
-                                    return (dynamic)left % (dynamic)right;
-                                });
+                                (left, right) => { return (dynamic)left % (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_MODULO:
                             await rightLeftOperation(context, "__imod__", "__mod__",
@@ -455,9 +449,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_AND:
                             await leftRightOperation(context, "__and__", null,
-                                (left, right) => {
-                                    return (dynamic)left & (dynamic)right;
-                                });
+                                (left, right) => { return (dynamic)left & (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_AND:
                             await leftRightOperation(context, "__iand__", "__and__",
@@ -465,9 +457,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_OR:
                             await leftRightOperation(context, "__or__", null,
-                                (left, right) => {
-                                    return (dynamic)left | (dynamic)right;
-                                });
+                                (left, right) => { return (dynamic)left | (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_OR:
                             await rightLeftOperation(context, "__ior__", "__or__",
@@ -475,9 +465,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_XOR:
                             await leftRightOperation(context, "__xor__", null,
-                                (left, right) => {
-                                    return (dynamic)left ^ (dynamic)right;
-                                });
+                                (left, right) => { return (dynamic)left ^ (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_XOR:
                             await leftRightOperation(context, "__ixor__", "__xor__",
@@ -485,9 +473,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_RSHIFT:
                             await leftRightOperation(context, "__rshift__", null,
-                                (left, right) => {
-                                    return (int) (dynamic) left >> (int) (dynamic)right;
-                                });
+                                (left, right) => { return (int) (dynamic) left >> (int) (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_RSHIFT:
                             await rightLeftOperation(context, "__irshift__", "__rshift__",
@@ -495,9 +481,7 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.BINARY_LSHIFT:
                             await leftRightOperation(context, "__lshift__", null,
-                                (left, right) => {
-                                    return (int) (dynamic)left << (int) (dynamic)right;
-                                });
+                                (left, right) => { return (int) (dynamic)left << (int) (dynamic)right; });
                             break;
                         case ByteCodes.INPLACE_LSHIFT:
                             await rightLeftOperation(context, "__ilshift__", "__lshift__",

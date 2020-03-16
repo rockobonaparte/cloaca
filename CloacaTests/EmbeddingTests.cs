@@ -456,7 +456,6 @@ namespace CloacaTests
 
         // Cousin to Basics.AssignmentOperators. This tests with a .NET integer!
         [Test]
-        [Ignore("Need to implement with .NET types")]
         public void AssignmentOperators()
         {
             // https://www.w3schools.com/python/python_operators.asp
@@ -501,18 +500,18 @@ namespace CloacaTests
                     { "l", 10 },
                 }, new VariableMultimap(new TupleList<string, object>
                 {
-                { "a", PyInteger.Create(12) },
-                { "b", PyInteger.Create(8) },
-                { "c", PyInteger.Create(20) },
-                { "d", PyFloat.Create(5.0) },
-                { "e", PyInteger.Create(1) },
-                { "f", PyInteger.Create(3) },
-                { "g", PyInteger.Create(100) },
-                { "h", PyInteger.Create(2) },
-                { "i", PyInteger.Create(14) },
-                { "j", PyInteger.Create(8) },
-                { "k", PyInteger.Create(2) },
-                { "l", PyInteger.Create(40) }
+                { "a", (BigInteger) 12 },
+                { "b", (BigInteger) 8 },
+                { "c", (BigInteger) 20 },
+                { "d", (decimal) 5.0 },
+                { "e", (BigInteger) 1 },
+                { "f", (BigInteger) 3 },
+                { "g", 100.0 },
+                { "h", (BigInteger) 2 },
+                { "i", (BigInteger) 14 },
+                { "j", (BigInteger) 8 },
+                { "k", 2 },
+                { "l", 40 }
             }), 1);
         }
 
