@@ -1147,6 +1147,12 @@ namespace CloacaInterpreter
                                         }
 
                                         // Still here? Let's try to get the array value!
+                                        if(arrayIndex < 0)
+                                        {
+                                            // Allow negative indexing, which only works for one wrap around the array.
+                                            arrayIndex = asArray.Length - arrayIndex;
+                                        }
+
                                         if (arrayIndex < 0 || arrayIndex >= asArray.Length)
                                         {
                                             throw new Exception("IndexError: list index out of range");
