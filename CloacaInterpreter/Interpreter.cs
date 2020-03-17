@@ -1107,38 +1107,82 @@ namespace CloacaInterpreter
                                 var container = context.DataStack.Pop();
 
                                 var containerPyObject = container as PyObject;
-                                if(containerPyObject == null)
-                                {
-                                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
-                                }
-
                                 var indexPyObject = index as PyObject;
-                                if(indexPyObject == null)
-                                {
-                                    throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
-                                }
 
-                                try
+                                if (containerPyObject == null)
                                 {
-                                    var getter = containerPyObject.__getattribute__("__getitem__");
-                                    var functionToRun = getter as IPyCallable;
-
-                                    if(functionToRun == null)
+                                    // TODO: Expand to cover lists and objects with indexing operators; probably also need to worry about dictionaries.
+                                    // Look at https://stackoverflow.com/questions/14462820/check-if-indexing-operator-exists
+                                    if (!container.GetType().IsArray)
                                     {
-                                        throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
+                                        throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject nor .NET array");
+                                    }
+                                    else
+                                    {
+                                        var asArray = container as Array;
+                                        int arrayIndex = -1;
+                                        if (indexPyObject != null)
+                                        {
+                                            var asPyInt = index as PyInteger;
+                                            if (asPyInt == null)
+                                            {
+                                                throw new Exception("TypeError: Attempted to use non - PyInteger '" + index.GetType().Name + "' as a subscript key.");
+                                            }
+                                            else
+                                            {
+                                                arrayIndex = (int)asPyInt.number;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Not a PyObject, so hopefully it's a .NET type?
+                                            try
+                                            {
+                                                arrayIndex = (int)index;
+                                            }
+                                            catch (InvalidCastException cast_e)
+                                            {
+                                                throw new Exception("TypeError: Attempted to use '" + index.GetType().Name + "' as a subscript key. Could not cast to int for .NET array.");
+                                            }
+                                        }
+
+                                        // Still here? Let's try to get the array value!
+                                        if (arrayIndex < 0 || arrayIndex >= asArray.Length)
+                                        {
+                                            throw new Exception("IndexError: list index out of range");
+                                        }
+                                        context.DataStack.Push(asArray.GetValue(arrayIndex));
+                                    }
+                                }
+                                else
+                                {
+                                    if (indexPyObject == null)
+                                    {
+                                        throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
                                     }
 
-                                    var returned = await functionToRun.Call(this, context, new object[] { indexPyObject });
-                                    if (returned != null)
+                                    try
                                     {
-                                        context.DataStack.Push(returned);
-                                    }
+                                        var getter = containerPyObject.__getattribute__("__getitem__");
+                                        var functionToRun = getter as IPyCallable;
 
-                                }
-                                catch (KeyNotFoundException)
-                                {
-                                    // TODO: use __class__.__name__
-                                    throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
+                                        if (functionToRun == null)
+                                        {
+                                            throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
+                                        }
+
+                                        var returned = await functionToRun.Call(this, context, new object[] { indexPyObject });
+                                        if (returned != null)
+                                        {
+                                            context.DataStack.Push(returned);
+                                        }
+
+                                    }
+                                    catch (KeyNotFoundException)
+                                    {
+                                        // TODO: use __class__.__name__
+                                        throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
+                                    }
                                 }
                             }
                             break;
