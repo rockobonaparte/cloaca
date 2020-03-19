@@ -34,9 +34,9 @@ Work that has boiled to the top while working on Unity embedding:
     * [DONE] INPLACE_RSHIFT
     * [DONE] INPLACE_LSHIFT
    3. Add the __i*__ calls to applicable classes
-6. Subscripting
-    * Lists
-	* Dictionaries
+6. [DONE] Subscripting
+    * [DONE] Lists
+	* [DONE] Dictionaries
 7. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
 8. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
@@ -50,6 +50,12 @@ Work that has boiled to the top while working on Unity embedding:
    * __pow__
    * __mod__
 10. Need to make sure that we can check and convert Python args in params field
+11. Embed a helper to create basic .NET types from Python types. This would be necessary to index into .NET dictionaries using
+    a specific key type.
+   * We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
+     a generic with specific types.
+12. [DONE] PyList and PyDict should be able to take all kinds of data types, not just PyObject.
+
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
@@ -126,7 +132,14 @@ Part 3: Hardening
 * Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
 * Functions
   * Implement co_flags
+  * List/enumerable functional helpers:
+    * list comprehensions
+    * map
+	* filter
+	* reduce
+* Generators
 * Exceptions
+  * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
     * AssertionError
   * Message should by PyString, not string
@@ -157,6 +170,10 @@ Part 3: Hardening
 * More .NET integration
   * Generic class support.
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
+  * .NET container support for
+    * Enumerating
+	* 'in' test
+	* Interoperation with any container methods implemented like map, reduce, filter.
 * Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
   do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.

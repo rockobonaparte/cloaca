@@ -48,6 +48,7 @@
     <Compile Include="CodeTests.cs" />
     <Compile Include="ConstantFactoryTests.cs" />
     <Compile Include="BluntEmbedTests.cs" />
+    <Compile Include="DirectSubscriptingTests.cs" />
     <Compile Include="EmbeddingTests.cs" />
     <Compile Include="ExceptionTests.cs" />
     <Compile Include="InjectionTests.cs" />
