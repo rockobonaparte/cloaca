@@ -40,6 +40,22 @@ namespace CloacaInterpreter
             }
         }
 
+        private static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, Array asArray, int arrayIndex)
+        {
+            // Still here? Let's try to get the array value!
+            if (arrayIndex < 0)
+            {
+                // Allow negative indexing, which only works for one wrap around the array.
+                arrayIndex = asArray.Length - arrayIndex;
+            }
+
+            if (arrayIndex < 0 || arrayIndex >= asArray.Length)
+            {
+                throw new Exception("IndexError: list index out of range");
+            }
+            return asArray.GetValue(arrayIndex);
+        }
+
         public static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, object container, object index)
         {
             var containerPyObject = container as PyObject;
@@ -82,18 +98,7 @@ namespace CloacaInterpreter
                         }
                     }
 
-                    // Still here? Let's try to get the array value!
-                    if (arrayIndex < 0)
-                    {
-                        // Allow negative indexing, which only works for one wrap around the array.
-                        arrayIndex = asArray.Length - arrayIndex;
-                    }
-
-                    if (arrayIndex < 0 || arrayIndex >= asArray.Length)
-                    {
-                        throw new Exception("IndexError: list index out of range");
-                    }
-                    return asArray.GetValue(arrayIndex);
+                    return LoadSubscript(interpreter, context, asArray, arrayIndex);
                 }
             }
             else
