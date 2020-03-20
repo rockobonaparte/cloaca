@@ -1,15 +1,63 @@
 ﻿using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CloacaInterpreter
 {
+    // TODO:
+    // Read:
+    // Dictionary
+    //
+    // Write:
+    // PyDict/PyList
+    // IList
+    // Array
+    // Dictionary
+    //
+    // Stretch:
+    // subscriptables.
     public class SubscriptHelper
     {
+        private static int GetIntIndex(object index)
+        {
+            var indexPyObject = index as PyObject;
+            if (indexPyObject != null)
+            {
+                var asPyInt = index as PyInteger;
+                if (asPyInt == null)
+                {
+                    throw new Exception("TypeError: Attempted to use non - PyInteger '" + index.GetType().Name + "' as a subscript key.");
+                }
+                else
+                {
+                    var arrayIndex = (int)asPyInt.number;
+                    return arrayIndex;
+                }
+            }
+            else
+            {
+                // Not a PyObject, so hopefully it's a .NET type?
+                try
+                {
+                    var arrayIndex = (int)index;
+                    return arrayIndex;
+                }
+                catch (InvalidCastException cast_e)
+                {
+                    throw new Exception("TypeError: Attempted to use '" + index.GetType().Name + "' as a subscript key. Could not cast to int for .NET array.");
+                }
+            }
+        }
+
+        private static object LoadSubscript(IInterpreter interpreter, FrameContext context, IList container, PyObject index)
+        {
+            int intIndex = GetIntIndex(index);
+            return container[intIndex];
+        }
+
         private static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, PyObject container, PyObject index)
         {
             try
@@ -31,7 +79,6 @@ namespace CloacaInterpreter
                 {
                     return NoneType.Instance;
                 }
-
             }
             catch (KeyNotFoundException)
             {
@@ -65,40 +112,19 @@ namespace CloacaInterpreter
             {
                 // TODO: Expand to cover lists and objects with indexing operators; probably also need to worry about dictionaries.
                 // Look at https://stackoverflow.com/questions/14462820/check-if-indexing-operator-exists
-                if (!container.GetType().IsArray)
+                if (container.GetType().IsArray)
                 {
-                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject nor .NET array");
+                    var asArray = container as Array;
+                    var arrayIndex = GetIntIndex(index);
+                    return LoadSubscript(interpreter, context, asArray, arrayIndex);
+                }
+                else if(container is IList)
+                {
+                    return LoadSubscript(interpreter, context, container as IList, index);
                 }
                 else
                 {
-                    var asArray = container as Array;
-                    int arrayIndex = -1;
-                    if (indexPyObject != null)
-                    {
-                        var asPyInt = index as PyInteger;
-                        if (asPyInt == null)
-                        {
-                            throw new Exception("TypeError: Attempted to use non - PyInteger '" + index.GetType().Name + "' as a subscript key.");
-                        }
-                        else
-                        {
-                            arrayIndex = (int)asPyInt.number;
-                        }
-                    }
-                    else
-                    {
-                        // Not a PyObject, so hopefully it's a .NET type?
-                        try
-                        {
-                            arrayIndex = (int)index;
-                        }
-                        catch (InvalidCastException cast_e)
-                        {
-                            throw new Exception("TypeError: Attempted to use '" + index.GetType().Name + "' as a subscript key. Could not cast to int for .NET array.");
-                        }
-                    }
-
-                    return LoadSubscript(interpreter, context, asArray, arrayIndex);
+                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject nor .NET array");
                 }
             }
             else
