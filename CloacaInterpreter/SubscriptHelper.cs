@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 namespace CloacaInterpreter
 {
     // TODO:
-    // Read:
-    // Dictionary
     //
     // Write:
     // PyDict/PyList
@@ -52,10 +50,22 @@ namespace CloacaInterpreter
             }
         }
 
-        private static object LoadSubscript(IInterpreter interpreter, FrameContext context, IList container, PyObject index)
+        private static object LoadSubscriptIList(IList container, object index)
         {
             int intIndex = GetIntIndex(index);
             return container[intIndex];
+        }
+
+        private static object LoadSubscriptIDict(IDictionary container, object index)
+        {
+            try
+            {
+                return container[index];
+            } 
+            catch(KeyNotFoundException)
+            {
+                throw new Exception("KeyError: " + index);
+            }
         }
 
         private static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, PyObject container, PyObject index)
@@ -87,7 +97,7 @@ namespace CloacaInterpreter
             }
         }
 
-        private static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, Array asArray, int arrayIndex)
+        private static object LoadSubscriptArray(Array asArray, int arrayIndex)
         {
             // Still here? Let's try to get the array value!
             if (arrayIndex < 0)
@@ -116,11 +126,15 @@ namespace CloacaInterpreter
                 {
                     var asArray = container as Array;
                     var arrayIndex = GetIntIndex(index);
-                    return LoadSubscript(interpreter, context, asArray, arrayIndex);
+                    return LoadSubscriptArray(asArray, arrayIndex);
                 }
                 else if(container is IList)
                 {
-                    return LoadSubscript(interpreter, context, container as IList, index);
+                    return LoadSubscriptIList(container as IList, index);
+                }
+                else if(container is IDictionary)
+                {
+                    return LoadSubscriptIDict(container as IDictionary, index);
                 }
                 else
                 {
