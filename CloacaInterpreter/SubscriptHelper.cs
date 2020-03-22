@@ -148,7 +148,7 @@ namespace CloacaInterpreter
                     throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
                 }
 
-                return LoadSubscript(interpreter, context, containerPyObject, indexPyObject);
+                return await LoadSubscript(interpreter, context, containerPyObject, indexPyObject);
             }
         }
 

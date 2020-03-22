@@ -55,6 +55,7 @@ Work that has boiled to the top while working on Unity embedding:
    * We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
      a generic with specific types.
 
+
 Part 2: Unity embedding. See how practical this is to use in Unity.
 * First Unity embed!
   * [DONE] Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
@@ -131,6 +132,7 @@ Part 3: Hardening
 * Functions
   * Implement co_flags
 * Exceptions
+  * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
     * AssertionError
   * Message should by PyString, not string
