@@ -151,5 +151,47 @@ namespace CloacaInterpreter
                 return LoadSubscript(interpreter, context, containerPyObject, indexPyObject);
             }
         }
+
+        public static async Task StoreSubscript(Interpreter interpreter, FrameContext context, object container, object index, object value)
+        {
+            // TODO: Stop checking between BigInt and friends once data types are all objects
+            // TODO: Raw index conversion to int should probably be moved to its more local section
+            context.Cursor += 1;
+            var idxAsPyObject = index as PyObject;
+            if (idxAsPyObject == null)
+            {
+                // TODO: use __class__.__name__
+                // throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + rawIndex.GetType().Name);
+                throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
+            }
+
+            var containerPyObject = container as PyObject;
+            if (containerPyObject == null)
+            {
+                throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
+            }
+
+            try
+            {
+                var setter = containerPyObject.__getattribute__("__setitem__");
+                var functionToRun = setter as IPyCallable;
+
+                if (functionToRun == null)
+                {
+                    throw new Exception("TypeError: '" + containerPyObject.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
+                }
+
+                var returned = await functionToRun.Call(interpreter, context, new object[] { idxAsPyObject, value });
+                if (returned != null)
+                {
+                    context.DataStack.Push(returned);
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                // TODO: use __class__.__name__
+                throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
+            }
+        }
     }
 }
