@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace CloacaInterpreter
 {
     // TODO:
+    // PyObject container using .NET indices
     //
     // Write:
-    // PyDict/PyList
     // IList
     // Array
     // Dictionary
@@ -143,6 +143,7 @@ namespace CloacaInterpreter
             }
             else
             {
+                // TODO: Should be able to index using a non-PyObject if we can make it a PyInteger or integer number!
                 if (indexPyObject == null)
                 {
                     throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
@@ -152,36 +153,19 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task StoreSubscript(Interpreter interpreter, FrameContext context, object container, object index, object value)
+        private static async Task StoreSubscriptPyObject(Interpreter interpreter, FrameContext context, PyObject container, PyObject index, object value)
         {
-            // TODO: Stop checking between BigInt and friends once data types are all objects
-            // TODO: Raw index conversion to int should probably be moved to its more local section
-            context.Cursor += 1;
-            var idxAsPyObject = index as PyObject;
-            if (idxAsPyObject == null)
-            {
-                // TODO: use __class__.__name__
-                // throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + rawIndex.GetType().Name);
-                throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
-            }
-
-            var containerPyObject = container as PyObject;
-            if (containerPyObject == null)
-            {
-                throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
-            }
-
             try
             {
-                var setter = containerPyObject.__getattribute__("__setitem__");
+                var setter = container.__getattribute__("__setitem__");
                 var functionToRun = setter as IPyCallable;
 
                 if (functionToRun == null)
                 {
-                    throw new Exception("TypeError: '" + containerPyObject.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
+                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to IPyCallable");
                 }
 
-                var returned = await functionToRun.Call(interpreter, context, new object[] { idxAsPyObject, value });
+                var returned = await functionToRun.Call(interpreter, context, new object[] { index, value });
                 if (returned != null)
                 {
                     context.DataStack.Push(returned);
@@ -190,7 +174,59 @@ namespace CloacaInterpreter
             catch (KeyNotFoundException)
             {
                 // TODO: use __class__.__name__
-                throw new Exception("TypeError: '" + containerPyObject.__class__.GetType().Name + "' object is not subscriptable");
+                throw new Exception("TypeError: '" + container.__class__.GetType().Name + "' object is not subscriptable");
+            }
+        }
+        private static void StoreSubscriptIList(IList container, object index, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void StoreSubscriptIDict(IDictionary container, object index, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void StoreSubscriptArray(Array asArray, int arrayIndex, object value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static async Task StoreSubscript(Interpreter interpreter, FrameContext context, object container, object index, object value)
+        {
+            // TODO: Stop checking between BigInt and friends once data types are all objects
+            // TODO: Raw index conversion to int should probably be moved to its more local section
+
+            var containerPyObject = container as PyObject;
+            if (containerPyObject != null)
+            {
+                var idxAsPyObject = index as PyObject;
+                if (idxAsPyObject == null)
+                {
+                    // TODO: use __class__.__name__
+                    // throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + rawIndex.GetType().Name);
+                    throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
+                }
+                else
+                {
+                    await StoreSubscriptPyObject(interpreter, context, containerPyObject, idxAsPyObject, value);
+                }
+            }
+            else if(container.GetType().IsArray)
+            {
+                StoreSubscriptArray(container as Array, GetIntIndex(index), value);
+            }
+            else if (container is IList)
+            {
+                StoreSubscriptIList(container as IList, index, value);
+            }
+            else if (container is IDictionary)
+            {
+                StoreSubscriptIDict(container as IDictionary, index, value);
+            }
+            else
+            {
+                throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject");
             }
         }
     }
