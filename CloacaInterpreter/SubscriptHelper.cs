@@ -10,11 +10,6 @@ namespace CloacaInterpreter
     // TODO:
     // PyObject container using .NET indices
     //
-    // Write:
-    // IList
-    // Array
-    // Dictionary
-    //
     // Stretch:
     // subscriptables.
     public class SubscriptHelper
@@ -99,7 +94,6 @@ namespace CloacaInterpreter
 
         private static object LoadSubscriptArray(Array asArray, int arrayIndex)
         {
-            // Still here? Let's try to get the array value!
             if (arrayIndex < 0)
             {
                 // Allow negative indexing, which only works for one wrap around the array.
@@ -179,17 +173,35 @@ namespace CloacaInterpreter
         }
         private static void StoreSubscriptIList(IList container, object index, object value)
         {
-            throw new NotImplementedException();
+            int intIndex = GetIntIndex(index);
+            container[intIndex] = value;
         }
 
         private static void StoreSubscriptIDict(IDictionary container, object index, object value)
         {
-            throw new NotImplementedException();
+            try
+            {
+                container[index] = value;
+            }
+            catch(KeyNotFoundException)
+            {
+                throw new Exception("KeyError: " + index);
+            }
         }
 
         private static void StoreSubscriptArray(Array asArray, int arrayIndex, object value)
         {
-            throw new NotImplementedException();
+            if (arrayIndex < 0)
+            {
+                // Allow negative indexing, which only works for one wrap around the array.
+                arrayIndex = asArray.Length - arrayIndex;
+            }
+
+            if (arrayIndex < 0 || arrayIndex >= asArray.Length)
+            {
+                throw new Exception("IndexError: list index out of range");
+            }
+            asArray.SetValue(value, arrayIndex);
         }
 
         public static async Task StoreSubscript(Interpreter interpreter, FrameContext context, object container, object index, object value)

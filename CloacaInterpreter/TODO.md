@@ -131,6 +131,12 @@ Part 3: Hardening
 * Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
 * Functions
   * Implement co_flags
+  * List/enumerable functional helpers:
+    * list comprehensions
+    * map
+	* filter
+	* reduce
+* Generators
 * Exceptions
   * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
@@ -163,6 +169,10 @@ Part 3: Hardening
 * More .NET integration
   * Generic class support.
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
+  * .NET container support for
+    * Enumerating
+	* 'in' test
+	* Interoperation with any container methods implemented like map, reduce, filter.
 * Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
   do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.
