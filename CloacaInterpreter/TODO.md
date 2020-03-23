@@ -54,6 +54,7 @@ Work that has boiled to the top while working on Unity embedding:
     a specific key type.
    * We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
      a generic with specific types.
+12. PyList and PyDict should be able to take all kinds of data types, not just PyObject.
 
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
