@@ -311,6 +311,12 @@ namespace LanguageImplementation.DataTypes
             dict = new Dictionary<PyObject, PyObject>();
         }
 
+        public static PyDict Create()
+        {
+            var pyDict = PyTypeObject.DefaultNew<PyDict>(PyDictClass.Instance);
+            return pyDict;
+        }
+
         public override bool Equals(object obj)
         {
             var asList = obj as PyDict;
