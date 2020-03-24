@@ -18,6 +18,18 @@ namespace CloacaTests
     [TestFixture]
     public class DirectSubscriptingTests
     {
+        private Scheduler scheduler;
+        private Interpreter interpreter;
+        private FrameContext context;
+
+        [SetUp]
+        public void Stage()
+        {
+            scheduler = new Scheduler();
+            interpreter = new Interpreter(scheduler);
+            context = new FrameContext(null);
+        }
+
         #region Reads
         [Test]
         public async Task PyListReadPyInteger()
@@ -26,61 +38,67 @@ namespace CloacaTests
             var stored = PyInteger.Create(1);
             PyListClass.append(list, stored);
 
-            var scheduler = new Scheduler();
-            var interpreter = new Interpreter(scheduler);
-            var context = new FrameContext(null);
-
             var read = await SubscriptHelper.LoadSubscript(interpreter, context, list, PyInteger.Create(0));
             Assert.That(read, Is.EqualTo(stored));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task PyListReadInt32()
         {
+            var list = PyList.Create();
+            var stored = PyInteger.Create(1);
+            PyListClass.append(list, stored);
 
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, list, 0);
+            Assert.That(read, Is.EqualTo(stored));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task ArrayReadPyInteger()
         {
-
+            var array = new int[] { 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, array, PyInteger.Create(0));
+            Assert.That(read, Is.EqualTo(1));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task ArrayReadInt32()
         {
-
+            var array = new int[] { 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, array, 0);
+            Assert.That(read, Is.EqualTo(1));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IListReadPyInteger()
         {
-
+            var list = new List<int> { 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, list, PyInteger.Create(0));
+            Assert.That(read, Is.EqualTo(1));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IListReadInt32()
         {
-
+            var list = new List<int> { 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, list, 0);
+            Assert.That(read, Is.EqualTo(1));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IDictReadPyInteger()
         {
-
+            var dict = new Dictionary<PyInteger, int> { [PyInteger.Create(0)] = 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, dict, PyInteger.Create(0));
+            Assert.That(read, Is.EqualTo(1));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IDictReadInt32()
         {
-
+            var dict = new Dictionary<int, int> { [0] = 1 };
+            var read = await SubscriptHelper.LoadSubscript(interpreter, context, dict, 0);
+            Assert.That(read, Is.EqualTo(1));
         }
 
         #endregion Reads

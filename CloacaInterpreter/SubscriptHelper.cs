@@ -63,7 +63,7 @@ namespace CloacaInterpreter
             }
         }
 
-        private static async Task<object> LoadSubscript(Interpreter interpreter, FrameContext context, PyObject container, PyObject index)
+        private static async Task<object> LoadSubscriptPyObject(Interpreter interpreter, FrameContext context, PyObject container, object index)
         {
             try
             {
@@ -137,13 +137,16 @@ namespace CloacaInterpreter
             }
             else
             {
-                // TODO: Should be able to index using a non-PyObject if we can make it a PyInteger or integer number!
-                if (indexPyObject == null)
+                if (indexPyObject != null)
                 {
-                    throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
+                    return await LoadSubscriptPyObject(interpreter, context, containerPyObject, indexPyObject);
+                }
+                else
+                {
+                    return await LoadSubscriptPyObject(interpreter, context, containerPyObject, GetIntIndex(index));
                 }
 
-                return await LoadSubscript(interpreter, context, containerPyObject, indexPyObject);
+
             }
         }
 
