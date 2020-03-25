@@ -107,55 +107,71 @@ namespace CloacaTests
         [Test]
         public async Task PyListWritePyInteger()
         {
+            var list = PyList.Create();
+            var stored = PyInteger.Create(1);
+            PyListClass.append(list, stored);
+
+            await SubscriptHelper.StoreSubscript(interpreter, context, list, PyInteger.Create(0), PyInteger.Create(2));
+            Assert.That(list.list[0], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task PyListWriteInt32()
         {
+            var list = PyList.Create();
+            var stored = PyInteger.Create(1);
+            PyListClass.append(list, stored);
 
+            await SubscriptHelper.StoreSubscript(interpreter, context, list, 0, PyInteger.Create(2));
+            Assert.That(list.list[0], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task ArrayWritePyInteger()
         {
-
+            var array = new int[] { 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, array, PyInteger.Create(0), 2);
+            Assert.That(array[0], Is.EqualTo(2));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task ArrayWriteInt32()
         {
-
+            var array = new int[] { 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, array, 0, 2);
+            Assert.That(array[0], Is.EqualTo(2));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IListWritePyInteger()
         {
-
+            var list = new List<int> { 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, list, PyInteger.Create(0), 2);
+            Assert.That(list[0], Is.EqualTo(2));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IListWriteInt32()
         {
-
+            var list = new List<int> { 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, list, 0, 2);
+            Assert.That(list[0], Is.EqualTo(2));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IDictWritePyInteger()
         {
-
+            var dict = new Dictionary<PyInteger, int> { [PyInteger.Create(0)] = 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, dict, PyInteger.Create(0), 2);
+            Assert.That(dict[PyInteger.Create(0)], Is.EqualTo(2));
         }
 
         [Test]
-        [Ignore("Test not yet implemented")]
         public async Task IDictWriteInt32()
         {
-
+            var dict = new Dictionary<int, int> { [0] = 1 };
+            await SubscriptHelper.StoreSubscript(interpreter, context, dict, 0, 2);
+            Assert.That(dict[0], Is.EqualTo(2));
         }
 
         #endregion Writes

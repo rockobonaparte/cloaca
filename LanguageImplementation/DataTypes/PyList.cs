@@ -76,15 +76,8 @@ namespace LanguageImplementation.DataTypes
 
         // TODO: Manage slices
         [ClassMember]
-        public static void __setitem__(PyList self, PyObject iPyObject, PyObject value)
+        public static void __setitem__(PyList self, PyInteger i, PyObject value)
         {
-            var i = iPyObject as PyInteger;
-            if (i == null)
-            {
-                // TODO: Use __class__.__name__
-                throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + iPyObject.GetType().Name);
-            }
-
             __setitem__(self, (int)i.number, value);
         }
 

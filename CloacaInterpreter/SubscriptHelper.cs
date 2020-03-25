@@ -150,7 +150,7 @@ namespace CloacaInterpreter
             }
         }
 
-        private static async Task StoreSubscriptPyObject(Interpreter interpreter, FrameContext context, PyObject container, PyObject index, object value)
+        private static async Task StoreSubscriptPyObject(Interpreter interpreter, FrameContext context, PyObject container, object index, object value)
         {
             try
             {
@@ -216,15 +216,13 @@ namespace CloacaInterpreter
             if (containerPyObject != null)
             {
                 var idxAsPyObject = index as PyObject;
-                if (idxAsPyObject == null)
+                if (idxAsPyObject != null)
                 {
-                    // TODO: use __class__.__name__
-                    // throw new InvalidCastException("TypeError: list indices must be integers or slices, not " + rawIndex.GetType().Name);
-                    throw new Exception("Attempted to use non-PyObject '" + index.GetType().Name + "' as a subscript key.");
+                    await StoreSubscriptPyObject(interpreter, context, containerPyObject, idxAsPyObject, value);
                 }
                 else
                 {
-                    await StoreSubscriptPyObject(interpreter, context, containerPyObject, idxAsPyObject, value);
+                    await StoreSubscriptPyObject(interpreter, context, containerPyObject, GetIntIndex(index), value);
                 }
             }
             else if(container.GetType().IsArray)
