@@ -34,9 +34,9 @@ Work that has boiled to the top while working on Unity embedding:
     * [DONE] INPLACE_RSHIFT
     * [DONE] INPLACE_LSHIFT
    3. Add the __i*__ calls to applicable classes
-6. Subscripting
-    * Lists
-	* Dictionaries
+6. [DONE] Subscripting
+    * [DONE] Lists
+	* [DONE] Dictionaries
 7. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
 8. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
@@ -54,7 +54,7 @@ Work that has boiled to the top while working on Unity embedding:
     a specific key type.
    * We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
      a generic with specific types.
-12. PyList and PyDict should be able to take all kinds of data types, not just PyObject.
+12. [DONE] PyList and PyDict should be able to take all kinds of data types, not just PyObject.
 
 
 Part 2: Unity embedding. See how practical this is to use in Unity.
