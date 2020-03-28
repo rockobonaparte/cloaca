@@ -41,14 +41,14 @@ Work that has boiled to the top while working on Unity embedding:
 8. Advanced overload: Check if there could be multiple applicable overloads
    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
-9. More dunders to add to objects (PyInteger, PyFloat, PyBool...). Just do a dir on them beforehand to see if they fit in.
-   * __xor__
-   * __rshift__
-   * __lshift__
-   * __truediv__
-   * __floordiv__
-   * __pow__
-   * __mod__
+9. [DONE?] More dunders to add to objects (PyInteger, PyFloat, PyBool...). Just do a dir on them beforehand to see if they fit in.
+   * [DONE?] __xor__
+   * [DONE?] __rshift__
+   * [DONE?] __lshift__
+   * [DONE?] __truediv__
+   * [DONE?] __floordiv__
+   * [DONE?] __pow__
+   * [DONE?] __mod__
 10. Need to make sure that we can check and convert Python args in params field
 11. Embed a helper to create basic .NET types from Python types. This would be necessary to index into .NET dictionaries using
     a specific key type.

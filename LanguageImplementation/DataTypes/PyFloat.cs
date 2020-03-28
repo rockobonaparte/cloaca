@@ -30,6 +30,38 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        public static decimal ExtractAsDecimal(PyObject var)
+        {
+            var rightFloat = var as PyFloat;
+            if (rightFloat != null)
+            {
+                return rightFloat.number;
+            }
+
+            var rightInt = var as PyInteger;
+            if (rightInt != null)
+            {
+                return (decimal) rightInt.number;
+            }
+
+            var rightBool = var as PyBool;
+            if (rightBool != null)
+            {
+                return rightBool.boolean ? (decimal) 1.0 : (decimal) 0.0;
+            }
+
+            var rightStr = var as PyString;
+            if (rightStr != null)
+            {
+                return Decimal.Parse(rightStr.str);
+            }
+
+            else
+            {
+                throw new InvalidCastException("TypeError: could not convert " + var + " to a floating-point type.");
+            }
+        }
+
         private static void castOperands(PyObject self, PyObject other, out PyFloat selfOut, out PyFloat otherOut, string operation)
         {
             selfOut = self as PyFloat;
@@ -124,6 +156,16 @@ namespace LanguageImplementation.DataTypes
             castOperands(self, other, out a, out b, "modulo");
             var newPyInteger = PyFloat.Create(a.number % b.number);
             return newPyInteger;
+        }
+
+        [ClassMember]
+        public static PyObject __pow__(PyObject self, PyObject other)
+        {
+            PyFloat a, b;
+            castOperands(self, other, out a, out b, "exponent");
+            double doubleExp = Math.Pow((double)a.number, (double)b.number);
+            var newPyFloat = PyFloat.Create(doubleExp);
+            return newPyFloat;
         }
 
         [ClassMember]

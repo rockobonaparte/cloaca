@@ -51,27 +51,56 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyObject __add__(PyObject self, PyObject other)
         {
-            return PyInteger.Create(extractInt(self) + extractInt(other));
+            if (other is PyInteger)
+            {
+                return PyInteger.Create(extractInt(self) + extractInt(other));
+            }
+            else
+            {
+                return PyFloat.Create(PyFloatClass.ExtractAsDecimal(self) + PyFloatClass.ExtractAsDecimal(other));
+            }
         }
 
         [ClassMember]
         public static PyObject __mul__(PyObject self, PyObject other)
         {
-            return PyInteger.Create(extractInt(self) * extractInt(other));
+            if (other is PyInteger)
+            {
+                return PyInteger.Create(extractInt(self) * extractInt(other));
+            }
+            else
+            {
+                return PyFloat.Create(PyFloatClass.ExtractAsDecimal(self) * PyFloatClass.ExtractAsDecimal(other));
+            }
         }
 
         [ClassMember]
         public static PyObject __sub__(PyObject self, PyObject other)
         {
-            return PyInteger.Create(extractInt(self) - extractInt(other));
+            if (other is PyInteger)
+            {
+                return PyInteger.Create(extractInt(self) - extractInt(other));
+            }
+            else
+            {
+                return PyFloat.Create(PyFloatClass.ExtractAsDecimal(self) - PyFloatClass.ExtractAsDecimal(other));
+            }
         }
 
         [ClassMember]
-        public static PyObject __div__(PyObject self, PyObject other)
+        public static PyObject __truediv__(PyObject self, PyObject other)
         {
-            return PyInteger.Create(extractInt(self) / extractInt(other));
+            var newPyFloat = PyFloat.Create((decimal) extractInt(self) / PyFloatClass.ExtractAsDecimal(other));
+            return newPyFloat;
         }
 
+        [ClassMember]
+        public static PyObject __floordiv__(PyObject self, PyObject other)
+        {
+            var newPyInteger = PyInteger.Create((BigInteger) ((decimal)extractInt(self) / PyFloatClass.ExtractAsDecimal(other)));
+            return newPyInteger;
+        }
+                
         [ClassMember]
         public static PyObject __and__(PyObject self, PyObject other)
         {
@@ -83,6 +112,13 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __or__(PyObject self, PyObject other)
         {
             var orded = extractInt(self) | extractInt(other);
+            return orded > 0 ? PyBool.True : PyBool.False;
+        }
+
+        [ClassMember]
+        public static PyObject __xor__(PyObject self, PyObject other)
+        {
+            var orded = extractInt(self) ^ extractInt(other);
             return orded > 0 ? PyBool.True : PyBool.False;
         }
 
@@ -128,6 +164,20 @@ namespace LanguageImplementation.DataTypes
             var a = extractInt(self);
             var b = extractInt(other);
             return a < b && a > b;
+        }
+
+        [ClassMember]
+        public static PyObject __rshift__(PyObject self, PyObject other)
+        {
+            var orded = (int)PyBoolClass.extractInt(self) >> (int)PyBoolClass.extractInt(other);
+            return PyInteger.Create(orded);
+        }
+
+        [ClassMember]
+        public static PyObject __lshift__(PyObject self, PyObject other)
+        {
+            var orded = (int)PyBoolClass.extractInt(self) << (int)PyBoolClass.extractInt(other);
+            return PyInteger.Create(orded);
         }
 
         [ClassMember]
