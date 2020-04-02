@@ -53,6 +53,13 @@ namespace LanguageImplementation
 
             return report;
         }
-    }
 
+        public void AssertNoErrors()
+        {
+            if(Errors.Count > 0)
+            {
+                throw new Exception("There were parse errors:\n" + Report());
+            }
+        }
+    }
 }

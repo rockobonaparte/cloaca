@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Builtins.cs" />
+    <Compile Include="ByteCodeCompiler.cs" />
     <Compile Include="ConstantsFactory.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FutureAwaiter.cs" />
