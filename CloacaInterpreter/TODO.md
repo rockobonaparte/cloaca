@@ -1,6 +1,23 @@
 ﻿Cloaca TODO
 ===========
 
+Currently debugging Unity integration with first attempts at actual scripting:
+
+Script:
+```
+mesh_renderer.material.color = new_color
+```
+
+Disassembly
+```
+  1           0  LOAD_FAST               0 (new_color)
+              3  LOAD_FAST               1 (mesh_renderer)
+              6  LOAD_ATTR               0 (material)
+              9  LOAD_ATTR               1 (color)
+```
+This is... really wrong! What the hell?!
+
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 

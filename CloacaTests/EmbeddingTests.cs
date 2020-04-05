@@ -22,6 +22,20 @@ namespace CloacaTests
     public delegate void SimpleIntEvent(int something);
     public delegate int ReturnIntEvent(int something);
 
+    // These mocks were created to test:
+    // mesh_renderer.material.color = new_color
+    // It was just loading all the attributes and not actually storing anything, so
+    // I was pretty sure parsing was screwed up.
+    public class MockMaterial
+    {
+        public int color;
+    }
+
+    public class MockMeshRenderer
+    {
+        public MockMaterial material = new MockMaterial();
+    }
+
     class ReflectIntoPython
     {
         public int AnInteger;
@@ -185,6 +199,18 @@ namespace CloacaTests
         void Meow()
         {
             calledCount += 1;
+        }
+
+        [Test]
+        [Ignore("Added after discovering this code was not getting properly generated. Fix is coming in next work.")]
+        public void MultilevelAttribute()
+        {
+            var mesh_renderer = new MockMeshRenderer();
+            var interpreter = runProgram("mesh_renderer.material.color = 3\n", new Dictionary<string, object>()
+            {
+                { "mesh_renderer", mesh_renderer}
+            }, 1);
+            Assert.That(mesh_renderer.material.color, Is.EqualTo(3));
         }
 
         [Test]
