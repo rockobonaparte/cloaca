@@ -1,22 +1,7 @@
 ﻿Cloaca TODO
 ===========
 
-Currently debugging Unity integration with first attempts at actual scripting:
-
-Script:
-```
-mesh_renderer.material.color = new_color
-```
-
-Disassembly
-```
-  1           0  LOAD_FAST               0 (new_color)
-              3  LOAD_FAST               1 (mesh_renderer)
-              6  LOAD_ATTR               0 (material)
-              9  LOAD_ATTR               1 (color)
-```
-This is... really wrong! What the hell?!
-
+Current issue: Somebody never hooked up STORE_ATTR for .NET types! We gotta do that!
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
@@ -24,6 +9,9 @@ without a reference to the interpreter and then fill it in afterwards.
 Embedding Notes:
 Consider updating DefaultNew so we can pass constructor args in one step to objects we're creating on-the-fly if it isn't a huge pain.
 Add Create() calls to all the other Python types even if we don't directly construct them (yet). Just get in the habit of having them. Make it part of interface?
+
+Consider moving CloacaBytecodeVisitor from CloacaInterpreter to LanguageImplementation. I spent a few minutes trying to find it again after
+a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
 
 Work that has boiled to the top while working on Unity embedding:
 1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
