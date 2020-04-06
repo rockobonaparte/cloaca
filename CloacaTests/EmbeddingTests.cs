@@ -202,13 +202,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Need to implement STORE_ATTR for .NET objects")]
+        //[Ignore("Need to implement STORE_ATTR for .NET objects")]
         public void MultilevelAttribute()
         {
             var mesh_renderer = new MockMeshRenderer();
-            var interpreter = runProgram("mesh_renderer.material.color = 3\n", new Dictionary<string, object>()
+            var interpreter = runProgram("mesh_renderer.material.color = three\n", new Dictionary<string, object>()
             {
-                { "mesh_renderer", mesh_renderer}
+                { "mesh_renderer", mesh_renderer},
+                { "three", 3 }
             }, 1);
             Assert.That(mesh_renderer.material.color, Is.EqualTo(3));
         }

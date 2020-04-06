@@ -36,6 +36,54 @@ namespace CloacaInterpreter
 
     public class ObjectResolver
     {
+        public static void SetValue(string attrName, object rawObject, object value)
+        {
+            var asPyObj = rawObject as PyObject;
+            if (asPyObj != null)
+            {
+                asPyObj.__setattr__(attrName, value);
+            }
+            else
+            {
+                try
+                {
+                    // Try it as a field and then as a property.
+                    var objType = rawObject.GetType();
+                    var member = objType.GetMember(attrName);
+                    if (member.Length == 0)
+                    {
+                        // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
+                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                    }
+                    if (member[0].MemberType == System.Reflection.MemberTypes.Property)
+                    {
+                        rawObject.GetType().GetProperty(attrName).SetValue(rawObject, value);
+                    }
+                    else if (member[0].MemberType == System.Reflection.MemberTypes.Field)
+                    {
+                        rawObject.GetType().GetField(attrName).SetValue(rawObject, value);
+                    }
+                    else if (member[0].MemberType == System.Reflection.MemberTypes.Method)
+                    {
+                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' is a .NET object and its methods cannot be reassigned"));
+                    }
+                    else if (member[0].MemberType == System.Reflection.MemberTypes.Event)
+                    {
+                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' is a .NET object and its events cannot be reassigned"));
+                    }
+                    else
+                    {
+                        throw new EscapedPyException(new NotImplemented("'" + rawObject.GetType().Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
+                    }
+                }
+                catch (ArgumentException e)
+                {
+                    throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                }
+
+            }
+        }
+
         public static object GetValue(string attrName, object rawObject)
         {
             var asPyObj = rawObject as PyObject;

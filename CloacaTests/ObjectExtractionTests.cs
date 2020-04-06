@@ -10,6 +10,7 @@ namespace CloacaTests
     public class TestExtractClass
     {
         public event SomeEventType SomeEvent;
+        public int SomeField;
 
         public void SimpleMethod()
         {
@@ -61,6 +62,19 @@ namespace CloacaTests
         {
             var extracted = ObjectResolver.GetValue("SomeEvent", new TestExtractClass());
             Assert.IsNotNull(extracted);
+        }
+    }
+
+    [TestFixture]
+    public class ObjectAssignmentTests
+    {
+        [Test]
+        public void AssignField()
+        {
+            var testInstance = new TestExtractClass();
+            Assert.That(testInstance.SomeField, Is.EqualTo(0));
+            ObjectResolver.SetValue("SomeField", testInstance, 3);
+            Assert.That(testInstance.SomeField, Is.EqualTo(3));
         }
     }
 }

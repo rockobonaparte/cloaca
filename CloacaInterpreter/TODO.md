@@ -3,6 +3,8 @@
 
 Current issue: Somebody never hooked up STORE_ATTR for .NET types! We gotta do that!
 
+ObjectResolver.SetValue needs to be able to box to the target type when possible.
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 

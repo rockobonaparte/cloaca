@@ -565,32 +565,24 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.STORE_ATTR:
                             {
-                                context.Cursor += 1;
-                                var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var attrName = context.Program.Names[nameIdx];
+                                {
+                                    context.Cursor += 1;
+                                    var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                    var attrName = context.Program.Names[nameIdx];
+                                    var rawObj = context.DataStack.Pop();
+                                    var val = context.DataStack.Pop();
 
-                                var rawObject = context.DataStack.Pop();
-                                var val = context.DataStack.Pop();
-                                var rawPyObject = rawObject as PyObject;
-                                if (rawPyObject != null)
-                                {
-                                    rawPyObject.__setattr__(attrName, val);
-                                }
-                                else
-                                {
-                                    // This is a .NET instance. If we're assigning an event, then this is a residual of doing a 
-                                    // += or -=. We can suppress the assignment because we already completed the operation in
-                                    // the INPLACE_X opcode. We just put the EventInstance back on the stack to signal later that's
-                                    // what happened. This isn't *that* hacky; regular INPLACE_ operations also put their result
-                                    // on the stack like a regular BINARY opcode!
-                                    var asEventInstance = val as EventInstance;
-                                    if(asEventInstance == null)
+                                    if (val is EventInstance)
                                     {
-                                        throw new NotImplementedException("Cannot use STORE_ATTR on non-PyObjects yet, although we do need it for .NET object members");
+                                        // This is a .NET instance. If we're assigning an event, then this is a residual of doing a 
+                                        // += or -=. We can suppress the assignment because we already completed the operation in
+                                        // the INPLACE_X opcode. We just put the EventInstance back on the stack to signal later that's
+                                        // what happened. This isn't *that* hacky; regular INPLACE_ operations also put their result
+                                        // on the stack like a regular BINARY opcode!
                                     }
                                     else
                                     {
-                                        // Suppressing!
+                                        ObjectResolver.SetValue(attrName, rawObj, val);
                                     }
                                 }
                             }
