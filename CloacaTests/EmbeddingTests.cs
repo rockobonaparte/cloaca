@@ -202,7 +202,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Added after discovering this code was not getting properly generated. Fix is coming in next work.")]
+        [Ignore("Need to implement STORE_ATTR for .NET objects")]
         public void MultilevelAttribute()
         {
             var mesh_renderer = new MockMeshRenderer();
@@ -211,6 +211,19 @@ namespace CloacaTests
                 { "mesh_renderer", mesh_renderer}
             }, 1);
             Assert.That(mesh_renderer.material.color, Is.EqualTo(3));
+        }
+
+        [Test]
+        [Ignore("Need to implement STORE_ATTR for .NET objects")]
+        public void MultilevelInplaceAttribute()
+        {
+            var mesh_renderer = new MockMeshRenderer();
+            mesh_renderer.material.color = 1;
+            var interpreter = runProgram("mesh_renderer.material.color += 3\n", new Dictionary<string, object>()
+            {
+                { "mesh_renderer", mesh_renderer}
+            }, 1);
+            Assert.That(mesh_renderer.material.color, Is.EqualTo(4));
         }
 
         [Test]
