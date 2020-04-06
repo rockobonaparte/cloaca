@@ -440,12 +440,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ActiveProgram.AddInstruction(ByteCodes.STORE_SUBSCR, context);
             }
             // Object subscript (self.x)
-            else if(maybeAtom.trailer().Length == 1 && maybeAtom.trailer()[0].NAME() != null)
+            // 04/05/2020: This was updated to reference multiple attributes at once (mesh_renderer.material.color = abc)
+            else if (maybeAtom.trailer().Length >= 1 && maybeAtom.trailer()[0].NAME() != null)
             {
                 variableName = maybeAtom.atom().GetText();
                 generateLoadForVariable(variableName, context);
 
-                var attrName = maybeAtom.trailer()[0].NAME().GetText();
+                int last_trailer_idx = maybeAtom.trailer().Length - 1;
+                for(int trailer_idx = 0; trailer_idx < last_trailer_idx; ++trailer_idx)
+                {
+                    var loadAttrName = maybeAtom.trailer()[trailer_idx].NAME().GetText();
+                    var loadAttrIdx = ActiveProgram.Names.AddGetIndex(loadAttrName);
+                    ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, loadAttrIdx, context);
+                }
+
+                var attrName = maybeAtom.trailer()[last_trailer_idx].NAME().GetText();
                 var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
                 ActiveProgram.AddInstruction(ByteCodes.STORE_ATTR, attrIdx, context);
                 return null;
