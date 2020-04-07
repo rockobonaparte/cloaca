@@ -214,6 +214,19 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Writing PyInteger to integer .NET field doesn't work yet. We don't have converters set up.")]
+        public void MultilevelAttributeDotNet()
+        {
+            var mesh_renderer = new MockMeshRenderer();
+            var interpreter = runProgram("mesh_renderer.material.color = three\n", new Dictionary<string, object>()
+            {
+                { "mesh_renderer", mesh_renderer},
+                { "three", 3 }
+            }, 1);
+            Assert.That(mesh_renderer.material.color, Is.EqualTo(3));
+        }
+
+        [Test]
         public void MultilevelInplaceAttribute()
         {
             var mesh_renderer = new MockMeshRenderer();
@@ -556,8 +569,26 @@ namespace CloacaTests
 
         // Cousin to DataStructureTests.ListReadWrite
         [Test]
-        [Ignore("Subscript with .NET arrays doesn't work yet.")]
         public void ListReadWrite()
+        {
+            var interpreter = runProgram(
+                "b = a[0]\n" +
+                "a[1] = twohundred\n", new Dictionary<string, object>()
+                {
+                    { "a", new int[] {1, 2} },
+                    { "twohundred", 200 }
+                }, 1);
+            var variables = interpreter.DumpVariables();
+            Assert.That(variables["b"], Is.EqualTo(1));
+            Assert.That(variables.ContainsKey("a"));
+            Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 200 }));
+            Assert.That(variables.ContainsKey("b"));
+        }
+
+        // Just like ListReadWrite, but we're assigning a PyInteger to a .NET integer
+        [Test]
+        [Ignore("Boxing PyInteger when subscripting saving doesn't yet work. We don't have converters set up.")]
+        public void ListReadWriteDoNotInt()
         {
             var interpreter = runProgram(
                 "b = a[0]\n" +
@@ -568,9 +599,8 @@ namespace CloacaTests
             var variables = interpreter.DumpVariables();
             Assert.That(variables["b"], Is.EqualTo(1));
             Assert.That(variables.ContainsKey("a"));
-            Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 2 }));
+            Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 200 }));
             Assert.That(variables.ContainsKey("b"));
         }
-
     }
 }
