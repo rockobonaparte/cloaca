@@ -15,6 +15,9 @@ Add Create() calls to all the other Python types even if we don't directly const
 Consider moving CloacaBytecodeVisitor from CloacaInterpreter to LanguageImplementation. I spent a few minutes trying to find it again after
 a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
 
+Errors from scheduled scripts in Unity disappear into the ether. We need a hookup to receive them and report them to Unity's log. I am guessing it
+would have to come from the scheduler.
+
 Work that has boiled to the top while working on Unity embedding:
 1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
    1. [DONE] Accept multiple MethodInfos
@@ -40,7 +43,7 @@ Work that has boiled to the top while working on Unity embedding:
     * [DONE] INPLACE_XOR
     * [DONE] INPLACE_RSHIFT
     * [DONE] INPLACE_LSHIFT
-   3. Add the __i*__ calls to applicable classes
+   3. [DONE] Add the __i*__ calls to applicable classes [Not literally done, but __i*__ calls fall back to their non-inplace equivalents just like Python.]
 6. [DONE] Subscripting
     * [DONE] Lists
 	* [DONE] Dictionaries
@@ -146,6 +149,8 @@ Part 3: Hardening
 	* reduce
 * Generators
 * Exceptions
+  * Show call stack for scripts that failed in .NET code
+    * Bonus points: Interleave with .NET stack trace!
   * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
     * AssertionError
