@@ -1,10 +1,6 @@
 ﻿Cloaca TODO
 ===========
 
-Current issue: Somebody never hooked up STORE_ATTR for .NET types! We gotta do that!
-
-ObjectResolver.SetValue needs to be able to box to the target type when possible.
-
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
@@ -60,9 +56,9 @@ Work that has boiled to the top while working on Unity embedding:
    * [DONE?] __pow__
    * [DONE?] __mod__
 10. Need to make sure that we can check and convert Python args in params field
-11. Embed a helper to create basic .NET types from Python types. This would be necessary to index into .NET dictionaries using
+11. [DONE] Embed a helper to create basic .NET types from Python types. This would be necessary to index into .NET dictionaries using
     a specific key type.
-   * We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
+   * [DONE] We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
      a generic with specific types.
 12. [DONE] PyList and PyDict should be able to take all kinds of data types, not just PyObject.
 
