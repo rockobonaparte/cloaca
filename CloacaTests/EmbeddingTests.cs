@@ -585,8 +585,7 @@ namespace CloacaTests
 
         // Just like ListReadWrite, but we're assigning a PyInteger to a .NET integer
         [Test]
-        [Ignore("Boxing PyInteger when subscripting saving doesn't yet work. We don't have converters set up.")]
-        public void ListReadWriteDoNotInt()
+        public void ListReadWriteDoNetInt()
         {
             var interpreter = runProgram(
                 "b = a[0]\n" +

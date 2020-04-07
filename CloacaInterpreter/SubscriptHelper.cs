@@ -177,14 +177,54 @@ namespace CloacaInterpreter
         private static void StoreSubscriptIList(IList container, object index, object value)
         {
             int intIndex = GetIntIndex(index);
-            container[intIndex] = value;
+            var listType = container.GetType();
+            var assignValue = value;
+            if(listType.IsGenericType)
+            {
+                if(PyNetConverter.CanConvert(value.GetType(), listType.GenericTypeArguments[0]))
+                {
+                    assignValue = PyNetConverter.Convert(value, listType.GenericTypeArguments[0]);
+                }
+                else
+                {
+                    throw new Exception("Cannot subscript store type " + value.GetType().Name + " to generic list with type " + listType.GenericTypeArguments[0]);
+                }
+            }
+            container[intIndex] = assignValue;
         }
 
-        private static void StoreSubscriptIDict(IDictionary container, object index, object value)
+        private static void StoreSubscriptIDict(IDictionary container, object index, object rawValue)
         {
+            var key = index;
+            var value = rawValue;
+            var dictType = container.GetType();
+
+            if(dictType.IsGenericType)
+            {
+                var keyType = dictType.GenericTypeArguments[0];
+                var valueType = dictType.GenericTypeArguments[1];
+                if (PyNetConverter.CanConvert(key.GetType(), keyType))
+                {
+                    key = PyNetConverter.Convert(key, keyType);
+                }
+                else
+                {
+                    throw new Exception("Cannot subscript store with key " + key.GetType().Name + " to generic dictionary with key type " + keyType);
+                }
+
+                if (PyNetConverter.CanConvert(value.GetType(), valueType))
+                {
+                    value = PyNetConverter.Convert(value, valueType);
+                }
+                else
+                {
+                    throw new Exception("Cannot subscript store with value " + value.GetType().Name + " to generic dictionary with value type " + valueType);
+                }
+            }
+
             try
             {
-                container[index] = value;
+                container[key] = value;
             }
             catch(KeyNotFoundException)
             {
@@ -192,8 +232,12 @@ namespace CloacaInterpreter
             }
         }
 
-        private static void StoreSubscriptArray(Array asArray, int arrayIndex, object value)
+        private static void StoreSubscriptArray(Array asArray, int arrayIndex, object rawValue)
         {
+            var value = rawValue;
+            var arrayType = asArray.GetType().GetElementType();
+            value = PyNetConverter.Convert(value, arrayType);
+
             if (arrayIndex < 0)
             {
                 // Allow negative indexing, which only works for one wrap around the array.
