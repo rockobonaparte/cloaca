@@ -78,7 +78,7 @@ namespace CloacaInterpreter
                 }
                 catch (ArgumentException e)
                 {
-                    throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                    throw new EscapedPyException(new AttributeError(e.Message));
                 }
 
             }
