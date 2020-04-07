@@ -49,6 +49,10 @@ namespace LanguageImplementation
             {
                 return null;
             }
+            else if (toType.IsAssignableFrom(cachedKey.Item1))
+            {
+                return fromObj;
+            }
             else if (toType == typeof(string))
             {
                 return fromObj.ToString();
@@ -72,7 +76,11 @@ namespace LanguageImplementation
             cachedKey.Item1 = fromType;
             cachedKey.Item2 = toType;
 
-            if(toType == typeof(string))
+            if(toType.IsAssignableFrom(fromType))
+            {
+                return true;
+            }
+            else if(toType == typeof(string))
             {
                 return true;
             }

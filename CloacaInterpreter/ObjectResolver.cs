@@ -57,11 +57,13 @@ namespace CloacaInterpreter
                     }
                     if (member[0].MemberType == System.Reflection.MemberTypes.Property)
                     {
-                        rawObject.GetType().GetProperty(attrName).SetValue(rawObject, value);
+                        var property = rawObject.GetType().GetProperty(attrName);
+                        property.SetValue(rawObject, PyNetConverter.Convert(value, property.PropertyType));
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Field)
                     {
-                        rawObject.GetType().GetField(attrName).SetValue(rawObject, value);
+                        var field = rawObject.GetType().GetField(attrName);
+                        field.SetValue(rawObject, PyNetConverter.Convert(value, field.FieldType));
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Method)
                     {
