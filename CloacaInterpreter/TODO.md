@@ -1,6 +1,40 @@
 ﻿Cloaca TODO
 ===========
 
+Next thing to do is implement import. I need to be able to do the good old-fashioned
+```
+import clr
+clr.AddReference("System")
+```
+So I can then do
+```
+from System import Int32
+```
+...so I can make sure to use appropriate data types from .NET (as well as Unity). The syntax is not so hard:
+```
+>> def import_test():
+...    import sys
+...    return sys.path
+...
+>>> dis(import_test)
+  2           0 LOAD_CONST               1 (0)
+              2 LOAD_CONST               0 (None)
+              4 IMPORT_NAME              0 (sys)
+              6 STORE_FAST               0 (sys)
+
+  3           8 LOAD_FAST                0 (sys)
+             10 LOAD_ATTR                1 (path)
+             12 RETURN_VALUE
+>>>
+```
+
+So I need to:
+* Look up how modules even work in Python in case there are gotchas. For now, importing seems to just put *something* on the stack and
+  then it's referenced using LOAD_ATTR
+* Parse and generate IMPORT_NAME
+* Create some kind of importable provider
+* Implement clr and add it to the provider
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
