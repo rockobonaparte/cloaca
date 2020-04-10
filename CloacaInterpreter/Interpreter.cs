@@ -1179,6 +1179,26 @@ namespace CloacaInterpreter
                                 context.BlockStack.Pop();
                                 break;
                             }
+                        case ByteCodes.IMPORT_NAME:
+                            {
+                                context.Cursor += 1;
+                                var import_name_i = context.Program.Code.GetUShort(context.Cursor);
+                                context.Cursor += 2;
+                                throw new NotImplementedException("IMPORT_NAME: Module imports are not yet supported");
+                                break;
+                            }
+                        case ByteCodes.IMPORT_FROM:
+                            {
+                                context.Cursor += 1;
+                                throw new NotImplementedException("IMPORT_FROM: Module imports are not yet supported");
+                                break;
+                            }
+                        case ByteCodes.IMPORT_STAR:
+                            {
+                                context.Cursor += 1;
+                                throw new NotImplementedException("IMPORT_STAR: Module imports are not yet supported");
+                                break;
+                            }
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }

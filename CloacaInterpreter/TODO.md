@@ -1,7 +1,10 @@
 ﻿Cloaca TODO
 ===========
 
-Next thing to do is implement import. I need to be able to do the good old-fashioned
+Next thing to do is implement import. Important reading:
+https://manikos.github.io/how-pythons-import-machinery-works
+
+I need to be able to do the good old-fashioned
 ```
 import clr
 clr.AddReference("System")

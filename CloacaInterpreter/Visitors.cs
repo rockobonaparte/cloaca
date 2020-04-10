@@ -1272,5 +1272,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1, context);
         return null;
     }
-}
 
+    public override object VisitImport_name([NotNull] CloacaParser.Import_nameContext context)
+    {
+        var moduleName = context.dotted_as_names().GetText();
+        var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
+        ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
+        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(moduleName);
+        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        return null;
+    }
+}
