@@ -78,6 +78,7 @@
     <Compile Include="DataTypes\PyFloat.cs" />
     <Compile Include="DataTypes\PyDict.cs" />
     <Compile Include="DataTypes\PyList.cs" />
+    <Compile Include="DataTypes\PyModule.cs" />
     <Compile Include="DataTypes\PyString.cs" />
     <Compile Include="DataTypes\PyInteger.cs" />
     <Compile Include="DataTypes\PyClass.cs" />

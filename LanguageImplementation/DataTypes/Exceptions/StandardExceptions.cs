@@ -16,6 +16,14 @@
         }
     }
 
+    public class ModuleNotFoundError : PyException
+    { 
+        public ModuleNotFoundError(string msg) : base(msg)
+        {
+
+        }
+    }
+
     public class NotImplemented : PyException
     {
         public NotImplemented(string msg) : base(msg)

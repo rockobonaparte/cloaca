@@ -363,12 +363,15 @@ namespace LanguageImplementation
                         }
                     case ByteCodes.IMPORT_FROM:
                         {
-                            throw new NotImplementedException("IMPORT_FROM: Module imports are not yet supported");
+                            cursor += 1;
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "IMPORT_FROM", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));
+                            cursor += 2;
                             break;
                         }
                     case ByteCodes.IMPORT_STAR:
                         {
-                            throw new NotImplementedException("IMPORT_STAR: Module imports are not yet supported");
+                            cursor += 1;
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "IMPORT_STAR", null, null);
                             break;
                         }
                     default:

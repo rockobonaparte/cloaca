@@ -1,6 +1,9 @@
 ﻿Cloaca TODO
 ===========
 
+I think the test bench needs a separate configuration builder. The multiple overloads for runProgram and runBasicTest
+are just too overwhelming at this point.
+
 Next thing to do is implement import. Important reading:
 https://manikos.github.io/how-pythons-import-machinery-works
 
@@ -135,6 +138,7 @@ Part 3: Hardening
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
 	    cause the right constructor to get invoked.
   * Passing PyInteger where PyFloat is needed--and vice versa--shouldn't fail to invoke the wrapper
+* Container ToString(). Implement more than stub.
 * Python number type
   * Integer
      * Hex

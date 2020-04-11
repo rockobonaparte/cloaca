@@ -1187,22 +1187,118 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.IMPORT_NAME:
                             {
+                                // TOS and TOS1 are popped and provide the fromlist and level arguments of __import__().
+                                // The module object is pushed onto the stack. The current namespace is not affected: for a proper import statement,
+                                // a subsequent STORE_FAST instruction modifies the namespace.
+                                // 
+                                //
+                                // from sys import path
+                                //
+                                // 2            0 LOAD_CONST               1(0)
+                                //              2 LOAD_CONST               2(('path',))
+                                //              4 IMPORT_NAME              0(sys)
                                 context.Cursor += 1;
+
+                                var fromlist = context.DataStack.Pop();
+                                var import_level = context.DataStack.Pop();
+
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
+                                var module_name = context.Names[import_name_i];
+
+                                // Look for the root name. The root is kind of what is actually imported, but we will crawl the
+                                // whole thing to see if the given path completely exists.
+                                var module_tree = module_name.Split(new char[] { '.' });
+
+                                if(!Modules.ContainsKey(module_tree[0]))
+                                {
+                                    context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
+                                }
+                                else
+                                {
+                                    // Check out this guy that's not recursing.
+                                    var module_root = Modules[module_tree[0]];
+                                    PyObject module_parent = module_root;
+                                    for(int module_path_i = 1; module_path_i < module_tree.Length; ++module_path_i)
+                                    {
+                                        var subname = module_tree[module_path_i];
+
+                                        // TODO: Should I use attribute lookup methods? I am not sure how Python does it and I'm not sure if I care.
+                                        if(!module_parent.__dict__.ContainsKey(subname))
+                                        {
+                                            context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            module_parent = (PyObject) PyClass.__getattribute__(module_parent, subname);
+                                        }
+                                    }
+
+                                    if(context.CurrentException == null)
+                                    {
+                                        context.DataStack.Push(Modules[module_tree[0]]);
+                                    }
+                                }
+
                                 context.Cursor += 2;
-                                throw new NotImplementedException("IMPORT_NAME: Module imports are not yet supported");
                                 break;
                             }
                         case ByteCodes.IMPORT_FROM:
                             {
+                                // Loads the attribute co_names[namei] from the module found in TOS. The resulting object is pushed onto the stack,
+                                // to be subsequently stored by a STORE_FAST instruction.
                                 context.Cursor += 1;
-                                throw new NotImplementedException("IMPORT_FROM: Module imports are not yet supported");
+                                var fromModule = context.DataStack.Peek();      // Module is kept on the stack for subsequent IMPORT_FROM. Removed with a POP_TOP.
+
+                                var importName_i = context.Program.Code.GetUShort(context.Cursor);
+                                var fromName = (PyString) context.Program.Constants[importName_i];
+
+                                // TODO: Import from .NET modules
+                                var asPyObject = fromModule as PyObject;
+                                if(asPyObject == null)
+                                {
+                                    throw new NotImplementedException("IMPORT_FROM for non-Python objects not supported. Importing from .NET " +
+                                                                      "assembles will eventually be implemented.");
+                                }
+                                else
+                                {
+                                    var fromImported = PyClass.__getattribute__(asPyObject, fromName);
+                                    context.DataStack.Push(fromImported);
+                                }
+
+                                context.Cursor += 2;
                                 break;
                             }
                         case ByteCodes.IMPORT_STAR:
                             {
+                                // Loads all symbols not starting with "_" directly from the module TOS to the local namespace. The module is popped after
+                                // loading all names. This opcode implements from module import *.
                                 context.Cursor += 1;
-                                throw new NotImplementedException("IMPORT_STAR: Module imports are not yet supported");
+                                var fromModule = (PyModule) context.DataStack.Pop();
+                                foreach(var starImported in fromModule.__dict__)
+                                {
+                                    if (!starImported.Key.StartsWith("_"))
+                                    {
+                                        // Name goes to here
+                                        // key to codeObject.LocalNames[existing name or end]
+                                        // Value goes to context.Locals[index of varname]
+                                        var varIndex = context.LocalNames.IndexOf(starImported.Key);
+                                        if (varIndex == -1)
+                                        {
+                                            context.LocalNames.Add(starImported.Key);
+                                            varIndex = context.LocalNames.Count - 1;
+                                        }
+
+                                        if (varIndex >= context.Locals.Count)
+                                        {
+                                            context.Locals.Add(starImported.Value);
+                                        }
+                                        else
+                                        {
+                                            context.Locals[varIndex] = starImported.Value;
+                                        }
+                                    }
+                                }
                                 break;
                             }
                         default:

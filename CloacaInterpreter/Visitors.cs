@@ -1273,13 +1273,138 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    private void generateImport(string moduleName, string moduleAs, string[] moduleFromList, string[] moduleFromAliases, ParserRuleContext context)
+    {
+        var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
+        var importLevel = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(0));
+
+        int fromListIndex = -1;
+        if(moduleFromList == null || moduleFromList.Length == 0)
+        {
+            fromListIndex = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+        }
+        else
+        {
+            var moduleListPyStrings = new PyObject[moduleFromList.Length];
+            for(int i = 0; i < moduleFromList.Length; ++i)
+            {
+                moduleListPyStrings[i] = PyString.Create(moduleFromList[i]);
+            }
+            var fromListTuple = PyTuple.Create(moduleListPyStrings);
+            fromListIndex = ActiveProgram.Constants.AddGetIndex(fromListTuple);
+        }
+
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevel, context);
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
+        ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
+
+        // General imports not using import-from.
+        // One do STORE_FAST if this isn't an import-from
+        if (moduleFromList == null)
+        {
+            string aliasedName = moduleAs == null ? moduleName : moduleAs;
+            var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        }
+        // Import-from code generation.
+        //if(moduleFromList != null && moduleFromList.Length > 0)
+        else if(moduleFromList[0] == "*")
+        {
+            ActiveProgram.AddInstruction(ByteCodes.IMPORT_STAR, context);
+        }
+        else
+        {
+            for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
+            {
+                var fromNameConstIdx = ActiveProgram.Constants.AddReplaceGetIndex(PyString.Create(moduleFromList[fromIdx]));
+                ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
+                var fromName = moduleFromList[fromIdx];
+                if (moduleFromAliases != null && moduleFromAliases[fromIdx] != null)
+                {
+                    fromName = moduleFromAliases[fromIdx];
+                }
+                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddReplaceGetIndex(fromName);
+                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+            }
+
+            // IMPORT_FROM Peeks the module without popping it so it can do multiple import-froms.
+            // We nuke it off the stack here because we're done with it.
+            ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+        }
+    }
+
     public override object VisitImport_name([NotNull] CloacaParser.Import_nameContext context)
     {
-        var moduleName = context.dotted_as_names().GetText();
-        var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
-        ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
-        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(moduleName);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        // context.dotted_as_names().GetChild(2).GetText()
+        // Every middle element is a comma between modules; skip
+        var dotted_as_names = context.dotted_as_names();
+        for(int import_i = 0; import_i < dotted_as_names.ChildCount; import_i += 2)
+        {
+            var importChild = dotted_as_names.GetChild(import_i);
+            var moduleName = dotted_as_names.GetChild(import_i).GetText();
+            var aliasedName = moduleName;
+            if (importChild.ChildCount > 1)
+            {
+                // Oh, it's aliased. Throw that out and go a level deeper.
+                moduleName = importChild.GetChild(0).GetText();
+                aliasedName = importChild.GetChild(2).GetText();
+            }
+            generateImport(moduleName, aliasedName, null, null, context);
+        }
+        return null;
+    }
+
+    public override object VisitImport_from([NotNull] CloacaParser.Import_fromContext context)
+    {
+        // import_from: ('from' (('.' | '...')* dotted_name | ('.' | '...')+)
+        // 'import'('*' | '(' import_as_names ')' | import_as_names));
+        //
+        // Look at the children:
+        // [0]: from
+        // [1]: name to import
+        // [2]: import
+        // [3]: ... ignore that and poke import_as_names directly if you can, otherwise use it.
+
+        var moduleName = context.GetChild(1).GetText();
+        var fromNames = new List<string>();
+        var asNames = new List<string>();
+        if (context.GetChild(3).GetText() == "*")
+        {
+            fromNames.Add("*");
+        }
+        else
+        {
+            var import_as_names = context.import_as_names();
+            if (import_as_names.ChildCount > 0)
+            {
+                // Skip the commas so we do every-other child.
+                for (int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; import_as_names_i += 2)
+                {
+                    var import_as_name = import_as_names.GetChild(import_as_names_i);
+                    if (import_as_name.ChildCount > 1)
+                    {
+                        fromNames.Add(import_as_name.GetChild(0).GetText());
+                        asNames.Add(import_as_name.GetChild(2).GetText());
+                    }
+                    else
+                    {
+                        fromNames.Add(import_as_name.GetText());
+                        asNames.Add(import_as_name.GetText());
+                    }
+                }
+            }
+            else
+            {
+                fromNames.Add(context.GetChild(3).GetText());
+            }
+        }
+
+        generateImport(
+            moduleName,
+            null,
+            fromNames.ToArray(),
+            asNames.Count > 0 ? asNames.ToArray() : null,
+            context);
         return null;
     }
 }
