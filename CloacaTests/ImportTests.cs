@@ -13,11 +13,16 @@ namespace CloacaTests
     public class ImportTests : RunCodeTest
     {
         [Test]
-        [Ignore("Importing has not been implemented yet and imports will cause NotImplementedErrors")]
         public void BasicImport()
         {
+            var fooModule = PyModule.Create("foo");
+            var modules = new Dictionary<string, PyModule>();
+            modules.Add("foo", fooModule);
+
             var interpreter = runProgram(
-                "import foo\n", new Dictionary<string, object>(), 1);
+                "import foo\n", new Dictionary<string, object>(), modules, 1);
+
+            // TODO: Assert *something*
         }
 
         [Test]

@@ -1192,8 +1192,18 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
+                                var module_name = context.Names[import_name_i];
+
+                                if(!Modules.ContainsKey(module_name))
+                                {
+                                    context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
+                                }
+                                else
+                                {
+                                    context.DataStack.Push(Modules[module_name]);
+                                }
+
                                 context.Cursor += 2;
-                                throw new NotImplementedException("IMPORT_NAME: Module imports are not yet supported");
                                 break;
                             }
                         case ByteCodes.IMPORT_FROM:

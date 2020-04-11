@@ -1,6 +1,9 @@
 ﻿Cloaca TODO
 ===========
 
+I think the test bench needs a separate configuration builder. The multiple overloads for runProgram and runBasicTest
+are just too overwhelming at this point.
+
 Next thing to do is implement import. Important reading:
 https://manikos.github.io/how-pythons-import-machinery-works
 

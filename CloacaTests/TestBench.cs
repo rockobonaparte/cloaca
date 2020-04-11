@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
@@ -18,7 +19,7 @@ namespace CloacaTests
     [TestFixture]
     public class RunCodeTest
     {
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
+        protected void runProgram(string program, Dictionary<string, object> variablesIn, Dictionary<string, PyModule> modules, int expectedIterations, out FrameContext context)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -44,6 +45,10 @@ namespace CloacaTests
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
+            foreach(var moduleName in modules.Keys)
+            {
+                interpreter.AddModule(moduleName, modules[moduleName]);
+            }
             scheduler.SetInterpreter(interpreter);
 
             var receipt = scheduler.Schedule(compiledProgram);
@@ -66,10 +71,22 @@ namespace CloacaTests
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
         }
 
+        protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
+        {
+            runProgram(program, variablesIn, new Dictionary<string, PyModule>(), expectedIterations, out context);
+        }
+
         protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
         {
             FrameContext context;
-            runProgram(program, variablesIn, expectedIterations, out context);
+            runProgram(program, variablesIn, new Dictionary<string, PyModule>(), expectedIterations, out context);
+            return context;
+        }
+
+        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, Dictionary<string, PyModule> modules, int expectedIterations)
+        {
+            FrameContext context;
+            runProgram(program, variablesIn, modules, expectedIterations, out context);
             return context;
         }
 
