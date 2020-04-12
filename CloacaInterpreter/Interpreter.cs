@@ -330,6 +330,12 @@ namespace CloacaInterpreter
                         }
                     }
 
+                    // Escaped, unhandled Python exceptions will get thrown from here.
+                    if(context.CurrentException != null && context.BlockStack.Count == 0)
+                    {
+                        throw new EscapedPyException(context.CurrentException);
+                    }
+
                     var opcode = (ByteCodes)context.Code[context.Cursor];
                     switch (opcode)
                     {
