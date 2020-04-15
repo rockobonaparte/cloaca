@@ -1277,6 +1277,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         var moduleName = context.dotted_name().GetText();
         var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
+        var importLevel = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(0));
+        var fromlist = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevel, context);
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromlist, context);
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // Aliased import:

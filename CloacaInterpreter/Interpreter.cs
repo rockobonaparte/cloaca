@@ -1196,7 +1196,21 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.IMPORT_NAME:
                             {
+                                // TOS and TOS1 are popped and provide the fromlist and level arguments of __import__().
+                                // The module object is pushed onto the stack. The current namespace is not affected: for a proper import statement,
+                                // a subsequent STORE_FAST instruction modifies the namespace.
+                                // 
+                                //
+                                // from sys import path
+                                //
+                                // 2            0 LOAD_CONST               1(0)
+                                //              2 LOAD_CONST               2(('path',))
+                                //              4 IMPORT_NAME              0(sys)
                                 context.Cursor += 1;
+
+                                var fromlist = context.DataStack.Pop();
+                                var import_level = context.DataStack.Pop();
+
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
                                 var module_name = context.Names[import_name_i];
 
