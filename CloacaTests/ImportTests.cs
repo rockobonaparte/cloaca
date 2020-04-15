@@ -40,11 +40,15 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Importing has not been implemented yet and imports will cause NotImplementedErrors")]
         public void AliasedImport()
         {
+            var fooModule = PyModule.Create("foo");
+            var modules = new Dictionary<string, PyModule>();
+            modules.Add("foo", fooModule);
+
             var interpreter = runProgram(
-                "import foo as fruit\n", new Dictionary<string, object>(), 1);
+                "import foo as fruit\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
         }
 
         [Test]

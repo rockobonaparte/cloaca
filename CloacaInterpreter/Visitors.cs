@@ -1273,12 +1273,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    public override object VisitImport_name([NotNull] CloacaParser.Import_nameContext context)
+    public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
     {
-        var moduleName = context.dotted_as_names().GetText();
+        var moduleName = context.dotted_name().GetText();
         var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
-        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(moduleName);
+
+        // Aliased import:
+        // import foo as bar
+        // We might not have an alias, but if we do, it'll be the third element in the series.
+        string aliasedName = moduleName;
+        if(context.children.Count > 1)
+        {
+            aliasedName = context.GetChild(2).GetText();
+        }
+
+        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
         ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
         return null;
     }
