@@ -1273,27 +1273,60 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
+    private void generateImport(string moduleName, string moduleAs, string[] moduleFromList, ParserRuleContext context)
     {
-        var moduleName = context.dotted_name().GetText();
         var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
         var importLevel = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(0));
-        var fromlist = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+
+        int fromListIndex = -1;
+        if(moduleFromList == null || moduleFromList.Length == 0)
+        {
+            fromListIndex = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+        }
+        else
+        {
+            throw new NotImplementedException("We don't work with the import from-list yet.");
+        }
+
         ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevel, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromlist, context);
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // Aliased import:
         // import foo as bar
         // We might not have an alias, but if we do, it'll be the third element in the series.
+        string aliasedName = moduleAs == null ? moduleName : moduleAs;
+        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
+        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+    }
+
+    public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
+    {
+        // TODO: import from statements mess this all up a bit. We need to construct a proper
+        // fromlist when working with them.
+        //
+        // Thoughts for implementing import_from:
+        // 1. It sits a level above dotted_as_name
+        // 2. It could also use import_as_names, which is different from dotted_as_name in the parsing tree
+        //    but comes down to just slurping up a string either way.
+        // 3. Coming in from import_from requires getting the from name
+        // 4. We can create a common helper for most of the import code that optionally takes a from statement
+        //    for now
+        // 5. The plural import_as_names and dotted_as_names add an additional wrinkle that maybe I should
+        //    learn to parse first.
+
+        var moduleName = context.dotted_name().GetText();
+
+        // Aliased import:
+        // import foo as bar
+        // We might not have an alias, but if we do, it'll be the third element in the series.
         string aliasedName = moduleName;
-        if(context.children.Count > 1)
+        if (context.children.Count > 1)
         {
             aliasedName = context.GetChild(2).GetText();
         }
 
-        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        generateImport(moduleName, aliasedName, null, context);
         return null;
     }
 }
