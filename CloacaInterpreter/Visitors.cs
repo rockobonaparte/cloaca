@@ -1273,7 +1273,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    private void generateImport(string moduleName, string moduleAs, string[] moduleFromList, ParserRuleContext context)
+    private void generateImport(string moduleName, string moduleAs, string[] moduleFromList, string[] moduleFromAliases, ParserRuleContext context)
     {
         var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
         var importLevel = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(0));
@@ -1285,19 +1285,47 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            throw new NotImplementedException("We don't work with the import from-list yet.");
+            var moduleListPyStrings = new PyObject[moduleFromList.Length];
+            for(int i = 0; i < moduleFromList.Length; ++i)
+            {
+                moduleListPyStrings[i] = PyString.Create(moduleFromList[i]);
+            }
+            var fromListTuple = PyTuple.Create(moduleListPyStrings);
+            fromListIndex = ActiveProgram.Constants.AddGetIndex(fromListTuple);
         }
 
         ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevel, context);
         ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
-        // Aliased import:
-        // import foo as bar
-        // We might not have an alias, but if we do, it'll be the third element in the series.
-        string aliasedName = moduleAs == null ? moduleName : moduleAs;
-        var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        // General imports not using import-from.
+        if (moduleAs == null)
+        {
+            string aliasedName = moduleAs == null ? moduleName : moduleAs;
+            var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+        }
+
+        // Import-from code generation.
+        if(moduleFromList != null && moduleFromList.Length > 0)
+        {
+            for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
+            {
+                var fromNameConstIdx = ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
+                ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
+                var fromName = moduleFromList[fromIdx];
+                if (moduleFromAliases != null && moduleFromAliases[fromIdx] != null)
+                {
+                    fromName = moduleFromAliases[fromIdx];
+                }
+                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddReplaceGetIndex(fromName);
+                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+            }
+
+            // To be honest, I'm not sure why I need the POP_TOP but I don't fully understand how the stack is 
+            // affected by IMPORT_FROM yet. I only need it when I start pounding out IMPORT_FROM.
+            ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+        }
     }
 
     public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
@@ -1326,7 +1354,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             aliasedName = context.GetChild(2).GetText();
         }
 
-        generateImport(moduleName, aliasedName, null, context);
+        generateImport(moduleName, aliasedName, null, null, context);
         return null;
     }
 }

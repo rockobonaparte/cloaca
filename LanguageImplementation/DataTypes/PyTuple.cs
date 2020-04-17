@@ -144,6 +144,20 @@ namespace LanguageImplementation.DataTypes
             this.Values = values;
         }
 
+        public static PyTuple Create(List<PyObject> values)
+        {
+            var pyTuple = PyTypeObject.DefaultNew<PyTuple>(PyTupleClass.Instance);
+            pyTuple.Values = values.ToArray();
+            return pyTuple;
+        }
+
+        public static PyTuple Create(PyObject[] values)
+        {
+            var pyTuple = PyTypeObject.DefaultNew<PyTuple>(PyTupleClass.Instance);
+            pyTuple.Values = values;
+            return pyTuple;
+        }
+
         public override bool Equals(object obj)
         {
             var asTuple = obj as PyTuple;
