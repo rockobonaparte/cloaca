@@ -184,7 +184,7 @@ namespace LanguageImplementation.DataTypes
 
         public override string ToString()
         {
-            throw new NotImplementedException();
+            return "PyTuple(contents are not yet displayed)";
         }
     }
 

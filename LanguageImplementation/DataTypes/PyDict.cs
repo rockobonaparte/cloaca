@@ -343,7 +343,7 @@ namespace LanguageImplementation.DataTypes
 
         public override string ToString()
         {
-            throw new NotImplementedException();
+            return "PyDict(contents are not yet displayed)";
         }
     }
 }

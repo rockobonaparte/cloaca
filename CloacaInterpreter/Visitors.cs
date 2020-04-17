@@ -1349,33 +1349,49 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    //public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
-    //{
-    //    // TODO: import from statements mess this all up a bit. We need to construct a proper
-    //    // fromlist when working with them.
-    //    //
-    //    // Thoughts for implementing import_from:
-    //    // 1. It sits a level above dotted_as_name
-    //    // 2. It could also use import_as_names, which is different from dotted_as_name in the parsing tree
-    //    //    but comes down to just slurping up a string either way.
-    //    // 3. Coming in from import_from requires getting the from name
-    //    // 4. We can create a common helper for most of the import code that optionally takes a from statement
-    //    //    for now
-    //    // 5. The plural import_as_names and dotted_as_names add an additional wrinkle that maybe I should
-    //    //    learn to parse first.
+    public override object VisitImport_from([NotNull] CloacaParser.Import_fromContext context)
+    {
+        // import_from: ('from' (('.' | '...')* dotted_name | ('.' | '...')+)
+        // 'import'('*' | '(' import_as_names ')' | import_as_names));
+        //
+        // Look at the children:
+        // [0]: from
+        // [1]: name to import
+        // [2]: import
+        // [3]: ... ignore that and poke import_as_names directly if you can, otherwise use it.
 
-    //    var moduleName = context.dotted_name().GetText();
+        var moduleName = context.GetChild(1).GetText();
+        var fromNames = new List<string>();
+        var asNames = new List<string>();
+        var import_as_names = context.import_as_names();
+        if (import_as_names.ChildCount > 0)
+        {
+            for(int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; ++import_as_names_i)
+            {
+                var import_as_name = import_as_names.GetChild(import_as_names_i);
+                if(import_as_name.ChildCount > 1)
+                {
+                    fromNames.Add(import_as_name.GetChild(0).GetText());
+                    asNames.Add(import_as_name.GetChild(2).GetText());
+                }
+                else
+                {
+                    fromNames.Add(import_as_name.GetText());
+                    asNames.Add(import_as_name.GetText());
+                }
+            }
+        }
+        else
+        {
+            fromNames.Add(context.GetChild(3).GetText());
+        }
 
-    //    // Aliased import:
-    //    // import foo as bar
-    //    // We might not have an alias, but if we do, it'll be the third element in the series.
-    //    string aliasedName = moduleName;
-    //    if (context.children.Count > 1)
-    //    {
-    //        aliasedName = context.GetChild(2).GetText();
-    //    }
-
-    //    generateImport(moduleName, aliasedName, null, null, context);
-    //    return null;
-    //}
+        generateImport(
+            moduleName,
+            null,
+            fromNames.ToArray(),
+            asNames.Count > 0 ? asNames.ToArray() : null,
+            context);
+        return null;
+    }
 }

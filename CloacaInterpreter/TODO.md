@@ -138,6 +138,7 @@ Part 3: Hardening
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
 	    cause the right constructor to get invoked.
   * Passing PyInteger where PyFloat is needed--and vice versa--shouldn't fail to invoke the wrapper
+* Container ToString(). Implement more than stub.
 * Python number type
   * Integer
      * Hex

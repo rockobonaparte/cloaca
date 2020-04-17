@@ -222,7 +222,7 @@ namespace LanguageImplementation.DataTypes
 
         public override string ToString()
         {
-            throw new NotImplementedException();
+            return "PyList(contents are not yet displayed)";
         }
 
         public void SetList(List<PyObject> newList)
