@@ -79,11 +79,18 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Importing has not been implemented yet and imports will cause NotImplementedErrors")]
         public void FromCommaImport()
         {
+            var fooModule = PyModule.Create("foo");
+            var FooThing = PyModule.Create("FooThing");
+            var OtherThing = PyModule.Create("OtherThing");
+            fooModule.__dict__.Add("FooThing", FooThing);
+            fooModule.__dict__.Add("OtherThing", OtherThing);
+            var modules = new Dictionary<string, PyModule>();
+            modules.Add("foo", fooModule);
+
             var interpreter = runProgram(
-                "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), 1);
+                "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), modules, 1);
         }
 
         [Test]

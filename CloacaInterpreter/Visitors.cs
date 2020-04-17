@@ -1323,10 +1323,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
             }
 
-            // To be honest, I'm not sure why I need the POP_TOP but I don't fully understand how the stack is 
-            // affected by IMPORT_FROM yet. I only need it when I start pounding out IMPORT_FROM.
-            // I'm currently asking online about it.
-            // ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+            // IMPORT_FROM Peeks the module without popping it so it can do multiple import-froms.
+            // We nuke it off the stack here because we're done with it.
+            ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
         }
     }
 
@@ -1368,7 +1367,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var import_as_names = context.import_as_names();
         if (import_as_names.ChildCount > 0)
         {
-            for(int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; ++import_as_names_i)
+            // Skip the commas so we do every-other child.
+            for(int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; import_as_names_i += 2)
             {
                 var import_as_name = import_as_names.GetChild(import_as_names_i);
                 if(import_as_name.ChildCount > 1)

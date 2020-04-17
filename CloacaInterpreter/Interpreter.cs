@@ -1257,7 +1257,7 @@ namespace CloacaInterpreter
                                 // Loads the attribute co_names[namei] from the module found in TOS. The resulting object is pushed onto the stack,
                                 // to be subsequently stored by a STORE_FAST instruction.
                                 context.Cursor += 1;
-                                var fromModule = context.DataStack.Pop();
+                                var fromModule = context.DataStack.Peek();      // Module is kept on the stack for subsequent IMPORT_FROM. Removed with a POP_TOP.
 
                                 var importName_i = context.Program.Code.GetUShort(context.Cursor);
                                 var fromName = (PyString) context.Program.Constants[importName_i];
