@@ -1328,33 +1328,54 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
+    public override object VisitImport_name([NotNull] CloacaParser.Import_nameContext context)
     {
-        // TODO: import from statements mess this all up a bit. We need to construct a proper
-        // fromlist when working with them.
-        //
-        // Thoughts for implementing import_from:
-        // 1. It sits a level above dotted_as_name
-        // 2. It could also use import_as_names, which is different from dotted_as_name in the parsing tree
-        //    but comes down to just slurping up a string either way.
-        // 3. Coming in from import_from requires getting the from name
-        // 4. We can create a common helper for most of the import code that optionally takes a from statement
-        //    for now
-        // 5. The plural import_as_names and dotted_as_names add an additional wrinkle that maybe I should
-        //    learn to parse first.
-
-        var moduleName = context.dotted_name().GetText();
-
-        // Aliased import:
-        // import foo as bar
-        // We might not have an alias, but if we do, it'll be the third element in the series.
-        string aliasedName = moduleName;
-        if (context.children.Count > 1)
+        // context.dotted_as_names().GetChild(2).GetText()
+        // Every middle element is a comma between modules; skip
+        var dotted_as_names = context.dotted_as_names();
+        for(int import_i = 0; import_i < dotted_as_names.ChildCount; import_i += 2)
         {
-            aliasedName = context.GetChild(2).GetText();
+            var importChild = dotted_as_names.GetChild(import_i);
+            var moduleName = dotted_as_names.GetChild(import_i).GetText();
+            var aliasedName = moduleName;
+            if (importChild.ChildCount > 1)
+            {
+                // Oh, it's aliased. Throw that out and go a level deeper.
+                moduleName = importChild.GetChild(0).GetText();
+                aliasedName = importChild.GetChild(2).GetText();
+            }
+            generateImport(moduleName, aliasedName, null, null, context);
         }
-
-        generateImport(moduleName, aliasedName, null, null, context);
         return null;
     }
+
+    //public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
+    //{
+    //    // TODO: import from statements mess this all up a bit. We need to construct a proper
+    //    // fromlist when working with them.
+    //    //
+    //    // Thoughts for implementing import_from:
+    //    // 1. It sits a level above dotted_as_name
+    //    // 2. It could also use import_as_names, which is different from dotted_as_name in the parsing tree
+    //    //    but comes down to just slurping up a string either way.
+    //    // 3. Coming in from import_from requires getting the from name
+    //    // 4. We can create a common helper for most of the import code that optionally takes a from statement
+    //    //    for now
+    //    // 5. The plural import_as_names and dotted_as_names add an additional wrinkle that maybe I should
+    //    //    learn to parse first.
+
+    //    var moduleName = context.dotted_name().GetText();
+
+    //    // Aliased import:
+    //    // import foo as bar
+    //    // We might not have an alias, but if we do, it'll be the third element in the series.
+    //    string aliasedName = moduleName;
+    //    if (context.children.Count > 1)
+    //    {
+    //        aliasedName = context.GetChild(2).GetText();
+    //    }
+
+    //    generateImport(moduleName, aliasedName, null, null, context);
+    //    return null;
+    //}
 }

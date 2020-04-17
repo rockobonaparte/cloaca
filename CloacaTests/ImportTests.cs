@@ -40,6 +40,20 @@ namespace CloacaTests
         }
 
         [Test]
+        public void TwoImportsOneLine()
+        {
+            var fooModule = PyModule.Create("foo");
+            var barModule = PyModule.Create("bar");
+            var modules = new Dictionary<string, PyModule>();
+            modules.Add("foo", fooModule);
+            modules.Add("bar", barModule);
+
+            var interpreter = runProgram(
+                "import foo, bar\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
+        }
+
+        [Test]
         public void AliasedImport()
         {
             var fooModule = PyModule.Create("foo");
