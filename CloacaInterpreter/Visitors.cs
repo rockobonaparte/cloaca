@@ -1299,19 +1299,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // General imports not using import-from.
-        if (moduleAs == null)
+        // One do STORE_FAST if this isn't an import-from
+        if (moduleFromList == null)
         {
             string aliasedName = moduleAs == null ? moduleName : moduleAs;
             var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
         }
-
         // Import-from code generation.
-        if(moduleFromList != null && moduleFromList.Length > 0)
+        //if(moduleFromList != null && moduleFromList.Length > 0)
+        else
         {
             for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
             {
-                var fromNameConstIdx = ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
+                var fromNameConstIdx = ActiveProgram.Constants.AddReplaceGetIndex(PyString.Create(moduleFromList[fromIdx]));
                 ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
                 var fromName = moduleFromList[fromIdx];
                 if (moduleFromAliases != null && moduleFromAliases[fromIdx] != null)
@@ -1324,7 +1325,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             // To be honest, I'm not sure why I need the POP_TOP but I don't fully understand how the stack is 
             // affected by IMPORT_FROM yet. I only need it when I start pounding out IMPORT_FROM.
-            ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+            // I'm currently asking online about it.
+            // ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
         }
     }
 

@@ -1239,7 +1239,7 @@ namespace CloacaInterpreter
                                         }
                                         else
                                         {
-                                            module_parent = (PyObject) module_parent.__dict__[subname];
+                                            module_parent = (PyObject) PyClass.__getattribute__(module_parent, subname);
                                         }
                                     }
 
@@ -1254,8 +1254,28 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.IMPORT_FROM:
                             {
+                                // Loads the attribute co_names[namei] from the module found in TOS. The resulting object is pushed onto the stack,
+                                // to be subsequently stored by a STORE_FAST instruction.
                                 context.Cursor += 1;
-                                throw new NotImplementedException("IMPORT_FROM: Module imports are not yet supported");
+                                var fromModule = context.DataStack.Pop();
+
+                                var importName_i = context.Program.Code.GetUShort(context.Cursor);
+                                var fromName = (PyString) context.Program.Constants[importName_i];
+
+                                // TODO: Import from .NET modules
+                                var asPyObject = fromModule as PyObject;
+                                if(asPyObject == null)
+                                {
+                                    throw new NotImplementedException("IMPORT_FROM for non-Python objects not supported. Importing from .NET " +
+                                                                      "assembles will eventually be implemented.");
+                                }
+                                else
+                                {
+                                    var fromImported = PyClass.__getattribute__(asPyObject, fromName);
+                                    context.DataStack.Push(fromImported);
+                                }
+
+                                context.Cursor += 2;
                                 break;
                             }
                         case ByteCodes.IMPORT_STAR:
