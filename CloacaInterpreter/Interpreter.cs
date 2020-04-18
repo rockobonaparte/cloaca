@@ -19,8 +19,17 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
+        public Dictionary<string, PyModule> Modules;
+
+        public void AddModule(string name, PyModule module)
+        {
+            Modules.Add(name, module);
+        }
+
         public Interpreter(Scheduler scheduler)
         {
+            Modules = new Dictionary<string, PyModule>();
+
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
             var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
