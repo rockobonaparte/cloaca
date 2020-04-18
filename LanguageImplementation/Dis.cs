@@ -370,7 +370,8 @@ namespace LanguageImplementation
                         }
                     case ByteCodes.IMPORT_STAR:
                         {
-                            throw new NotImplementedException("IMPORT_STAR: Module imports are not yet supported");
+                            cursor += 1;
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "IMPORT_STAR", null, null);
                             break;
                         }
                     default:

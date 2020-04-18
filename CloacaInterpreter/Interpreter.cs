@@ -1280,8 +1280,34 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.IMPORT_STAR:
                             {
+                                // Loads all symbols not starting with "_" directly from the module TOS to the local namespace. The module is popped after
+                                // loading all names. This opcode implements from module import *.
                                 context.Cursor += 1;
-                                throw new NotImplementedException("IMPORT_STAR: Module imports are not yet supported");
+                                var fromModule = (PyModule) context.DataStack.Pop();
+                                foreach(var starImported in fromModule.__dict__)
+                                {
+                                    if (!starImported.Key.StartsWith("_"))
+                                    {
+                                        // Name goes to here
+                                        // key to codeObject.LocalNames[existing name or end]
+                                        // Value goes to context.Locals[index of varname]
+                                        var varIndex = context.LocalNames.IndexOf(starImported.Key);
+                                        if (varIndex == -1)
+                                        {
+                                            context.LocalNames.Add(starImported.Key);
+                                            varIndex = context.LocalNames.Count - 1;
+                                        }
+
+                                        if (varIndex >= context.Locals.Count)
+                                        {
+                                            context.Locals.Add(starImported.Value);
+                                        }
+                                        else
+                                        {
+                                            context.Locals[varIndex] = starImported.Value;
+                                        }
+                                    }
+                                }
                                 break;
                             }
                         default:

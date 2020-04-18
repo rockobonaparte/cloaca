@@ -1308,6 +1308,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         // Import-from code generation.
         //if(moduleFromList != null && moduleFromList.Length > 0)
+        else if(moduleFromList[0] == "*")
+        {
+            ActiveProgram.AddInstruction(ByteCodes.IMPORT_STAR, context);
+        }
         else
         {
             for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
@@ -1364,28 +1368,35 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var moduleName = context.GetChild(1).GetText();
         var fromNames = new List<string>();
         var asNames = new List<string>();
-        var import_as_names = context.import_as_names();
-        if (import_as_names.ChildCount > 0)
+        if (context.GetChild(3).GetText() == "*")
         {
-            // Skip the commas so we do every-other child.
-            for(int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; import_as_names_i += 2)
-            {
-                var import_as_name = import_as_names.GetChild(import_as_names_i);
-                if(import_as_name.ChildCount > 1)
-                {
-                    fromNames.Add(import_as_name.GetChild(0).GetText());
-                    asNames.Add(import_as_name.GetChild(2).GetText());
-                }
-                else
-                {
-                    fromNames.Add(import_as_name.GetText());
-                    asNames.Add(import_as_name.GetText());
-                }
-            }
+            fromNames.Add("*");
         }
         else
         {
-            fromNames.Add(context.GetChild(3).GetText());
+            var import_as_names = context.import_as_names();
+            if (import_as_names.ChildCount > 0)
+            {
+                // Skip the commas so we do every-other child.
+                for (int import_as_names_i = 0; import_as_names_i < import_as_names.ChildCount; import_as_names_i += 2)
+                {
+                    var import_as_name = import_as_names.GetChild(import_as_names_i);
+                    if (import_as_name.ChildCount > 1)
+                    {
+                        fromNames.Add(import_as_name.GetChild(0).GetText());
+                        asNames.Add(import_as_name.GetChild(2).GetText());
+                    }
+                    else
+                    {
+                        fromNames.Add(import_as_name.GetText());
+                        asNames.Add(import_as_name.GetText());
+                    }
+                }
+            }
+            else
+            {
+                fromNames.Add(context.GetChild(3).GetText());
+            }
         }
 
         generateImport(
