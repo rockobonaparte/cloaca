@@ -12,6 +12,25 @@ Next TODO work:
    * Helper to create custom .NET PyModules
    * Harden in Unity
 
+Overview of module import process:
+1. Look in sys.modules for the request module. sys.modules is a dict of module names to modules and serves as a cache.
+2. Fall back to finders to try to locate the module. Typical ones: built-ins, frozen, and paths. Each finder tries in turn and returns None if it fails.
+   It can be resolved from sys.meta_path. "Meta path finders must implement a method called find_spec() which takes three arguments: a name, an import path,
+   and (optionally) a target module." Note that frozen modules are for precompiled Python executables. We won't implement that.
+
+All modules have a module spec defined as __spec__. These defines how the module is loaded. It is of ModuleSpec class. The loader attribute specifically
+states which loader to use to load the module. There's a peculiar chicken-and-egg thing happening here. I don't fully get it.
+
+The path finder normally looks in:
+1. sys.path
+2. sys.path_hooks
+3. sys.path_importer_cache
+4. __path__ attribute on package objects
+We probably don't have to directly replicate this.
+
+This is probably enough to get things rolling...
+
+
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.
 
