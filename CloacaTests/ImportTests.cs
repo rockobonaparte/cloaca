@@ -76,6 +76,7 @@ namespace CloacaTests
 
             var interpreter = runProgram(
                 "from foo import FooThing\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
         }
 
         [Test]
@@ -91,6 +92,7 @@ namespace CloacaTests
 
             var interpreter = runProgram(
                 "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
         }
 
         [Test]
@@ -106,6 +108,22 @@ namespace CloacaTests
 
             var interpreter = runProgram(
                 "from foo import *\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
+        }
+
+        [Test]
+        [Ignore("We can set module import levels but the current module system doesn't have an awareness of hierarchical position (yet).")]
+        public void FromDotDotImportStar()
+        {
+            var fooModule = PyModule.Create("foo");
+            var modules = new Dictionary<string, PyModule>();
+            modules.Add("foo", fooModule);
+
+            // TODO: Need to actually set this test up to be a level below or whatever.
+
+            var interpreter = runProgram(
+                "from .. import foo\n", new Dictionary<string, object>(), modules, 1);
+            // TODO: Assert *something*
         }
     }
 }

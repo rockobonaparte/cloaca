@@ -4,7 +4,7 @@
 Next TODO work:
 * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
 * Implementing import
-   * Module levels; it's based on leading dots
+   * Module levels; it's based on leading dots. Literally the number of dots is the import level
    * Binding spec
       * Spec for manually embedded modules
       * Spec for other source files based on a provider

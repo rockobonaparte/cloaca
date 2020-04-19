@@ -1273,10 +1273,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    private void generateImport(string moduleName, string moduleAs, string[] moduleFromList, string[] moduleFromAliases, ParserRuleContext context)
+    private void generateImport(string originalModuleName, string moduleAs, string[] moduleFromList, string[] moduleFromAliases, ParserRuleContext context)
     {
+        // Munge on the name to determine import level. Eat up all leading dots as levels from which to import.
+        string moduleName = originalModuleName.TrimStart('.');
         var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
-        var importLevel = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(0));
+        int importLevelInt = originalModuleName.Length - moduleName.Length;
+        var importLevelConstIdx = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(importLevelInt));
 
         int fromListIndex = -1;
         if(moduleFromList == null || moduleFromList.Length == 0)
@@ -1294,7 +1297,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             fromListIndex = ActiveProgram.Constants.AddGetIndex(fromListTuple);
         }
 
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevel, context);
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevelConstIdx, context);
         ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
@@ -1361,14 +1364,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //
         // Look at the children:
         // [0]: from
-        // [1]: name to import
-        // [2]: import
-        // [3]: ... ignore that and poke import_as_names directly if you can, otherwise use it.
+        // [1+]: name to import (or lots of dots)
+        // [-2]: import
+        // [-1]: ... ignore that and poke import_as_names directly if you can, otherwise use it.
 
+        // Gotta keep going until we run out of dots. If we never had any dots in the first place,
+        // then the first index we used is the module from which to import.
         var moduleName = context.GetChild(1).GetText();
+        for(int dotted_i = 2; context.GetChild(dotted_i).GetText().StartsWith("."); ++dotted_i)
+        {
+            moduleName += context.GetChild(dotted_i).GetText();
+        }
+
         var fromNames = new List<string>();
         var asNames = new List<string>();
-        if (context.GetChild(3).GetText() == "*")
+        var endOfChildren = context.children.Count;
+        if (context.GetChild(endOfChildren-1).GetText() == "*")
         {
             fromNames.Add("*");
         }
@@ -1395,7 +1406,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
-                fromNames.Add(context.GetChild(3).GetText());
+                fromNames.Add(context.GetChild(endOfChildren - 1).GetText());
             }
         }
 
