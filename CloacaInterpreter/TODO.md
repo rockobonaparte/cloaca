@@ -30,6 +30,8 @@ We probably don't have to directly replicate this.
 
 This is probably enough to get things rolling...
 
+Each context will need to track which modules it has imported. Don't make that global to the interpreter. However, we can have the binding mechanisms global.
+
 
 There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
 without a reference to the interpreter and then fill it in afterwards.

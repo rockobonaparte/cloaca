@@ -20,6 +20,7 @@ namespace LanguageImplementation
         public FrameContext(Stack<Frame> callStack)
         {
             this.callStack = callStack;
+            SysModules = new Dictionary<string, PyModule>();
         }
 
         public int Cursor
@@ -97,6 +98,12 @@ namespace LanguageImplementation
                 return callStack.Peek().LocalNames;
             }
         }
+
+        /// <summary>
+        /// A representation of sys.modules. Each context gets its own since it's possibly
+        /// importing different things.
+        /// </summary>
+        public Dictionary<string, PyModule> SysModules;
 
         // This is like doing a LOAD_NAME without pushing it on the stack.
         public object GetVariable(string name)
