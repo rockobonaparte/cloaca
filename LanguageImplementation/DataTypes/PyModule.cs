@@ -34,14 +34,14 @@ namespace LanguageImplementation.DataTypes
 
     public class PyModule : PyObject
     {
-        public string name;
+        public string Name;
         public PyModule() : base(PyModuleClass.Instance)
         {
         }
 
         public PyModule(string name) : base(PyModuleClass.Instance)
         {
-            this.name = name;
+            this.Name = name;
         }
 
         public static PyModule Create(string name)
@@ -51,7 +51,7 @@ namespace LanguageImplementation.DataTypes
 
         public override string ToString()
         {
-            return "<module '" + name + "'>";
+            return "<module '" + Name + "'>";
         }
     }
 }

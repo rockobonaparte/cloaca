@@ -61,6 +61,7 @@
     <Compile Include="FutureAwaiter.cs" />
     <Compile Include="Interpreter.cs" />
     <Compile Include="JumpOpcodeFixer.cs" />
+    <Compile Include="ModuleImporting\InjectedModuleLoader.cs" />
     <Compile Include="ObjectResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repl.cs" />
@@ -80,6 +81,7 @@
       <Name>LanguageImplementation</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

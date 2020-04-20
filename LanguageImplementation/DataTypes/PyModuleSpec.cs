@@ -6,7 +6,12 @@ namespace LanguageImplementation.DataTypes
 
     public interface ISpecLoader
     {
-        PyModule find_spec(string name, string import_path, string target_module);
+        PyModule Load(PyModuleSpec spec);
+    }
+
+    public interface ISpecFinder
+    {
+        PyModuleSpec find_spec(string name, string import_path, string target_module);
     }
 
     public class PyModuleSpecClass : PyClass
