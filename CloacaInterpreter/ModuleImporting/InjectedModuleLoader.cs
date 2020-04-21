@@ -62,7 +62,7 @@ namespace CloacaInterpreter.ModuleImporting
             return parent;
         }
 
-        public PyModuleSpec find_spec(string name, string import_path, string target_module)
+        public PyModuleSpec find_spec(string name, string import_path, PyModule target)
         {
             var module = findModule(name);
             if(module == null)

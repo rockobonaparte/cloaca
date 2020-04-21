@@ -46,7 +46,10 @@ namespace LanguageImplementation.DataTypes
 
         public static PyModule Create(string name)
         {
-            return PyTypeObject.DefaultNew<PyModule>(PyModuleClass.Instance);
+            var createdModule = PyTypeObject.DefaultNew<PyModule>(PyModuleClass.Instance);
+            createdModule.Name = name;
+            return createdModule;
+           
         }
 
         public override string ToString()

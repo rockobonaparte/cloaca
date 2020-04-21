@@ -11,7 +11,19 @@ namespace LanguageImplementation.DataTypes
 
     public interface ISpecFinder
     {
-        PyModuleSpec find_spec(string name, string import_path, string target_module);
+        /// <summary>
+        /// Locates a module binding spec. This is using the same signature of the Python equivalent--including
+        /// the formatting of the name of the method (find_spec).
+        /// 
+        /// It's not assumed that the finder will even find a binding spec for this module; it will just return
+        /// null in that situation.
+        /// </summary>
+        /// <param name="name">The name of the module to import.</param>
+        /// <param name="import_path">The path from which to import the module (if applicable).</param>
+        /// <param name="target">(Optional, can be null) Module object to use as the target for loading the module.
+        /// Normally this is null, which means the target module has not been created yet.</param>
+        /// <returns></returns>
+        PyModuleSpec find_spec(string name, string import_path, PyModule target);
     }
 
     public class PyModuleSpecClass : PyClass

@@ -3,14 +3,55 @@ using System.Collections.Generic;
 
 using NUnit.Framework;
 
-using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation.DataTypes;
-using LanguageImplementation;
+using CloacaInterpreter.ModuleImporting;
 
 namespace CloacaTests
 {
     [TestFixture]
-    public class ImportTests : RunCodeTest
+    public class ImporterTests
+    {
+        [Test]
+        public void InjectedModulesRootLevel()
+        {
+            var repo = new InjectedModuleRepository();
+            var fooModule = PyModule.Create("foo");
+            repo.AddNewModuleRoot(fooModule);
+
+            var fooSpec = repo.find_spec("foo", null, null);
+
+            Assert.That(fooSpec, Is.Not.Null);
+
+            var fooLoaded = repo.Load(fooSpec);
+
+            Assert.That(fooLoaded, Is.EqualTo(fooModule));
+        }
+
+        [Test]
+        public void InjectedModulesSecondLevel()
+        {
+            var repo = new InjectedModuleRepository();
+            var fooModule = PyModule.Create("foo");
+            var barModule = PyModule.Create("bar");
+            fooModule.__dict__.Add("bar", barModule);
+            repo.AddNewModuleRoot(fooModule);
+
+            var fooSpec = repo.find_spec("foo", null, null);
+            var barSpec = repo.find_spec("foo.bar", null, null);
+
+            Assert.That(fooSpec, Is.Not.Null);
+            Assert.That(barSpec, Is.Not.Null);
+
+            var fooLoaded = repo.Load(fooSpec);
+            var barLoaded = repo.Load(barSpec);
+
+            Assert.That(fooLoaded, Is.EqualTo(fooModule));
+            Assert.That(barLoaded, Is.EqualTo(barModule));
+        }
+    }
+
+    [TestFixture]
+    public class ImportSyntaxTests : RunCodeTest
     {
         [Test]
         public void BasicImport()
