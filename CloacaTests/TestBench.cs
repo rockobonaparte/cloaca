@@ -7,19 +7,14 @@ using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
 using Antlr4.Runtime;
-using Antlr4.Runtime.Atn;
-using Antlr4.Runtime.Dfa;
-using Antlr4.Runtime.Misc;
-using Antlr4.Runtime.Sharpen;
 using NUnit.Framework;
-using System.Runtime.ExceptionServices;
 
 namespace CloacaTests
 {
     [TestFixture]
     public class RunCodeTest
     {
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, Dictionary<string, PyModule> modules, int expectedIterations, out FrameContext context)
+        protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -45,9 +40,9 @@ namespace CloacaTests
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
-            foreach(var moduleName in modules.Keys)
+            foreach(var finder in moduleSpecFinders)
             {
-                interpreter.AddModule(moduleName, modules[moduleName]);
+                interpreter.AddModuleFinder(finder);
             }
             scheduler.SetInterpreter(interpreter);
 
@@ -73,20 +68,20 @@ namespace CloacaTests
 
         protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
         {
-            runProgram(program, variablesIn, new Dictionary<string, PyModule>(), expectedIterations, out context);
+            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
         }
 
         protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
         {
             FrameContext context;
-            runProgram(program, variablesIn, new Dictionary<string, PyModule>(), expectedIterations, out context);
+            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
             return context;
         }
 
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, Dictionary<string, PyModule> modules, int expectedIterations)
+        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> modulesSpecFinders, int expectedIterations)
         {
             FrameContext context;
-            runProgram(program, variablesIn, modules, expectedIterations, out context);
+            runProgram(program, variablesIn, modulesSpecFinders, expectedIterations, out context);
             return context;
         }
 

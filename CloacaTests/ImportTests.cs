@@ -53,15 +53,35 @@ namespace CloacaTests
     [TestFixture]
     public class ImportSyntaxTests : RunCodeTest
     {
+        private List<ISpecFinder> moduleFinders;
+
+        [SetUp]
+        public void setupFinders()
+        {
+            var repo = new InjectedModuleRepository();
+            var fooModule = PyModule.Create("foo");
+
+            var barModule = PyModule.Create("bar");
+            var FooThing = PyModule.Create("FooThing");
+            var OtherThing = PyModule.Create("OtherThing");
+            fooModule.__dict__.Add("bar", barModule);
+            fooModule.__dict__.Add("FooThing", FooThing);
+            fooModule.__dict__.Add("OtherThing", OtherThing);
+
+            var foo2Module = PyModule.Create("foo2");
+
+            repo.AddNewModuleRoot(fooModule);
+            repo.AddNewModuleRoot(foo2Module);
+
+            moduleFinders = new List<ISpecFinder>();
+            moduleFinders.Add(repo);
+        }
+
         [Test]
         public void BasicImport()
         {
-            var fooModule = PyModule.Create("foo");
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "import foo\n", new Dictionary<string, object>(), modules, 1);
+                "import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             // TODO: Assert *something*
         }
@@ -69,86 +89,48 @@ namespace CloacaTests
         [Test]
         public void TwoLevelImport()
         {
-            var fooModule = PyModule.Create("foo");
-            var barModule = PyModule.Create("bar");
-            fooModule.__dict__.Add("bar", barModule);
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "import foo.bar\n", new Dictionary<string, object>(), modules, 1);
+                "import foo.bar\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
         [Test]
         public void TwoImportsOneLine()
         {
-            var fooModule = PyModule.Create("foo");
-            var barModule = PyModule.Create("bar");
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-            modules.Add("bar", barModule);
-
             var interpreter = runProgram(
-                "import foo, bar\n", new Dictionary<string, object>(), modules, 1);
+                "import foo, foo2\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
         [Test]
         public void AliasedImport()
         {
-            var fooModule = PyModule.Create("foo");
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "import foo as fruit\n", new Dictionary<string, object>(), modules, 1);
+                "import foo as fruit\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
         [Test]
         public void FromImport()
         {
-            var fooModule = PyModule.Create("foo");
-            var FooThing = PyModule.Create("FooThing");
-            fooModule.__dict__.Add("FooThing", FooThing);
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "from foo import FooThing\n", new Dictionary<string, object>(), modules, 1);
+                "from foo import FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
         [Test]
         public void FromCommaImport()
         {
-            var fooModule = PyModule.Create("foo");
-            var FooThing = PyModule.Create("FooThing");
-            var OtherThing = PyModule.Create("OtherThing");
-            fooModule.__dict__.Add("FooThing", FooThing);
-            fooModule.__dict__.Add("OtherThing", OtherThing);
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), modules, 1);
+                "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
         [Test]
         public void FromImportStar()
         {
-            var fooModule = PyModule.Create("foo");
-            var FooThing = PyModule.Create("FooThing");
-            var OtherThing = PyModule.Create("OtherThing");
-            fooModule.__dict__.Add("FooThing", FooThing);
-            fooModule.__dict__.Add("OtherThing", OtherThing);
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             var interpreter = runProgram(
-                "from foo import *\n", new Dictionary<string, object>(), modules, 1);
+                "from foo import *\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
 
@@ -156,14 +138,10 @@ namespace CloacaTests
         [Ignore("We can set module import levels but the current module system doesn't have an awareness of hierarchical position (yet).")]
         public void FromDotDotImportStar()
         {
-            var fooModule = PyModule.Create("foo");
-            var modules = new Dictionary<string, PyModule>();
-            modules.Add("foo", fooModule);
-
             // TODO: Need to actually set this test up to be a level below or whatever.
 
             var interpreter = runProgram(
-                "from .. import foo\n", new Dictionary<string, object>(), modules, 1);
+                "from .. import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
     }

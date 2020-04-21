@@ -7,7 +7,6 @@ using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 using System.Threading.Tasks;
 using System.Reflection;
-using System.Reflection.Emit;
 
 namespace CloacaInterpreter
 {
@@ -19,16 +18,21 @@ namespace CloacaInterpreter
             get; protected set;
         }
 
-        public Dictionary<string, PyModule> Modules;
+        /// <summary>
+        /// Analogue to sys.meta_path. These are all the different module finders that are consulted when
+        /// we try to import a new module. These will try to figure out what the heck the developer was
+        /// talking about among any various sources that could import a module from the given name.
+        /// </summary>
+        private List<ISpecFinder> sys_meta_path;
 
-        public void AddModule(string name, PyModule module)
+        public void AddModuleFinder(ISpecFinder finder)
         {
-            Modules.Add(name, module);
+            sys_meta_path.Add(finder);
         }
 
         public Interpreter(Scheduler scheduler)
         {
-            Modules = new Dictionary<string, PyModule>();
+            sys_meta_path = new List<ISpecFinder>();
 
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
@@ -1210,17 +1214,8 @@ namespace CloacaInterpreter
 
                                 var fromlist = context.DataStack.Pop();
                                 var import_level = context.DataStack.Pop();
-
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
-
-                                // TODO: Encapsulate this to isolate testing binding specs more directly.
-                                // Look first in the context's SysModules. If it's not there, look into our global bindings and then add it to
-                                // SysModules.
                                 var module_name = context.Names[import_name_i];
-
-                                // Look for the root name. The root is kind of what is actually imported, but we will crawl the
-                                // whole thing to see if the given path completely exists.
-                                var module_tree = module_name.Split(new char[] { '.' });
 
                                 PyModule foundModule = null;
                                 if (context.SysModules.ContainsKey(module_name))
@@ -1229,37 +1224,25 @@ namespace CloacaInterpreter
                                 }
                                 else
                                 {
-                                    if (!Modules.ContainsKey(module_tree[0]))
+                                    PyModuleSpec spec = null;
+                                    foreach(var finder in sys_meta_path)
+                                    {
+                                        spec = finder.find_spec(module_name, null, null);
+                                        if(spec != null)
+                                        {
+                                            break;
+                                        }
+                                    }
+
+                                    if(spec == null)
                                     {
                                         context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
                                     }
                                     else
-                                    {
-                                        // Check out this guy that's not recursing.
-                                        var module_root = Modules[module_tree[0]];
-                                        PyObject module_parent = module_root;
-                                        for (int module_path_i = 1; module_path_i < module_tree.Length; ++module_path_i)
-                                        {
-                                            var subname = module_tree[module_path_i];
-
-                                            // TODO: Should I use attribute lookup methods? I am not sure how Python does it and I'm not sure if I care.
-                                            if (!module_parent.__dict__.ContainsKey(subname))
-                                            {
-                                                context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                module_parent = (PyObject)PyClass.__getattribute__(module_parent, subname);
-                                            }
-                                        }
-
-                                        if (context.CurrentException == null)
-                                        {
-                                            var toImport = Modules[module_tree[0]];
-                                            context.DataStack.Push(toImport);
-                                            context.SysModules.Add(module_name, toImport);
-                                        }
+                                    {                                       
+                                        var toImport = spec.Loader.Load(spec);
+                                        context.DataStack.Push(toImport);
+                                        context.SysModules.Add(module_name, toImport);
                                     }
                                 }
 
