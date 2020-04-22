@@ -61,6 +61,7 @@
     <Compile Include="FutureAwaiter.cs" />
     <Compile Include="Interpreter.cs" />
     <Compile Include="JumpOpcodeFixer.cs" />
+    <Compile Include="ModuleImporting\FileBasedModuleLoader.cs" />
     <Compile Include="ModuleImporting\InjectedModuleLoader.cs" />
     <Compile Include="ObjectResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

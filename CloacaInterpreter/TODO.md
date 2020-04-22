@@ -219,6 +219,9 @@ Part 3: Hardening
   do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.
 * Need to implement __getattr__ properly as the alternative to __getattribute__
+* Modules
+  * [MODULE_INIT] Start running __init__.py files when importing.
+  * [PRECOMPILE_LOAD] Precompile modules and load the precompiled versions
 
 
 Tech debt:
