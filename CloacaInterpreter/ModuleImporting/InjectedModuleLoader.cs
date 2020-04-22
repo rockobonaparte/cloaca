@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using LanguageImplementation.DataTypes;
 
@@ -14,13 +13,16 @@ namespace CloacaInterpreter.ModuleImporting
     /// So if you have a root of "foo" then you create a PyModule named "foo." If you then want "foo.bar", create
     /// a "bar" PyModule and add it as an attribute named "bar" under the foo PyModule.
     /// </summary>
-    public class InjectedModuleRepository : ISpecFinder, ISpecLoader
+    public class InjectedModuleRepository : ISpecFinder
     {
         private Dictionary<string, PyModule> ModuleRoots;
+        private InjectedModuleSpec loader;
+
 
         public InjectedModuleRepository()
         {
             ModuleRoots = new Dictionary<string, PyModule>();
+            loader = new InjectedModuleSpec();
         }
 
         public void AddNewModuleRoot(PyModule newModule)
@@ -71,10 +73,17 @@ namespace CloacaInterpreter.ModuleImporting
             }
             else
             {
-                return PyModuleSpec.Create(name, this, "", null);
+                var spec = PyModuleSpec.Create(name, loader, "", null);
+                spec.LoaderState = module;
+                return spec;
             }
         }
 
+
+    }
+
+    public class InjectedModuleSpec : ISpecLoader
+    {
         /// <summary>
         /// This is more of a formality since the injected module loader already has the module loaded, but this gives us conformity with
         /// the module importing system.
@@ -83,9 +92,7 @@ namespace CloacaInterpreter.ModuleImporting
         /// <returns>The loaded module, which is just a lookup into our system.</returns>
         public PyModule Load(PyModuleSpec spec)
         {
-            // We're doing a double lookup but since the result gets cached, I don't consider it to be a huge performance hit. If it comes to it,
-            // we can create some kind of loader class that we create for each lookup that'll just return the module.
-            return findModule(spec.Name);
+            return (PyModule)spec.LoaderState;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace CloacaTests
 
             Assert.That(fooSpec, Is.Not.Null);
 
-            var fooLoaded = repo.Load(fooSpec);
+            var fooLoaded = fooSpec.Loader.Load(fooSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
         }
@@ -42,8 +42,8 @@ namespace CloacaTests
             Assert.That(fooSpec, Is.Not.Null);
             Assert.That(barSpec, Is.Not.Null);
 
-            var fooLoaded = repo.Load(fooSpec);
-            var barLoaded = repo.Load(barSpec);
+            var fooLoaded = fooSpec.Loader.Load(fooSpec);
+            var barLoaded = barSpec.Loader.Load(barSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
             Assert.That(barLoaded, Is.EqualTo(barModule));

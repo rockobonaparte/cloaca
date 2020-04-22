@@ -105,6 +105,22 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        /// <summary>
+        /// Per https://www.python.org/dev/peps/pep-0451/
+        /// loader_state - a container of extra module-specific data for use during loading.
+        /// </summary>
+        public object LoaderState
+        {
+            get
+            {
+                return PyClass.__getattribute__(this, "loader_state");
+            }
+            set
+            {
+                PyClass.__setattr__(this, "loader_state", value);
+            }
+        }
+
         public PyModuleSpec() : base(PyModuleClass.Instance)
         {
         }
