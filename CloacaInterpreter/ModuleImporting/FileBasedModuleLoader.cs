@@ -2,6 +2,7 @@
 using System.IO;
 
 using LanguageImplementation.DataTypes;
+using LanguageImplementation;
 
 namespace CloacaInterpreter.ModuleImporting
 {
@@ -18,9 +19,10 @@ namespace CloacaInterpreter.ModuleImporting
         private List<string> moduleRootPaths;
         private FileBasedModuleLoader loader;
 
-        public FileBasedModuleFinder(List<string> moduleRootPaths)
+        public FileBasedModuleFinder(List<string> moduleRootPaths, FileBasedModuleLoader loader)
         {
             this.moduleRootPaths = moduleRootPaths;
+            this.loader = loader;
         }
 
         /// <summary>
@@ -78,9 +80,26 @@ namespace CloacaInterpreter.ModuleImporting
     /// </summary>
     public class FileBasedModuleLoader : ISpecLoader
     {
+        private IInterpreter interpreter;
+
+        public FileBasedModuleLoader(IInterpreter interpreter)
+        {
+            this.interpreter = interpreter;
+        }
+
         public PyModule Load(PyModuleSpec spec)
         {
-            throw new System.NotImplementedException();
+            var foundPath = (string)spec.LoaderState;
+
+            var inFile = File.ReadAllText(foundPath);
+
+            ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
+
+            // TODO: Need to extend the existing frame context to start executing this module in the current context.
+            // Have the interpreter then run the module and then return the affected namespace as a module.
+            // Easy, right? :p
+
+            return null;
         }
     }
 }

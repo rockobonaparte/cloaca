@@ -21,7 +21,8 @@ namespace LanguageImplementation.DataTypes
         /// <param name="name">The name of the module to import.</param>
         /// <param name="import_path">The path from which to import the module (if applicable).</param>
         /// <param name="target">(Optional, can be null) Module object to use as the target for loading the module.
-        /// Normally this is null, which means the target module has not been created yet.</param>
+        /// Normally this is null, which means the target module has not been created yet. According to PEP 451, this
+        /// is used in particular when reloading a module.</param>
         /// <returns></returns>
         PyModuleSpec find_spec(string name, string import_path, PyModule target);
     }
