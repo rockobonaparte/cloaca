@@ -2,6 +2,8 @@
 using System.IO;
 
 using LanguageImplementation.DataTypes;
+using LanguageImplementation;
+using System.Threading.Tasks;
 
 namespace CloacaInterpreter.ModuleImporting
 {
@@ -18,9 +20,10 @@ namespace CloacaInterpreter.ModuleImporting
         private List<string> moduleRootPaths;
         private FileBasedModuleLoader loader;
 
-        public FileBasedModuleFinder(List<string> moduleRootPaths)
+        public FileBasedModuleFinder(List<string> moduleRootPaths, FileBasedModuleLoader loader)
         {
             this.moduleRootPaths = moduleRootPaths;
+            this.loader = loader;
         }
 
         /// <summary>
@@ -32,25 +35,33 @@ namespace CloacaInterpreter.ModuleImporting
         private string findModule(string[] splitNames, string moduleRoot)
         {
             var builtPath = moduleRoot;
-            bool found = true;
-            foreach(var subPath in splitNames)
+
+            // Need to index explicitly because the last of the split paths might actually be a .py file.
+            for (int subPath_i = 0; subPath_i < splitNames.Length; ++subPath_i)
             {
-                builtPath += subPath;
+                var subPath = splitNames[subPath_i];
+                builtPath = Path.Combine(builtPath, subPath);
                 if(!File.Exists(builtPath))
                 {
-                    found = false;
-                    break;
+                    if(subPath_i == splitNames.Length - 1)
+                    {
+                        if(File.Exists(builtPath + ".py"))
+                        {
+                            return builtPath + ".py";
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    return null;
                 }
             }
 
-            if(!found)
-            {
-                return null;
-            }
-            else
-            {
-                return builtPath;
-            }
+            return builtPath;
         }
 
         public PyModuleSpec find_spec(string name, string import_path, PyModule target)
@@ -74,13 +85,32 @@ namespace CloacaInterpreter.ModuleImporting
 
     /// <summary>
     /// Loader of FileBasedModuleFinder PyModuleSpecs. This will actually load the module
-    /// from disk.
+    /// from disk. It will then execute the code inside that module file. The final module is a fresh
+    /// module created from scratch that is populated with the executed code's namespace.
     /// </summary>
     public class FileBasedModuleLoader : ISpecLoader
     {
-        public PyModule Load(PyModuleSpec spec)
+
+        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
-            throw new System.NotImplementedException();
+            var foundPath = (string)spec.LoaderState;
+            var inFile = File.ReadAllText(foundPath);
+            var moduleCode = ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
+            await interpreter.CallInto(context, moduleCode, new object[0]);
+
+            if(context.EscapedDotNetException != null)
+            {
+                throw context.EscapedDotNetException;
+            }
+
+            var moduleFrame = context.callStack.Pop();
+            var module = PyModule.Create(spec.Name);
+            for(int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
+            {
+                module.__setattr__(moduleFrame.LocalNames[local_i], moduleFrame.Locals[local_i]);
+            }
+
+            return module;
         }
     }
 }

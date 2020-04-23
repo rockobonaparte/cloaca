@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-
+using System.Threading.Tasks;
+using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
 namespace CloacaInterpreter.ModuleImporting
@@ -90,7 +91,7 @@ namespace CloacaInterpreter.ModuleImporting
         /// </summary>
         /// <param name="spec">The module spec we will load.</param>
         /// <returns>The loaded module, which is just a lookup into our system.</returns>
-        public PyModule Load(PyModuleSpec spec)
+        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             return (PyModule)spec.LoaderState;
         }

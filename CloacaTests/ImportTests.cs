@@ -1,18 +1,49 @@
-﻿using System.Numerics;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 using NUnit.Framework;
 
-using LanguageImplementation.DataTypes;
 using CloacaInterpreter.ModuleImporting;
+using CloacaInterpreter;
+using LanguageImplementation.DataTypes;
+using LanguageImplementation;
 
 namespace CloacaTests
 {
     [TestFixture]
-    public class ImporterTests
+    public class FileImporterTests
     {
         [Test]
-        public void InjectedModulesRootLevel()
+        public async Task BasicImport()
+        {           
+            var repoRoots = new List<string>();
+            var fake_module_root = Path.Combine(Path.GetDirectoryName(typeof(FileImporterTests).Assembly.Location),
+                "fake_module_root");
+            repoRoots.Add(fake_module_root);
+
+            var scheduler = new Scheduler();                // Might not need the actual scheduler...
+            var interpreter = new Interpreter(scheduler);
+
+            var loader = new FileBasedModuleLoader();
+            var rootContext = new FrameContext();
+            var repo = new FileBasedModuleFinder(repoRoots, loader);
+
+            var spec = repo.find_spec("test", null, null);
+            Assert.NotNull(spec);
+
+            var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec);
+            Assert.That(loadedModule.__dict__, Contains.Key("a_string"));
+            Assert.That(loadedModule.__dict__["a_string"], Is.EqualTo(PyString.Create("Yay!")));
+        }
+    }
+
+    [TestFixture]
+    public class InjectedImporterTests
+    {
+        [Test]
+        public async Task InjectedModulesRootLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -22,13 +53,13 @@ namespace CloacaTests
 
             Assert.That(fooSpec, Is.Not.Null);
 
-            var fooLoaded = fooSpec.Loader.Load(fooSpec);
+            var fooLoaded = await fooSpec.Loader.Load(null, null, fooSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
         }
 
         [Test]
-        public void InjectedModulesSecondLevel()
+        public async Task InjectedModulesSecondLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -42,8 +73,8 @@ namespace CloacaTests
             Assert.That(fooSpec, Is.Not.Null);
             Assert.That(barSpec, Is.Not.Null);
 
-            var fooLoaded = fooSpec.Loader.Load(fooSpec);
-            var barLoaded = barSpec.Loader.Load(barSpec);
+            var fooLoaded = await fooSpec.Loader.Load(null, null, fooSpec);
+            var barLoaded = await barSpec.Loader.Load(null, null, barSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
             Assert.That(barLoaded, Is.EqualTo(barModule));

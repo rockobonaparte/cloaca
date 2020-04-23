@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
 
     public interface ISpecLoader
     {
-        PyModule Load(PyModuleSpec spec);
+        /// <summary>
+        /// Load the module. This is asynchronous because the module may need to run some code, and that code may
+        /// have to yield. Since it has to run code, it needs a handle to the interpreter as well as the context into
+        /// which to load the module.
+        /// </summary>
+        /// <param name="interpreter">Interpreter with which to run any module bootstrapping code.</param>
+        /// <param name="context">Context on which to attach any code that has to be run while loading the module.</param>
+        /// <param name="spec">The module spec to load.</param>
+        /// <returns></returns>
+        Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec);
     }
 
     public interface ISpecFinder
@@ -21,7 +31,8 @@ namespace LanguageImplementation.DataTypes
         /// <param name="name">The name of the module to import.</param>
         /// <param name="import_path">The path from which to import the module (if applicable).</param>
         /// <param name="target">(Optional, can be null) Module object to use as the target for loading the module.
-        /// Normally this is null, which means the target module has not been created yet.</param>
+        /// Normally this is null, which means the target module has not been created yet. According to PEP 451, this
+        /// is used in particular when reloading a module.</param>
         /// <returns></returns>
         PyModuleSpec find_spec(string name, string import_path, PyModule target);
     }
