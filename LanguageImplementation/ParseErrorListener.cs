@@ -9,6 +9,14 @@ using Antlr4.Runtime.Sharpen;
 
 namespace LanguageImplementation
 {
+    public class CloacaParseException : Exception
+    {
+        public CloacaParseException(string message) : base(message)
+        {
+
+        }
+    }
+
     /// <summary>
     /// Capture parsing errors for the test bench. Each one gets crammed into a list of strings that can be 
     /// examined after parsing.
@@ -58,7 +66,7 @@ namespace LanguageImplementation
         {
             if(Errors.Count > 0)
             {
-                throw new Exception("There were parse errors:\n" + Report());
+                throw new CloacaParseException("There were parse errors:\n" + Report());
             }
         }
     }

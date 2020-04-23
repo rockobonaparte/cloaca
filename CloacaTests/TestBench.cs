@@ -16,22 +16,15 @@ namespace CloacaTests
     {
         protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
         {
-            var inputStream = new AntlrInputStream(program);
-            var lexer = new CloacaLexer(inputStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-            var errorListener = new ParseErrorListener();
-            var parser = new CloacaParser(commonTokenStream);
-            parser.AddErrorListener(errorListener);
-
-            var antlrVisitorContext = parser.file_input();
-
-            Assert.That(errorListener.Errors.Count, Is.Zero, "There were parse errors:\n" + errorListener.Report());
-
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
-            visitor.Visit(antlrVisitorContext);
-
-            // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = null;
+            try
+            {
+                compiledProgram = ByteCodeCompiler.Compile(program, variablesIn);
+            }
+            catch(CloacaParseException parseFailed)
+            {
+                Assert.Fail(parseFailed.Message);
+            }
 
             Dis.dis(compiledProgram);
 

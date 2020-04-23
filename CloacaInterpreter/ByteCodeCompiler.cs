@@ -19,7 +19,7 @@ namespace CloacaInterpreter
         /// <param name="variablesIn">Variables referenced from the script that have to be externally injected. The
         /// dictionary maps the string key as the variable name and the value is the object to be referenced in the script.</param>
         /// <returns>The compiled code.</returns>
-        /// <exception cref="Exception">There were errors trying to build the script into byte code.</exception>
+        /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
         public static CodeObject Compile(string program, Dictionary<string, object> variablesIn)
         {
             var inputStream = new AntlrInputStream(program);
