@@ -81,12 +81,6 @@ namespace CloacaInterpreter.ModuleImporting
     /// </summary>
     public class FileBasedModuleLoader : ISpecLoader
     {
-        private Scheduler scheduler;
-
-        public FileBasedModuleLoader(Scheduler scheduler)
-        {
-            this.scheduler = scheduler;
-        }
 
         public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {

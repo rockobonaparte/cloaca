@@ -17,6 +17,10 @@ namespace LanguageImplementation
 
         public Stack<Frame> callStack;
 
+        public FrameContext() : this(new Stack<Frame>())
+        {
+        }
+
         public FrameContext(Stack<Frame> callStack)
         {
             this.callStack = callStack;

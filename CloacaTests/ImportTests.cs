@@ -1,15 +1,44 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 using NUnit.Framework;
 
-using LanguageImplementation.DataTypes;
 using CloacaInterpreter.ModuleImporting;
-using System.Threading.Tasks;
+using CloacaInterpreter;
+using LanguageImplementation.DataTypes;
+using LanguageImplementation;
 
 namespace CloacaTests
 {
     [TestFixture]
-    public class ImporterTests
+    public class FileImporterTests
+    {
+        [Test]
+        [Ignore("Getting this test to pass is a work-in-progress on this topic branch.")]
+        public async Task BasicImport()
+        {
+            var dir = Path.GetDirectoryName(typeof(FileImporterTests).Assembly.Location);
+            Environment.CurrentDirectory = dir;
+
+            var repoRoots = new List<string>();
+            repoRoots.Add("fake_module_root");
+
+            var scheduler = new Scheduler();                // Might not need the actual scheduler...
+            var interpreter = new Interpreter(scheduler);
+
+            var loader = new FileBasedModuleLoader();
+            var rootContext = new FrameContext();
+            var repo = new FileBasedModuleFinder(repoRoots, loader);
+
+            var spec = repo.find_spec("test", null, null);
+            var testLoaded = await spec.Loader.Load(interpreter, rootContext, spec);
+        }
+    }
+
+    [TestFixture]
+    public class InjectedImporterTests
     {
         [Test]
         public async Task InjectedModulesRootLevel()
