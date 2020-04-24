@@ -80,14 +80,14 @@ namespace CloacaInterpreter.ModuleImporting
     /// </summary>
     public class FileBasedModuleLoader : ISpecLoader
     {
-        private IInterpreter interpreter;
+        private Scheduler scheduler;
 
-        public FileBasedModuleLoader(IInterpreter interpreter)
+        public FileBasedModuleLoader(Scheduler scheduler)
         {
-            this.interpreter = interpreter;
+            this.scheduler = scheduler;
         }
 
-        public PyModule Load(PyModuleSpec spec)
+        public PyModule Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var foundPath = (string)spec.LoaderState;
 
@@ -97,6 +97,12 @@ namespace CloacaInterpreter.ModuleImporting
 
             // TODO: Need to extend the existing frame context to start executing this module in the current context.
             // Have the interpreter then run the module and then return the affected namespace as a module.
+            //
+            // I suspect ultimately the easiest way to do this is to start making the spec loaders and finders actual
+            // Python objects that can receive the frame context and continue from it.
+            //
+            // A shorter-term solution would be to change the APIs to take the interpreter, frame context, etc.
+            //
             // Easy, right? :p
 
             return null;

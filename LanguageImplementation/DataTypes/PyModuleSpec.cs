@@ -6,7 +6,14 @@ namespace LanguageImplementation.DataTypes
 
     public interface ISpecLoader
     {
-        PyModule Load(PyModuleSpec spec);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="interpreter">Interpreter with which to run any module bootstrapping code.</param>
+        /// <param name="context">Context on which to attach any code that has to be run while loading the module.</param>
+        /// <param name="spec">The module spec to load.</param>
+        /// <returns></returns>
+        PyModule Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec);
     }
 
     public interface ISpecFinder
