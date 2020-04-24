@@ -1240,7 +1240,7 @@ namespace CloacaInterpreter
                                     }
                                     else
                                     {                                       
-                                        var toImport = spec.Loader.Load(this, context, spec);
+                                        var toImport = await spec.Loader.Load(this, context, spec);
                                         context.DataStack.Push(toImport);
                                         context.SysModules.Add(module_name, toImport);
                                     }

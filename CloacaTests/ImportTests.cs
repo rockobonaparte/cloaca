@@ -1,10 +1,10 @@
-﻿using System.Numerics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
 using CloacaInterpreter.ModuleImporting;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -12,7 +12,7 @@ namespace CloacaTests
     public class ImporterTests
     {
         [Test]
-        public void InjectedModulesRootLevel()
+        public async Task InjectedModulesRootLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -22,13 +22,13 @@ namespace CloacaTests
 
             Assert.That(fooSpec, Is.Not.Null);
 
-            var fooLoaded = fooSpec.Loader.Load(null, null, fooSpec);
+            var fooLoaded = await fooSpec.Loader.Load(null, null, fooSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
         }
 
         [Test]
-        public void InjectedModulesSecondLevel()
+        public async Task InjectedModulesSecondLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -42,8 +42,8 @@ namespace CloacaTests
             Assert.That(fooSpec, Is.Not.Null);
             Assert.That(barSpec, Is.Not.Null);
 
-            var fooLoaded = fooSpec.Loader.Load(null, null, fooSpec);
-            var barLoaded = barSpec.Loader.Load(null, null, barSpec);
+            var fooLoaded = await fooSpec.Loader.Load(null, null, fooSpec);
+            var barLoaded = await barSpec.Loader.Load(null, null, barSpec);
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
             Assert.That(barLoaded, Is.EqualTo(barModule));

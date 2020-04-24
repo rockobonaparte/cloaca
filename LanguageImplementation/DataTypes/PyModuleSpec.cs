@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -7,13 +8,15 @@ namespace LanguageImplementation.DataTypes
     public interface ISpecLoader
     {
         /// <summary>
-        /// 
+        /// Load the module. This is asynchronous because the module may need to run some code, and that code may
+        /// have to yield. Since it has to run code, it needs a handle to the interpreter as well as the context into
+        /// which to load the module.
         /// </summary>
         /// <param name="interpreter">Interpreter with which to run any module bootstrapping code.</param>
         /// <param name="context">Context on which to attach any code that has to be run while loading the module.</param>
         /// <param name="spec">The module spec to load.</param>
         /// <returns></returns>
-        PyModule Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec);
+        Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec);
     }
 
     public interface ISpecFinder

@@ -3,6 +3,7 @@ using System.IO;
 
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
+using System.Threading.Tasks;
 
 namespace CloacaInterpreter.ModuleImporting
 {
@@ -87,25 +88,27 @@ namespace CloacaInterpreter.ModuleImporting
             this.scheduler = scheduler;
         }
 
-        public PyModule Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
+        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var foundPath = (string)spec.LoaderState;
 
             var inFile = File.ReadAllText(foundPath);
 
-            ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
+            var moduleCode = ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
 
-            // TODO: Need to extend the existing frame context to start executing this module in the current context.
-            // Have the interpreter then run the module and then return the affected namespace as a module.
-            //
-            // I suspect ultimately the easiest way to do this is to start making the spec loaders and finders actual
-            // Python objects that can receive the frame context and continue from it.
-            //
-            // A shorter-term solution would be to change the APIs to take the interpreter, frame context, etc.
-            //
-            // Easy, right? :p
+            Frame moduleFrame = new Frame();
+            moduleFrame.Program = moduleCode;
+            context.callStack.Push(moduleFrame);
+            await interpreter.Run(context);
+            context.callStack.Pop();
 
-            return null;
+            var module = PyModule.Create(spec.Name);
+            for(int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
+            {
+                module.__setattr__(moduleFrame.LocalNames[local_i], moduleFrame.Locals[local_i]);
+            }
+
+            return module;
         }
     }
 }
