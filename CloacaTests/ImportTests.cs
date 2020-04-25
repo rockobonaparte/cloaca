@@ -16,14 +16,12 @@ namespace CloacaTests
     public class FileImporterTests
     {
         [Test]
-        [Ignore("Getting this test to pass is a work-in-progress on this topic branch.")]
         public async Task BasicImport()
-        {
-            var dir = Path.GetDirectoryName(typeof(FileImporterTests).Assembly.Location);
-            Environment.CurrentDirectory = dir;
-
+        {           
             var repoRoots = new List<string>();
-            repoRoots.Add("fake_module_root");
+            var fake_module_root = Path.Combine(Path.GetDirectoryName(typeof(FileImporterTests).Assembly.Location),
+                "fake_module_root");
+            repoRoots.Add(fake_module_root);
 
             var scheduler = new Scheduler();                // Might not need the actual scheduler...
             var interpreter = new Interpreter(scheduler);
@@ -33,6 +31,8 @@ namespace CloacaTests
             var repo = new FileBasedModuleFinder(repoRoots, loader);
 
             var spec = repo.find_spec("test", null, null);
+            Assert.NotNull(spec);
+
             var testLoaded = await spec.Loader.Load(interpreter, rootContext, spec);
         }
     }

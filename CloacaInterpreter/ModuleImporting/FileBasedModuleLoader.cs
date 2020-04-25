@@ -35,25 +35,33 @@ namespace CloacaInterpreter.ModuleImporting
         private string findModule(string[] splitNames, string moduleRoot)
         {
             var builtPath = moduleRoot;
-            bool found = true;
-            foreach(var subPath in splitNames)
+
+            // Need to index explicitly because the last of the split paths might actually be a .py file.
+            for (int subPath_i = 0; subPath_i < splitNames.Length; ++subPath_i)
             {
-                builtPath += subPath;
+                var subPath = splitNames[subPath_i];
+                builtPath = Path.Combine(builtPath, subPath);
                 if(!File.Exists(builtPath))
                 {
-                    found = false;
-                    break;
+                    if(subPath_i == splitNames.Length - 1)
+                    {
+                        if(File.Exists(builtPath + ".py"))
+                        {
+                            return builtPath + ".py";
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                }
+                else
+                {
+                    return null;
                 }
             }
 
-            if(!found)
-            {
-                return null;
-            }
-            else
-            {
-                return builtPath;
-            }
+            return builtPath;
         }
 
         public PyModuleSpec find_spec(string name, string import_path, PyModule target)
