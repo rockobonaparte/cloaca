@@ -33,7 +33,9 @@ namespace CloacaTests
             var spec = repo.find_spec("test", null, null);
             Assert.NotNull(spec);
 
-            var testLoaded = await spec.Loader.Load(interpreter, rootContext, spec);
+            var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec);
+            Assert.That(loadedModule.__dict__, Contains.Key("a_string"));
+            Assert.That(loadedModule.__dict__["a_string"], Is.EqualTo(PyString.Create("Yay!")));
         }
     }
 

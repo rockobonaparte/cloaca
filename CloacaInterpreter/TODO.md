@@ -180,6 +180,7 @@ Part 3: Hardening
 * Exceptions
   * Show call stack for scripts that failed in .NET code
     * Bonus points: Interleave with .NET stack trace!
+  * Full call stack when mixing between interpreted and .NET code.
   * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
     * AssertionError

@@ -85,7 +85,8 @@ namespace CloacaInterpreter.ModuleImporting
 
     /// <summary>
     /// Loader of FileBasedModuleFinder PyModuleSpecs. This will actually load the module
-    /// from disk.
+    /// from disk. It will then execute the code inside that module file. The final module is a fresh
+    /// module created from scratch that is populated with the executed code's namespace.
     /// </summary>
     public class FileBasedModuleLoader : ISpecLoader
     {
@@ -93,17 +94,16 @@ namespace CloacaInterpreter.ModuleImporting
         public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var foundPath = (string)spec.LoaderState;
-
             var inFile = File.ReadAllText(foundPath);
-
             var moduleCode = ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
+            await interpreter.CallInto(context, moduleCode, new object[0]);
 
-            Frame moduleFrame = new Frame();
-            moduleFrame.Program = moduleCode;
-            context.callStack.Push(moduleFrame);
-            await interpreter.Run(context);
-            context.callStack.Pop();
+            if(context.EscapedDotNetException != null)
+            {
+                throw context.EscapedDotNetException;
+            }
 
+            var moduleFrame = context.callStack.Pop();
             var module = PyModule.Create(spec.Name);
             for(int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
             {
