@@ -2,15 +2,25 @@
 ===========
 
 Next TODO work:
-* Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
 * Implementing import
-   * Module levels; it's based on leading dots. Literally the number of dots is the import level
-   * Binding spec
-      * Spec for manually embedded modules
-      * Spec for other source files based on a provider
-   * clr module
-   * Helper to create custom .NET PyModules
+   * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
+     * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
+   * .NET import interoperability
+     * Implement clr https://ironpython.net/documentation/dotnet/dotnet.html
+       * clr.AddReference
+         * Basic form
+         * Extended form clr.AddReference("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+       * clr.References
+       * from System import Environment
+     * Include System by default
+     * Look into whether or not you need mscorlib
    * Harden in Unity
+     * Helper to create custom .NET PyModules (investigate)
+   * Document import process in official documentation
+     * Explain how to embed your own modules
+     * Explain how to use the file-based importer
+* Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
+
 
 Overview of module import process:
 1. Look in sys.modules for the request module. sys.modules is a dict of module names to modules and serves as a cache.
