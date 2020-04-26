@@ -85,21 +85,27 @@ namespace CloacaTests
     public class ImportSyntaxTests : RunCodeTest
     {
         private List<ISpecFinder> moduleFinders;
+        private PyObject fooThing;
+        private PyObject otherThing;
+        private PyModule fooModule;
+        private PyModule foo2Module;
+        private PyModule barModule;
+
 
         [SetUp]
         public void setupFinders()
         {
             var repo = new InjectedModuleRepository();
-            var fooModule = PyModule.Create("foo");
+            fooModule = PyModule.Create("foo");
 
-            var barModule = PyModule.Create("bar");
-            var FooThing = PyModule.Create("FooThing");
-            var OtherThing = PyModule.Create("OtherThing");
+            barModule = PyModule.Create("bar");
+            fooThing = PyString.Create("FooThing");
+            otherThing = PyString.Create("OtherThing");
             fooModule.__dict__.Add("bar", barModule);
-            fooModule.__dict__.Add("FooThing", FooThing);
-            fooModule.__dict__.Add("OtherThing", OtherThing);
+            fooModule.__dict__.Add("FooThing", fooThing);
+            fooModule.__dict__.Add("OtherThing", otherThing);
 
-            var foo2Module = PyModule.Create("foo2");
+            foo2Module = PyModule.Create("foo2");
 
             repo.AddNewModuleRoot(fooModule);
             repo.AddNewModuleRoot(foo2Module);
@@ -111,58 +117,79 @@ namespace CloacaTests
         [Test]
         public void BasicImport()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            // TODO: Assert *something*
+            var foo = finishedFrame.GetVariable("foo");
+            Assert.That(foo, Is.EqualTo(fooModule));
         }
 
         [Test]
         public void TwoLevelImport()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "import foo.bar\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+            
+            var foobar = finishedFrame.GetVariable("foo.bar");
+            Assert.That(foobar, Is.EqualTo(barModule));
         }
 
         [Test]
         public void TwoImportsOneLine()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "import foo, foo2\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+            
+            var foo = finishedFrame.GetVariable("foo");
+            var foo2 = finishedFrame.GetVariable("foo2");
+            Assert.That(foo, Is.EqualTo(fooModule));
+            Assert.That(foo2, Is.EqualTo(foo2Module));
         }
 
         [Test]
         public void AliasedImport()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "import foo as fruit\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+
+            var fooFruit = finishedFrame.GetVariable("fruit");
+            Assert.That(fooFruit, Is.EqualTo(fooModule));
         }
 
         [Test]
         public void FromImport()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "from foo import FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+
+            var importedFooThing = finishedFrame.GetVariable("FooThing");
+            Assert.That(importedFooThing, Is.EqualTo(fooThing));
         }
 
         [Test]
         public void FromCommaImport()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+
+            var importedFooThing = finishedFrame.GetVariable("FooThing");
+            var importedOtherThing = finishedFrame.GetVariable("OtherThing");
+            Assert.That(importedFooThing, Is.EqualTo(fooThing));
+            Assert.That(importedOtherThing, Is.EqualTo(otherThing));
         }
 
         [Test]
         public void FromImportStar()
         {
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "from foo import *\n", new Dictionary<string, object>(), moduleFinders, 1);
-            // TODO: Assert *something*
+
+            var importedFooThing = finishedFrame.GetVariable("FooThing");
+            var importedOtherThing = finishedFrame.GetVariable("OtherThing");
+            var importedBar = finishedFrame.GetVariable("bar");
+            Assert.That(importedFooThing, Is.EqualTo(fooThing));
+            Assert.That(importedOtherThing, Is.EqualTo(otherThing));
+            Assert.That(importedBar, Is.EqualTo(barModule));
         }
 
         [Test]
@@ -171,7 +198,7 @@ namespace CloacaTests
         {
             // TODO: Need to actually set this test up to be a level below or whatever.
 
-            var interpreter = runProgram(
+            var finishedFrame = runProgram(
                 "from .. import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }
