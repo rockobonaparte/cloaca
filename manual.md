@@ -29,3 +29,7 @@ just trying to embed Cloaca into some other .NET application for your own script
 The Python module import system has a lot of steps that settle into two main components:
 1. Finding information about how to load the module (locating the "module spec").
 2. Actually importing the module.
+
+## The clr Module
+
+We've mimicked IronPython (also Python.NET) with the clr module.
