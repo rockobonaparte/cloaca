@@ -21,6 +21,7 @@ Next TODO work:
      * Explain how to use the file-based importer
      * Explain how generics are done. IronPython uses a special[T, K](arg1, arg2) convention.
 * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
+* Helpers to create .NET types from base types.
 
 
 Overview of module import process:

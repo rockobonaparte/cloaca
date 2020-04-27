@@ -4,9 +4,12 @@ using System.Collections.Generic;
 
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
-using LanguageImplementation.DataTypes.Exceptions;
 using System.Threading.Tasks;
 using System.Reflection;
+
+using LanguageImplementation.DataTypes.Exceptions;
+
+using CloacaInterpreter.ModuleImporting;
 
 namespace CloacaInterpreter
 {
@@ -33,6 +36,10 @@ namespace CloacaInterpreter
         public Interpreter(Scheduler scheduler)
         {
             sys_meta_path = new List<ISpecFinder>();
+
+            // CLR is added by default
+            var builtinsInjector = new InjectedModuleRepository();
+            builtinsInjector.AddNewModuleRoot(ClrModuleInternals.CreateClrModule());
 
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;

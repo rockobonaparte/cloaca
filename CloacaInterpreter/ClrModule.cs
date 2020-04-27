@@ -35,7 +35,7 @@ namespace CloacaInterpreter
             var internals = new ClrModuleInternals();
             var module = PyModule.Create("clr");
             module.__dict__.Add("AddReference", internals.GetType().GetMethod("addReference"));
-            module.__dict__.Add("References", null);
+            module.__dict__.Add("References", internals.references);
             return module;
         }
     }

@@ -32,4 +32,19 @@ The Python module import system has a lot of steps that settle into two main com
 
 ## The clr Module
 
-We've mimicked IronPython (also Python.NET) with the clr module.
+We're mimicking IronPython (also Python.NET) with the clr module. However, it's a work-in-progress. The clr module (standing for
+"Common Language Runtime") interfaces with Microsoft .NET's clr to import its assemblies (.NET DLLs) so we can poke them with a stick
+in our scripts.
+
+These are the general use cases:
+1. clr.AddReference:
+   1. Basic form: `clr.AddReference("System")`
+   2. Expanded form: `clr.AddReference("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")`
+2. clr.References to list added references. Directly manipulated this will probably not be supported right away (or ever?). If I can
+   incorporate it simply then I will.
+3. Actual import sequence:
+   """
+      clr.AddReference("System")
+      from System import Environment
+      print(Environment)
+   """
