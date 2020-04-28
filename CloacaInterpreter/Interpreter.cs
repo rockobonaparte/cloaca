@@ -37,9 +37,13 @@ namespace CloacaInterpreter
         {
             sys_meta_path = new List<ISpecFinder>();
 
-            // CLR is added by default
+            // Add the universal module finders. It is up to the embedder to stuff more of these in using
+            // AddModuleFinder if they want to import from other sources.
+            // CLR and built-ins are added by default
             var builtinsInjector = new InjectedModuleRepository();
             builtinsInjector.AddNewModuleRoot(ClrModuleInternals.CreateClrModule());
+            AddModuleFinder(builtinsInjector);
+            AddModuleFinder(new ClrModuleFinder());
 
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
@@ -1234,7 +1238,7 @@ namespace CloacaInterpreter
                                     PyModuleSpec spec = null;
                                     foreach(var finder in sys_meta_path)
                                     {
-                                        spec = finder.find_spec(module_name, null, null);
+                                        spec = finder.find_spec(context, module_name, null, null);
                                         if(spec != null)
                                         {
                                             break;

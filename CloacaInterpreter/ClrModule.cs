@@ -1,9 +1,26 @@
-﻿using LanguageImplementation.DataTypes;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
+
+using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaInterpreter
 {
+    /// <summary>
+    /// Taking this on to the frame context as a means to track imported clr modules... and whatever else might come later.
+    /// I don't think Python.NET nor IronPython do it this way but I can't be bothered to mimick them.
+    /// </summary>
+    public class ClrContext
+    {
+        public Dictionary<string, Assembly> AddedReferences;
+        public const string FrameContextTokenName = "__clr__";
+
+        public ClrContext()
+        {
+            AddedReferences = new Dictionary<string, Assembly>();
+        }
+    }
+
     /// <summary>
     /// Start of a CLR module a la IronPython or Python.NET. The internals are obfuscated and expodes as a PyModule.
     /// This is not yet connected to anything and only does the basic assembly load; it's not connected into the
@@ -18,11 +35,30 @@ namespace CloacaInterpreter
             references = new List<Assembly>();
         }
 
-        private void addReference(string name)
-        {
-            // TODO: Don't double-load-add an existing assembly.
+        private void addReference(FrameContext context, string name)
+        {            
             var assembly = Assembly.Load(name);
-            references.Add(assembly);
+            if(!references.Contains(assembly))
+            {
+                references.Add(assembly);
+            }
+
+            ClrContext clrContext = null;
+            if(context.HasVariable(ClrContext.FrameContextTokenName))
+            {
+                clrContext = (ClrContext) context.GetVariable(ClrContext.FrameContextTokenName);
+            }
+            else
+            {
+                clrContext = new ClrContext();
+            }
+
+            if(!clrContext.AddedReferences.ContainsKey(name))
+            {
+                clrContext.AddedReferences.Add(name, assembly);
+            }
+
+            context.SetVariable(ClrContext.FrameContextTokenName, new ClrContext());
         }
 
         /// <summary>

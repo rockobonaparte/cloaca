@@ -136,6 +136,20 @@ namespace LanguageImplementation
             Locals[varIdx] = value;
         }
 
+        public bool HasVariable(string name)
+        {
+            foreach (var stackFrame in callStack)
+            {
+                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                if (nameIdx >= 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public Dictionary<string, object> DumpVariables()
         {
             var variables = new Dictionary<string, object>();

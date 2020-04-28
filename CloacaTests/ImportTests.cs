@@ -30,7 +30,7 @@ namespace CloacaTests
             var rootContext = new FrameContext();
             var repo = new FileBasedModuleFinder(repoRoots, loader);
 
-            var spec = repo.find_spec("test", null, null);
+            var spec = repo.find_spec(null, "test", null, null);
             Assert.NotNull(spec);
 
             var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec);
@@ -49,7 +49,7 @@ namespace CloacaTests
             var fooModule = PyModule.Create("foo");
             repo.AddNewModuleRoot(fooModule);
 
-            var fooSpec = repo.find_spec("foo", null, null);
+            var fooSpec = repo.find_spec(null, "foo", null, null);
 
             Assert.That(fooSpec, Is.Not.Null);
 
@@ -67,8 +67,8 @@ namespace CloacaTests
             fooModule.__dict__.Add("bar", barModule);
             repo.AddNewModuleRoot(fooModule);
 
-            var fooSpec = repo.find_spec("foo", null, null);
-            var barSpec = repo.find_spec("foo.bar", null, null);
+            var fooSpec = repo.find_spec(null, "foo", null, null);
+            var barSpec = repo.find_spec(null, "foo.bar", null, null);
 
             Assert.That(fooSpec, Is.Not.Null);
             Assert.That(barSpec, Is.Not.Null);

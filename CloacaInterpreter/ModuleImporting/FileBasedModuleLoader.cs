@@ -64,7 +64,7 @@ namespace CloacaInterpreter.ModuleImporting
             return builtPath;
         }
 
-        public PyModuleSpec find_spec(string name, string import_path, PyModule target)
+        public PyModuleSpec find_spec(FrameContext context, string name, string import_path, PyModule target)
         {
             var splitNames = name.Split('.');
             foreach (var moduleRoot in moduleRootPaths)
