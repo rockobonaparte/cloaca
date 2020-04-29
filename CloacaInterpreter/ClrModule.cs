@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 
 using LanguageImplementation;
@@ -35,9 +36,18 @@ namespace CloacaInterpreter
             references = new List<Assembly>();
         }
 
-        private void addReference(FrameContext context, string name)
-        {            
-            var assembly = Assembly.Load(name);
+        public void AddReference(FrameContext context, string name)
+        {
+            Assembly assembly = null;
+            try
+            {
+                assembly = Assembly.Load(name);
+            }
+            catch(FileNotFoundException notFound)
+            {
+                assembly = Assembly.LoadWithPartialName(name);
+            }
+
             if(!references.Contains(assembly))
             {
                 references.Add(assembly);
@@ -58,7 +68,7 @@ namespace CloacaInterpreter
                 clrContext.AddedReferences.Add(name, assembly);
             }
 
-            context.SetVariable(ClrContext.FrameContextTokenName, new ClrContext());
+            context.AddVariable(ClrContext.FrameContextTokenName, clrContext);
         }
 
         /// <summary>

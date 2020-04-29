@@ -126,6 +126,12 @@ namespace LanguageImplementation
             throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
         }
 
+        public void AddVariable(string name, object value)
+        {
+            LocalNames.Add(name);
+            Locals.Add(value);
+        }
+
         public void SetVariable(string name, object value)
         {
             int varIdx = LocalNames.IndexOf(name);

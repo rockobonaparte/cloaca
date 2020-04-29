@@ -82,6 +82,28 @@ namespace CloacaTests
     }
 
     [TestFixture]
+    public class ClrImporterTests
+    {
+        [Test]
+        public async Task SystemBasic()
+        {
+            var finder = new ClrModuleFinder();
+            var mockStack = new Stack<Frame>();
+            var mockFrame = new Frame();
+            mockStack.Push(mockFrame);
+            var mockContext = new FrameContext(mockStack);
+            var clrLoader = new ClrModuleInternals();
+            clrLoader.AddReference(mockContext, "System");
+            
+            var spec = finder.find_spec(mockContext, "System", null, null);
+            Assert.NotNull(spec);
+
+            var module = await spec.Loader.Load(null, mockContext, spec);
+            Assert.That(module.Name, Is.EqualTo("System"));
+        }
+    }
+
+    [TestFixture]
     public class ImportSyntaxTests : RunCodeTest
     {
         private List<ISpecFinder> moduleFinders;
