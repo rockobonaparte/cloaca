@@ -63,9 +63,10 @@ namespace CloacaInterpreter
                 clrContext = new ClrContext();
             }
 
-            if(!clrContext.AddedReferences.ContainsKey(name))
+            var shortName = assembly.GetName().Name;
+            if (!clrContext.AddedReferences.ContainsKey(shortName))
             {
-                clrContext.AddedReferences.Add(name, assembly);
+                clrContext.AddedReferences.Add(shortName, assembly);
             }
 
             context.AddVariable(ClrContext.FrameContextTokenName, clrContext);

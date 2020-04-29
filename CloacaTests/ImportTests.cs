@@ -84,6 +84,7 @@ namespace CloacaTests
     [TestFixture]
     public class ClrImporterTests
     {
+        
         [Test]
         public async Task SystemBasic()
         {
@@ -101,6 +102,25 @@ namespace CloacaTests
             var module = await spec.Loader.Load(null, mockContext, spec);
             Assert.That(module.Name, Is.EqualTo("System"));
         }
+
+        [Test]
+        public async Task SystemBasicFullName()
+        {
+            var finder = new ClrModuleFinder();
+            var mockStack = new Stack<Frame>();
+            var mockFrame = new Frame();
+            mockStack.Push(mockFrame);
+            var mockContext = new FrameContext(mockStack);
+            var clrLoader = new ClrModuleInternals();
+            clrLoader.AddReference(mockContext, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
+
+            var spec = finder.find_spec(mockContext, "System", null, null);
+            Assert.NotNull(spec);
+
+            var module = await spec.Loader.Load(null, mockContext, spec);
+            Assert.That(module.Name, Is.EqualTo("System"));
+        }
+
     }
 
     [TestFixture]
