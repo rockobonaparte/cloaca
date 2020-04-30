@@ -22,11 +22,16 @@ namespace CloacaInterpreter.ModuleImporting
             if(context.HasVariable(ClrContext.FrameContextTokenName))
             {
                 var clrContext = (ClrContext) context.GetVariable(ClrContext.FrameContextTokenName);
-                if(clrContext.AddedReferences.ContainsKey(name))
+
+                // TODO: Try to find a faster way to do these lookups.
+                foreach (var assembly in clrContext.AddedReferences.Values)
                 {
-                    var spec = PyModuleSpec.Create(name, loader, "", null);
-                    spec.LoaderState = clrContext.AddedReferences[name];
-                    return spec;
+                    foreach (var type in assembly.GetTypes())
+                    {
+                        var spec = PyModuleSpec.Create(name, loader, "", null);
+                        spec.LoaderState = clrContext;
+                        return spec;
+                    }
                 }
             }
 
@@ -45,17 +50,26 @@ namespace CloacaInterpreter.ModuleImporting
         public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var module = PyModule.Create(spec.Name);
-            var assembly = (Assembly) spec.LoaderState;
+            var clrContext = (ClrContext) spec.LoaderState;
 
             // TODO: Create a .NET PyModule interface overridding __getattr__ to do these lookups instead of stuffing the
             // module with everything. Tackle that once this has settled down a bit and we know exactly what we're trying to do.
-            foreach(var type in assembly.GetTypes())
+            
+            // Some LINQ magic could probably do this but I think I want to be able to step through it.
+            foreach(var assembly in clrContext.AddedReferences.Values)
             {
-                if (!module.__dict__.ContainsKey(type.Name))
+                foreach(var type in assembly.GetTypes())
                 {
-                    module.__dict__.Add(type.Name, type);
+                    if(type.Namespace == spec.Name)
+                    {
+                        if(!module.__dict__.ContainsKey(type.Name))
+                        {
+                            module.__dict__.Add(type.Name, type);
+                        }
+                    }
                 }
             }
+
             return module;
         }
     }
