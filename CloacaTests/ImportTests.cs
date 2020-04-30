@@ -17,7 +17,7 @@ namespace CloacaTests
     {
         [Test]
         public async Task BasicImport()
-        {           
+        {
             var repoRoots = new List<string>();
             var fake_module_root = Path.Combine(Path.GetDirectoryName(typeof(FileImporterTests).Assembly.Location),
                 "fake_module_root");
@@ -84,7 +84,7 @@ namespace CloacaTests
     [TestFixture]
     public class ClrImporterTests
     {
-        
+
         [Test]
         public async Task SystemBasic()
         {
@@ -95,7 +95,7 @@ namespace CloacaTests
             var mockContext = new FrameContext(mockStack);
             var clrLoader = new ClrModuleInternals();
             clrLoader.AddReference(mockContext, "System");
-            
+
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
 
@@ -139,6 +139,23 @@ namespace CloacaTests
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
+    }
+
+    [TestFixture]
+    public class ClrImporterCodeTests : RunCodeTest
+    {
+        [Test]
+        public void ImportSystemEnvironmentInCode()
+        {
+            var finishedFrame = runProgram(
+                "import clr\n" +
+                "clr.AddReference('mscorlib')\n" +
+                "from System import Environment\n" +
+                "machine_name = Environment.MachineName\n", new Dictionary<string, object>(), 1);
+
+            var machine_name = finishedFrame.GetVariable("machine_name");
+            Assert.That(machine_name, Is.EqualTo(System.Environment.MachineName));
+        }
     }
 
     [TestFixture]
