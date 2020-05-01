@@ -12,6 +12,8 @@ namespace CloacaTests
         public event SomeEventType SomeEvent;
         public int SomeField;
 
+        public static int StaticInt = 0;
+
         public void SimpleMethod()
         {
 
@@ -61,6 +63,21 @@ namespace CloacaTests
         public void ExtractEvent()
         {
             var extracted = ObjectResolver.GetValue("SomeEvent", new TestExtractClass());
+            Assert.IsNotNull(extracted);
+        }
+
+        [Test]
+        public void ExtractStaticField()
+        {
+            var extracted = ObjectResolver.GetValue("StaticInt", new TestExtractClass());
+            Assert.IsNotNull(extracted);
+        }
+
+        [Test]
+        [Ignore("Problem exposed when starting to import .NET types from assemblies. They come in as types and we have to extract them.")]
+        public void ExtractStaticFieldFromType()
+        {
+            var extracted = ObjectResolver.GetValue("StaticInt", typeof(TestExtractClass));
             Assert.IsNotNull(extracted);
         }
     }
