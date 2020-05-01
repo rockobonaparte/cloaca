@@ -72,6 +72,11 @@ namespace CloacaInterpreter
             context.AddVariable(ClrContext.FrameContextTokenName, clrContext);
         }
 
+        public void EmbeddedAddReference(FrameContext context, PyModule self, PyString name)
+        {
+            AddReference(context, name.str);
+        }
+
         /// <summary>
         /// Intended to be called once by the Cloaca interpreter to create the clr module in an injectable
         /// module loader.
@@ -81,7 +86,9 @@ namespace CloacaInterpreter
         {
             var internals = new ClrModuleInternals();
             var module = PyModule.Create("clr");
-            module.__dict__.Add("AddReference", internals.GetType().GetMethod("addReference"));
+
+            var addReference = new WrappedCodeObject("AddReference", internals.GetType().GetMethod("EmbeddedAddReference"), internals);
+            module.__dict__.Add("AddReference", addReference);
             module.__dict__.Add("References", internals.references);
             return module;
         }

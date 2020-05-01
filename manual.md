@@ -1,3 +1,37 @@
+## Emedding
+
+## Adding Functions
+If you wish to embed a .NET function into the runtime that's directly interacting with it, you will need to create a WrappedCodeObject for it.
+Here's an example from the REPL demo. We wanted to embed print() as a function that prints to a text box:
+
+```
+        public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
+        {
+            var str_func = (IPyCallable) to_print.__getattribute__(PyClass.__STR__);
+
+            var returned = await str_func.Call(interpreter, context, new object[] { to_print });
+            if (returned != null)
+            {
+                var asPyString = (PyString)returned;
+                richTextBox1.AppendText(asPyString.str);
+                SetCursorToEnd();
+            }
+        }
+```
+
+Here's what we gave the interpreter:
+```
+repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
+```
+This will tell the interpreter we have a root built-in called "print" that should call a wrapper around print_func that do any
+necessary Python data conversions to/from the call.
+
+These parameters will be injected without appearing in the arguments for the function in the interpreter:
+* IInterpreter
+* FrameContext
+* IScheduler
+
+
 ## Modules
 
 ### Adding Import Capability
