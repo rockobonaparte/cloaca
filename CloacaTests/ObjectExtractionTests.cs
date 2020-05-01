@@ -74,7 +74,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Problem exposed when starting to import .NET types from assemblies. They come in as types and we have to extract them.")]
         public void ExtractStaticFieldFromType()
         {
             var extracted = ObjectResolver.GetValue("StaticInt", typeof(TestExtractClass));

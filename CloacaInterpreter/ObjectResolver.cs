@@ -47,35 +47,42 @@ namespace CloacaInterpreter
             {
                 try
                 {
+                    // If it's not a type, then get its type. If it's a type, we have the reflection information already.
+                    // This became an issue when we had to resolve stuff being imported from assemblies.
+                    var objType = rawObject as Type;
+                    if (objType == null)
+                    {
+                        objType = rawObject.GetType();
+                    }
+
                     // Try it as a field and then as a property.
-                    var objType = rawObject.GetType();
                     var member = objType.GetMember(attrName);
                     if (member.Length == 0)
                     {
                         // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
-                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                        throw new EscapedPyException(new AttributeError("'" + objType.Name + "' object has no attribute named '" + attrName + "'"));
                     }
                     if (member[0].MemberType == System.Reflection.MemberTypes.Property)
                     {
-                        var property = rawObject.GetType().GetProperty(attrName);
+                        var property = objType.GetProperty(attrName);
                         property.SetValue(rawObject, PyNetConverter.Convert(value, property.PropertyType));
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Field)
                     {
-                        var field = rawObject.GetType().GetField(attrName);
+                        var field = objType.GetField(attrName);
                         field.SetValue(rawObject, PyNetConverter.Convert(value, field.FieldType));
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Method)
                     {
-                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' is a .NET object and its methods cannot be reassigned"));
+                        throw new EscapedPyException(new AttributeError("'" + objType.Name + "' is a .NET object and its methods cannot be reassigned"));
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Event)
                     {
-                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' is a .NET object and its events cannot be reassigned"));
+                        throw new EscapedPyException(new AttributeError("'" + objType.Name + "' is a .NET object and its events cannot be reassigned"));
                     }
                     else
                     {
-                        throw new EscapedPyException(new NotImplemented("'" + rawObject.GetType().Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
+                        throw new EscapedPyException(new NotImplemented("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
                     }
                 }
                 catch (ArgumentException e)
@@ -98,21 +105,28 @@ namespace CloacaInterpreter
             {
                 try
                 {
+                    // If it's not a type, then get its type. If it's a type, we have the reflection information already.
+                    // This became an issue when we had to resolve stuff being imported from assemblies.
+                    var objType = rawObject as Type;
+                    if (objType == null)
+                    {
+                        objType = rawObject.GetType();
+                    }
+
                     // Try it as a field and then as a property.
-                    var objType = rawObject.GetType();
                     var member = objType.GetMember(attrName);
                     if(member.Length == 0)
                     {
                         // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
-                        throw new EscapedPyException(new AttributeError("'" + rawObject.GetType().Name + "' object has no attribute named '" + attrName + "'"));
+                        throw new EscapedPyException(new AttributeError("'" + objType.Name + "' object has no attribute named '" + attrName + "'"));
                     }
                     if (member[0].MemberType == System.Reflection.MemberTypes.Property)
                     {
-                        return rawObject.GetType().GetProperty(attrName).GetValue(rawObject);
+                        return objType.GetProperty(attrName).GetValue(rawObject);
                     }
                     else if (member[0].MemberType == System.Reflection.MemberTypes.Field)
                     {
-                        return rawObject.GetType().GetField(attrName).GetValue(rawObject);
+                        return objType.GetField(attrName).GetValue(rawObject);
                     }
                     else if(member[0].MemberType == System.Reflection.MemberTypes.Method)
                     {
@@ -120,7 +134,7 @@ namespace CloacaInterpreter
                         // let's skip all of this filtering.
                         if(member.Length == 1)
                         {
-                            return new WrappedCodeObject(member[0].Name, rawObject.GetType().GetMethod(attrName), rawObject);
+                            return new WrappedCodeObject(member[0].Name, objType.GetMethod(attrName), rawObject);
                         }
                         else
                         {
@@ -144,7 +158,7 @@ namespace CloacaInterpreter
                     }
                     else
                     {
-                        throw new EscapedPyException(new NotImplemented("'" + rawObject.GetType().Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
+                        throw new EscapedPyException(new NotImplemented("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
                     }
                 }
                 catch (ArgumentException e)
