@@ -64,6 +64,14 @@ namespace LanguageImplementation
             return hash;
         }
 
+        public static void AssertMethodBaseNotNull(MethodBase methodBase)
+        {
+            if(methodBase == null)
+            {
+                throw new Exception("MethodBase given to WrappedCodeObject was null. This implies the reflection call to get the MethodInfo through reflection did not find the method in the first place.");
+            }
+        }
+
         #region Constructors
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases)
         {
@@ -74,6 +82,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase })
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases) : this(null, nameInsideInterpreter, methodBases)
@@ -82,6 +91,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase) : this(null, nameInsideInterpreter, new MethodBase[] { methodBase })
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(FrameContext context, MethodBase[] methodBases)
@@ -93,6 +103,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(FrameContext context, MethodBase methodBase) : this(context, new MethodBase[] { methodBase })
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(MethodBase[] methodBases)
@@ -105,6 +116,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(MethodBase methodBase) : this(new MethodBase[] { methodBase })
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase[] methodBases, object instance)
@@ -116,6 +128,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(FrameContext context, string nameInsideInterpreter, MethodBase methodBase, object instance) : this(context, nameInsideInterpreter, new MethodBase[] { methodBase }, instance)
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodBase[] methodBases, object instance) : this(null, nameInsideInterpreter, methodBases, instance)
@@ -124,6 +137,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(string nameInsideInterpreter, MethodBase methodBase, object instance) : this(null, nameInsideInterpreter, methodBase, instance)
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(FrameContext context, MethodBase[] methodBases, object instance)
@@ -135,6 +149,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(FrameContext context, MethodBase methodBase, object instance) : this(context, new MethodBase[] { methodBase }, instance)
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         public WrappedCodeObject(MethodBase[] methodBases, object instance)
@@ -146,6 +161,7 @@ namespace LanguageImplementation
 
         public WrappedCodeObject(MethodBase methodBase, object instance) : this(new MethodBase[] { methodBase }, instance)
         {
+            AssertMethodBaseNotNull(methodBase);
         }
 
         #endregion Constructors

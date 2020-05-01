@@ -142,6 +142,7 @@ namespace CloacaTests
     }
 
     [TestFixture]
+    [Ignore("Next functionality to implement. The Environment 'thingy' that was import isn't exactly the right thing and we're figuring it out in a separate test.")]
     public class ClrImporterCodeTests : RunCodeTest
     {
         [Test]
