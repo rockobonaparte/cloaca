@@ -2,18 +2,24 @@
 ===========
 
 Next TODO work:
+* [DONE] Make sure you can use the ObjectResolver on a literal Type object. Should be fine but you were paranoid your ObjectResolver
+  changes would mess that up.
+* [DONE] Try some more clr tests
+   * [DONE] Instantiating something
+   * A little more juggling of types
+* .NET type management [EMBEDDING - .NET TYPES]. We need to work with a lot more raw .NET types.
+   * Consider other scenarios where we work directly with .NET types and determine a strategy with how to manage them better.
 * Implementing import
    * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
      * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
-   * .NET import interoperability
-     * Implement clr https://ironpython.net/documentation/dotnet/dotnet.html
-       * clr.AddReference
-         * Basic form
-         * Extended form clr.AddReference("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-       * clr.References
-       * from System import Environment
-     * Include System by default
-     * Look into whether or not you need mscorlib
+   * [DONE] .NET import interoperability
+     * [DONE] Implement clr https://ironpython.net/documentation/dotnet/dotnet.html
+       * [DONE] clr.AddReference
+         * [DONE] Basic form
+         * [DONE] Extended form clr.AddReference("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
+       * [DONE] clr.References
+       * [DONE] from System import Environment
+     * Include System and mscorlib by default
    * Harden in Unity
      * Helper to create custom .NET PyModules (investigate)
    * Document import process in official documentation

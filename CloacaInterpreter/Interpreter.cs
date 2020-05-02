@@ -990,6 +990,14 @@ namespace CloacaInterpreter
                                         // We'll just proceed as usual.
                                     }
                                 }
+                                else if(abstractFunctionToRun is Type)
+                                {
+                                    // Maybe it's a .NET type we imported. If we're trying to invoke the type, then that
+                                    // means we're trying to call a constructor on it.
+                                    // Tagging with [EMBEDDING - .NET TYPES]
+                                    // We might want to generally do this better.
+                                    abstractFunctionToRun = new PyDotNetClassProxy(abstractFunctionToRun as Type);
+                                }
 
                                 // Treat this kind of like an else if. We don't do that literally because we have
                                 // to test for __call__ in the PyObject, and also because it might not be a PyObject

@@ -156,6 +156,25 @@ namespace CloacaTests
             var machine_name = finishedFrame.GetVariable("machine_name");
             Assert.That(machine_name, Is.EqualTo(System.Environment.MachineName));
         }
+
+        /// <summary>
+        /// This tests shows we can construct something from an imported assembly and work with it.
+        /// It requires that are .NET interaction generally is correct in the first place, so this
+        /// just reinforces that we can ingest this stuff externally from imports.
+        /// </summary>
+        [Test]
+        //[Ignore("Internals can't seem to accept the type as a thing to use. It's a similar cockup to what the object resolver was doing.")]
+        public void Guid()
+        {
+            var finishedFrame = runProgram(
+                "import clr\n" +
+                "clr.AddReference('mscorlib')\n" +
+                "from System import Guid\n" +
+                "guid = Guid('dddddddd-dddd-dddd-dddd-dddddddddddd')\n", new Dictionary<string, object>(), 1);
+
+            var guid = finishedFrame.GetVariable("guid");
+            Assert.That(guid, Is.EqualTo(new System.Guid("dddddddd-dddd-dddd-dddd-dddddddddddd")));
+        }
     }
 
     [TestFixture]
