@@ -4,31 +4,24 @@
 Next TODO work:
 * [DONE] Make sure you can use the ObjectResolver on a literal Type object. Should be fine but you were paranoid your ObjectResolver
   changes would mess that up.
-* [DONE] Try some more clr tests
-   * [DONE] Instantiating something
-   * A little more juggling of types
 * .NET type management [EMBEDDING - .NET TYPES]. We need to work with a lot more raw .NET types.
    * Consider other scenarios where we work directly with .NET types and determine a strategy with how to manage them better.
 * Implementing import
    * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
      * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
-   * [DONE] .NET import interoperability
-     * [DONE] Implement clr https://ironpython.net/documentation/dotnet/dotnet.html
-       * [DONE] clr.AddReference
-         * [DONE] Basic form
-         * [DONE] Extended form clr.AddReference("System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")
-       * [DONE] clr.References
-       * [DONE] from System import Environment
-     * Include System and mscorlib by default
+* clr module
+   * Include System and mscorlib by default
    * Harden in Unity
-     * Helper to create custom .NET PyModules (investigate)
-   * Document import process in official documentation
-     * Explain how to embed your own modules
-     * Explain how to use the file-based importer
-     * Explain how generics are done. IronPython uses a special[T, K](arg1, arg2) convention.
-     * Acknowledge Clr module importer (if you stick with it)
+   * Helper to create custom .NET PyModules (investigate)
+   * Testing: Juggle a few more different data types to verify robustness. Goes hand-and-hand with [EMBEDDING - .NET TYPES]
+* Document import process in official documentation
+    * Explain how to embed your own modules
+    * Explain how to use the file-based importer
+    * Explain how generics are done. IronPython uses a special[T, K](arg1, arg2) convention.
 * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
 * Helpers to create .NET types from base types.
+* Module isolation: Finders and loaders (and their state) are being kept in the interpreter, not the context, so all scripts
+  are sharing that state. We might not want that--although it could be convenient to do that for most scripts.
 
 
 Overview of module import process:
