@@ -82,3 +82,20 @@ These are the general use cases:
       from System import Environment
       print(Environment)
    """
+
+### Default References
+
+The Interpreter.ClrFinder will expose the ClrModuleFinder included in itself for the sake of importing .NET assemblies. You can use the
+Interpreter.ClrFinder.AddDefaultAssembly to add assemblies that should be available to all modules without having to use clr.AddReference.
+
+_The CLR module does not have any default references to anything._ IronPython will include System and mscorlib by default. We don't know
+if you want to have those involved in your embedding environment, or if you want to be loaded by default, or if you'd rather by loading
+other stuff instead.
+
+### A Word About Importing Assemblies
+
+You need to remember the difference between assemblies and namespaces. For testing, we liked to check System.Environment.MachineName.
+Environment is in the System namespace, but it's in the mscorlib assembly. You can usually find this in the online documentation up at
+the top ("Assembly: mscorlib.dll"). You've probably missed this for years... like me! Also, make sure you're referencing the proper .NET
+runtime version when you're looking this up because the assemblies for various things in .NET can be different. The biggest thing is
+bringing up .NET core documentation when you wanted .NET framework. It can have the same API but everything's in different assemblies.

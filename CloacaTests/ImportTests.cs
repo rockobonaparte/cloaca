@@ -9,6 +9,7 @@ using CloacaInterpreter.ModuleImporting;
 using CloacaInterpreter;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
+using System.Reflection;
 
 namespace CloacaTests
 {
@@ -95,6 +96,28 @@ namespace CloacaTests
             var mockContext = new FrameContext(mockStack);
             var clrLoader = new ClrModuleInternals();
             clrLoader.AddReference(mockContext, "System");
+
+            var spec = finder.find_spec(mockContext, "System", null, null);
+            Assert.NotNull(spec);
+
+            var module = await spec.Loader.Load(null, mockContext, spec);
+            Assert.That(module.Name, Is.EqualTo("System"));
+        }
+
+        /// <summary>
+        /// This is the SystemBasic but making sure we can resolve it if the reference was added as 
+        /// a default to the finder instead of from the AddReference call.
+        /// </summary>
+        /// <returns></returns>
+        [Test]
+        public async Task SystemBasicFromDefaults()
+        {
+            var finder = new ClrModuleFinder();
+            finder.AddDefaultAssembly(Assembly.LoadWithPartialName("System"));
+            var mockStack = new Stack<Frame>();
+            var mockFrame = new Frame();
+            mockStack.Push(mockFrame);
+            var mockContext = new FrameContext(mockStack);
 
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);

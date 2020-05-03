@@ -2,18 +2,12 @@
 ===========
 
 Next TODO work:
-* [DONE] Make sure you can use the ObjectResolver on a literal Type object. Should be fine but you were paranoid your ObjectResolver
-  changes would mess that up.
+* clr module
+   * Harden in Unity
+   * Testing: Juggle a few more different data types to verify robustness. Goes hand-and-hand with [EMBEDDING - .NET TYPES]
 * .NET type management [EMBEDDING - .NET TYPES]. We need to work with a lot more raw .NET types.
    * Consider other scenarios where we work directly with .NET types and determine a strategy with how to manage them better.
-* Implementing import
-   * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
-     * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
-* clr module
-   * Include System and mscorlib by default
-   * Harden in Unity
-   * Helper to create custom .NET PyModules (investigate)
-   * Testing: Juggle a few more different data types to verify robustness. Goes hand-and-hand with [EMBEDDING - .NET TYPES]
+* Helper to create custom .NET PyModules (investigate)
 * Document import process in official documentation
     * Explain how to embed your own modules
     * Explain how to use the file-based importer
@@ -235,6 +229,9 @@ Part 3: Hardening
 * Modules
   * [MODULE_INIT] Start running __init__.py files when importing.
   * [PRECOMPILE_LOAD] Precompile modules and load the precompiled versions
+  * Implementing import
+     * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
+       * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
 
 
 Tech debt:

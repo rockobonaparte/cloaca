@@ -13,12 +13,28 @@ namespace CloacaInterpreter
     /// </summary>
     public class ClrContext
     {
-        public Dictionary<string, Assembly> AddedReferences;
+        public List<Assembly> AddedReferences;
         public const string FrameContextTokenName = "__clr__";
 
         public ClrContext()
         {
-            AddedReferences = new Dictionary<string, Assembly>();
+            AddedReferences = new List<Assembly>();
+        }
+
+        public void AddAssemblyToReferences(Assembly assembly)
+        {
+            if(!AddedReferences.Contains(assembly))
+            {
+                AddedReferences.Add(assembly);
+            }
+        }
+
+        public void AddAssembliesToReferences(List<Assembly> assemblies)
+        {
+            foreach(var assembly in assemblies)
+            {
+                AddAssemblyToReferences(assembly);
+            }
         }
     }
 
@@ -63,11 +79,7 @@ namespace CloacaInterpreter
                 clrContext = new ClrContext();
             }
 
-            var shortName = assembly.GetName().Name;
-            if (!clrContext.AddedReferences.ContainsKey(shortName))
-            {
-                clrContext.AddedReferences.Add(shortName, assembly);
-            }
+            clrContext.AddAssemblyToReferences(assembly);
 
             context.AddVariable(ClrContext.FrameContextTokenName, clrContext);
         }

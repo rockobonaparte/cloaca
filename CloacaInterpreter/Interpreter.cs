@@ -33,6 +33,16 @@ namespace CloacaInterpreter
             sys_meta_path.Add(finder);
         }
 
+        /// <summary>
+        /// The CLR module finder is exposed externally from the interpreter so you can add default assemblies
+        /// to include by default. If you want to be like IronPython, you want to add System and mscorlib, but
+        /// likely want to include more related to your embedded runtime.
+        /// </summary>
+        public ClrModuleFinder ClrFinder
+        {
+            get; private set;
+        }
+
         public Interpreter(Scheduler scheduler)
         {
             sys_meta_path = new List<ISpecFinder>();
@@ -43,7 +53,8 @@ namespace CloacaInterpreter
             var builtinsInjector = new InjectedModuleRepository();
             builtinsInjector.AddNewModuleRoot(ClrModuleInternals.CreateClrModule());
             AddModuleFinder(builtinsInjector);
-            AddModuleFinder(new ClrModuleFinder());
+            ClrFinder = new ClrModuleFinder();
+            AddModuleFinder(ClrFinder);
 
             Expression<Action<PyTypeObject>> super_expr = instance => Builtins.super(null);
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
