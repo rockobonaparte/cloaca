@@ -1,6 +1,10 @@
 ﻿Cloaca TODO
 ===========
 
+Current pressing issue is that the module loading system always loads stuff as PyModules, but we could be
+plucking out classes or objects, not just whole modules. So it needs to step back and determine whether or not
+what it has to import is a module or a specific thing.
+
 Next TODO work:
 * clr module
    * Harden in Unity

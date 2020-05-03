@@ -10,6 +10,8 @@ using CloacaInterpreter;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Threading;
 
 namespace CloacaTests
 {
@@ -162,6 +164,52 @@ namespace CloacaTests
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
+        [Test]
+        [Ignore("Imports successfully, but turns the result into a PyModule when it should be a class")]
+        public async Task NoNamespace()
+        {
+            // Rather than set up a mock project just to create on mock object with no namespace, we're going to dynamically
+            // create one and stuff it into the import system.
+            AssemblyBuilder ab = null;
+            AssemblyName an = new AssemblyName();
+            an.Version = new Version(1, 0, 0, 0);
+            an.Name = "NoNamespaceMockAssembly";
+            ab = Thread.GetDomain().DefineDynamicAssembly(an, AssemblyBuilderAccess.RunAndSave);
+            // Define a dynamic module and the filename of the assembly 
+            ModuleBuilder modBuilder = ab.DefineDynamicModule("NoNamespaceMockModule");
+            TypeBuilder typeBuilder = modBuilder.DefineType("NoNamespaceClass",
+                                            TypeAttributes.Public |
+                                            TypeAttributes.Class |
+                                            TypeAttributes.AutoClass |
+                                            TypeAttributes.AnsiClass |
+                                            TypeAttributes.BeforeFieldInit |
+                                            TypeAttributes.AutoLayout
+                                            , null);
+            typeBuilder.DefineDefaultConstructor(MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName);
+            FieldBuilder fieldBuilder = typeBuilder.DefineField("some_number", typeof(int), FieldAttributes.Public);
+            var mockType = typeBuilder.CreateType();
+
+            // Some sanity checks since we don't generally write this kind of crazy code.
+            Assert.That(mockType.Name, Is.EqualTo("NoNamespaceClass"));
+            Assert.That(mockType.Assembly.GetName().Name, Is.EqualTo("NoNamespaceMockAssembly"));
+            Assert.That(mockType.Namespace, Is.Null);
+
+            // If we made it this far, then the mock assembly should be set up like one on disk that previously screwed up
+            // versions of the CLR importer.
+            var finder = new ClrModuleFinder();
+            finder.AddDefaultAssembly(mockType.Assembly);
+
+            var mockStack = new Stack<Frame>();
+            var mockFrame = new Frame();
+            mockStack.Push(mockFrame);
+            var mockContext = new FrameContext(mockStack);
+
+            var spec = finder.find_spec(mockContext, "NoNamespaceClass", null, null);
+            Assert.NotNull(spec);
+
+            var module = await spec.Loader.Load(null, mockContext, spec);
+            Assert.That(module, Is.EqualTo(mockType));
+        }
     }
 
     [TestFixture]
