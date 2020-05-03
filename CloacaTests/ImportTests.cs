@@ -46,7 +46,7 @@ namespace CloacaTests
     public class InjectedImporterTests
     {
         [Test]
-        public async Task InjectedModulesRootLevel()
+        public async Task RootLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -62,7 +62,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task InjectedModulesSecondLevel()
+        public async Task SecondLevel()
         {
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
@@ -81,6 +81,27 @@ namespace CloacaTests
 
             Assert.That(fooLoaded, Is.EqualTo(fooModule));
             Assert.That(barLoaded, Is.EqualTo(barModule));
+        }
+
+        [Test]
+        [Ignore("Injected module loader can't import non-module items yet.")]
+        public async Task SecondLevelNonModule()
+        {
+            var repo = new InjectedModuleRepository();
+            var fooModule = PyModule.Create("foo");
+            var barModule = PyModule.Create("bar");
+            var barString = PyString.Create("bar string");
+            barModule.__dict__.Add("barstring", barString);
+            fooModule.__dict__.Add("bar", barModule);
+            repo.AddNewModuleRoot(fooModule);
+
+            var barStringSpec = repo.find_spec(null, "foo.bar.barstring", null, null);
+
+            Assert.That(barStringSpec, Is.Not.Null);
+
+            var barStringLoaded = await barStringSpec.Loader.Load(null, null, barStringSpec);
+
+            Assert.That(barStringLoaded, Is.EqualTo(barString));
         }
     }
 
