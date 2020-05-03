@@ -1,5 +1,25 @@
 ## Emedding
 
+## Working With The Scheduler
+
+### ScheduledTaskRecord
+When you schedule a task, you will get a TaskEventRecord as a receipt. The task won't immediately run; the scheduler has to be ticked using
+Tick(). This give you some time to, say, inject variables into the context using the receipt's Frame.
+
+There is an ExtraMedadata object field you can use to assign some stuff to identify particular tasks. This is because some event handlers will
+receive all variety of these and have disassociated what came from where. This can be particularly use when logging errors. Maybe you don't want
+your stream-of-conscious typing into the REPL to get echoed into the log, so you can have your hook to the log suppress them.
+
+Since the whole system is running asynchronously, the submission doesn't block and things just keep going. Also, errors normally just get buried
+because the exceptions from them have nowhere above them to escape. Hence, task completion and task exceptions are sent to the receipt, which
+has events associated with it that'll then fire:
+
+* WhenTaskCompleted(TaskEventRecord): Called in normal script termination. The record is the receipt of the task that finished.
+* WhenTaskExceptionEscaped(TaskEventRecord, ExceptionDispatchInfo). The TaskEventRecord is the receipt of the task that finished, and the
+    ExceptionDispatchInfo contains information about the failure.
+
+Attaching to WhenTaskExceptionEscaped is particularly useful to log scripting errors.
+
 ## Adding Functions
 If you wish to embed a .NET function into the runtime that's directly interacting with it, you will need to create a WrappedCodeObject for it.
 Here's an example from the REPL demo. We wanted to embed print() as a function that prints to a text box:
@@ -93,6 +113,11 @@ if you want to have those involved in your embedding environment, or if you want
 other stuff instead.
 
 ### A Word About Importing Assemblies
+
+Make sure you understand the difference between assemblies and namespaces. Practical points:
+1. Use the assembly for clr.AddReference
+2. Use the namespace for your import statement
+3. If there's no namespace around what you're importing, use the global 'import x' statement.
 
 You need to remember the difference between assemblies and namespaces. For testing, we liked to check System.Environment.MachineName.
 Environment is in the System namespace, but it's in the mscorlib assembly. You can usually find this in the online documentation up at

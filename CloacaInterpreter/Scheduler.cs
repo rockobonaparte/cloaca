@@ -49,6 +49,7 @@ namespace CloacaInterpreter
     }
 
     public delegate void OnTaskCompleted(TaskEventRecord record);
+    public delegate void OnTaskExceptionEscaped(TaskEventRecord record, ExceptionDispatchInfo exc);
 
     /// <summary>
     /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
@@ -58,13 +59,16 @@ namespace CloacaInterpreter
         public FrameContext Frame { get; protected set; }
         public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
         public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
+        public event OnTaskExceptionEscaped WhenTaskExceptionEscaped = (ignoredRecord, ignoredExc) => { };
         public bool Completed { get; protected set; }
+        public object ExtraMetadata;
          
         public TaskEventRecord(FrameContext frame)
         {
             Frame = frame;
             Completed = false;
             EscapedExceptionInfo = null;
+            ExtraMetadata = null;
         }
 
         public void NotifyCompleted()
@@ -77,7 +81,7 @@ namespace CloacaInterpreter
         {
             Completed = true;
             EscapedExceptionInfo = escapedInfo;
-            WhenTaskCompleted(this);
+            WhenTaskExceptionEscaped(this, escapedInfo);
         }
     }
 
