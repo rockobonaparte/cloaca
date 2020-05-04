@@ -33,9 +33,23 @@ namespace CloacaInterpreter.ModuleImporting
             {
                 foreach (var type in assembly.GetTypes())
                 {
-                    var spec = PyModuleSpec.Create(name, loader, "", null);
-                    spec.LoaderState = loaderContext;
-                    return spec;
+                    if (type.Namespace == name)
+                    {
+                        var spec = PyModuleSpec.Create(name, loader, "", null);
+                        spec.LoaderState = loaderContext;
+                        return spec;
+                    }
+                }
+
+                // Still here? Maybe it's an actual type, not an assembly!
+                foreach (var type in assembly.GetTypes())
+                {
+                    if (type.Name == name)
+                    {
+                        var spec = PyModuleSpec.Create(name, loader, "", null);
+                        spec.LoaderState = loaderContext;
+                        return spec;
+                    }
                 }
             }
             return null;
@@ -84,16 +98,18 @@ namespace CloacaInterpreter.ModuleImporting
         /// the module importing system.
         /// </summary>
         /// <param name="spec">The module spec we will load.</param>
-        /// <returns>The loaded module, which is just a lookup into our system.</returns>
-        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
+        /// <returns>The loaded asset... which might be a PyModule wrapper if this is a namespace. Otherwise, the asset itself.</returns>
+        public async Task<object> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
+            // Don't get too fixated on this being a module at the end of the day.
             var module = PyModule.Create(spec.Name);
             var clrContext = (ClrContext) spec.LoaderState;
 
-            // TODO: Create a .NET PyModule interface overridding __getattr__ to do these lookups instead of stuffing the
+            // TODO: [CLR - OPTIMIZE GETATTR] Create a .NET PyModule interface overridding __getattr__ to do these lookups instead of stuffing the
             // module with everything. Tackle that once this has settled down a bit and we know exactly what we're trying to do.
-            
+
             // Some LINQ magic could probably do this but I think I want to be able to step through it.
+            bool foundAny = false;
             foreach(var assembly in clrContext.AddedReferences)
             {
                 foreach(var type in assembly.GetTypes())
@@ -102,7 +118,23 @@ namespace CloacaInterpreter.ModuleImporting
                     {
                         if(!module.__dict__.ContainsKey(type.Name))
                         {
+                            foundAny = true;
                             module.__dict__.Add(type.Name, type);
+                        }
+                    }
+                }
+            }
+
+            // Maybe it's not a namespace!
+            if(!foundAny)
+            {
+                foreach (var assembly in clrContext.AddedReferences)
+                {
+                    foreach (var type in assembly.GetTypes())
+                    {
+                        if (type.Name == spec.Name)
+                        {
+                            return type;
                         }
                     }
                 }

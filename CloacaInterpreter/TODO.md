@@ -5,10 +5,13 @@ Current pressing issue is that the module loading system always loads stuff as P
 plucking out classes or objects, not just whole modules. So it needs to step back and determine whether or not
 what it has to import is a module or a specific thing.
 
+Looks like some unit tests from exception management in the REPL got wrecked from recent changes...
+
 Next TODO work:
 * clr module
    * Harden in Unity
    * Testing: Juggle a few more different data types to verify robustness. Goes hand-and-hand with [EMBEDDING - .NET TYPES]
+   * PyModule optimization: [CLR - OPTIMIZE GETATTR] Don't cram everything into the PyModule but instead use __getattr__ to resolve as-needed.
 * .NET type management [EMBEDDING - .NET TYPES]. We need to work with a lot more raw .NET types.
    * Consider other scenarios where we work directly with .NET types and determine a strategy with how to manage them better.
 * Helper to create custom .NET PyModules (investigate)

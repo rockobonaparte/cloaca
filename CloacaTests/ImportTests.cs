@@ -36,7 +36,7 @@ namespace CloacaTests
             var spec = repo.find_spec(null, "test", null, null);
             Assert.NotNull(spec);
 
-            var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec);
+            var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec) as PyModule;
             Assert.That(loadedModule.__dict__, Contains.Key("a_string"));
             Assert.That(loadedModule.__dict__["a_string"], Is.EqualTo(PyString.Create("Yay!")));
         }
@@ -84,9 +84,12 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Injected module loader can't import non-module items yet.")]
+        [Ignore("It looks like this *shouldn't work*")]
         public async Task SecondLevelNonModule()
         {
+            // Exception should be something like:
+            // ModuleNotFoundError: No module named 'foo.bar.barstring'; 'foo.bar.barstring' is not a package
+            // They would be forced to use the "from foo.bar import barstring"
             var repo = new InjectedModuleRepository();
             var fooModule = PyModule.Create("foo");
             var barModule = PyModule.Create("bar");
@@ -123,7 +126,7 @@ namespace CloacaTests
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
 
-            var module = await spec.Loader.Load(null, mockContext, spec);
+            var module = await spec.Loader.Load(null, mockContext, spec) as PyModule;
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
@@ -145,7 +148,7 @@ namespace CloacaTests
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
 
-            var module = await spec.Loader.Load(null, mockContext, spec);
+            var module = await spec.Loader.Load(null, mockContext, spec) as PyModule;
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
@@ -163,7 +166,7 @@ namespace CloacaTests
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
 
-            var module = await spec.Loader.Load(null, mockContext, spec);
+            var module = await spec.Loader.Load(null, mockContext, spec) as PyModule;
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
@@ -181,12 +184,11 @@ namespace CloacaTests
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
 
-            var module = await spec.Loader.Load(null, mockContext, spec);
+            var module = await spec.Loader.Load(null, mockContext, spec) as PyModule;
             Assert.That(module.Name, Is.EqualTo("System"));
         }
 
         [Test]
-        [Ignore("Imports successfully, but turns the result into a PyModule when it should be a class")]
         public async Task NoNamespace()
         {
             // Rather than set up a mock project just to create on mock object with no namespace, we're going to dynamically

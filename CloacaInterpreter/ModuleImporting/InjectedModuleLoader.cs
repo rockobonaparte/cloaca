@@ -79,8 +79,6 @@ namespace CloacaInterpreter.ModuleImporting
                 return spec;
             }
         }
-
-
     }
 
     public class InjectedModuleSpec : ISpecLoader
@@ -90,8 +88,8 @@ namespace CloacaInterpreter.ModuleImporting
         /// the module importing system.
         /// </summary>
         /// <param name="spec">The module spec we will load.</param>
-        /// <returns>The loaded module, which is just a lookup into our system.</returns>
-        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
+        /// <returns>The loaded asset. In this case, it will be a PyModule.</returns>
+        public async Task<object> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             return (PyModule)spec.LoaderState;
         }

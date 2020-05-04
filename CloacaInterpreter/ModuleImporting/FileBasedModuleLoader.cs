@@ -91,7 +91,7 @@ namespace CloacaInterpreter.ModuleImporting
     public class FileBasedModuleLoader : ISpecLoader
     {
 
-        public async Task<PyModule> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
+        public async Task<object> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var foundPath = (string)spec.LoaderState;
             var inFile = File.ReadAllText(foundPath);

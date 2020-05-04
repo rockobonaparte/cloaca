@@ -1272,7 +1272,10 @@ namespace CloacaInterpreter
                                     {                                       
                                         var toImport = await spec.Loader.Load(this, context, spec);
                                         context.DataStack.Push(toImport);
-                                        context.SysModules.Add(module_name, toImport);
+                                        if(toImport is PyModule)
+                                        {
+                                            context.SysModules.Add(module_name, toImport as PyModule);
+                                        }
                                     }
                                 }
 
