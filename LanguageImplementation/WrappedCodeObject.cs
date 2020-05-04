@@ -253,8 +253,8 @@ namespace LanguageImplementation
                         }
                         else
                         {
-                            genericTypes[i] = in_args[i].GetType();
-                        }                        
+                            genericTypes[i] = (Type) in_args[i];
+                        }
                     }
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 

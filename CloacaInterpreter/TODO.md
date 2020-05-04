@@ -1,11 +1,9 @@
 ﻿Cloaca TODO
 ===========
 
-Current pressing issue is that the module loading system always loads stuff as PyModules, but we could be
-plucking out classes or objects, not just whole modules. So it needs to step back and determine whether or not
-what it has to import is a module or a specific thing.
-
-Looks like some unit tests from exception management in the REPL got wrecked from recent changes...
+Having these together also caused "stack is empty" in Unity.
+from UnityEngine import MeshRenderer, Color
+from UnityEngine import Color
 
 Next TODO work:
 * clr module
