@@ -259,6 +259,7 @@ namespace CloacaInterpreter
             var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
             activeContext = scheduledTaskRecord.Frame;
             scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
+            scheduledTaskRecord.WhenTaskExceptionEscaped += WhenReplTaskExceptionEscaped;
             foreach (string varName in ContextVariables.Keys)
             {
                 activeContext.SetVariable(varName, ContextVariables[varName]);
@@ -301,37 +302,36 @@ namespace CloacaInterpreter
 
         private async void WhenReplTaskCompleted(TaskEventRecord scheduledTaskRecord)
         {
-            if (scheduledTaskRecord.EscapedExceptionInfo != null)
+            var stack_output = new StringBuilder();
+            foreach (var stack_var in scheduledTaskRecord.Frame.DataStack)
             {
-                CaughtError = true;
-                WhenReplCommandDone(this, scheduledTaskRecord.EscapedExceptionInfo.SourceException.Message);
-            }
-            else
-            {
-                var stack_output = new StringBuilder();
-                foreach (var stack_var in scheduledTaskRecord.Frame.DataStack)
+                var stack_var_obj = stack_var as PyObject;
+                if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
                 {
-                    var stack_var_obj = stack_var as PyObject;
-                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
-                    {
-                        stack_output.Append(stack_var.ToString());
-                    }
-                    else
-                    {
-                        var __repr__ = stack_var_obj.__getattribute__(PyClass.__REPR__);
-                        var functionToRun = __repr__ as IPyCallable;
-
-                        var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
-                        if (returned != null)
-                        {
-                            stack_output.Append(returned);
-                        }
-                    }
-                    stack_output.Append(Environment.NewLine);
+                    stack_output.Append(stack_var.ToString());
                 }
+                else
+                {
+                    var __repr__ = stack_var_obj.__getattribute__(PyClass.__REPR__);
+                    var functionToRun = __repr__ as IPyCallable;
 
-                WhenReplCommandDone(this, stack_output.ToString());
+                    var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
+                    if (returned != null)
+                    {
+                        stack_output.Append(returned);
+                    }
+                }
+                stack_output.Append(Environment.NewLine);
             }
+
+            WhenReplCommandDone(this, stack_output.ToString());
+            ContextVariables = scheduledTaskRecord.Frame.DumpVariables();
+        }
+
+        private async void WhenReplTaskExceptionEscaped(TaskEventRecord scheduledTaskRecord, ExceptionDispatchInfo exc)
+        {
+            CaughtError = true;
+            WhenReplCommandDone(this, scheduledTaskRecord.EscapedExceptionInfo.SourceException.Message);
             ContextVariables = scheduledTaskRecord.Frame.DumpVariables();
         }
 
