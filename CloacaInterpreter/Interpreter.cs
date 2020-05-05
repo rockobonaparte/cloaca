@@ -1251,6 +1251,7 @@ namespace CloacaInterpreter
                                 if (context.SysModules.ContainsKey(module_name))
                                 {
                                     foundModule = context.SysModules[module_name];
+                                    context.DataStack.Push(foundModule);
                                 }
                                 else
                                 {

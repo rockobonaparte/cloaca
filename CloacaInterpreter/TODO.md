@@ -1,10 +1,6 @@
 ﻿Cloaca TODO
 ===========
 
-Having these together also caused "stack is empty" in Unity.
-from UnityEngine import MeshRenderer, Color
-from UnityEngine import Color
-
 Next TODO work:
 * clr module
    * Harden in Unity
