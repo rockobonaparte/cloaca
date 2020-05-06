@@ -169,7 +169,7 @@ namespace CloacaInterpreter
 
         /// <summary>
         /// Retains the current frame state but enters a new child CodeObject. This is equivalent to
-        /// using a CALL_FUNCTION opcode to descene into a subroutine or similar, but can be invoked
+        /// using a CALL_FUNCTION opcode to descend into a subroutine or similar, but can be invoked
         /// external into the interpreter. It is used for inner, coordinating code to call back into
         /// the interpreter to get results. For example, this is used in object creation to invoke
         /// __new__ and __init__.
@@ -189,7 +189,7 @@ namespace CloacaInterpreter
 
         /// <summary>
         /// Retains the current frame state but enters the next frame. This is equivalent to
-        /// using a CALL_FUNCTION opcode to descend into a subroutine or similar, but can be invoked
+        /// using a CALL_FUNCTION to descend into a subroutine or similar, but can be invoked
         /// externally into the interpreter. It is used for inner, coordinating code to call back into
         /// the interpreter to get results. 
         /// </summary>

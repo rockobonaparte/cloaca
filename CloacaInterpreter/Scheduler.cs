@@ -97,6 +97,7 @@ namespace CloacaInterpreter
         private List<ScheduledTaskRecord> blocked;
         private List<ScheduledTaskRecord> unblocked;
         private List<ScheduledTaskRecord> yielded;
+        private ScheduledTaskRecord currentTask;
 
         public Scheduler()
         {
@@ -104,8 +105,60 @@ namespace CloacaInterpreter
             blocked = new List<ScheduledTaskRecord>();
             unblocked = new List<ScheduledTaskRecord>();
             yielded = new List<ScheduledTaskRecord>();
+            currentTask = null;
 
             TickCount = 0;
+        }
+
+        /// <summary>
+        /// Returns a copy of a list of all active tasks currently in the scheduler.
+        /// </summary>
+        /// <returns>All active tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are active.
+        /// </returns>
+        public ScheduledTaskRecord[] GetTasksActive()
+        {
+            return active.ToArray();
+        }
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as blocked in the scheduler. Blocked tasks are waiting on an asynchronous result.
+        /// </summary>
+        /// <returns>All blocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        public ScheduledTaskRecord[] GetTasksBlocked()
+        {
+            return blocked.ToArray();
+        }
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as unblocked in the scheduler. These are tasks that have finished yielding or otherwise
+        /// got a value asynchronously that will let their scripts continue. Normally investigating this will not find much since these are moved into the
+        /// active queue after each scheduler tick. It is mostly useful for particular scheduler diagnostics.
+        /// </summary>
+        /// <returns>All unblocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        public ScheduledTaskRecord[] GetTasksUnblocked()
+        {
+            return unblocked.ToArray();
+        }
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as yielded in the scheduler. These are tasks that have taken a break from running. This
+        /// can happen either from an explicit yield instruction, or they have exhausted their prescribed run time--if that is even a thing with this scheduler.
+        /// </summary>
+        /// <returns>All yielded tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        public ScheduledTaskRecord[] GetTasksYielded()
+        {
+            return yielded.ToArray();
+        }
+
+        /// <summary>
+        /// Gets the task currently running. This could be null if no task is running.
+        /// </summary>
+        /// <returns>The task that's currently running. This could be null if no task is running.</returns>
+        public ScheduledTaskRecord GetCurrentTask()
+        {
+            return currentTask;
         }
 
         private int findTaskRecordIndex(FrameContext frame, List<ScheduledTaskRecord> records)
@@ -143,6 +196,31 @@ namespace CloacaInterpreter
         public TaskEventRecord Schedule(CodeObject program)
         {
             var scheduleState = PrepareFrameContext(program);
+            unblocked.Add(scheduleState);
+            return scheduleState.SubmitterReceipt;
+        }
+
+        /// <summary>
+        /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
+        /// in function calls that need to be spun up as independent coroutines.
+        /// </summary>
+        /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
+        /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
+        /// <returns></returns>
+        public TaskEventRecord Schedule(CodeObject program, params object[] args)
+        {
+            if(args.Length != program.ArgCount)
+            {
+                throw new Exception("The given code object requires " + program.ArgCount + " arguments but only " + args.Length + " arguments were given");
+            }
+
+            var scheduleState = PrepareFrameContext(program);
+
+            for (int argIdx = 0; argIdx < args.Length; ++argIdx)
+            {
+                scheduleState.Frame.AddVariable(program.ArgVarNames[argIdx], args[argIdx]);
+            }
+
             unblocked.Add(scheduleState);
             return scheduleState.SubmitterReceipt;
         }
@@ -205,10 +283,12 @@ namespace CloacaInterpreter
 
             foreach (var continued in oldUnblocked)
             {
-                lastScheduled = continued;
-                active.Add(lastScheduled);
-                var theContinuation = continued.Continuation;
+                currentTask = null;
+                currentTask = continued;
+                active.Add(currentTask);
+                var theContinuation = currentTask.Continuation;
                 await theContinuation.Continue();
+                currentTask = null;
             }
             lastScheduled = null;
 

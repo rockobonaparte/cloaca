@@ -18,6 +18,9 @@ Next TODO work:
 * Module isolation: Finders and loaders (and their state) are being kept in the interpreter, not the context, so all scripts
   are sharing that state. We might not want that--although it could be convenient to do that for most scripts.
 
+An advanced problem to eventually worry about is atomicity. If the scheduler starts interrupting scripts in the middle of doing stuff, we
+might have an incomplete state that could wreck other things that run after--including the parent runtime.
+
 
 Overview of module import process:
 1. Look in sys.modules for the request module. sys.modules is a dict of module names to modules and serves as a cache.
