@@ -304,30 +304,32 @@ namespace CloacaInterpreter
                 // active task above, but we're keeping them here for later when we try to make the scheduler more resiliant against
                 // rogue scripts and keep running.
                 //
-                // TODO: Test for escaped exception first and that should simplify a lot of this code.
                 // We need to check the call stack because we have started scheduling functions. Those return from themselves and
                 // fully nuke their call stacks unlike root programs.
-                if (!(interpreter.ExceptionEscaped(lastScheduled.Frame) ||
-                      lastScheduled.Frame.EscapedDotNetException != null ||
-                      (lastScheduled.Frame.BlockStack.Count == 0 && lastScheduled.Frame.Cursor >= lastScheduled.Frame.CodeBytes.Bytes.Length)
-                     )
-                   )
-                {
-                    active.Add(lastScheduled);
-                }
-                else if(lastScheduled.Frame.EscapedDotNetException != null)
+                if(lastScheduled.Frame.EscapedDotNetException != null)
                 {
                     // We want to rethrow while retaining the original stack trace.
                     // https://stackoverflow.com/questions/57383/how-to-rethrow-innerexception-without-losing-stack-trace-in-c
                     scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException));
+
                 }
                 else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
                 {
                     scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(new EscapedPyException(lastScheduled.Frame.CurrentException)));
                 }
-                else
+                else if(lastScheduled.Frame.callStack.Count == 0)
+                {
+                    // Executed a return statement and that nuked the whole stack. This code is done!
+                    scheduled.SubmitterReceipt.NotifyCompleted();
+                }
+                else if (lastScheduled.Frame.BlockStack.Count == 0 &&
+                    lastScheduled.Frame.Cursor >= lastScheduled.Frame.CodeBytes.Bytes.Length)
                 {
                     scheduled.SubmitterReceipt.NotifyCompleted();
+                }
+                else
+                {
+                    active.Add(lastScheduled);
                 }
             }
 
