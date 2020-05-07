@@ -236,6 +236,19 @@ Part 3: Hardening
   * Implementing import
      * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
        * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
+* Task schedule hardening
+  * ScheduledTaskRecord additions
+    * Cancel(): Cancel this task no matter current state
+    * ScheduleCancel(): "Soft" cancel. Next time this task stops, cancel it. Still kind of crappy, but if the task is in a yield polling loop,
+      this may be a perfectly fine way to stop them without having to communicate to them.
+    * RunNow(): Stop current task and run the one given by the current task record
+  * Scheduler additions 
+    * YieldNow()
+  * SysModule wrapper should be easier to represent
+    * Shouldn't need so much boilerplate
+    * Should be able to create PyLists instead of C# arrays.
+
+
 
 
 Tech debt:

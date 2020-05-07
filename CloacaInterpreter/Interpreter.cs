@@ -47,11 +47,15 @@ namespace CloacaInterpreter
         {
             sys_meta_path = new List<ISpecFinder>();
 
+            // Prepare built-in modules.
+            var builtinsInjector = new InjectedModuleRepository();
+            builtinsInjector.AddNewModuleRoot(ClrModuleInternals.CreateClrModule());
+            var sysBuilder = new SysModuleBuilder(scheduler);
+            builtinsInjector.AddNewModuleRoot(sysBuilder.CreateModule());
+
             // Add the universal module finders. It is up to the embedder to stuff more of these in using
             // AddModuleFinder if they want to import from other sources.
             // CLR and built-ins are added by default. 
-            var builtinsInjector = new InjectedModuleRepository();
-            builtinsInjector.AddNewModuleRoot(ClrModuleInternals.CreateClrModule());
             AddModuleFinder(builtinsInjector);
             ClrFinder = new ClrModuleFinder();
             AddModuleFinder(ClrFinder);

@@ -70,6 +70,7 @@
     <Compile Include="Repl.cs" />
     <Compile Include="Scheduler.cs" />
     <Compile Include="SubscriptHelper.cs" />
+    <Compile Include="SysModule.cs" />
     <Compile Include="Visitors.cs" />
     <Compile Include="YieldTick.cs" />
   </ItemGroup>
