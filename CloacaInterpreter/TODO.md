@@ -1,6 +1,14 @@
 ﻿Cloaca TODO
 ===========
 
+Current issue:
+I need to implement the nonlocal statement. The schedule unit test is trying to use it. I could probably test around it, but the point
+is that I should implement all the syntax I personally end up using for stuff. Since I'm a Python asshole, that probably means implementing
+just about everything... :(
+
+Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
+I ended up looking at the length of argument names.
+
 Next TODO work:
 * clr module
    * Harden in Unity

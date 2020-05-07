@@ -209,7 +209,7 @@ namespace CloacaInterpreter
         /// <returns></returns>
         public TaskEventRecord Schedule(CodeObject program, params object[] args)
         {
-            if(args.Length != program.ArgCount)
+            if(args.Length != program.ArgVarNames.Count)
             {
                 throw new Exception("The given code object requires " + program.ArgCount + " arguments but only " + args.Length + " arguments were given");
             }
@@ -218,7 +218,7 @@ namespace CloacaInterpreter
 
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                scheduleState.Frame.AddVariable(program.ArgVarNames[argIdx], args[argIdx]);
+                scheduleState.Frame.SetVariable(program.ArgVarNames[argIdx], args[argIdx]);
             }
 
             unblocked.Add(scheduleState);
