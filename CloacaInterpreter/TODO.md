@@ -2,6 +2,9 @@
 ===========
 
 Current issue:
+Complete context is not getting carried when passing an function to run to the scheduler. If it references stuff in globals, it won't
+resolve. I think the scheduler needs a handle to the parent context to build off of it instead of preparing a brand-spanking-new context.
+
 I need to implement the nonlocal statement. The schedule unit test is trying to use it. I could probably test around it, but the point
 is that I should implement all the syntax I personally end up using for stuff. Since I'm a Python asshole, that probably means implementing
 just about everything... :(
