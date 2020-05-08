@@ -6,6 +6,8 @@ I need to implement the nonlocal statement. The schedule unit test is trying to 
 is that I should implement all the syntax I personally end up using for stuff. Since I'm a Python asshole, that probably means implementing
 just about everything... :(
 
+(actually you need the global keyword for the unit test you wrote, but you'll need nonlocal when you start going another layer down)
+
 Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
 I ended up looking at the length of argument names.
 
@@ -255,6 +257,11 @@ Part 3: Hardening
   * SysModule wrapper should be easier to represent
     * Shouldn't need so much boilerplate
     * Should be able to create PyLists instead of C# arrays.
+* Scope keywords: global, nonlocal
+  * Exception checks for parsing cases where nonlocal, global are defined after variable is defined.
+  * External global declaration.
+  * Exception checks for parsing external global declarations that then use that name for function parameters.
+  * Nonlocal keyword.
 
 
 

@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-using LanguageImplementation.DataTypes.Exceptions;
-using LanguageImplementation;
-using System;
 
 namespace CloacaTests
 {
@@ -19,7 +16,7 @@ namespace CloacaTests
     public class SysModule : RunCodeTest
     {
         [Test]
-        [Ignore("Currently fails because we don't implement nonlocal. The scheduler might still have bugs behind that...")]
+        [Ignore("Real bug here. The parent scope is not getting included so the global doesn't get found.")]
         public void SchedulerAnotherFunctionNoArgs()
         {
             runBasicTest(
@@ -27,7 +24,7 @@ namespace CloacaTests
                 "\n" +
                 "a = 0\n" +
                 "def change_a():\n" +
-                "   nonlocal a\n" +
+                "   global a\n" +
                 "   a = 1\n" +
                 "\n" + 
                 "sys.scheduler.schedule(change_a)\n", new VariableMultimap(new TupleList<string, object>

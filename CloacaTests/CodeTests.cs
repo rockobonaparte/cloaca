@@ -523,56 +523,6 @@ namespace CloacaTests
         }
 
         [Test]
-        public void InnerAndOuterScopesLocal()
-        {
-            string program =
-                "a = 1\n" +
-                "def foo():\n" +
-                "   a = 2\n" +
-                "foo()\n";
-
-            runBasicTest(program,
-                new VariableMultimap(new TupleList<string, object>
-                {
-                    { "a", PyInteger.Create(1) }
-                }), 1, new string[] { "foo" });
-        }
-
-        [Test]
-        public void InnerGlobal()
-        {
-            string program =
-                "a = 1\n" +
-                "def foo():\n" +
-                "   global a\n" +
-                "   a = 2\n" +
-                "foo()\n";
-
-            runBasicTest(program,
-                new VariableMultimap(new TupleList<string, object>
-                {
-                    { "a", PyInteger.Create(2) }
-                }), 1, new string[] { "foo" });
-        }
-
-        [Test]
-        public void ImplicitlyUsesGlobal()
-        {
-            string program =
-                "a = 1\n" +
-                "def foo():\n" +
-                "   b = a + 1\n" +
-                "   return b\n" +
-                "a = foo()\n";
-
-            runBasicTest(program,
-                new VariableMultimap(new TupleList<string, object>
-                {
-                    { "a", PyInteger.Create(2) }
-                }), 1, new string[] { "foo" });
-        }
-
-        [Test]
         public void IntIntFunction()
         {
             string program =

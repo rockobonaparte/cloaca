@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuiltinsTests.cs" />
+    <Compile Include="ScopeTests.cs" />
     <Compile Include="SysModuleTests.cs" />
     <Compile Include="CodeTests.cs" />
     <Compile Include="ConstantFactoryTests.cs" />
