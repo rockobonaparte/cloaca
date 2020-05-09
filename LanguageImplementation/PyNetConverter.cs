@@ -21,6 +21,7 @@ namespace LanguageImplementation
             { ValueTuple.Create(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).number; } },
             { ValueTuple.Create(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).number; } },
             { ValueTuple.Create(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).number; } },
+            { ValueTuple.Create(typeof(BigInteger), typeof(int)), (as_bi) => { return (int) ((BigInteger)as_bi); } },
 
             // Float conversions
             { ValueTuple.Create(typeof(float), typeof(PyFloat)), (as_float) => { return PyFloat.Create((float)as_float); } },
