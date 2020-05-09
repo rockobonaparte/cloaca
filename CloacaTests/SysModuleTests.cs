@@ -16,7 +16,6 @@ namespace CloacaTests
     public class SysModule : RunCodeTest
     {
         [Test]
-        [Ignore("Real bug here. The parent scope is not getting included so the global doesn't get found.")]
         public void SchedulerAnotherFunctionNoArgs()
         {
             runBasicTest(

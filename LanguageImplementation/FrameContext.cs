@@ -23,8 +23,46 @@ namespace LanguageImplementation
 
         public FrameContext(Stack<Frame> callStack)
         {
+            StartDepth = callStack.Count;
             this.callStack = callStack;
             SysModules = new Dictionary<string, PyModule>();
+        }
+
+        /// <summary>
+        /// A subcontext carries the variable state of the parent FrameContext but runs different
+        /// code with it. This is used for things like functions defined inside functions.
+        /// </summary>
+        /// <param name="subFrames">The frame stack to use for the subcontext.</param>
+        /// <returns>A new FrameContext that has this FrameContext's variable state but the
+        /// new callstack based on rootFrame.</returns>
+        public FrameContext CreateSubcontext(Stack<Frame> subFrames)
+        {
+            Stack<Frame> reverseStack = new Stack<Frame>();
+            foreach (var parentFrame in callStack)
+            {
+                reverseStack.Push(parentFrame);
+            }
+            foreach (var childFrame in subFrames)
+            {
+                reverseStack.Push(childFrame);
+            }
+
+            int subStartDepth = callStack.Count;
+            FrameContext newContext = new FrameContext(reverseStack);
+            newContext.StartDepth = subStartDepth;
+            return newContext;
+        }
+
+        /// <summary>
+        /// This is the call stack depth when the frame context was created. If our depth is less
+        /// than this, then this context has finished.
+        /// 
+        /// A fresh frame context will likely start with a depth of zero. Subcontexts such as
+        /// functions in functions will start with a non-zero depth.
+        /// </summary>
+        public int StartDepth
+        {
+            get; private set;
         }
 
         public int Cursor

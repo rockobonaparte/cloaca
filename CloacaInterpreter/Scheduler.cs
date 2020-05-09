@@ -200,6 +200,13 @@ namespace CloacaInterpreter
             return scheduleState.SubmitterReceipt;
         }
 
+        public TaskEventRecord Schedule(CodeObject program, FrameContext context)
+        {
+            var scheduleState = PrepareFrameContext(program, context);
+            unblocked.Add(scheduleState);
+            return scheduleState.SubmitterReceipt;
+        }
+
         /// <summary>
         /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
         /// in function calls that need to be spun up as independent coroutines.
@@ -207,7 +214,7 @@ namespace CloacaInterpreter
         /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
         /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
         /// <returns></returns>
-        public TaskEventRecord Schedule(CodeObject program, params object[] args)
+        public TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args)
         {
             if(args.Length != program.ArgVarNames.Count)
             {
@@ -234,6 +241,19 @@ namespace CloacaInterpreter
         /// well as the continuation to kick it off (and resume it later).</returns>
         private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram)
         {
+            return PrepareFrameContext(newProgram, null);
+        }
+
+        /// <summary>
+        /// Creates a new frame context as a child of the super context. If the super context is null, then this
+        /// context is considered a root context. If it is defined, this context is considered a subcontext.
+        /// Subcontexts come up when defining functions in functions and then scheduling them out.
+        /// </summary>
+        /// <param name="newProgram"></param>
+        /// <param name="superContext"></param>
+        /// <returns></returns>
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext)
+        {
             var newFrameStack = new Stack<Frame>();
             var rootFrame = new Frame(newProgram);
 
@@ -243,9 +263,10 @@ namespace CloacaInterpreter
             }
 
             newFrameStack.Push(rootFrame);
-            var frame = new FrameContext(newFrameStack);
-            var initialContinuation = new InitialScheduledContinuation(this.interpreter, frame);
-            return new ScheduledTaskRecord(frame, initialContinuation, new TaskEventRecord(frame));
+            FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack) : new FrameContext(newFrameStack);
+
+            var initialContinuation = new InitialScheduledContinuation(this.interpreter, subContext);
+            return new ScheduledTaskRecord(subContext, initialContinuation, new TaskEventRecord(subContext));
         }
 
         // This is called when the currently-active script is blocking. Call this right before invoking

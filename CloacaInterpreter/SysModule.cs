@@ -38,15 +38,15 @@ namespace CloacaInterpreter
             return scheduler.GetTasksYielded();
         }
 
-        public void schedule(PyModule module, CodeObject call, params object[] args)
+        public void schedule(PyModule module, FrameContext context, CodeObject call, params object[] args)
         {
             if (args == null)
             {
-                scheduler.Schedule(call);
+                scheduler.Schedule(call, context);
             }
             else
             {
-                scheduler.Schedule(call, args);
+                scheduler.Schedule(call, context, args);
             }
         }
 

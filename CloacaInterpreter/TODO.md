@@ -1,9 +1,14 @@
 ﻿Cloaca TODO
 ===========
 
-Current issue:
-Complete context is not getting carried when passing an function to run to the scheduler. If it references stuff in globals, it won't
-resolve. I think the scheduler needs a handle to the parent context to build off of it instead of preparing a brand-spanking-new context.
+Current issue: scheduling functions from other contexts. It current seems to work but needs more aggressively testing to make sure we're
+not blowing up the parent context.
+
+The scheduler also waits to see the block stack is completely clear. I guess I need to worry about that too haha. We should try some
+stuff that involves blocks with functions inside of them getting rammed into the scheduler.
+
+The tests needs to alter some other state--maybe with an increment--to see if the child context is escaping out and double-tapping
+parent code.
 
 I need to implement the nonlocal statement. The schedule unit test is trying to use it. I could probably test around it, but the point
 is that I should implement all the syntax I personally end up using for stuff. Since I'm a Python asshole, that probably means implementing
