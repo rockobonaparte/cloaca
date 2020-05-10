@@ -398,7 +398,7 @@ namespace CloacaInterpreter
                             await rightLeftOperation(context, "__iadd__", "__add__", (left, right) =>
                             {
                                 var leftEvent = left as EventInstance;
-                                var rightCall = right as WrappedCodeObject;
+                                var rightCall = right as IPyCallable;
                                 if (leftEvent != null)
                                 {
                                     // This is what you'll see in Microsoft documentation for getting the parameter and return information for an event. It's... fickle.
@@ -427,7 +427,7 @@ namespace CloacaInterpreter
                             await rightLeftOperation(context, "__isub__", "__sub__", (left, right) =>
                             {
                                 var leftEvent = left as EventInstance;
-                                var rightCall = right as WrappedCodeObject;
+                                var rightCall = right as IPyCallable;
                                 if (leftEvent != null)
                                 {
                                     var listeners = leftEvent.EventDelegate.GetInvocationList();
