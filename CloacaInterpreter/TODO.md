@@ -9,6 +9,10 @@ String concatenation doesn't appear to work either. There was a parse error when
 
 Exception raised by a Cloaca error listener to a C# event is disappearing.
 
+Attribute names are not getting reused; they're just piling up over and over.
+
+Need better management when trying to reference null .NET values that aren't our fault.
+
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
 
