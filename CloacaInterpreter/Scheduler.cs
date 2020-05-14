@@ -7,6 +7,8 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
+    public delegate void NewScheduleTaskDelegate(ScheduledTaskRecord taskRecord);
+
     public class InitialScheduledContinuation : ISubscheduledContinuation
     {
         private IInterpreter interpreter;
@@ -92,6 +94,12 @@ namespace CloacaInterpreter
     {
         private IInterpreter interpreter;
         public int TickCount;
+
+        /// <summary>
+        /// Fired each time a task is scheduled. This is useful for attaching on to the task
+        /// record for exceptions so they can be logged.
+        /// </summary>
+        public event NewScheduleTaskDelegate OnTaskScheduled = (x) => { };
 
         private List<ScheduledTaskRecord> active;
         private List<ScheduledTaskRecord> blocked;
@@ -197,6 +205,7 @@ namespace CloacaInterpreter
         {
             var scheduleState = PrepareFrameContext(program);
             unblocked.Add(scheduleState);
+            OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
         }
 
@@ -204,6 +213,7 @@ namespace CloacaInterpreter
         {
             var scheduleState = PrepareFrameContext(program, context);
             unblocked.Add(scheduleState);
+            OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
         }
 
@@ -229,6 +239,7 @@ namespace CloacaInterpreter
             }
 
             unblocked.Add(scheduleState);
+            OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
         }
 

@@ -2,6 +2,11 @@
 ===========
 
 ## Current Issues
+Scheduler doesn't seem to run scheduled code in Unity. It may also stick into the active queue, but I haven't sorted that out yet.
+Confirmed that imported modules in a parent script are not carrying into a scheduled function. They don't resolve. So the subcontext
+feature is incomplete. We should be able to replicate with a unit test that imports something.
+
+
 It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
 Unity GameObject. It couldn't resolve it.
 
@@ -12,6 +17,27 @@ Exception raised by a Cloaca error listener to a C# event is disappearing.
 Attribute names are not getting reused; they're just piling up over and over.
 
 Need better management when trying to reference null .NET values that aren't our fault.
+
+The scheduler worked fine with the REPL demo. I was able to schedule this and have it run in the background:
+
+```python
+def burp_loop():
+   while True:
+     set_blip(3, True)
+     sleep(1.0)
+     set_blip(3, False)
+     sleep(1.0)
+```
+Somehow, schedule calls in Unity don't seem to kick off anything? I suppose I need to try something with just Debug.Log.
+
+* REPL demo
+  * Don't print NoneType if it's returned from a call invoked in REPL
+  * sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
+  * Declaring a function in REPL caused a parsing screwup in the visitors.
+  * ```>>> scheduler.schedule(set_blip, 2, True)
+    No .NET method found to match the given arguments: PyModule, WrappedCodeObject, PyInteger, PyBool```
+  * Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
+
 
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
