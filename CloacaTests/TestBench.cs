@@ -8,14 +8,34 @@ using LanguageImplementation.DataTypes;
 
 using Antlr4.Runtime;
 using NUnit.Framework;
+using System.Runtime.ExceptionServices;
 
 namespace CloacaTests
 {
     [TestFixture]
     public class RunCodeTest
     {
+        protected List<ExceptionDispatchInfo> escapedExceptions;
+
+        protected void taskHadException(TaskEventRecord taskRecord, ExceptionDispatchInfo exc)
+        {
+            taskRecord.WhenTaskExceptionEscaped -= taskHadException;
+            escapedExceptions.Add(exc);
+        }
+
+        protected void whenTaskScheduled(ScheduledTaskRecord scheduled)
+        {
+            scheduled.SubmitterReceipt.WhenTaskExceptionEscaped += taskHadException;
+        }
+
+        protected void whenTaskCompleted(ScheduledTaskRecord scheduled)
+        {
+            scheduled.SubmitterReceipt.WhenTaskExceptionEscaped -= taskHadException;
+        }
+
         protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
         {
+            escapedExceptions = new List<ExceptionDispatchInfo>();
             CodeObject compiledProgram = null;
             try
             {
@@ -38,6 +58,7 @@ namespace CloacaTests
                 interpreter.AddModuleFinder(finder);
             }
             scheduler.SetInterpreter(interpreter);
+            scheduler.OnTaskScheduled += whenTaskScheduled;
 
             var receipt = scheduler.Schedule(compiledProgram);
             context = receipt.Frame;
@@ -54,6 +75,14 @@ namespace CloacaTests
             if(receipt.EscapedExceptionInfo != null)
             {
                 receipt.EscapedExceptionInfo.Throw();
+            }
+
+            // For now, just throw the topmost exception if we have one. It would mean if there are
+            // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
+            // debug them.
+            if(escapedExceptions.Count > 0)
+            {
+                escapedExceptions[0].Throw();
             }
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));

@@ -12,6 +12,11 @@ namespace CloacaTests
         public int TheInt;
     }
 
+    public class Sack
+    {
+        public object inside;
+    }
+
     [TestFixture]
     public class SysModule : RunCodeTest
     {
@@ -85,6 +90,34 @@ namespace CloacaTests
             }), 2);
 
             Assert.That(intHaver.TheInt, Is.EqualTo(1));
+        }
+
+        /// <summary>
+        /// Despite our best effort with subcontexts to convey parent state to inner functions that get
+        /// scheduled, imported stuff somehow was getting missed. This test makes sure we catch this
+        /// situation. We don't want to create dependencies on other stuff, so we just use the sys
+        /// module we already imported as the test collateral.
+        /// </summary>
+        [Test]
+        [Ignore("Identified this problem during Unity integration testing. Need to address.")]
+        public void ReferenceImportInScheduled()
+        {
+            var sack = new Sack();
+            runBasicTest(
+                "import sys\n" +
+                "\n" +
+                "def reference_sys(some_sack):\n" +
+                "   some_sack.inside = sys.__name__\n" +
+                "\n" +
+                "sys.scheduler.schedule(reference_sys, sack)\n",
+                new Dictionary<string, object>()
+            {
+                { "sack", sack }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+            }), 2);
+
+            Assert.That(sack.inside, Is.EqualTo(PyString.Create("sys")));
         }
     }
 }
