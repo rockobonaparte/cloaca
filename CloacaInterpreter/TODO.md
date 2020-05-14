@@ -10,7 +10,9 @@ feature is incomplete. We should be able to replicate with a unit test that impo
 It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
 Unity GameObject. It couldn't resolve it.
 
-String concatenation doesn't appear to work either. There was a parse error when I tried to use one.
+String concatenation doesn't appear to work either. There was a parse error when I tried to use one. A simple test passed, so it might
+have to do with concatenating non-string objects to strings. We should have a specific test for that in StringTests. We probably need
+to use the str() casting to make it a string--check against Python. Also, when we screw this up, the error should be clear.
 
 Exception raised by a Cloaca error listener to a C# event is disappearing.
 
