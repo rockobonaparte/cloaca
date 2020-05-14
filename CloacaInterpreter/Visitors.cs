@@ -806,7 +806,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // more proper to say that *everything* needs STORE_NAME by default but we're able to optimize it in just about every other
         // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
         // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
-        if(context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
+        //
+        // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
+        if(context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
+            context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
         {
             var nameIdx = ActiveProgram.Names.AddReplaceGetIndex(funcName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
