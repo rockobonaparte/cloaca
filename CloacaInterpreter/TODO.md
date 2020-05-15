@@ -2,11 +2,6 @@
 ===========
 
 ## Current Issues
-Scheduler doesn't seem to run scheduled code in Unity. It may also stick into the active queue, but I haven't sorted that out yet.
-Confirmed that imported modules in a parent script are not carrying into a scheduled function. They don't resolve. So the subcontext
-feature is incomplete. We should be able to replicate with a unit test that imports something.
-
-
 It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
 Unity GameObject. It couldn't resolve it.
 
@@ -191,6 +186,7 @@ Part 3: Hardening
 	 * Decimal types
 	 * strings
 	 * bools
+  * [PYSTRING TO OBJECT] Shouldn't we assign PyString to object instead of casting it?
   * Object wrapping. Start with wrapping a generic object. All fields should also get boxed/unboxed which will
     likely mess around with how primitive boxing/unboxing is done.
   * PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
@@ -311,7 +307,6 @@ Part 3: Hardening
   * External global declaration.
   * Exception checks for parsing external global declarations that then use that name for function parameters.
   * Nonlocal keyword.
-
 
 
 

@@ -11,9 +11,7 @@ namespace LanguageImplementation.DataTypes
         {
             __instance = this;
 
-            // We have to replace PyTypeObject.DefaultNew with one that creates a PyString.
-            // TODO: Can this be better consolidated?
-            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyString>(null);
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyModule>(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
@@ -48,8 +46,8 @@ namespace LanguageImplementation.DataTypes
         {
             var createdModule = PyTypeObject.DefaultNew<PyModule>(PyModuleClass.Instance);
             createdModule.Name = name;
-            return createdModule;
-           
+            createdModule.__dict__.Add("__name__", name);
+            return createdModule;           
         }
 
         public override string ToString()

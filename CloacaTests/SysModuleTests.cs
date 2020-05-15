@@ -99,7 +99,7 @@ namespace CloacaTests
         /// module we already imported as the test collateral.
         /// </summary>
         [Test]
-        [Ignore("Identified this problem during Unity integration testing. Need to address.")]
+        //[Ignore("Identified this problem during Unity integration testing. Need to address.")]
         public void ReferenceImportInScheduled()
         {
             var sack = new Sack();
@@ -117,7 +117,8 @@ namespace CloacaTests
             {
             }), 2);
 
-            Assert.That(sack.inside, Is.EqualTo(PyString.Create("sys")));
+            // [TODO][PYSTRING TO OBJECT] Shouldn't we assign PyString to object instead of casting it?
+            Assert.That(sack.inside, Is.EqualTo("sys"));
         }
     }
 }
