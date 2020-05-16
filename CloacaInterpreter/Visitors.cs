@@ -292,6 +292,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitReturn_stmt([NotNull] CloacaParser.Return_stmtContext context)
+    {
+        if(context.testlist() == null)
+        {
+            var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
+        }
+        else
+        {
+            Visit(context.testlist());
+        }
+        ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+        return null;
+    }
+
     public override object VisitRaise_stmt([NotNull] CloacaParser.Raise_stmtContext context)
     {
         // This will build up the exception and put it on the stack.

@@ -38,7 +38,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Fix TBD. Replicated this from Unity testing.")]
         public void SchedulerAnotherFunctionReturnFromConditional()
         {
             runBasicTest(
