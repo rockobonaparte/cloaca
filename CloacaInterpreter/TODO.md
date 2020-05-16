@@ -2,6 +2,9 @@
 ===========
 
 ## Current Issues
+Conditional returns are not ending scheduled scripts that are inner functions. I suspect it has something to do with the subcontexts
+and the logic the scheduler is using to decide it's done. I bet it has to do with blocks.
+
 It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
 Unity GameObject. It couldn't resolve it.
 

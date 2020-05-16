@@ -38,6 +38,27 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Fix TBD. Replicated this from Unity testing.")]
+        public void SchedulerAnotherFunctionReturnFromConditional()
+        {
+            runBasicTest(
+                "import sys\n" +
+                "\n" +
+                "a = 0\n" +
+                "def change_a():\n" +
+                "   global a\n" +
+                "   a = 1\n" +
+                "   if a == 1:\n" +
+                "      return\n" +
+                "   a = 2\n" +      // This line shouldn't run.
+                "\n" +
+                "sys.scheduler.schedule(change_a)\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(1) }
+            }), 2);
+        }
+
+        [Test]
         public void SchedulerParentContextPreserved()
         {
             // This test was added due to a lot of paranoia around how the subcontext call stack is created.
@@ -99,7 +120,6 @@ namespace CloacaTests
         /// module we already imported as the test collateral.
         /// </summary>
         [Test]
-        //[Ignore("Identified this problem during Unity integration testing. Need to address.")]
         public void ReferenceImportInScheduled()
         {
             var sack = new Sack();
