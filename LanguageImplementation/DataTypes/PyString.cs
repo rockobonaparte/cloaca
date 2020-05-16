@@ -50,7 +50,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "concatenation");
-            var newPyString = PyString.Create(a.str + b.str);
+            var newPyString = PyString.Create(a.InternalValue + b.InternalValue);
             return newPyString;
         }
 
@@ -71,7 +71,7 @@ namespace LanguageImplementation.DataTypes
                 // TODO: Try to realize this as a real TypeError object in some way.
                 throw new Exception("TypeError: can't multiply sequence by non-int of type 'str'");
             }
-            var newPyString = PyString.Create(string.Concat(Enumerable.Repeat(a.str, (int) b.number)));
+            var newPyString = PyString.Create(string.Concat(Enumerable.Repeat(a.InternalValue, (int) b.InternalValue)));
             return newPyString;
         }
 
@@ -94,7 +94,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "less-than");
-            return a.str.CompareTo(b.str) < 0;
+            return a.InternalValue.CompareTo(b.InternalValue) < 0;
         }
 
         [ClassMember]
@@ -102,7 +102,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "greater-than");
-            return a.str.CompareTo(b.str) > 0;
+            return a.InternalValue.CompareTo(b.InternalValue) > 0;
         }
 
         [ClassMember]
@@ -110,7 +110,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "less-than-equal");
-            return a.str.CompareTo(b.str) <= 0;
+            return a.InternalValue.CompareTo(b.InternalValue) <= 0;
         }
 
         [ClassMember]
@@ -118,7 +118,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "greater-than-equal");
-            return a.str.CompareTo(b.str) >= 0;
+            return a.InternalValue.CompareTo(b.InternalValue) >= 0;
         }
 
         [ClassMember]
@@ -126,7 +126,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "equality");
-            return a.str.CompareTo(b.str) == 0;
+            return a.InternalValue.CompareTo(b.InternalValue) == 0;
         }
 
         [ClassMember]
@@ -134,7 +134,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "non-equality");
-            return a.str.CompareTo(b.str) != 0;
+            return a.InternalValue.CompareTo(b.InternalValue) != 0;
         }
 
         [ClassMember]
@@ -142,7 +142,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyString a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
-            var compared = a.str.CompareTo(b.str);
+            var compared = a.InternalValue.CompareTo(b.InternalValue);
             return compared < 0 && compared > 0;
         }
 
@@ -161,15 +161,15 @@ namespace LanguageImplementation.DataTypes
 
     public class PyString : PyObject
     {
-        public string str;
+        public string InternalValue;
         public PyString(string str) : base(PyStringClass.Instance)
         {
-            this.str = str;
+            this.InternalValue = str;
         }
 
         public PyString()
         {
-            str = "";
+            InternalValue = "";
         }
 
         public static PyString Create()
@@ -180,7 +180,7 @@ namespace LanguageImplementation.DataTypes
         public static PyString Create(string value)
         {
             var pyString = PyTypeObject.DefaultNew<PyString>(PyStringClass.Instance);
-            pyString.str = value;
+            pyString.InternalValue = value;
             return pyString;
         }
 
@@ -193,23 +193,23 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return asPyStr.str == str;
+                return asPyStr.InternalValue == InternalValue;
             }
         }
 
         public override int GetHashCode()
         {
-            return str.GetHashCode();
+            return InternalValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return str;
+            return InternalValue;
         }
 
         public static implicit operator string(PyString asPyString)
         {
-            return asPyString.str;
+            return asPyString.InternalValue;
         }
     }
 }

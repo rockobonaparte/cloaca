@@ -9,8 +9,6 @@ String concatenation doesn't appear to work either. There was a parse error when
 have to do with concatenating non-string objects to strings. We should have a specific test for that in StringTests. We probably need
 to use the str() casting to make it a string--check against Python. Also, when we screw this up, the error should be clear.
 
-Exception raised by a Cloaca error listener to a C# event is disappearing.
-
 Attribute names are not getting reused; they're just piling up over and over.
 
 Need better management when trying to reference null .NET values that aren't our fault.

@@ -63,7 +63,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
         /// Create a new Python exception based on a PyString message
         /// </summary>
         /// <param name="message">The exception message as a PyString</param>
-        public PyException(PyString message) : this(message.str)
+        public PyException(PyString message) : this(message.InternalValue)
         {
         }
 
@@ -142,7 +142,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
         private PyObject __init__impl(PyException self, PyString message)
         {
-            return __init__impl(self, message.str);
+            return __init__impl(self, message.InternalValue);
         }
 
         // TODO: Migrate to a built-in that can be invoked as necessary. One problem will be to fetch it out to run from C# code to create exceptions.

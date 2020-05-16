@@ -51,7 +51,7 @@ namespace LanguageImplementation.DataTypes
         {
             try
             {
-                self.list.RemoveAt((int) i.number);
+                self.list.RemoveAt((int) i.InternalValue);
             }
             catch (IndexOutOfRangeException)
             {
@@ -65,7 +65,7 @@ namespace LanguageImplementation.DataTypes
         {
             try
             {
-                return self.list[(int) i.number];
+                return self.list[(int) i.InternalValue];
             }
             catch(IndexOutOfRangeException)
             {
@@ -78,7 +78,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static void __setitem__(PyList self, PyInteger i, PyObject value)
         {
-            __setitem__(self, (int)i.number, value);
+            __setitem__(self, (int)i.InternalValue, value);
         }
 
         // TODO: Manage slices
@@ -112,7 +112,7 @@ namespace LanguageImplementation.DataTypes
 
             for(int i = 0; i < self.list.Count; ++i)
             {
-                if(self.list[i].__eq__(otherList.list[i]).boolean == false)
+                if(self.list[i].__eq__(otherList.list[i]).InternalValue == false)
                 {
                     return PyBool.False;
                 }
@@ -205,7 +205,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return PyListClass.__eq__(this, asList).boolean;
+                return PyListClass.__eq__(this, asList).InternalValue;
             }
         }
 

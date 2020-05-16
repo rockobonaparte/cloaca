@@ -35,11 +35,11 @@ namespace LanguageImplementation.DataTypes
         {
             if(a is PyBool)
             {
-                return ((PyBool) a).boolean ? 1 : 0;
+                return ((PyBool) a).InternalValue ? 1 : 0;
             }
             else if(a is PyInteger)
             {
-                return ((PyInteger)a).number;
+                return ((PyInteger)a).InternalValue;
             }
             else
             {
@@ -195,19 +195,19 @@ namespace LanguageImplementation.DataTypes
 
     public class PyBool : PyObject
     {
-        public bool boolean
+        public bool InternalValue
         {
             get; private set;
         }
 
         public PyBool(bool boolean) : base(PyBoolClass.Instance)
         {
-            this.boolean = boolean;
+            this.InternalValue = boolean;
         }
 
         public PyBool()
         {
-            this.boolean = false;
+            this.InternalValue = false;
         }
 
         public override bool Equals(object obj)
@@ -219,18 +219,18 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return asPyBool.boolean == boolean;
+                return asPyBool.InternalValue == InternalValue;
             }
         }
 
         public override int GetHashCode()
         {
-            return boolean.GetHashCode();
+            return InternalValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return boolean.ToString();
+            return InternalValue.ToString();
         }
 
         public static implicit operator PyBool(bool rhs)
@@ -247,13 +247,13 @@ namespace LanguageImplementation.DataTypes
 
         public static implicit operator bool(PyBool rhs)
         {
-            return rhs.boolean;
+            return rhs.InternalValue;
         }
 
         private static PyBool _makeInstance(bool value)
         {
             var instance = PyTypeObject.DefaultNew<PyBool>(PyBoolClass.Instance);
-            instance.boolean = value;
+            instance.InternalValue = value;
             return instance;
         }
         

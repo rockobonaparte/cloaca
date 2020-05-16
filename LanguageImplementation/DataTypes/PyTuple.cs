@@ -51,7 +51,7 @@ namespace LanguageImplementation.DataTypes
         {
             try
             {
-                return self.Values[(int)i.number];
+                return self.Values[(int)i.InternalValue];
             }
             catch (IndexOutOfRangeException)
             {
@@ -77,7 +77,7 @@ namespace LanguageImplementation.DataTypes
 
             for (int i = 0; i < self.Values.Length; ++i)
             {
-                if (self.Values[i].__eq__(otherList.Values[i]).boolean == false)
+                if (self.Values[i].__eq__(otherList.Values[i]).InternalValue == false)
                 {
                     return PyBool.False;
                 }
@@ -167,7 +167,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return PyTupleClass.__eq__(this, asTuple).boolean;
+                return PyTupleClass.__eq__(this, asTuple).InternalValue;
             }
         }
 

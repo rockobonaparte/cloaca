@@ -26,7 +26,7 @@ namespace CloacaInterpreter
                 }
                 else
                 {
-                    var arrayIndex = (int)asPyInt.number;
+                    var arrayIndex = (int)asPyInt.InternalValue;
                     return arrayIndex;
                 }
             }

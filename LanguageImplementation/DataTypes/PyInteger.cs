@@ -50,7 +50,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "addition");
-            var newPyInteger = PyInteger.Create(a.number + b.number);
+            var newPyInteger = PyInteger.Create(a.InternalValue + b.InternalValue);
             return newPyInteger;
         }
 
@@ -59,7 +59,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "multiplication");
-            var newPyInteger = PyInteger.Create(a.number * b.number);
+            var newPyInteger = PyInteger.Create(a.InternalValue * b.InternalValue);
             return newPyInteger;
         }
 
@@ -68,7 +68,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "exponent");
-            double doubleExp = Math.Pow((double) a.number, (double) b.number);
+            double doubleExp = Math.Pow((double) a.InternalValue, (double) b.InternalValue);
             var newPyInteger = PyInteger.Create((BigInteger) doubleExp);
             return newPyInteger;
         }
@@ -78,7 +78,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "subtraction");
-            var newPyInteger = PyInteger.Create(a.number - b.number);
+            var newPyInteger = PyInteger.Create(a.InternalValue - b.InternalValue);
             return newPyInteger;
         }
 
@@ -87,7 +87,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "true division");
-            var newPyFloat = PyFloat.Create(((Decimal) a.number) / ((Decimal) b.number));
+            var newPyFloat = PyFloat.Create(((Decimal) a.InternalValue) / ((Decimal) b.InternalValue));
             return newPyFloat;
         }
 
@@ -96,7 +96,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "floor division");
-            var newPyInteger = PyInteger.Create(a.number / b.number);
+            var newPyInteger = PyInteger.Create(a.InternalValue / b.InternalValue);
             return newPyInteger;
         }
 
@@ -105,7 +105,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "modulo");
-            var newPyInteger = PyInteger.Create(a.number % b.number);
+            var newPyInteger = PyInteger.Create(a.InternalValue % b.InternalValue);
             return newPyInteger;
         }
 
@@ -151,7 +151,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than");
-            return a.number < b.number;
+            return a.InternalValue < b.InternalValue;
         }
 
         [ClassMember]
@@ -159,7 +159,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than");
-            return a.number > b.number;
+            return a.InternalValue > b.InternalValue;
         }
 
         [ClassMember]
@@ -167,7 +167,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-equal");
-            return a.number <= b.number;
+            return a.InternalValue <= b.InternalValue;
         }
 
         [ClassMember]
@@ -175,7 +175,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "greater-than-equal");
-            return a.number >= b.number;
+            return a.InternalValue >= b.InternalValue;
         }
 
         [ClassMember]
@@ -183,7 +183,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "equality");
-            return a.number == b.number;
+            return a.InternalValue == b.InternalValue;
         }
 
         [ClassMember]
@@ -191,7 +191,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "non-equality");
-            return a.number != b.number;
+            return a.InternalValue != b.InternalValue;
         }
 
         [ClassMember]
@@ -199,7 +199,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyInteger a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
-            return a.number < b.number && a.number > b.number;
+            return a.InternalValue < b.InternalValue && a.InternalValue > b.InternalValue;
         }
 
         [ClassMember]
@@ -217,15 +217,15 @@ namespace LanguageImplementation.DataTypes
 
     public class PyInteger : PyObject
     {
-        public BigInteger number;
+        public BigInteger InternalValue;
         public PyInteger(BigInteger num) : base(PyIntegerClass.Instance)
         {
-            number = num;
+            InternalValue = num;
         }
 
         public PyInteger()
         {
-            number = 0;
+            InternalValue = 0;
         }
 
         public static PyInteger Create()
@@ -236,7 +236,7 @@ namespace LanguageImplementation.DataTypes
         public static PyInteger Create(BigInteger value)
         {
             var pyInt = PyTypeObject.DefaultNew<PyInteger>(PyIntegerClass.Instance);
-            pyInt.number = value;
+            pyInt.InternalValue = value;
             return pyInt;
         }
 
@@ -249,18 +249,18 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return asPyInt.number == number;
+                return asPyInt.InternalValue == InternalValue;
             }
         }
 
         public override int GetHashCode()
         {
-            return number.GetHashCode();
+            return InternalValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return number.ToString();
+            return InternalValue.ToString();
         }
     }
 }

@@ -277,11 +277,11 @@ namespace CloacaInterpreter
             }
             else if (leftObj == null)
             {
-                context.DataStack.Push(dotNetOp(a, b.number));
+                context.DataStack.Push(dotNetOp(a, b.InternalValue));
             }
             else if (rightObj == null)
             {
-                context.DataStack.Push(dotNetOp(a.number, b));
+                context.DataStack.Push(dotNetOp(a.InternalValue, b));
             }
             else
             {

@@ -35,25 +35,25 @@ namespace LanguageImplementation.DataTypes
             var rightFloat = var as PyFloat;
             if (rightFloat != null)
             {
-                return rightFloat.number;
+                return rightFloat.InternalValue;
             }
 
             var rightInt = var as PyInteger;
             if (rightInt != null)
             {
-                return (decimal) rightInt.number;
+                return (decimal) rightInt.InternalValue;
             }
 
             var rightBool = var as PyBool;
             if (rightBool != null)
             {
-                return rightBool.boolean ? (decimal) 1.0 : (decimal) 0.0;
+                return rightBool.InternalValue ? (decimal) 1.0 : (decimal) 0.0;
             }
 
             var rightStr = var as PyString;
             if (rightStr != null)
             {
-                return Decimal.Parse(rightStr.str);
+                return Decimal.Parse(rightStr.InternalValue);
             }
 
             else
@@ -80,21 +80,21 @@ namespace LanguageImplementation.DataTypes
             var rightInt = other as PyInteger;
             if (rightInt != null)
             {
-                otherOut = PyFloat.Create((decimal)rightInt.number);
+                otherOut = PyFloat.Create((decimal)rightInt.InternalValue);
                 return;
             }
 
             var rightBool = other as PyBool;
             if (rightBool != null)
             {
-                otherOut = PyFloat.Create(rightBool.boolean ? 1.0 : 0.0);
+                otherOut = PyFloat.Create(rightBool.InternalValue ? 1.0 : 0.0);
                 return;
             }
 
             var rightStr = other as PyString;
             if (rightStr != null)
             {
-                otherOut = PyFloat.Create(Decimal.Parse(rightStr.str));
+                otherOut = PyFloat.Create(Decimal.Parse(rightStr.InternalValue));
                 return;
             }
 
@@ -109,7 +109,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "addition");
-            var newPyFloat = PyFloat.Create(a.number + b.number);
+            var newPyFloat = PyFloat.Create(a.InternalValue + b.InternalValue);
             return newPyFloat;
         }
 
@@ -118,7 +118,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "multiplication");
-            var newPyFloat = PyFloat.Create(a.number * b.number);
+            var newPyFloat = PyFloat.Create(a.InternalValue * b.InternalValue);
             return newPyFloat;
         }
 
@@ -127,7 +127,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "subtract");
-            var newPyFloat = PyFloat.Create(a.number - b.number);
+            var newPyFloat = PyFloat.Create(a.InternalValue - b.InternalValue);
             return newPyFloat;
         }
 
@@ -136,7 +136,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "division");
-            var newPyFloat = PyFloat.Create(a.number / b.number);
+            var newPyFloat = PyFloat.Create(a.InternalValue / b.InternalValue);
             return newPyFloat;
         }
 
@@ -145,7 +145,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "floor division");
-            var newPyInteger = PyFloat.Create(Math.Floor(a.number / b.number));
+            var newPyInteger = PyFloat.Create(Math.Floor(a.InternalValue / b.InternalValue));
             return newPyInteger;
         }
         
@@ -154,7 +154,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "modulo");
-            var newPyInteger = PyFloat.Create(a.number % b.number);
+            var newPyInteger = PyFloat.Create(a.InternalValue % b.InternalValue);
             return newPyInteger;
         }
 
@@ -163,7 +163,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "exponent");
-            double doubleExp = Math.Pow((double)a.number, (double)b.number);
+            double doubleExp = Math.Pow((double)a.InternalValue, (double)b.InternalValue);
             var newPyFloat = PyFloat.Create(doubleExp);
             return newPyFloat;
         }
@@ -173,7 +173,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "less-than");
-            return a.number < b.number;
+            return a.InternalValue < b.InternalValue;
         }
 
         [ClassMember]
@@ -181,7 +181,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "greater-than");
-            return a.number > b.number;
+            return a.InternalValue > b.InternalValue;
         }
 
         [ClassMember]
@@ -189,7 +189,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "less-than-equal");
-            return a.number <= b.number;
+            return a.InternalValue <= b.InternalValue;
         }
 
         [ClassMember]
@@ -197,7 +197,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "greater-than-equal");
-            return a.number >= b.number;
+            return a.InternalValue >= b.InternalValue;
         }
 
         [ClassMember]
@@ -205,7 +205,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "equality");
-            return a.number == b.number;
+            return a.InternalValue == b.InternalValue;
         }
 
         [ClassMember]
@@ -213,7 +213,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "non-equality");
-            return a.number != b.number;
+            return a.InternalValue != b.InternalValue;
         }
 
         [ClassMember]
@@ -221,7 +221,7 @@ namespace LanguageImplementation.DataTypes
         {
             PyFloat a, b;
             castOperands(self, other, out a, out b, "less-than-greater-than");
-            return a.number < b.number && a.number > b.number;
+            return a.InternalValue < b.InternalValue && a.InternalValue > b.InternalValue;
         }
 
         [ClassMember]
@@ -239,20 +239,20 @@ namespace LanguageImplementation.DataTypes
 
     public class PyFloat : PyObject
     {
-        public Decimal number;
+        public Decimal InternalValue;
         public PyFloat(Decimal num) : base(PyFloatClass.Instance)
         {
-            number = num;
+            InternalValue = num;
         }
 
         public PyFloat(double num) : base(PyFloatClass.Instance)
         {
-            number = new Decimal(num);
+            InternalValue = new Decimal(num);
         }
 
         public PyFloat()
         {
-            number = 0;
+            InternalValue = 0;
         }
 
         public static PyFloat Create()
@@ -263,14 +263,14 @@ namespace LanguageImplementation.DataTypes
         public static PyFloat Create(Decimal value)
         {
             var pyFloat = PyTypeObject.DefaultNew<PyFloat>(PyFloatClass.Instance);
-            pyFloat.number = value;
+            pyFloat.InternalValue = value;
             return pyFloat;
         }
 
         public static PyFloat Create(double value)
         {
             var pyFloat = PyTypeObject.DefaultNew<PyFloat>(PyFloatClass.Instance);
-            pyFloat.number = new Decimal(value);
+            pyFloat.InternalValue = new Decimal(value);
             return pyFloat;
         }
 
@@ -283,18 +283,18 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return asPyFloat.number == number;
+                return asPyFloat.InternalValue == InternalValue;
             }
         }
 
         public override int GetHashCode()
         {
-            return number.GetHashCode();
+            return InternalValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return number.ToString();
+            return InternalValue.ToString();
         }
     }
 }

@@ -86,7 +86,7 @@ namespace CloacaInterpreter
 
         public void EmbeddedAddReference(FrameContext context, PyModule self, PyString name)
         {
-            AddReference(context, name.str);
+            AddReference(context, name.InternalValue);
         }
 
         /// <summary>

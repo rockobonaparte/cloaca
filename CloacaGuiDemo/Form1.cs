@@ -133,7 +133,7 @@ namespace CloacaGuiDemo
         {
             var future = new FutureVoidAwaiter(scheduler, context);
             scheduler.NotifyBlocked(context, future);
-            mock_sleep_subsystem_daemon(future, (int)(sleepTime.number * 1000.0m));
+            mock_sleep_subsystem_daemon(future, (int)(sleepTime.InternalValue * 1000.0m));
             await future;
             return future;
         }
@@ -146,7 +146,7 @@ namespace CloacaGuiDemo
             for(int i = 0; i < choices.list.Count; ++i)
             {
                 var iPyStr = (PyString) choices.list[i];
-                choicesStr[i] = iPyStr.str;
+                choicesStr[i] = iPyStr.InternalValue;
             }
             ShowDialogs(choicesStr);
 
@@ -162,8 +162,8 @@ namespace CloacaGuiDemo
 
         public void set_player_pos_wrapper(PyFloat x, PyFloat y)
         {
-            playerXLabel.Text = x.number.ToString();
-            playerYLabel.Text = y.number.ToString();
+            playerXLabel.Text = x.InternalValue.ToString();
+            playerYLabel.Text = y.InternalValue.ToString();
         }
 
         // TODO: Make every part of this much easier. Creating the objects properly will need to be simplified. One-step
@@ -172,9 +172,9 @@ namespace CloacaGuiDemo
         public async Task<PyTuple> get_player_pos_wrapper(IInterpreter interpreter, FrameContext context)
         {
             PyFloat f1 = (PyFloat) await PyFloatClass.Instance.Call(interpreter, context, new object[0]);
-            f1.number = Decimal.Parse(playerXLabel.Text);
+            f1.InternalValue = Decimal.Parse(playerXLabel.Text);
             PyFloat f2 = (PyFloat)await PyFloatClass.Instance.Call(interpreter, context, new object[0]);
-            f2.number = Decimal.Parse(playerYLabel.Text);
+            f2.InternalValue = Decimal.Parse(playerYLabel.Text);
 
             var tuples = new PyObject[2]
             {
@@ -194,7 +194,7 @@ namespace CloacaGuiDemo
 
         public void set_blip_wrapper(PyInteger i, PyBool value)
         {
-            SetBlip((int) i.number, value.boolean);
+            SetBlip((int) i.InternalValue, value.InternalValue);
         }
 
         public bool GetBlip(int i)
@@ -204,7 +204,7 @@ namespace CloacaGuiDemo
 
         public PyBool get_blip_wrapper(PyInteger i)
         {
-            return PyBool.Create(GetBlip((int)i.number));
+            return PyBool.Create(GetBlip((int)i.InternalValue));
         }
 
         public void ClearDialogs()
@@ -237,7 +237,7 @@ namespace CloacaGuiDemo
             if (returned != null)
             {
                 var asPyString = (PyString)returned;
-                richTextBox1.AppendText(asPyString.str);
+                richTextBox1.AppendText(asPyString.InternalValue);
                 SetCursorToEnd();
             }
         }
@@ -334,7 +334,7 @@ namespace CloacaGuiDemo
                     var asButton = dialogRadioFlow.Controls[i] as RadioButton;
                     if(asButton.Checked)
                     {
-                        choicePyInt.number = i;
+                        choicePyInt.InternalValue = i;
                         dialogFuture.SetResult(choicePyInt);
                         repl.Run();             // TODO: Major temporality here. Need to make this more straightforward.
                         break;

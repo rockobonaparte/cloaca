@@ -17,23 +17,23 @@ namespace LanguageImplementation
             { ValueTuple.Create(typeof(short), typeof(PyInteger)), (as_short) => { return PyInteger.Create((short)as_short); } },
             { ValueTuple.Create(typeof(long), typeof(PyInteger)), (as_long) => { return PyInteger.Create((long)as_long); } },
             { ValueTuple.Create(typeof(BigInteger), typeof(PyInteger)), (as_bi) => { return PyInteger.Create((BigInteger)as_bi); } },
-            { ValueTuple.Create(typeof(PyInteger), typeof(int)), (as_pi) => { return (int) ((PyInteger)as_pi).number; } },
-            { ValueTuple.Create(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).number; } },
-            { ValueTuple.Create(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).number; } },
-            { ValueTuple.Create(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).number; } },
+            { ValueTuple.Create(typeof(PyInteger), typeof(int)), (as_pi) => { return (int) ((PyInteger)as_pi).InternalValue; } },
+            { ValueTuple.Create(typeof(PyInteger), typeof(short)), (as_pi) => { return (short) ((PyInteger)as_pi).InternalValue; } },
+            { ValueTuple.Create(typeof(PyInteger), typeof(long)), (as_pi) => { return (long) ((PyInteger)as_pi).InternalValue; } },
+            { ValueTuple.Create(typeof(PyInteger), typeof(BigInteger)), (as_pi) => { return (BigInteger) ((PyInteger)as_pi).InternalValue; } },
             { ValueTuple.Create(typeof(BigInteger), typeof(int)), (as_bi) => { return (int) ((BigInteger)as_bi); } },
 
             // Float conversions
             { ValueTuple.Create(typeof(float), typeof(PyFloat)), (as_float) => { return PyFloat.Create((float)as_float); } },
             { ValueTuple.Create(typeof(double), typeof(PyFloat)), (as_double) => { return PyFloat.Create((double)as_double); } },
             { ValueTuple.Create(typeof(Decimal), typeof(PyFloat)), (as_Decimal) => { return PyFloat.Create((Decimal)as_Decimal); } },
-            { ValueTuple.Create(typeof(PyFloat), typeof(float)), (as_pf) => { return (float) ((PyFloat)as_pf).number; } },
-            { ValueTuple.Create(typeof(PyFloat), typeof(double)), (as_pf) => { return (double) ((PyFloat)as_pf).number; } },
-            { ValueTuple.Create(typeof(PyFloat), typeof(Decimal)), (as_pf) => { return (Decimal) ((PyFloat)as_pf).number; } },
+            { ValueTuple.Create(typeof(PyFloat), typeof(float)), (as_pf) => { return (float) ((PyFloat)as_pf).InternalValue; } },
+            { ValueTuple.Create(typeof(PyFloat), typeof(double)), (as_pf) => { return (double) ((PyFloat)as_pf).InternalValue; } },
+            { ValueTuple.Create(typeof(PyFloat), typeof(Decimal)), (as_pf) => { return (Decimal) ((PyFloat)as_pf).InternalValue; } },
 
             // Bool conversions
             { ValueTuple.Create(typeof(bool), typeof(PyBool)), (as_bool) => { return new PyBool((bool)as_bool); } },
-            { ValueTuple.Create(typeof(PyBool), typeof(bool)), (as_pb) => { return ((PyBool)as_pb).boolean; } },
+            { ValueTuple.Create(typeof(PyBool), typeof(bool)), (as_pb) => { return ((PyBool)as_pb).InternalValue; } },
 
             // We don't write out string conversions. If the toType is a string, we'll just use ToString(). (famous last words)
         };

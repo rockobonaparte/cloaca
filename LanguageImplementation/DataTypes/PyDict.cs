@@ -114,7 +114,7 @@ namespace LanguageImplementation.DataTypes
                 }
 
                 var otherVal = otherDict.dict[pair.Key];
-                if (pair.Value.__eq__(otherVal).boolean == false)
+                if (pair.Value.__eq__(otherVal).InternalValue == false)
                 {
                     return PyBool.False;
                 }
@@ -326,7 +326,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                return PyDictClass.__eq__(this, asList).boolean;
+                return PyDictClass.__eq__(this, asList).InternalValue;
             }
         }
 
