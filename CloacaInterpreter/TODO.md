@@ -5,11 +5,9 @@
 It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
 Unity GameObject. It couldn't resolve it.
 
-String concatenation doesn't appear to work either. There was a parse error when I tried to use one. A simple test passed, so it might
-have to do with concatenating non-string objects to strings. We should have a specific test for that in StringTests. We probably need
-to use the str() casting to make it a string--check against Python. Also, when we screw this up, the error should be clear.
-
 Attribute names are not getting reused; they're just piling up over and over.
+
+Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
 
 Need better management when trying to reference null .NET values that aren't our fault.
 
