@@ -4,6 +4,8 @@
 ## Current Issues
 Attribute names are not getting reused; they're just piling up over and over.
 
+[TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
+
 Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
 
 Need better management when trying to reference null .NET values that aren't our fault.

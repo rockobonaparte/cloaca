@@ -1,4 +1,5 @@
-﻿using LanguageImplementation.DataTypes;
+﻿using CloacaInterpreter;
+using LanguageImplementation.DataTypes;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -373,6 +374,19 @@ namespace LanguageImplementation
                 }
                 else
                 {
+                    if(methodBase.IsExtensionMethod())
+                    {
+                        // Gotta rearrange the furniture a little bit to invoke this. It's a static method so don't
+                        // invoke with an instance. Instead, pass it as the first argument.
+                        //
+                        // I guess final_args isn't really final!
+                        //
+                        // [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
+                        var extension_final_args = new object[final_args.Length + 1];
+                        extension_final_args[0] = instance;
+                        Array.Copy(final_args, 0, extension_final_args, 1, final_args.Length);
+                        return Task.FromResult(methodBase.Invoke(instance, extension_final_args));
+                    }
                     return Task.FromResult(methodBase.Invoke(instance, final_args));
                 }
             }

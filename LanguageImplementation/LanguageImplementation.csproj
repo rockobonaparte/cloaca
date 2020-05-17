@@ -90,6 +90,7 @@
     <Compile Include="DataTypes\PySuperType.cs" />
     <Compile Include="DataTypes\PyTypeObject.cs" />
     <Compile Include="Dis.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FrameContext.cs" />
     <Compile Include="Injector.cs" />

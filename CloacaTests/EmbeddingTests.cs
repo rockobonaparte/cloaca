@@ -3,14 +3,8 @@ using System.Numerics;
 using System.Collections.Generic;
 
 using CloacaInterpreter;
-using Language;
 using LanguageImplementation;
 
-using Antlr4.Runtime;
-using Antlr4.Runtime.Atn;
-using Antlr4.Runtime.Dfa;
-using Antlr4.Runtime.Misc;
-using Antlr4.Runtime.Sharpen;
 using NUnit.Framework;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -152,6 +146,12 @@ namespace CloacaTests
     {
         public static int AnExtensionMethod(this ReflectIntoPython reflectThis)
         {
+            return reflectThis.AnInteger;
+        }
+
+        public static int AnExtensionMethodWithArgs(this ReflectIntoPython reflectThis, int number)
+        {
+            reflectThis.AnInteger += number;
             return reflectThis.AnInteger;
         }
 
@@ -466,7 +466,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Extension methods don't work quite yet")]
+        [Ignore("Generic extension methods don't work quite yet")]
         public void CallGenericExtensionMethod()
         {
             FrameContext runContext = null;
@@ -485,7 +485,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Extension methods don't work quite yet")]
         public void CallExtensionMethod()
         {
             FrameContext runContext = null;
@@ -498,9 +497,26 @@ namespace CloacaTests
             }, 1, out runContext);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
-            var aInstance = (ReflectIntoPython)variables["a"];
-            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
-            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(1337));
+        }
+
+        [Test]
+        [Ignore("Extension methods that take arguments are not yet supported")]
+        public void CallExtensionMethodWithArgs()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
+                "a = obj.AnExtensionMethodWithArgs(1)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(1338));
         }
 
         // Cousin to Basics.ComprehensiveArithmeticOperators. This tests with a .NET integer!

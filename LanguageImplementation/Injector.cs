@@ -1,7 +1,9 @@
-﻿using System;
+﻿using CloacaInterpreter;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,11 +45,25 @@ namespace LanguageImplementation
 
             // If there's a params field then we have to cram an array into there.
             bool hasParamsField = methodParams.Length >= 1 && methodParams[methodParams.Length - 1].IsDefined(typeof(ParamArrayAttribute), false);
+            bool isExtensionMethod = methodBase.IsExtensionMethod();
 
             // Transform all arguments except for any in the params field.
-            object[] outParams = new object[methodParams.Length];
+            object[] outParams;
             int in_param_i = 0;     // Keep an eye on this for later to determine if we have stuff for a params field!
-            for(int out_param_i = 0; out_param_i < (hasParamsField ? methodParams.Length - 1 : methodParams.Length); ++out_param_i)
+            int out_param_i = 0;
+
+            // Extension method; there's the "this object" parameter in the first position that we need to gloss over.
+            if (isExtensionMethod)
+            {
+                in_param_i = 1;
+                outParams = new object[methodParams.Length-1];
+            }
+            else
+            {
+                outParams = new object[methodParams.Length];
+            }
+
+            for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i)
             {
                 var paramInfo = methodParams[out_param_i];
                 if(paramInfo.ParameterType == typeof(IInterpreter))
