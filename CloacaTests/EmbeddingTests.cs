@@ -502,7 +502,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Extension methods that take arguments are not yet supported")]
         public void CallExtensionMethodWithArgs()
         {
             FrameContext runContext = null;

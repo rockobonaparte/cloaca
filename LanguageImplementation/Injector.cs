@@ -51,21 +51,22 @@ namespace LanguageImplementation
             object[] outParams;
             int in_param_i = 0;     // Keep an eye on this for later to determine if we have stuff for a params field!
             int out_param_i = 0;
+            int methodInfo_i = 0;
 
             // Extension method; there's the "this object" parameter in the first position that we need to gloss over.
             if (isExtensionMethod)
             {
-                in_param_i = 1;
                 outParams = new object[methodParams.Length-1];
+                methodInfo_i = 1;
             }
             else
             {
                 outParams = new object[methodParams.Length];
             }
 
-            for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i)
+            for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i, ++methodInfo_i)
             {
-                var paramInfo = methodParams[out_param_i];
+                var paramInfo = methodParams[methodInfo_i];
                 if(paramInfo.ParameterType == typeof(IInterpreter))
                 {
                     outParams[out_param_i] = Interpreter;
