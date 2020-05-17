@@ -264,9 +264,17 @@ namespace LanguageImplementation
                     parameters = methodBase.GetParameters();
                 }
 
+                // Set up parameter checking and casting loop. If this is an extension method then skip the first parameter
+                // because that's just the object to invoke.
+                int params_i = 0;
+                int args_i = 0;
+                if(methodBase.IsExtensionMethod())
+                {
+                    params_i = 1;
+                }
 
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
-                for (int params_i = 0, args_i = 0; args_i < args.Length || params_i < args.Length;)
+                for (; args_i < args.Length || params_i < args.Length;)
                 {
                     while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
                     {
