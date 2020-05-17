@@ -2,9 +2,6 @@
 ===========
 
 ## Current Issues
-It looks like we can't resolve extension methods. I noticed this trying to access my GetOrCreateComponent extension method to
-Unity GameObject. It couldn't resolve it.
-
 Attribute names are not getting reused; they're just piling up over and over.
 
 Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
@@ -286,6 +283,8 @@ Part 3: Hardening
     * Enumerating
 	* 'in' test
 	* Interoperation with any container methods implemented like map, reduce, filter.
+  * Cache extension method lookups in ObjectResolver because the current lookup method is horribly slow. We have to
+    trawl all assemblies EACH time we call an extension method.
 * Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
   do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.

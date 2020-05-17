@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
@@ -93,6 +95,43 @@ namespace CloacaInterpreter
             }
         }
 
+        #region Extension Method Resolution
+        // Original inspiration: https://stackoverflow.com/questions/299515/reflection-to-identify-extension-methods
+        private static MethodInfo[] GetExtensionMethods(Type t)
+        {
+            List<Type> AssTypes = new List<Type>();
+
+            foreach (Assembly item in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                AssTypes.AddRange(item.GetTypes());
+            }
+
+            var query = from type in AssTypes
+                        where type.IsSealed && !type.IsGenericType && !type.IsNested
+                        from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                        where method.IsDefined(typeof(ExtensionAttribute), false)
+                        where method.GetParameters()[0].ParameterType == t
+                        select method;
+            return query.ToArray<MethodInfo>();
+        }
+
+        /// <summary>
+        /// Search for an extension method.
+        /// </summary>
+        /// <param name="MethodName">Name of the Methode</param>
+        /// <returns>the found Method or null</returns>
+        private static MethodInfo GetExtensionMethod(Type t, string MethodName)
+        {
+            var mi = from methode in GetExtensionMethods(t)
+                     where methode.Name == MethodName
+                     select methode;
+            if (mi.Count<MethodInfo>() <= 0)
+                return null;
+            else
+                return mi.First<MethodInfo>();
+        }
+        #endregion Extension Method Resolution
+
         public static object GetValue(string attrName, object rawObject)
         {
             var asPyObj = rawObject as PyObject;
@@ -117,8 +156,17 @@ namespace CloacaInterpreter
                     var member = objType.GetMember(attrName);
                     if(member.Length == 0)
                     {
-                        // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
-                        throw new EscapedPyException(new AttributeError("'" + objType.Name + "' object has no attribute named '" + attrName + "'"));
+                        // We couldn't find this as a member of the class. However, it could be an extension method. Hooray!
+                        var extensionMethod = GetExtensionMethod(objType, attrName);
+                        if (extensionMethod == null)
+                        {
+                            // We have a catch for ArgumentException but it also looks like GetMember will just return an empty list if the attribute is not found.
+                            throw new EscapedPyException(new AttributeError("'" + objType.Name + "' object has no attribute named '" + attrName + "'"));
+                        }
+                        else
+                        {
+                            return new WrappedCodeObject(attrName, extensionMethod, rawObject);
+                        }
                     }
                     if (member[0].MemberType == System.Reflection.MemberTypes.Property)
                     {

@@ -148,6 +148,19 @@ namespace CloacaTests
         }
     }
 
+    static class ReflectIntoPythonExtensions
+    {
+        public static int AnExtensionMethod(this ReflectIntoPython reflectThis)
+        {
+            return reflectThis.AnInteger;
+        }
+
+        public static T AGenericExtensionMethod<T>(this ReflectIntoPython reflectThis, T arg)
+        {
+            return reflectThis.GenericMethod<T>(arg);
+        }
+    }
+
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
     {
         private IScheduler scheduler;
@@ -434,28 +447,51 @@ namespace CloacaTests
                     "a return type anyways?");
         }
 
-        // TODO: Add generic support. Invoking a generic in Python should have all generic args passed first.
-        // findBestMethodMatch
-        // 1. Get number of generic args and put into numGenericArgs
-        // 2. Start argument matching from numGenericArgs index.
-        //
-        // Update injector to work this way too.
-        //
-        // Actual invocation will then take numGenericArgs as arguments for creating generic and then use rest to invoke.
-        //
-        // Another TODO concern is being able to pass int to a generic and get a PyInteger to properly circulate. We can't pass
-        // int as a generic argument right now without it getting all mixed up between PyClass, PyInteger, and .NET integer.
-        //
-        // Current problem is that generic arguments are coming in as a generic, reflected type; they don't come in as their actual
-        // type.
         [Test]
-        //[Ignore("Enabling generics is a work-in-progress in the 'generics' topic branch.")]
         public void CallGenericMethod()
         {
             FrameContext runContext = null;
             runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var aInstance = (ReflectIntoPython)variables["a"];
+            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
+            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
+        }
+
+        [Test]
+        [Ignore("Extension methods don't work quite yet")]
+        public void CallGenericExtensionMethod()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
+                "a = obj.AGenericExtensionMethod(ReflectIntoPython, obj)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var aInstance = (ReflectIntoPython)variables["a"];
+            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
+            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
+        }
+
+        [Test]
+        [Ignore("Extension methods don't work quite yet")]
+        public void CallExtensionMethod()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
+                "a = obj.AnExtensionMethod()\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }

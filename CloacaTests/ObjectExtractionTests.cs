@@ -35,6 +35,20 @@ namespace CloacaTests
         }
     }
 
+    // Add an extension method to TestExtractClass so we can test that too
+    public static class TestExtractClassExtensions
+    {
+        public static int AnExtensionMethod(this TestExtractClass testClass)
+        {
+            return testClass.SomeField;
+        }
+
+        public static int AGenericExtensionMethod<T>(this TestExtractClass testClass)
+        {
+            return testClass.SomeField;
+        }
+    }
+
     [TestFixture]
     public class ObjectExtractionTests
     {
@@ -56,6 +70,20 @@ namespace CloacaTests
         public void ExtractGenericMethod()
         {
             var extracted = ObjectResolver.GetValue("GenericMethod", new TestExtractClass());
+            Assert.IsNotNull(extracted);
+        }
+
+        [Test]
+        public void ExtractExtensionMethod()
+        {
+            var extracted = ObjectResolver.GetValue("AnExtensionMethod", new TestExtractClass());
+            Assert.IsNotNull(extracted);
+        }
+
+        [Test]
+        public void ExtractGenericExtensionMethod()
+        {
+            var extracted = ObjectResolver.GetValue("AGenericExtensionMethod", new TestExtractClass());
             Assert.IsNotNull(extracted);
         }
 
