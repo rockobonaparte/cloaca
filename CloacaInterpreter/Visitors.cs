@@ -806,6 +806,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         base.Visit(context.parameters());
 
         base.VisitSuite(context.suite());
+
+        // Did we end with a RETURN_VALUE? If not, return None. Kind of hacky but the alternative is tracking the
+        // state for this, and it gets ugly if there are multiple blocks with returns in them.
+        if(ActiveProgram.Code.Count < 1 || ActiveProgram.Code[ActiveProgram.Code.Count-2] != (byte) ByteCodes.RETURN_VALUE)
+        {
+            var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
+            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+        }
+
         ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
 
         // This should restore us back to the original function with which we started.
@@ -834,6 +844,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ActiveProgram.VarNames.Add(funcName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1, context);
         }
+
         return null;
     }
 

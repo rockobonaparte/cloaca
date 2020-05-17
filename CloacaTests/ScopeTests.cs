@@ -68,6 +68,25 @@ namespace CloacaTests
         }
 
         [Test]
+        public void ReturnsNoneProperly()
+        {
+            string program =
+                "def inner():\n" +
+                "  return 3\n" +
+                "\n" +
+                "def outer():\n" +
+                "  inner()\n" +
+                "\n" +
+                "a = outer()\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", NoneType.Instance }
+                }), 1, new string[] { "inner", "outer" });
+        }
+
+        [Test]
         public void ImplicitlyUsesGlobal()
         {
             string program =
