@@ -361,7 +361,23 @@ namespace LanguageImplementation
             // Inject internal types, convert .NET/Cloaca types.
             // Unit tests like to come in with a null interpreter so we have to test for it.
             var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
-            var final_args = injector.Inject(methodBase, noGenericArgs);
+            var injected_args = injector.Inject(methodBase, noGenericArgs);
+            object[] final_args = injected_args;
+            if (methodBase.IsExtensionMethod())
+            {
+                // Gotta rearrange the furniture a little bit to invoke this. It's a static method so don't
+                // invoke with an instance. Instead, pass it as the first argument.
+                //
+                // I guess final_args isn't really final!
+                //
+                // [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
+
+                // LOL maybe it's both a generic AND an extension method! Then we have to dance! Insert the
+                // object after the generic arguments!
+                final_args = new object[injected_args.Length + 1];
+                final_args[0] = instance;
+                Array.Copy(injected_args, 0, final_args, 1, injected_args.Length);
+            }
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
@@ -387,22 +403,6 @@ namespace LanguageImplementation
                 }
                 else
                 {
-                    if(methodBase.IsExtensionMethod())
-                    {
-                        // Gotta rearrange the furniture a little bit to invoke this. It's a static method so don't
-                        // invoke with an instance. Instead, pass it as the first argument.
-                        //
-                        // I guess final_args isn't really final!
-                        //
-                        // [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
-
-                        // LOL maybe it's both a generic AND an extension method! Then we have to dance! Insert the
-                        // object after the generic arguments!
-                        var extension_final_args = new object[final_args.Length + 1];
-                        extension_final_args[0] = instance;
-                        Array.Copy(final_args, 0, extension_final_args, 1, final_args.Length);
-                        return Task.FromResult(methodBase.Invoke(instance, extension_final_args));
-                    }
                     return Task.FromResult(methodBase.Invoke(instance, final_args));
                 }
             }
