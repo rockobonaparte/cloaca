@@ -159,6 +159,11 @@ namespace CloacaTests
         {
             return reflectThis.GenericMethod<T>(arg);
         }
+
+        public static bool AGenericExtensionMethodNoArgs<T>(this ReflectIntoPython reflectThis)
+        {
+            return true;
+        }
     }
 
     class MockBlockedReturnValue : INotifyCompletion, ISubscheduledContinuation, IPyCallable
@@ -471,16 +476,35 @@ namespace CloacaTests
             FrameContext runContext = null;
             runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
-                "a = obj.AGenericExtensionMethod(ReflectIntoPython, obj)\n",
+                "b = MockMaterial()\n" +
+                "b.color = 333\n" +
+                "a = obj.AGenericExtensionMethod(MockMaterial, b)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) },
+                { "MockMaterial", typeof(MockMaterial) }
+            }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var aInstance = (MockMaterial)variables["a"];
+            Assert.That(aInstance.color, Is.EqualTo(333));
+        }
+
+        [Test]
+        public void CallGenericExtensionMethodNoArgs()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
+                "a = obj.AGenericExtensionMethodNoArgs(ReflectIntoPython)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
             }, 1, out runContext);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
-            var aInstance = (ReflectIntoPython)variables["a"];
-            Assert.That(aInstance.AnInteger, Is.EqualTo(1337));
-            Assert.That(aInstance.AString, Is.EqualTo("Generic test!"));
+            var aInstance = (bool)variables["a"];
+            Assert.That(aInstance, Is.True);
         }
 
         [Test]

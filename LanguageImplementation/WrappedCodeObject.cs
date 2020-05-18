@@ -326,7 +326,7 @@ namespace LanguageImplementation
             }
 
             // Broke through to here: we couldn't find a match at all for the given arguments!
-            var errorMessage = new StringBuilder("No .NET method found to match the given arguments: ");
+            var errorMessage = new StringBuilder("No .NET method found for " + Name + " to match the given arguments: ");
             if(in_args.Length == 0)
             {
                 errorMessage.Append("(no arguments)");
@@ -399,9 +399,8 @@ namespace LanguageImplementation
                         // LOL maybe it's both a generic AND an extension method! Then we have to dance! Insert the
                         // object after the generic arguments!
                         var extension_final_args = new object[final_args.Length + 1];
-                        Array.Copy(final_args, 0, extension_final_args, 0, numGenerics);
-                        extension_final_args[numGenerics] = instance;
-                        Array.Copy(final_args, numGenerics, extension_final_args, numGenerics + 1, final_args.Length - numGenerics);
+                        extension_final_args[0] = instance;
+                        Array.Copy(final_args, 0, extension_final_args, 1, final_args.Length);
                         return Task.FromResult(methodBase.Invoke(instance, extension_final_args));
                     }
                     return Task.FromResult(methodBase.Invoke(instance, final_args));
