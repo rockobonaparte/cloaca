@@ -466,7 +466,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Generic extension methods don't work quite yet")]
         public void CallGenericExtensionMethod()
         {
             FrameContext runContext = null;

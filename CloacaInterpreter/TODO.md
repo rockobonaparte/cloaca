@@ -6,6 +6,10 @@ Attribute names are not getting reused; they're just piling up over and over.
 
 [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
 
+The whole system for finding methods, injecting args, and binding them for calls needs a pass to smooth out a lot of the conditionals.
+Finding the proper array lengths and offsets at any given moment is kind of gross since it goes in layers when you add on extension
+methods and generics.
+
 Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
 
 Need better management when trying to reference null .NET values that aren't our fault.

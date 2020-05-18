@@ -238,7 +238,10 @@ namespace LanguageImplementation
                     
                     var genericTypes = new Type[genericsCount];
                     args = new object[in_args.Length - genericsCount];
-                    if (in_args.Length - genericTypes.Length < parameters.Length)
+
+                    // If it's an extension method, then ignore the this Class parameter in our calculation.
+                    var actualParameterCount = methodBase.IsExtensionMethod() ? parameters.Length - 1 : parameters.Length;
+                    if (in_args.Length - genericTypes.Length < actualParameterCount)
                     {
                         // Between generic args and arguments we got, we can't fill in for this one so don't even try.
                         continue;
@@ -345,10 +348,12 @@ namespace LanguageImplementation
             // we started out that way already. Current hack is to see if we have more arguments than
             // the method needs. If we do, then we strip the excess in front since they were used to
             // monomorphize the generic.
+            int numGenerics = 0;
             var noGenericArgs = args;
-            if(methodBase.IsGenericMethod && args.Length > methodBase.GetParameters().Length)
+            int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
+            if (methodBase.IsGenericMethod && args.Length > actualParametersLength)
             {
-                var numGenerics = methodBase.GetGenericArguments().Length;
+                numGenerics = methodBase.GetGenericArguments().Length;
                 noGenericArgs = new object[args.Length - numGenerics];
                 Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
             }
@@ -390,9 +395,13 @@ namespace LanguageImplementation
                         // I guess final_args isn't really final!
                         //
                         // [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
+
+                        // LOL maybe it's both a generic AND an extension method! Then we have to dance! Insert the
+                        // object after the generic arguments!
                         var extension_final_args = new object[final_args.Length + 1];
-                        extension_final_args[0] = instance;
-                        Array.Copy(final_args, 0, extension_final_args, 1, final_args.Length);
+                        Array.Copy(final_args, 0, extension_final_args, 0, numGenerics);
+                        extension_final_args[numGenerics] = instance;
+                        Array.Copy(final_args, numGenerics, extension_final_args, numGenerics + 1, final_args.Length - numGenerics);
                         return Task.FromResult(methodBase.Invoke(instance, extension_final_args));
                     }
                     return Task.FromResult(methodBase.Invoke(instance, final_args));

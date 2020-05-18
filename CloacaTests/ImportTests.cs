@@ -257,7 +257,6 @@ namespace CloacaTests
         /// just reinforces that we can ingest this stuff externally from imports.
         /// </summary>
         [Test]
-        //[Ignore("Internals can't seem to accept the type as a thing to use. It's a similar cockup to what the object resolver was doing.")]
         public void Guid()
         {
             var finishedFrame = runProgram(
