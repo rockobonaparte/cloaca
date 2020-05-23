@@ -2,38 +2,28 @@
 ===========
 
 ## Current Issues
-Attribute names are not getting reused; they're just piling up over and over.
 
-[TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
-
-The whole system for finding methods, injecting args, and binding them for calls needs a pass to smooth out a lot of the conditionals.
-Finding the proper array lengths and offsets at any given moment is kind of gross since it goes in layers when you add on extension
-methods and generics.
-
-Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
-
-Need better management when trying to reference null .NET values that aren't our fault.
-
-The scheduler worked fine with the REPL demo. I was able to schedule this and have it run in the background:
-
-```python
-def burp_loop():
-   while True:
-     set_blip(3, True)
-     sleep(1.0)
-     set_blip(3, False)
-     sleep(1.0)
-```
-Somehow, schedule calls in Unity don't seem to kick off anything? I suppose I need to try something with just Debug.Log.
-
+* Fix piling up of duplicate names. It's probably a bug in code generation.
+* Cleanup .NET method lookup, resolution, and calling in WrappedCodeObject
+  * Add support for .NET kwargs
+  * [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
+  * Cleanup. Consolidate everything added across the different method lookup conditions into streamlined calls.
+     * Cleanup findBestMethodMatch
+     * Cleanup injector
+     * Cleanup invocation
+     * Misc cleanup
+     * Document the behavior
+     * Try to diagram the behavior of the scenarios
 * REPL demo
   * Don't print NoneType if it's returned from a call invoked in REPL
   * sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
   * Declaring a function in REPL caused a parsing screwup in the visitors.
   * ```>>> scheduler.schedule(set_blip, 2, True)
     No .NET method found to match the given arguments: PyModule, WrappedCodeObject, PyInteger, PyBool```
-  * Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
-
+  * (I think I fixed this?) Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
+* Misc
+  * Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
+  * Need better management when trying to referencing null .NET values that aren't our fault.
 
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
