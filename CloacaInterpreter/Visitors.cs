@@ -44,54 +44,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    ///// <summary>
-    ///// Add an instruction to the end of the active program.
-    ///// </summary>
-    ///// <param name="opcode">The instruction opcode</param>
-    ///// <param name="data">Opcode data.</param>
-    ///// <returns>The index of the NEXT instruction in the program.</returns>
-    //private int AddInstruction(ByteCodes opcode, int data)
-    //{
-    //    return AddInstruction(ActiveProgram.Code, opcode, data);
-    //}
-
-    ///// <summary>
-    ///// Add an instruction to the end of the given program.
-    ///// </summary>
-    ///// <param name="builder">The code builder to which to add the instruction.</param>
-    ///// <param name="opcode">The instruction opcode</param>
-    ///// <param name="data">Opcode data.</param>
-    ///// <returns>The index of the NEXT instruction in the program.</returns>
-    //private int AddInstruction(CodeBuilder builder, ByteCodes opcode, int data)
-    //{
-    //    builder.AddByte((byte)opcode);
-    //    builder.AddUShort(data);
-    //    return ActiveProgram.Code.Count;
-    //}
-
-    ///// <summary>
-    ///// Add an instruction to the end of the active program.
-    ///// </summary>
-    ///// <param name="opcode">The instruction opcode</param>
-    ///// <returns>The index of the NEXT instruction in the program.</returns>
-    //private int AddInstruction(ByteCodes opcode)
-    //{
-    //    return AddInstruction(ActiveProgram.Code, opcode);
-    //}
-
-
-    ///// <summary>
-    ///// Add an instruction to the end of the given program.
-    ///// </summary>
-    ///// <param name="builder">The code builder to which to add the instruction.</param>
-    ///// <param name="opcode">The instruction opcode</param>
-    ///// <returns>The index of the NEXT instruction in the program.</returns>
-    //private int AddInstruction(CodeBuilder builder, ByteCodes opcode)
-    //{
-    //    builder.AddByte((byte)opcode);
-    //    return ActiveProgram.Code.Count;
-    //}
-
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
     {
         // If it's in VarNames, we use it from there. If not, 
