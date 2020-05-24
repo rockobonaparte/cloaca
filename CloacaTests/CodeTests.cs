@@ -501,6 +501,30 @@ namespace CloacaTests
                 }), 1);
         }
 
+        [Test]
+        [Ignore("Demonstrating an issue we found with names not getting reused. Need to fix.")]
+        public void NamesAreNotDefinedMultipleTimes()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "class Foo:\n" +
+                "  def __init__(self):\n" +
+                "    self.a = 1\n" +
+                "\n" +
+                "foo = Foo()\n" +
+                "a = 3\n" +
+                "foo.a = 2\n" +
+                "foo.a = a\n",
+                new Dictionary<string, object>(), 1, out runContext);
+
+            Assert.That(runContext.LocalNames.Count, Is.EqualTo(3));
+            Assert.That(runContext.LocalNames.Contains("Foo"));
+            Assert.That(runContext.LocalNames.Contains("foo"));
+            Assert.That(runContext.LocalNames.Contains("a"));
+            Assert.That(runContext.Names.Count, Is.EqualTo(1));
+            Assert.That(runContext.Names.Contains("a"));
+        }
+
         // TODO: Add test for basic parse error of things like missing newlines and poor indentation.
     }
 
