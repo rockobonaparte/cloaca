@@ -277,10 +277,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         for(int name_i = 0; name_i < context.NAME().Length; ++name_i)
         {
             var name = context.NAME(name_i).GetText();
-            if (ActiveProgram.Names.IndexOf(name) < 0)
-            {
-                ActiveProgram.Names.Add(name);
-            }
+            ActiveProgram.Names.AddGetIndex(name);
         }
         return null;
     }
@@ -743,7 +740,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ActiveProgram.Constants[funcIndex] = newFunctionCode;
         }
 
-        int nameIndex = findIndex<string>(funcName);
+        int nameIndex = findConstantIndex<string>(funcName);
         if(nameIndex < 0)
         {
             ActiveProgram.Constants.Add(funcName);
@@ -788,7 +785,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if(context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
         {
-            var nameIdx = ActiveProgram.Names.AddReplaceGetIndex(funcName);
+            var nameIdx = ActiveProgram.Names.AddGetIndex(funcName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
         }
         else
@@ -970,7 +967,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    private int findIndex<T>(T constant) where T:class
+    private int findConstantIndex<T>(T constant) where T:class
     {
         for(int i = 0; i < ActiveProgram.Constants.Count; ++i)
         {
@@ -1202,7 +1199,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ActiveProgram.Constants[funcIndex] = newFunctionCode;
         }
 
-        int nameIndex = findIndex<string>(className);
+        int nameIndex = findConstantIndex<string>(className);
         if (nameIndex < 0)
         {
             nameIndex = ActiveProgram.Constants.AddGetIndex(className);
@@ -1258,7 +1255,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // Munge on the name to determine import level. Eat up all leading dots as levels from which to import.
         string moduleName = originalModuleName.TrimStart('.');
-        var moduleNameIndex = ActiveProgram.Names.AddReplaceGetIndex(moduleName);
+        var moduleNameIndex = ActiveProgram.Names.AddGetIndex(moduleName);
         int importLevelInt = originalModuleName.Length - moduleName.Length;
         var importLevelConstIdx = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(importLevelInt));
 
@@ -1287,7 +1284,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (moduleFromList == null)
         {
             string aliasedName = moduleAs == null ? moduleName : moduleAs;
-            var moduleNameFastIndex = ActiveProgram.VarNames.AddReplaceGetIndex(aliasedName);
+            var moduleNameFastIndex = ActiveProgram.VarNames.AddGetIndex(aliasedName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
         }
         // Import-from code generation.
@@ -1300,14 +1297,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
             {
-                var fromNameConstIdx = ActiveProgram.Constants.AddReplaceGetIndex(PyString.Create(moduleFromList[fromIdx]));
+                var fromNameConstIdx = ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
                 ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
                 var fromName = moduleFromList[fromIdx];
                 if (moduleFromAliases != null && moduleFromAliases[fromIdx] != null)
                 {
                     fromName = moduleFromAliases[fromIdx];
                 }
-                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddReplaceGetIndex(fromName);
+                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(fromName);
                 ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
             }
 

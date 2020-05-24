@@ -502,7 +502,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Demonstrating an issue we found with names not getting reused. Need to fix.")]
         public void NamesAreNotDefinedMultipleTimes()
         {
             FrameContext runContext = null;

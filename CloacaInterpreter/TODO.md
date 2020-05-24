@@ -3,7 +3,6 @@
 
 ## Current Issues
 
-* Fix piling up of duplicate names. It's probably a bug in code generation.
 * Cleanup .NET method lookup, resolution, and calling in WrappedCodeObject
   * Add support for .NET kwargs
   * [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.

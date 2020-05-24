@@ -6,14 +6,8 @@ namespace LanguageImplementation
     {
         public static int AddGetIndex<T>(this List<T> list, T item)
         {
-            list.Add(item);
-            return list.Count - 1;
-        }
-
-        public static int AddReplaceGetIndex<T>(this List<T> list, T item)
-        {
             int idx = list.IndexOf(item);
-            if(idx >= 0)
+            if (idx >= 0)
             {
                 return idx;
             }
