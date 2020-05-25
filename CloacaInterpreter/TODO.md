@@ -5,7 +5,7 @@
 
 * REPL demo
   * [DONE] Don't print NoneType if it's returned from a call invoked in REPL
-  * sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
+  * [DONE] sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
   * Declaring a function in REPL caused a parsing screwup in the visitors.
   * ```>>> scheduler.schedule(set_blip, 2, True)
     No .NET method found to match the given arguments: PyModule, WrappedCodeObject, PyInteger, PyBool```
@@ -163,6 +163,7 @@ Part 3: Hardening
   * Misc cleanup
   * Document the behavior
   * Try to diagram the behavior of the scenarios
+* Add more PyNetConverter rules across the different data types (int-float, float-int, and bool for good measure)
 * NoneType needs to be formalized as an object and type.  
   * Add a __repr__
 * Switch to wordcode. I thought I had already done this! Wow!
