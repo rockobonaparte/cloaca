@@ -575,5 +575,23 @@ namespace CloacaTests
                     { "a", PyInteger.Create(4) }
                 }), 1, new string[] { "foo" });
         }
+
+        [Test]
+        public void DoubleDefine()
+        {
+            string program =
+                "def foo():\n" +
+                "   return 1\n" +
+                "def foo():\n" +
+                "   return 2\n" +
+                "a = foo()\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(2) }
+                }), 1, new string[] { "foo" });
+
+        }
     }
 }

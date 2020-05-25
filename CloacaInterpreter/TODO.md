@@ -9,7 +9,7 @@
   * Declaring a function in REPL caused a parsing screwup in the visitors.
   * ```>>> scheduler.schedule(set_blip, 2, True)
     No .NET method found to match the given arguments: PyModule, WrappedCodeObject, PyInteger, PyBool```
-  * (I think I fixed this?) Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
+  * [DONE] Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
 * Misc
   * Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
   * Need better management when trying to referencing null .NET values that aren't our fault.

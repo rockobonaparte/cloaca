@@ -84,17 +84,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            var idx = ActiveProgram.VarNames.IndexOf(variableName);
-            if (idx >= 0)
-            {
-                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
-            }
-            else
-            {
-                ActiveProgram.VarNames.Add(variableName);
-                idx = ActiveProgram.VarNames.Count - 1;
-                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
-            }
+            var idx = ActiveProgram.VarNames.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
         }
     }
 
@@ -790,8 +781,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            ActiveProgram.VarNames.Add(funcName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1, context);
+            var nameIdx = ActiveProgram.VarNames.AddGetIndex(funcName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, nameIdx, context);
         }
 
         return null;
@@ -1246,8 +1237,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses, context);
 
-        ActiveProgram.VarNames.Add(className);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, ActiveProgram.VarNames.Count - 1, context);
+        var idx = ActiveProgram.VarNames.AddGetIndex(className);
+        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
         return null;
     }
 

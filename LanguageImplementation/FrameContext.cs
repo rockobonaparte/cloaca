@@ -166,8 +166,16 @@ namespace LanguageImplementation
 
         public void AddVariable(string name, object value)
         {
-            LocalNames.Add(name);
-            Locals.Add(value);
+            var nameIdx = LocalNames.IndexOf(name);
+            if (nameIdx == -1)
+            {
+                LocalNames.Add(name);
+                Locals.Add(value);
+            }
+            else
+            {
+                Locals[nameIdx] = value;
+            }
         }
 
         public void SetVariable(string name, object value)

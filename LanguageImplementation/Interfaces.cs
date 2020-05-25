@@ -43,8 +43,19 @@ namespace LanguageImplementation
 
         public void AddLocal(string name, object value)
         {
-            LocalNames.Add(name);
-            Locals.Add(value);
+            // Can't use AddGetIndex because LocalNames and Locals are paired. If you took the index from
+            // LocalNames and assumed to append whenever the index you got was at the end, you'd miss cases
+            // where it positively matches the last index and didn't insert!
+            var nameIdx = LocalNames.IndexOf(name);
+            if(nameIdx == -1)
+            {
+                LocalNames.Add(name);
+                Locals.Add(value);
+            }
+            else
+            {
+                Locals[nameIdx] = value;
+            }    
         }
 
         /// <summary>
@@ -58,7 +69,7 @@ namespace LanguageImplementation
         /// <param name="value">The </param>
         public void AddOnlyNewLocal(string name, object value)
         {
-            if(!Locals.Contains(name))
+            if(!LocalNames.Contains(name))
             {
                 AddLocal(name, value);
             }

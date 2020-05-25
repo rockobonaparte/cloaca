@@ -1329,8 +1329,7 @@ namespace CloacaInterpreter
                                         var varIndex = context.LocalNames.IndexOf(starImported.Key);
                                         if (varIndex == -1)
                                         {
-                                            context.LocalNames.Add(starImported.Key);
-                                            varIndex = context.LocalNames.Count - 1;
+                                            varIndex = context.LocalNames.AddGetIndex(starImported.Key);
                                         }
 
                                         if (varIndex >= context.Locals.Count)
