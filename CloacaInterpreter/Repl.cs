@@ -305,23 +305,25 @@ namespace CloacaInterpreter
             var stack_output = new StringBuilder();
             foreach (var stack_var in scheduledTaskRecord.Frame.DataStack)
             {
-                var stack_var_obj = stack_var as PyObject;
-                if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
-                {
-                    stack_output.Append(stack_var.ToString());
-                }
-                else
-                {
-                    var __repr__ = stack_var_obj.__getattribute__(PyClass.__REPR__);
-                    var functionToRun = __repr__ as IPyCallable;
-
-                    var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
-                    if (returned != null)
+                if (!(stack_var is NoneType))
+                { 
+                    var stack_var_obj = stack_var as PyObject;
+                    if (stack_var_obj == null || !stack_var_obj.__dict__.ContainsKey(PyClass.__REPR__))
                     {
-                        stack_output.Append(returned);
+                        stack_output.Append(stack_var.ToString());
+                    }
+                    else
+                    {
+                        var __repr__ = stack_var_obj.__getattribute__(PyClass.__REPR__);
+                        var functionToRun = __repr__ as IPyCallable;
+
+                        var returned = await functionToRun.Call(Interpreter, scheduledTaskRecord.Frame, new object[0]);
+                        if (returned != null)
+                        {
+                            stack_output.Append(returned);
+                        }
                     }
                 }
-                stack_output.Append(Environment.NewLine);
             }
 
             WhenReplCommandDone(this, stack_output.ToString());

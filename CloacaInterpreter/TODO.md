@@ -4,7 +4,7 @@
 ## Current Issues
 
 * REPL demo
-  * Don't print NoneType if it's returned from a call invoked in REPL
+  * [DONE] Don't print NoneType if it's returned from a call invoked in REPL
   * sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
   * Declaring a function in REPL caused a parsing screwup in the visitors.
   * ```>>> scheduler.schedule(set_blip, 2, True)
@@ -163,7 +163,8 @@ Part 3: Hardening
   * Misc cleanup
   * Document the behavior
   * Try to diagram the behavior of the scenarios
-* NoneType needs to be formalized as an object and type.
+* NoneType needs to be formalized as an object and type.  
+  * Add a __repr__
 * Switch to wordcode. I thought I had already done this! Wow!
 * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
