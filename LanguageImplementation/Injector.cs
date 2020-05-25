@@ -76,8 +76,23 @@ namespace LanguageImplementation
                 }
                 else
                 {
-                    outParams[out_param_i] = PyNetConverter.Convert(args[in_param_i], paramInfo.ParameterType);
-                    ++in_param_i;
+                    if (in_param_i < args.Length)
+                    {
+                        outParams[out_param_i] = PyNetConverter.Convert(args[in_param_i], paramInfo.ParameterType);
+                        ++in_param_i;
+                    }
+                    else
+                    {
+                        // Might be an optional parameter. If so, we use the default:
+                        if(paramInfo.HasDefaultValue)
+                        {
+                            outParams[out_param_i] = paramInfo.DefaultValue == null ? null : PyNetConverter.Convert(paramInfo.DefaultValue, paramInfo.ParameterType);
+                        }
+                        else
+                        {
+                            throw new ArgumentException("Not enough arguments for " + methodBase.Name + " to satisfy the call");
+                        }
+                    }
                 }
             }
 

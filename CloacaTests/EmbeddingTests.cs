@@ -547,7 +547,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
         public void CallDotNetOptionalsImplicit()
         {
             FrameContext runContext = null;
@@ -564,7 +563,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
         public void CallDotNetOptionalsImplicitInOrder()
         {
             FrameContext runContext = null;
@@ -582,7 +580,7 @@ namespace CloacaTests
 
 
         [Test]
-        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        [Ignore("Cannot support this until we support kwargs")]
         public void CallDotNetOptionalsExplicitInOrder()
         {
             FrameContext runContext = null;
@@ -599,7 +597,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        [Ignore("Cannot support this until we support kwargs.")]
         public void CallDotNetOptionalsExplicitOutOfOrder()
         {
             FrameContext runContext = null;
