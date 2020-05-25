@@ -140,6 +140,11 @@ namespace CloacaTests
         {
             return arg;
         }
+
+        public int Kwargs(int first=1, int second=10)
+        {
+            return first + 10 * second;
+        }
     }
 
     static class ReflectIntoPythonExtensions
@@ -539,6 +544,75 @@ namespace CloacaTests
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
             Assert.That(a, Is.EqualTo(1338));
+        }
+
+        [Test]
+        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        public void CallDotNetOptionalsImplicit()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "a = obj.Kwargs()\n",
+                new Dictionary<string, object>()
+                {
+                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(101));
+        }
+
+        [Test]
+        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        public void CallDotNetOptionalsImplicitInOrder()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "a = obj.Kwargs(2, 20)\n",
+                new Dictionary<string, object>()
+                {
+                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(202));
+        }
+
+
+        [Test]
+        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        public void CallDotNetOptionalsExplicitInOrder()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "a = obj.Kwargs(first=2, second=20)\n",
+                new Dictionary<string, object>()
+                {
+                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(202));
+        }
+
+        [Test]
+        [Ignore("Calling .NET functions with optional arguments not yet supported.")]
+        public void CallDotNetOptionalsExplicitOutOfOrder()
+        {
+            FrameContext runContext = null;
+            runProgram(
+                "a = obj.Kwargs(second=20, first=2)\n",
+                new Dictionary<string, object>()
+                {
+                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                }, 1, out runContext);
+            var variables = runContext.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            var a = (int)variables["a"];
+            Assert.That(a, Is.EqualTo(202));
         }
 
         // Cousin to Basics.ComprehensiveArithmeticOperators. This tests with a .NET integer!
