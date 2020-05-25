@@ -3,16 +3,6 @@
 
 ## Current Issues
 
-* Cleanup .NET method lookup, resolution, and calling in WrappedCodeObject
-  * Add support for .NET kwargs
-  * [TODO][INJECT_THIS] Have the injector inject the this pointer for extension methods.
-  * Cleanup. Consolidate everything added across the different method lookup conditions into streamlined calls.
-     * Cleanup findBestMethodMatch
-     * Cleanup injector
-     * Cleanup invocation
-     * Misc cleanup
-     * Document the behavior
-     * Try to diagram the behavior of the scenarios
 * REPL demo
   * Don't print NoneType if it's returned from a call invoked in REPL
   * sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
@@ -162,6 +152,17 @@ Part 2: Unity embedding. See how practical this is to use in Unity.
 
 
 Part 3: Hardening
+* kwargs
+  * Pure-Python kwargs
+  * Calling .NET functions with optionals as if they were kwargs
+  * Embedding functions that can take kwargs
+* Cleanup WrappedCode object. Consolidate everything added across the different method lookup conditions into streamlined calls.
+  * Cleanup findBestMethodMatch
+  * Cleanup injector
+  * Cleanup invocation
+  * Misc cleanup
+  * Document the behavior
+  * Try to diagram the behavior of the scenarios
 * NoneType needs to be formalized as an object and type.
 * Switch to wordcode. I thought I had already done this! Wow!
 * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html

@@ -34,7 +34,7 @@ namespace LanguageImplementation
                parameterType == typeof(IScheduler);
         }
 
-        public object[] Inject(MethodBase methodBase, object[] args)
+        public object[] Inject(MethodBase methodBase, object[] args, object thisReference=null)
         {
             var methodParams = methodBase.GetParameters();
 
@@ -48,15 +48,14 @@ namespace LanguageImplementation
             int out_param_i = 0;
             int methodInfo_i = 0;
 
-            // Extension method; there's the "this object" parameter in the first position that we need to gloss over.
+            outParams = new object[methodParams.Length];
+
+            // Extension method; there's the "this object" parameter in the first position that we need to insert.
             if (isExtensionMethod)
             {
-                outParams = new object[methodParams.Length-1];
+                outParams[0] = thisReference;
+                out_param_i = 1;
                 methodInfo_i = 1;
-            }
-            else
-            {
-                outParams = new object[methodParams.Length];
             }
 
             for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i, ++methodInfo_i)
