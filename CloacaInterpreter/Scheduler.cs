@@ -92,7 +92,10 @@ namespace CloacaInterpreter
     /// </summary>
     public class Scheduler : IScheduler
     {
-        private IInterpreter interpreter;
+        public IInterpreter Interpreter
+        {
+            get; private set;
+        }
         public int TickCount;
 
         /// <summary>
@@ -192,7 +195,7 @@ namespace CloacaInterpreter
 
         public void SetInterpreter(IInterpreter interpreter)
         {
-            this.interpreter = interpreter;
+            this.Interpreter = interpreter;
         }
 
         /// <summary>
@@ -276,7 +279,7 @@ namespace CloacaInterpreter
             newFrameStack.Push(rootFrame);
             FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack) : new FrameContext(newFrameStack);
 
-            var initialContinuation = new InitialScheduledContinuation(this.interpreter, subContext);
+            var initialContinuation = new InitialScheduledContinuation(this.Interpreter, subContext);
             return new ScheduledTaskRecord(subContext, initialContinuation, new TaskEventRecord(subContext));
         }
 
@@ -345,7 +348,7 @@ namespace CloacaInterpreter
                     scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(lastScheduled.Frame.EscapedDotNetException));
 
                 }
-                else if (interpreter.ExceptionEscaped(lastScheduled.Frame))
+                else if (Interpreter.ExceptionEscaped(lastScheduled.Frame))
                 {
                     scheduled.SubmitterReceipt.NotifyEscapedException(ExceptionDispatchInfo.Capture(new EscapedPyException(lastScheduled.Frame.CurrentException)));
                 }

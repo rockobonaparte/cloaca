@@ -3,17 +3,6 @@
 
 ## Current Issues
 
-* REPL demo
-  * [DONE] Don't print NoneType if it's returned from a call invoked in REPL
-  * [DONE] sleep() with a PyInteger choked. Should be able to turn it into a PyDouble automatically! Add that to automatic converters.
-  * Declaring a function in REPL caused a parsing screwup in the visitors.
-  * ```>>> scheduler.schedule(set_blip, 2, True)
-    No .NET method found to match the given arguments: PyModule, WrappedCodeObject, PyInteger, PyBool```
-  * [DONE] Can't define a function twice. Issue in REPL if you're stumbling through a function call. Should work in regular Python too.
-* Misc
-  * Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
-  * Need better management when trying to referencing null .NET values that aren't our fault.
-
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
 
@@ -24,23 +13,9 @@ The tests needs to alter some other state--maybe with an increment--to see if th
 parent code.
 
 ## Scope
-I need to implement the nonlocal statement. The schedule unit test is trying to use it. I could probably test around it, but the point
-is that I should implement all the syntax I personally end up using for stuff. Since I'm a Python asshole, that probably means implementing
-just about everything... :(
-
-(actually you need the global keyword for the unit test you wrote, but you'll need nonlocal when you start going another layer down)
-
 Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
 I ended up looking at the length of argument names.
 
-Next TODO work:
-* clr module
-   * Harden in Unity
-   * Testing: Juggle a few more different data types to verify robustness. Goes hand-and-hand with [EMBEDDING - .NET TYPES]
-   * PyModule optimization: [CLR - OPTIMIZE GETATTR] Don't cram everything into the PyModule but instead use __getattr__ to resolve as-needed.
-* .NET type management [EMBEDDING - .NET TYPES]. We need to work with a lot more raw .NET types.
-   * Consider other scenarios where we work directly with .NET types and determine a strategy with how to manage them better.
-* Helper to create custom .NET PyModules (investigate)
 * Document import process in official documentation
     * Explain how to embed your own modules
     * Explain how to use the file-based importer
@@ -255,6 +230,8 @@ Part 3: Hardening
      * It has something to do with the two-part __new__ and __init__ process. I am not currently handling this
        in the most proper manner but rather kind of encapsulating the self pointer (has-a instead of is-a)
   * Wrap .NET exceptions
+  * Cloaca code running as a .NET event receiver that has an exception doesn't report the error. It just kind of disappears.
+  * Need better management when trying to reference null .NET values that aren't our fault.
 * REPL and REPL demo
   * implement help() with a proof-of-concept implementation
   * [May skip...] Improve GUI interaction
@@ -293,12 +270,16 @@ Part 3: Hardening
   * Implementing import
      * Relative imports. I can't even get help on this. It looks like it's very obscure and I might just declare I don't support it.
        * Follow-up https://groups.google.com/forum/#!topic/comp.lang.python/AnFJbDMsKAo
+  * Helper to create custom .NET PyModules (investigate)
 * Task schedule hardening
   * ScheduledTaskRecord additions
     * Cancel(): Cancel this task no matter current state
     * ScheduleCancel(): "Soft" cancel. Next time this task stops, cancel it. Still kind of crappy, but if the task is in a yield polling loop,
       this may be a perfectly fine way to stop them without having to communicate to them.
     * RunNow(): Stop current task and run the one given by the current task record
+  * [SYS.SCHEDULE - RETURN TASK] sys.schedule should return the task record or a similar handle that the caller can manage
+    * [SYS.SCHEDULE - RETURN TASK - CODEOBJECT] Handle for normal code case
+    * [SYS.SCHEDULE - RETURN TASK - PYCALLABLE] Handle for all callables (WrappedCodeObject)
   * Scheduler additions 
     * YieldNow()
   * SysModule wrapper should be easier to represent
