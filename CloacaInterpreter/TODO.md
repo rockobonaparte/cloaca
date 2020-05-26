@@ -63,74 +63,12 @@ a hiatus in LanguageImplementation, and was actually shocked to find it in Cloac
 Errors from scheduled scripts in Unity disappear into the ether. We need a hookup to receive them and report them to Unity's log. I am guessing it
 would have to come from the scheduler.
 
-Work that has boiled to the top while working on Unity embedding:
-1. [DONE] Current plan is to extend WrappedCodeObject to take multiple method candidates:
-   1. [DONE] Accept multiple MethodInfos
-   2. [DONE] Still have defaults for just a single one
-   3. [DONE] Determine which one is the best fit given incoming arguments
-   4. [DONE] Prove one test where a pair of overloads is correctly invoked based on which arguments were actually given.
-2. [DONE] Start trying to invoke these methods from types generated in Python code and suffer type conversion hell
-3. [DONE] Then deal with embedded class constructors!
-4. [WIP?] Events
-   1. [DONE] Implement necessary operators
-      * [DONE] INPLACE_ADD
-      * [DONE] INPLACE_SUBTRACT
-   2. [DONE] Try to subscribe C# event handler to C# event
-   3. Try to subscribe Cloaca function to C# event (maybe move to hardening)
-5. [DONE] Assignment operator bonus round!
-    * [DONE] INPLACE_MULTIPLY
-    * [DONE] INPLACE_TRUE_DIVIDE
-    * [DONE] INPLACE_MODULO
-    * [DONE] INPLACE_FLOOR_DIVIDE
-    * [DONE] INPLACE_POWER
-    * [DONE] INPLACE_AND
-    * [DONE] INPLACE_OR
-    * [DONE] INPLACE_XOR
-    * [DONE] INPLACE_RSHIFT
-    * [DONE] INPLACE_LSHIFT
-   3. [DONE] Add the __i*__ calls to applicable classes [Not literally done, but __i*__ calls fall back to their non-inplace equivalents just like Python.]
-6. [DONE] Subscripting
-    * [DONE] Lists
-	* [DONE] Dictionaries
-7. [DONE] Invoke a generic where the generic parameter isn't given! This might require bending the language to be able to do Foo<Generic>(parameter)
-8. Advanced overload: Check if there could be multiple applicable overloads
-   * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
-     typical way to manage this.
-9. [DONE?] More dunders to add to objects (PyInteger, PyFloat, PyBool...). Just do a dir on them beforehand to see if they fit in.
-   * [DONE?] __xor__
-   * [DONE?] __rshift__
-   * [DONE?] __lshift__
-   * [DONE?] __truediv__
-   * [DONE?] __floordiv__
-   * [DONE?] __pow__
-   * [DONE?] __mod__
-10. Need to make sure that we can check and convert Python args in params field
-11. [DONE] Embed a helper to create basic .NET types from Python types. This would be necessary to index into .NET dictionaries using
-    a specific key type.
-   * [DONE] We can try to use the same conversion helpers that the wrapped code object uses to transform types if the dictionary is
-     a generic with specific types.
-12. [DONE] PyList and PyDict should be able to take all kinds of data types, not just PyObject.
-
-
-Part 2: Unity embedding. See how practical this is to use in Unity.
-* First Unity embed!
-  * [DONE] Experiment in demo how it we would expose a subsystem in REPL. This will probably cause a lot of TODOs!
-  * [DONE] Toss REPL into Unity!
-  * [DONE] Add support for invoking generic methods (so you can call GetComponent<T>)
-  * Final exam: start a script that works on a gameObject to do something like change its color with a delay in a loop
-     * Expose scheduler in order to execute scripts in a non-blocking way
-	 * Expose GameObject finding code in Unity
-	 * Manipulate GameObject code
-	 * Embed scene hierarchy into Unity
-* [IN-PROGRESS] Expand basic opcodes to work with .NET types when possible (add, subtract... etc)
-* Serializing script state: dabble in trying to serialize a single, non-blocking script's state.
-
-
 Part 3: Hardening
 * kwargs
   * Pure-Python kwargs
   * Calling .NET functions with optionals as if they were kwargs
-  * Embedding functions that can take kwargs
+  * Embedding functions that can take kwargs. This will likely use a special PyDict subclass to designate it's for kwargs. Either
+    that or some kind of decorator.
 * Cleanup WrappedCode object. Consolidate everything added across the different method lookup conditions into streamlined calls.
   * Cleanup findBestMethodMatch
   * Cleanup injector
@@ -199,9 +137,11 @@ Part 3: Hardening
 * Imports
   * clr library for .NET stuff
   * Import Unity stuff?
-* Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
+* Scripting serialization
+  * Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
 * Functions
   * Implement co_flags
+  * Need to make sure that we can check and convert Python args in params field from wrapped calls
   * List/enumerable functional helpers:
     * list comprehensions
     * map
@@ -260,6 +200,9 @@ Part 3: Hardening
 	* Interoperation with any container methods implemented like map, reduce, filter.
   * Cache extension method lookups in ObjectResolver because the current lookup method is horribly slow. We have to
     trawl all assemblies EACH time we call an extension method.
+  * Advanced overload: Check if there could be multiple applicable overloads
+    * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
+     typical way to manage this.
 * Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
   do some cute jump opcode logic to mimick them.
 * Need to implement __hash__ and use it in our data types.
