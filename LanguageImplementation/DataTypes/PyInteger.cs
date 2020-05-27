@@ -262,5 +262,27 @@ namespace LanguageImplementation.DataTypes
         {
             return InternalValue.ToString();
         }
+
+        #region Operator Overloads
+        public static bool operator ==(PyInteger lhs, int rhs)
+        {
+            return lhs.InternalValue == rhs;
+        }
+
+        public static bool operator ==(int lhs, PyInteger rhs)
+        {
+            return lhs == rhs.InternalValue;
+        }
+
+        public static bool operator !=(PyInteger lhs, int rhs)
+        {
+            return lhs.InternalValue != rhs;
+        }
+
+        public static bool operator !=(int lhs, PyInteger rhs)
+        {
+            return lhs != rhs.InternalValue;
+        }
+        #endregion Operator Overloads
     }
 }

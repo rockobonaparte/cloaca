@@ -2,6 +2,46 @@
 ===========
 
 ## Current Issues
+Scheduler should accept labels for input scripts so stack traces can show their origination.
+
+Couldn't run this:
+```
+GlobalState.Instance.DialogSubsystem.Prompt(prompt_text, ["No", "Yes"])
+```
+The array couldn't be recognized as a string array. Not surprised. It's a pain to code around it so I'd like to see if I can do
+some more sophisticated conversions.
+
+Couldn't import List<T> directly--probably due to it being a generic:
+```
+from System.Collections.Generic import List
+```
+
+Nor did just importing it all out really work:
+```
+import System.Collections.Generic
+...
+choices = System.Collections.Generic.List(string)
+```
+
+```
+A Cloaca script failed: System.Exception: Global 'System' was not found!
+  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
+```
+
+Couldn't compare a .NET integer with a PyInteger. I started to create the basic overloads but we'll have to do all of them.
+```
+A Cloaca script failed: Microsoft.CSharp.RuntimeBinder.RuntimeBinderException: Operator '==' cannot be applied to operands of type 'int' and 'LanguageImplementation.DataTypes.PyInteger'
+  at (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
+  at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet] (System.Runtime.CompilerServices.CallSite site, T0 arg0, T1 arg1) [0x0010f] in <351e49e2a5bf4fd6beabb458ce2255f3>:0 
+  at (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
+  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x02aab] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:792 
+```
+
+Apparently int() isn't built in
+```
+A Cloaca script failed: System.Exception: Global 'int' was not found!
+  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
+```
 
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
