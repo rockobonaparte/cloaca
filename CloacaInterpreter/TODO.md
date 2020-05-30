@@ -28,20 +28,13 @@ A Cloaca script failed: System.Exception: Global 'System' was not found!
   at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
 ```
 
-Couldn't compare a .NET integer with a PyInteger. I started to create the basic overloads but we'll have to do all of them.
-```
-A Cloaca script failed: Microsoft.CSharp.RuntimeBinder.RuntimeBinderException: Operator '==' cannot be applied to operands of type 'int' and 'LanguageImplementation.DataTypes.PyInteger'
-  at (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
-  at System.Dynamic.UpdateDelegates.UpdateAndExecute2[T0,T1,TRet] (System.Runtime.CompilerServices.CallSite site, T0 arg0, T1 arg1) [0x0010f] in <351e49e2a5bf4fd6beabb458ce2255f3>:0 
-  at (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
-  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x02aab] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:792 
-```
-
 Apparently int() isn't built in
 ```
 A Cloaca script failed: System.Exception: Global 'int' was not found!
   at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
 ```
+
+Need to figure out how to embed methods into a module without necessarily needing to pass PyModule as the first argument.
 
 ## Scheduling Functions from Other Contexts
 It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.

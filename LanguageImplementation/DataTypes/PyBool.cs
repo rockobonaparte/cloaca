@@ -245,11 +245,6 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public static implicit operator bool(PyBool rhs)
-        {
-            return rhs.InternalValue;
-        }
-
         private static PyBool _makeInstance(bool value)
         {
             var instance = PyTypeObject.DefaultNew<PyBool>(PyBoolClass.Instance);
@@ -271,5 +266,24 @@ namespace LanguageImplementation.DataTypes
                 return PyBool.False;
             }
         }
+
+        #region Cast Conversions
+        public static explicit operator sbyte(PyBool pybool) => (sbyte) (pybool.InternalValue ? 1 : 0);
+        public static explicit operator byte(PyBool pybool) => (byte)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator short(PyBool pybool) => (short)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator ushort(PyBool pybool) => (ushort)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator int(PyBool pybool) => (int)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator uint(PyBool pybool) => (uint)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator long(PyBool pybool) => (long)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator ulong(PyBool pybool) => (ulong)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator BigInteger(PyBool pybool) => (BigInteger)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator float(PyBool pybool) => (float)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator double(PyBool pybool) => (double)(pybool.InternalValue ? 1 : 0);
+        public static explicit operator decimal(PyBool pybool) => (decimal)(pybool.InternalValue ? 1 : 0);
+        public static implicit operator bool(PyBool rhs)
+        {
+            return rhs.InternalValue;
+        }
+        #endregion Cast Conversions
     }
 }

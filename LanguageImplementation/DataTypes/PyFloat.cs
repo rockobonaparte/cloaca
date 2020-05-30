@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Numerics;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -296,5 +297,36 @@ namespace LanguageImplementation.DataTypes
         {
             return InternalValue.ToString();
         }
+
+        #region Cast Conversions
+        public static explicit operator sbyte(PyFloat pyfloat) => (sbyte)pyfloat.InternalValue;
+        public static explicit operator byte(PyFloat pyfloat) => (byte)pyfloat.InternalValue;
+        public static explicit operator short(PyFloat pyfloat) => (short)pyfloat.InternalValue;
+        public static explicit operator ushort(PyFloat pyfloat) => (ushort)pyfloat.InternalValue;
+        public static explicit operator int(PyFloat pyfloat) => (int)pyfloat.InternalValue;
+        public static explicit operator uint(PyFloat pyfloat) => (uint)pyfloat.InternalValue;
+        public static explicit operator long(PyFloat pyfloat) => (long)pyfloat.InternalValue;
+        public static explicit operator ulong(PyFloat pyfloat) => (ulong)pyfloat.InternalValue;
+        public static explicit operator BigInteger(PyFloat pyfloat) => (BigInteger)pyfloat.InternalValue;
+        public static explicit operator float(PyFloat pyfloat) => (float)pyfloat.InternalValue;
+        public static explicit operator double(PyFloat pyfloat) => (double)pyfloat.InternalValue;
+        public static explicit operator decimal(PyFloat pyfloat) => pyfloat.InternalValue;
+        public static explicit operator bool(PyFloat pyfloat)
+        {
+            if (pyfloat.InternalValue == 1.0m)
+            {
+                return true;
+            }
+            else if (pyfloat.InternalValue == 0.0m)
+            {
+                return false;
+            }
+            else
+            {
+                throw new InvalidCastException("cannot convert PyFloat value of " + pyfloat.InternalValue + " to a boolean 1.0 or 0.0.");
+            }
+        }
+        #endregion Cast Conversions
+
     }
 }

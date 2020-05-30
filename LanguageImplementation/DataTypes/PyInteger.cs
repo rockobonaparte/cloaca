@@ -243,7 +243,7 @@ namespace LanguageImplementation.DataTypes
         public override bool Equals(object obj)
         {
             var asPyInt = obj as PyInteger;
-            if(asPyInt == null)
+            if (asPyInt == null)
             {
                 return false;
             }
@@ -263,26 +263,34 @@ namespace LanguageImplementation.DataTypes
             return InternalValue.ToString();
         }
 
-        #region Operator Overloads
-        public static bool operator ==(PyInteger lhs, int rhs)
+        #region Cast Conversions
+        public static explicit operator sbyte(PyInteger pyint) => (sbyte)pyint.InternalValue;
+        public static explicit operator byte(PyInteger pyint) => (byte)pyint.InternalValue;
+        public static explicit operator short(PyInteger pyint) => (short)pyint.InternalValue;
+        public static explicit operator ushort(PyInteger pyint) => (ushort)pyint.InternalValue;
+        public static explicit operator int(PyInteger pyint) => (int)pyint.InternalValue;
+        public static explicit operator uint(PyInteger pyint) => (uint)pyint.InternalValue;
+        public static explicit operator long(PyInteger pyint) => (long)pyint.InternalValue;
+        public static explicit operator ulong(PyInteger pyint) => (ulong)pyint.InternalValue;
+        public static explicit operator BigInteger(PyInteger pyint) => pyint.InternalValue;
+        public static explicit operator float(PyInteger pyint) => (float)pyint.InternalValue;
+        public static explicit operator double(PyInteger pyint) => (double)pyint.InternalValue;
+        public static explicit operator decimal(PyInteger pyint) => (decimal)pyint.InternalValue;
+        public static explicit operator bool(PyInteger pyint)
         {
-            return lhs.InternalValue == rhs;
+            if(pyint.InternalValue == 1)
+            {
+                return true;
+            }
+            else if(pyint.InternalValue == 0)
+            {
+                return false;
+            }
+            else
+            {
+                throw new InvalidCastException("cannot convert PyInteger value of " + pyint.InternalValue + " to a boolean 1 or 0.");
+            }
         }
-
-        public static bool operator ==(int lhs, PyInteger rhs)
-        {
-            return lhs == rhs.InternalValue;
-        }
-
-        public static bool operator !=(PyInteger lhs, int rhs)
-        {
-            return lhs.InternalValue != rhs;
-        }
-
-        public static bool operator !=(int lhs, PyInteger rhs)
-        {
-            return lhs != rhs.InternalValue;
-        }
-        #endregion Operator Overloads
+        #endregion Cast Conversions
     }
 }
