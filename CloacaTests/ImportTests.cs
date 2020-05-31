@@ -251,6 +251,21 @@ namespace CloacaTests
             Assert.That(machine_name, Is.EqualTo(System.Environment.MachineName));
         }
 
+        [Test]
+        [Ignore("Support for this is a current work-in-progress.")]
+        public void ImportGenericList()
+        {
+            var finishedFrame = runProgram(
+                "import clr\n" +
+                "clr.AddReference('mscorlib')\n" +
+                "from System.Collections.Generic import List\n" +
+                "from System import String\n" +
+                "a_list = List(String)\n", new Dictionary<string, object>(), 1);
+
+            var machine_name = finishedFrame.GetVariable("a_list");
+            Assert.That(machine_name.GetType(), Is.EqualTo(typeof(List<string>)));
+        }
+
         /// <summary>
         /// This tests shows we can construct something from an imported assembly and work with it.
         /// It requires that are .NET interaction generally is correct in the first place, so this

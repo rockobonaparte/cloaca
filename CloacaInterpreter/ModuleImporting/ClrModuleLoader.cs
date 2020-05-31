@@ -116,10 +116,23 @@ namespace CloacaInterpreter.ModuleImporting
                 {
                     if(type.Namespace == spec.Name)
                     {
-                        if(!module.__dict__.ContainsKey(type.Name))
+                        // TODO: [DISAMBIGUATE GENERIC IMPORTS] Replace clr generic type import with a more robust system that can manage Type<T> and Type<T, K>
+                        // As it stands, they will collide here since we're removing the `# designator at the end. It would normally be:
+                        // Type<T> -> Type`1
+                        // Type<T, K> -> Type`2
+                        //
+                        // But we're collapsing them into just "Type"
+                        var collapsedName = type.Name;
+                        var genericParamQualifierIdx = collapsedName.IndexOf("`");
+                        if(genericParamQualifierIdx >= 0)
+                        {
+                            collapsedName = collapsedName.Substring(0, genericParamQualifierIdx);
+                        }
+
+                        if(!module.__dict__.ContainsKey(collapsedName))
                         {
                             foundAny = true;
-                            module.__dict__.Add(type.Name, type);
+                            module.__dict__.Add(collapsedName, type);
                         }
                     }
                 }
