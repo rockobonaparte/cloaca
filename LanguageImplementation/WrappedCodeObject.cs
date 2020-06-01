@@ -218,24 +218,34 @@ namespace LanguageImplementation
             foreach(var methodBase_itr in MethodBases)
             {
                 var methodBase = methodBase_itr;        // Might plow over this with the monomorphized generic method.
-                var args = in_args;             // We might tweak this if the arguments are for a generic.
+                var args = in_args;                     // We might tweak this if the arguments are for a generic.
 
-                // Test for IsGenericMethodDefinition in case we're making internal calls to stuff like DefaultNew and the
+                // Test for generic parameters in case we're making internal calls to stuff like DefaultNew and the
                 // generic arguments are already filled in.
-                var genericsCount = methodBase_itr.IsGenericMethodDefinition ? methodBase_itr.GetGenericArguments().Length : 0;
-                var parameters = methodBase_itr.GetParameters();
+                int genericsCount = 0;
+                if(methodBase.ContainsGenericParameters)
+                {
+                    if (methodBase.IsConstructor)
+                    {
+                        // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                        // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                        // defines.
+                        var asConstructor = methodBase as ConstructorInfo;
+                        genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
+                    }
+                    else
+                    {
+                        genericsCount = methodBase.GetGenericArguments().Length;
+                    }
+                }
+
+                var parameters = methodBase.GetParameters();
                 bool found = true;
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
-                if (methodBase_itr.IsGenericMethodDefinition)
-                {
-                    var asMethodInfo = methodBase_itr as MethodInfo;
-                    if (asMethodInfo == null)
-                    {
-                        throw new Exception("Cannot find matching methods for " + methodBase_itr.Name + " since it is not a MethodInfo. For example, we don't support generic constructors (does .NET even support it?)");
-                    }
-                    
+                if (methodBase.ContainsGenericParameters)
+                {                    
                     var genericTypes = new Type[genericsCount];
                     args = new object[in_args.Length - genericsCount];
 
@@ -262,9 +272,16 @@ namespace LanguageImplementation
                     }
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 
-                    var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
-                    methodBase = monomorphedMethod;
                     parameters = methodBase.GetParameters();
+                    var asMethodInfo = methodBase as MethodInfo;
+                    if (asMethodInfo != null)
+                    {
+                        // We don't have to follow this path for constructors because the generic parameters are part of the type,
+                        // not the call itself. On the other hand, we'll suffer that later when invoking it...
+                        var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
+                        methodBase = monomorphedMethod;
+                        parameters = methodBase.GetParameters();
+                    }
                 }
 
                 // Set up parameter checking and casting loop. If this is an extension method then skip the first parameter
@@ -351,12 +368,23 @@ namespace LanguageImplementation
             int numGenerics = 0;
             var noGenericArgs = args;
             int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if (methodBase.IsGenericMethod && args.Length > actualParametersLength)
+            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && args.Length > actualParametersLength)
             {
-                numGenerics = methodBase.GetGenericArguments().Length;
-                noGenericArgs = new object[args.Length - numGenerics];
-                Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
+                if (methodBase.IsConstructor)
+                {
+                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                    // defines.
+                    var asConstructor = methodBase as ConstructorInfo;
+                    numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
+                }
+                else
+                {
+                    numGenerics = methodBase.GetGenericArguments().Length;
+                    noGenericArgs = new object[args.Length - numGenerics];
+                }
             }
+            Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
 
             // Inject internal types, convert .NET/Cloaca types.
             // Unit tests like to come in with a null interpreter so we have to test for it.
@@ -384,6 +412,21 @@ namespace LanguageImplementation
                 var asConstructor = methodBase as ConstructorInfo;
                 if (asConstructor != null)
                 {
+                    // Special handling for generic constructors. The generic arguments for generic constructors are part of the type,
+                    // not the constructor.
+                    if(asConstructor.ContainsGenericParameters)
+                    {
+                        Type[] generics = new Type[numGenerics];
+                        var constructorParamIns = methodBase.GetParameters();
+                        Type[] constructorInTypes = new Type[constructorParamIns.Length];
+                        for(int param_i = 0; param_i < constructorInTypes.Length; ++param_i)
+                        {
+                            constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
+                        }
+                        Array.Copy(args, 0, generics, 0, numGenerics);
+                        Type monomorophedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
+                        asConstructor = monomorophedConstructor.GetConstructor(constructorInTypes);
+                    }
                     return Task.FromResult(asConstructor.Invoke(final_args));
                 }
                 else

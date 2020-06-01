@@ -11,23 +11,6 @@ GlobalState.Instance.DialogSubsystem.Prompt(prompt_text, ["No", "Yes"])
 The array couldn't be recognized as a string array. Not surprised. It's a pain to code around it so I'd like to see if I can do
 some more sophisticated conversions.
 
-Couldn't import List<T> directly--probably due to it being a generic:
-```
-from System.Collections.Generic import List
-```
-
-Nor did just importing it all out really work:
-```
-import System.Collections.Generic
-...
-choices = System.Collections.Generic.List(string)
-```
-
-```
-A Cloaca script failed: System.Exception: Global 'System' was not found!
-  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
-```
-
 Apparently int() isn't built in
 ```
 A Cloaca script failed: System.Exception: Global 'int' was not found!

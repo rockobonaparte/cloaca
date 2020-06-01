@@ -252,7 +252,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Support for this is a current work-in-progress.")]
         public void ImportGenericList()
         {
             var finishedFrame = runProgram(
