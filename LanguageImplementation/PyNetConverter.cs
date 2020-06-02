@@ -1,13 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-
+using System.Threading;
 using LanguageImplementation.DataTypes;
 
 namespace LanguageImplementation
 {
     public class PyNetConverter
     {
+        /// <summary>
+        /// Adaptation of Boolean.Parse that factors in some of the strings we might expect from Python to turn into a bool. Namely, "1" and "0" should
+        /// become booleans too.
+        /// </summary>
+        /// <param name="text_in">Input text to parse as a boolean</param>
+        /// <returns>Parsed boolean value</returns>
+        private static bool extendedBoolString(string text_in)
+        {
+            if(text_in == "1" || text_in == "1.0")
+            {
+                return true;
+            }
+            else if(text_in == "0" || text_in == "0.0")
+            {
+                return false;
+            }
+            else
+            {
+                return Boolean.Parse(text_in);
+            }
+        }
+
         // This will lead to some problems if some asshat decides to subclass the base types. We won't be able to look it up this way.
         // At this point, I'm willing to dismiss that. Famous last words.
         private static Dictionary<ValueTuple<Type, Type>, Func<object, object>> converters = new Dictionary<ValueTuple<Type, Type>, Func<object, object>>
@@ -41,7 +63,15 @@ namespace LanguageImplementation
             { ValueTuple.Create(typeof(bool), typeof(PyBool)), (as_bool) => { return new PyBool((bool)as_bool); } },
             { ValueTuple.Create(typeof(PyBool), typeof(bool)), (as_pb) => { return ((PyBool)as_pb).InternalValue; } },
 
-            // We don't write out string conversions. If the toType is a string, we'll just use ToString(). (famous last words)
+            // String-other conversions
+            { ValueTuple.Create(typeof(PyString), typeof(PyInteger)), (as_text) => { return (PyInteger) PyInteger.Create(BigInteger.Parse(((PyString) as_text).InternalValue)); } },
+            { ValueTuple.Create(typeof(string), typeof(PyInteger)), (as_text) => { return (PyInteger) PyInteger.Create(BigInteger.Parse((string) as_text)); } },
+            { ValueTuple.Create(typeof(PyString), typeof(PyFloat)), (as_text) => { return (PyFloat) PyFloat.Create(decimal.Parse(((PyString) as_text).InternalValue)); } },
+            { ValueTuple.Create(typeof(string), typeof(PyFloat)), (as_text) => { return (PyFloat) PyFloat.Create(decimal.Parse((string) as_text)); } },
+            { ValueTuple.Create(typeof(PyString), typeof(PyBool)), (as_text) => { return (PyBool) PyBool.Create(extendedBoolString(((PyString) as_text).InternalValue)); } },
+            { ValueTuple.Create(typeof(string), typeof(PyBool)), (as_text) => { return (PyBool) PyBool.Create(extendedBoolString((string) as_text)); } },
+
+            // We don't write out to-string conversions. If the toType is a string, we'll just use ToString(). (famous last words)
         };
 
         // We'll reuse a ValueTuple instead of constantly creating new ones.
@@ -63,6 +93,10 @@ namespace LanguageImplementation
             else if (toType == typeof(string))
             {
                 return fromObj.ToString();
+            }
+            else if (toType == typeof(PyString))
+            {
+                return PyString.Create(fromObj.ToString());
             }
             else if (converters.ContainsKey(cachedKey))
             {
@@ -88,6 +122,10 @@ namespace LanguageImplementation
                 return true;
             }
             else if(toType == typeof(string))
+            {
+                return true;
+            }
+            else if(toType == typeof(PyString))
             {
                 return true;
             }

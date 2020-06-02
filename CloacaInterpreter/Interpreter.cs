@@ -79,6 +79,11 @@ namespace CloacaInterpreter
             var builtin_type_methodInfo = ((MethodCallExpression)builtin_type_expr.Body).Method;
             var builtin_type_wrapper = new WrappedCodeObject("builtin_type", builtin_type_methodInfo);
 
+            var int_wrapper = new WrappedCodeObject("int", typeof(Builtins).GetMethod("int_builtin"));
+            var float_wrapper = new WrappedCodeObject("float", typeof(Builtins).GetMethod("float_builtin"));
+            var bool_wrapper = new WrappedCodeObject("bool", typeof(Builtins).GetMethod("bool_builtin"));
+            var str_wrapper = new WrappedCodeObject("str", typeof(Builtins).GetMethod("str_builtin"));
+
             builtins = new Dictionary<string, object>
             {
                 { "Exception", PyExceptionClass.Instance },
@@ -87,6 +92,10 @@ namespace CloacaInterpreter
                 { "issubclass", issubclass_wrapper },
                 { "isinstance", isinstance_wrapper },
                 { "type", builtin_type_wrapper },
+                { "int", int_wrapper },
+                { "float", float_wrapper },
+                { "bool", bool_wrapper },
+                { "str", str_wrapper },
             };
 
             this.Scheduler = scheduler;

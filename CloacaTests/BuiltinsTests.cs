@@ -40,5 +40,27 @@ namespace CloacaTests
             Assert.That(unrelated_class_class, Is.False);
             Assert.That(unrelated_obj_class, Is.False);
         }
+
+        [Test]
+        public void NumericStringConversions()
+        {
+            runBasicTest(
+                "a_string = '1'\n" +
+                "as_int = int(a_string)\n" +
+                "as_float = float(a_string)\n" +
+                "as_bool = bool(a_string)\n" +
+                "int_str = str(1)\n" +
+                "float_str = str(1.0)\n" +
+                "bool_str = str(True)\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "as_int", PyInteger.Create(1) },
+                { "as_float", PyFloat.Create(1.0) },
+                { "as_bool", PyBool.True },
+                { "int_str", PyString.Create("1") },
+                { "float_str", PyString.Create("1.0") },
+                { "bool_str", PyString.Create("True") },
+            }), 1);
+        }
     }
 }

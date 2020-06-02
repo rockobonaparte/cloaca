@@ -11,12 +11,6 @@ GlobalState.Instance.DialogSubsystem.Prompt(prompt_text, ["No", "Yes"])
 The array couldn't be recognized as a string array. Not surprised. It's a pain to code around it so I'd like to see if I can do
 some more sophisticated conversions.
 
-Apparently int() isn't built in
-```
-A Cloaca script failed: System.Exception: Global 'int' was not found!
-  at CloacaInterpreter.Interpreter+<Run>d__26.MoveNext () [0x01dce] in C:\coding\cloaca_git\CloacaInterpreter\Interpreter.cs:686 
-```
-
 Need to figure out how to embed methods into a module without necessarily needing to pass PyModule as the first argument.
 
 ## Scheduling Functions from Other Contexts

@@ -120,5 +120,53 @@ namespace CloacaInterpreter
         {
             return obj.__class__;
         }
+
+        public static PyInteger int_builtin(object o)
+        {
+            if(PyNetConverter.CanConvert(o.GetType(), typeof(PyInteger)))
+            {
+                return (PyInteger) PyNetConverter.Convert(o, typeof(PyInteger));
+            }
+            else
+            {
+                throw new InvalidCastException("Cannot convert " + o.GetType() + " to an int.");
+            }
+        }
+
+        public static PyFloat float_builtin(object o)
+        {
+            if (PyNetConverter.CanConvert(o.GetType(), typeof(PyFloat)))
+            {
+                return (PyFloat)PyNetConverter.Convert(o, typeof(PyFloat));
+            }
+            else
+            {
+                throw new InvalidCastException("Cannot convert " + o.GetType() + " to a float.");
+            }
+        }
+
+        public static PyBool bool_builtin(object o)
+        {
+            if (PyNetConverter.CanConvert(o.GetType(), typeof(PyBool)))
+            {
+                return (PyBool)PyNetConverter.Convert(o, typeof(PyBool));
+            }
+            else
+            {
+                throw new InvalidCastException("Cannot convert " + o.GetType() + " to a bool.");
+            }
+        }
+
+        public static PyString str_builtin(object o)
+        {
+            if (PyNetConverter.CanConvert(o.GetType(), typeof(PyString)))
+            {
+                return (PyString)PyNetConverter.Convert(o, typeof(PyString));
+            }
+            else
+            {
+                throw new InvalidCastException("Cannot convert " + o.GetType() + " to a string.");
+            }
+        }
     }
 }
