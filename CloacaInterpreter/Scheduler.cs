@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using LanguageImplementation;
@@ -55,8 +56,10 @@ namespace CloacaInterpreter
 
     /// <summary>
     /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
+    /// 
+    /// You can await on it to suspend the holder of the record until the associated task finishes.
     /// </summary>
-    public class TaskEventRecord
+    public class TaskEventRecord : INotifyCompletion
     {
         public FrameContext Frame { get; protected set; }
         public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
@@ -64,6 +67,8 @@ namespace CloacaInterpreter
         public event OnTaskExceptionEscaped WhenTaskExceptionEscaped = (ignoredRecord, ignoredExc) => { };
         public bool Completed { get; protected set; }
         public object ExtraMetadata;
+
+        private Action continuationIfAwaited;
          
         public TaskEventRecord(FrameContext frame)
         {
@@ -85,6 +90,46 @@ namespace CloacaInterpreter
             EscapedExceptionInfo = escapedInfo;
             WhenTaskExceptionEscaped(this, escapedInfo);
         }
+
+        #region INotifyCompletion and custom awaiter
+
+        public void OnCompleted(Action continuation)
+        {
+            if (Completed)
+            {
+                continuationIfAwaited();
+            }
+            else
+            {
+                continuationIfAwaited = continuation;
+            }
+        }
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return Completed;
+            }
+        }
+
+        public Task Continue()
+        {
+            continuationIfAwaited?.Invoke();
+            return Task.FromResult(this);
+        }
+
+        public TaskEventRecord GetAwaiter()
+        {
+            return this;
+        }
+
+        public TaskEventRecord GetResult()
+        {
+            return this;
+        }
+
+        #endregion INotifyCompletion and custom awaiter
     }
 
     /// <summary>
