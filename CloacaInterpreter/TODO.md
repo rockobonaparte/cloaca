@@ -1,7 +1,16 @@
 ﻿Cloaca TODO
 ===========
 
-## Current Issues
+## Current Issues: For-Loops
+
+Need to implement for-loops. Main thing:
+* Implement range with __iter__() method that returns range_iterator
+* Implement range_iterator with __next()__ method that returns next element, then StopIteration
+* Generate appropriate code for the loops
+* Implement iterators for list and dict
+* Implement iterators for .NET enumerables
+
+## Older Issues with Integration
 Scheduler should accept labels for input scripts so stack traces can show their origination.
 
 Couldn't run this:
@@ -74,6 +83,9 @@ Errors from scheduled scripts in Unity disappear into the ether. We need a hooku
 would have to come from the scheduler.
 
 Part 3: Hardening
+* *args
+  * Implement
+  * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
 * kwargs
   * Pure-Python kwargs
   * Calling .NET functions with optionals as if they were kwargs

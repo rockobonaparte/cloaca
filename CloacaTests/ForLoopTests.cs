@@ -16,17 +16,18 @@ namespace CloacaTests
         {
             runBasicTest(
                 "test_range = range(0, 2, 1)\n" +
+                "itr = test_range.__iter__()\n" +
                 "raised_exception = False\n" +
-                "i0 = test_range(0)\n" +
-                "i1 = test_range(1)\n" +
+                "i0 = itr.__next__()\n" +
+                "i1 = itr.__next__()\n" +
                 "try:\n" +
-                "   i2 = test_range(2)\n" +
-                "except IndexError:\n" +
-                "   raised_exception = True\n", new VariableMultimap(new TupleList<string, object>
+                "   i2 = itr.__next__()\n" +
+                "except StopIteration:\n" +
+                "   raised_stop = True\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "i0", PyInteger.Create(0) },
                 { "i1", PyInteger.Create(1) },
-                { "raised_exception", PyBool.True },
+                { "raised_stop", PyBool.True },
             }), 1);
         }
 
@@ -36,10 +37,59 @@ namespace CloacaTests
         {
             runBasicTest(
                 "a = 0\n" +
-                "for i in range(0, 10, 1):\n\n" +
+                "for i in range(0, 10, 1):\n" +
                 "   a += i\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyInteger.Create(0 + 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9) }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("For-loops yet implemented")]
+        public void ForLoopRangeElse()
+        {
+            runBasicTest(
+                "a = 0\n" +
+                "for i in range(0, 3, 1):\n" +
+                "   a += i\n" +
+                "else:\n" +
+                "   a += 10\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(0 + 1 + 2 + 10) }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("For-loops yet implemented")]
+        public void ForLoopRangeBreak()
+        {
+            runBasicTest(
+                "a = 0\n" +
+                "for i in range(0, 3, 1):\n" +
+                "   if i == 2:\n" +
+                "      break\n" +
+                "   a += i\n" +
+                "else:\n" +
+                "   a += 10\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(0 + 1) }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("For-loops yet implemented")]
+        public void ForLoopRangeContinue()
+        {
+            runBasicTest(
+                "a = 0\n" +
+                "for i in range(0, 3, 1):\n" +
+                "   if i == 2:\n" +
+                "      continue\n" +
+                "   a += i\n" +
+                "else:\n" +
+                "   a += 10\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(0 + 1 + 10) }
             }), 1);
         }
 
