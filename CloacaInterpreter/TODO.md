@@ -10,6 +10,9 @@ Need to implement for-loops. Main thing:
 * Implement iterators for list and dict
 * Implement iterators for .NET enumerables
 
+### Found Issues
+* I should be able to catch .NET exceptions with my except block.
+
 ## Older Issues with Integration
 Scheduler should accept labels for input scripts so stack traces can show their origination.
 

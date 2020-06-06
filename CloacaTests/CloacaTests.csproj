@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BuiltinsTests.cs" />
+    <Compile Include="ForLoopTests.cs" />
     <Compile Include="StringTests.cs" />
     <Compile Include="ScopeTests.cs" />
     <Compile Include="SysModuleTests.cs" />

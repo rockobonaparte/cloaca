@@ -1,4 +1,6 @@
-﻿namespace LanguageImplementation.DataTypes.Exceptions
+﻿using System;
+
+namespace LanguageImplementation.DataTypes.Exceptions
 {
     public class AttributeError : PyException
     {
@@ -30,5 +32,21 @@
         {
 
         }
+    }
+
+    public class StopIteration : PyException
+    {
+        public StopIteration() : base()
+        {
+
+        }
+    }
+
+    /// <summary>
+    /// Version of StopIteration thrown from .NET code.
+    /// </summary>
+    public class StopIterationException : Exception
+    {
+
     }
 }

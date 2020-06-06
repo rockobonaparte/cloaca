@@ -1,34 +1,39 @@
-﻿using System.Collections.Generic;
-
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
+using System.Collections.Generic;
+using LanguageImplementation;
+using System.Reflection;
 
 namespace CloacaTests
 {
     [TestFixture]
     public class ForLoopTests : RunCodeTest
     {
-        // Range is just an object with __getitem__ that runs the whole range. Raises IndexError when it goes out of bounds.
         [Test]
-        [Ignore("Range not yet implemented")]
         public void Range()
         {
-            runBasicTest(
+            FrameContext runContext = null;
+
+            var exc = Assert.Throws<TargetInvocationException>(
+              () => {
+                  runProgram(
                 "test_range = range(0, 2, 1)\n" +
                 "itr = test_range.__iter__()\n" +
                 "raised_exception = False\n" +
                 "i0 = itr.__next__()\n" +
-                "i1 = itr.__next__()\n" +
-                "try:\n" +
-                "   i2 = itr.__next__()\n" +
-                "except StopIteration:\n" +
-                "   raised_stop = True\n", new VariableMultimap(new TupleList<string, object>
-            {
-                { "i0", PyInteger.Create(0) },
-                { "i1", PyInteger.Create(1) },
-                { "raised_stop", PyBool.True },
-            }), 1);
+                "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
+                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1, out runContext);
+              });
+
+            Assert.That(exc.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));
+
+            var variables = new VariableMultimap(runContext);
+            var i0 = (PyInteger)variables.Get("i0");
+            var i1 = (PyInteger)variables.Get("i1");
+            Assert.That(i0, Is.EqualTo(PyInteger.Create(0)));
+            Assert.That(i1, Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]

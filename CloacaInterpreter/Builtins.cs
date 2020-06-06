@@ -168,5 +168,10 @@ namespace CloacaInterpreter
                 throw new InvalidCastException("Cannot convert " + o.GetType() + " to a string.");
             }
         }
+
+        public static PyRange range_builtin(int min, int max, int step)
+        {
+            return PyRange.Create(min, max, step);
+        }
     }
 }
