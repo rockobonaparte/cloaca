@@ -10,6 +10,7 @@ using System.Reflection;
 using LanguageImplementation.DataTypes.Exceptions;
 
 using CloacaInterpreter.ModuleImporting;
+using System.Net.Http.Headers;
 
 namespace CloacaInterpreter
 {
@@ -955,6 +956,104 @@ namespace CloacaInterpreter
 
                                 // Offset is based off of the NEXT instruction so add one.
                                 context.Cursor += jumpOffset + 2;
+                                continue;
+                            }
+                        case ByteCodes.GET_ITER:
+                            {
+                                // Implements TOS = iter(TOS).
+                                context.Cursor += 1;
+                                var tos = context.DataStack.Pop();
+                                var asPyObject = tos as PyObject;
+                                if(asPyObject == null)
+                                {
+                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + tos.GetType().Name);
+                                }
+                                else
+                                {
+                                    var __call__ = asPyObject.__getattribute__("__iter__");
+                                    var functionToRun = (IPyCallable)__call__;
+
+                                    var returned = await functionToRun.Call(this, context, new object[0]);
+                                    if (returned != null && !(returned is FutureVoidAwaiter))
+                                    {
+                                        if (returned is IGetsFutureAwaiterResult)
+                                        {
+                                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                        }
+                                        context.DataStack.Push(returned);
+                                    }
+                                    else if (returned == null)
+                                    {
+                                        throw new InvalidCastException("__iter__ for type " + tos.GetType().Name + " returned None.");
+                                    }
+                                }
+                                continue;
+                            }
+                        case ByteCodes.FOR_ITER:
+                            {
+                                // TOS is an iterator. Call its __next__() method. If this yields a new value, push it on the stack 
+                                // (leaving the iterator below it). If the iterator indicates it is exhausted TOS is popped, and the
+                                // byte code counter is incremented by delta.
+                                context.Cursor += 1;
+                                var jumpOffset = context.CodeBytes.GetUShort(context.Cursor);
+
+                                var iterator = context.DataStack.Pop();
+                                var asPyObject = iterator as PyObject;
+                                if (asPyObject == null)
+                                {
+                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + iterator.GetType().Name);
+                                }
+                                else
+                                {
+                                    var __call__ = asPyObject.__getattribute__("__next__");
+                                    var functionToRun = (IPyCallable)__call__;
+
+                                    try
+                                    {
+                                        var returned = await functionToRun.Call(this, context, new object[0]);
+                                        if (returned != null && !(returned is FutureVoidAwaiter))
+                                        {
+                                            if (returned is IGetsFutureAwaiterResult)
+                                            {
+                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                            }
+
+                                            // Might have gotten StopIteration either from a .NET call or from internal interpreter context.
+                                            if (context.EscapedDotNetException != null && context.EscapedDotNetException.GetType() == typeof(StopIterationException))
+                                            {
+                                                context.Cursor += jumpOffset + 2;
+                                                context.EscapedDotNetException = null;
+                                            }
+                                            else if (context.CurrentException != null && context.CurrentException.GetType() == typeof(StopIteration))
+                                            {
+                                                context.Cursor += jumpOffset + 2;
+                                                context.EscapedDotNetException = null;
+                                            }
+                                            else
+                                            {
+                                                // Looks like we didn't get a StopIteration so we set up our stack to iterate again later. We'll just move
+                                                // on to the next immediate instruction.
+                                                context.DataStack.Push(iterator);   // Make sure that iterator gets put back on top!
+                                                context.DataStack.Push(returned);
+                                                context.Cursor += 2;
+                                            }
+                                        }
+                                    }
+                                    catch(TargetInvocationException maybeItIsStopIterationException)
+                                    {
+                                        // Thanks to all the async Task shenanigans, we don't get StopIterationException directly from .NET
+                                        // code but instead get it wrapped up in some TargetInvocationException puke that we have to peel back.
+                                        // Such is life and this is what I get for trying to be cool.
+                                        if (maybeItIsStopIterationException.InnerException.GetType() == typeof(StopIterationException))
+                                        {
+                                            context.Cursor += jumpOffset + 2;
+                                        }
+                                        else
+                                        {
+                                            throw;
+                                        }
+                                    }
+                                }
                                 continue;
                             }
                         case ByteCodes.MAKE_FUNCTION:

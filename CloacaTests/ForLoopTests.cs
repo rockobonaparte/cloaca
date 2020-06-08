@@ -37,7 +37,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("For-loops yet implemented")]
         public void ForLoopRange()
         {
             runBasicTest(

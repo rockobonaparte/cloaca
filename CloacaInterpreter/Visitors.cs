@@ -535,6 +535,70 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitFor_stmt([NotNull] CloacaParser.For_stmtContext context)
+    {
+        /*
+         * >>> def for_loop():
+           ...   a = 0
+           ...   for i in range(0, 10, 1):
+           ...     a += i
+           ...   return a
+           ...
+           >>> from dis import dis
+           >>> dis(for_loop)
+             2           0 LOAD_CONST               1 (0)
+                         2 STORE_FAST               0 (a)
+
+             3           4 SETUP_LOOP              28 (to 34)
+                         6 LOAD_GLOBAL              0 (range)
+                         8 LOAD_CONST               1 (0)
+                         10 LOAD_CONST               2 (10)
+                         12 LOAD_CONST               3 (1)
+                         14 CALL_FUNCTION            3
+                         16 GET_ITER
+                    >>   18 FOR_ITER                12 (to 32)
+                         20 STORE_FAST               1 (i)
+
+              4          22 LOAD_FAST                0 (a)
+                         24 LOAD_FAST                1 (i)
+                         26 INPLACE_ADD
+                         28 STORE_FAST               0 (a)
+                         30 JUMP_ABSOLUTE           18
+                    >>   32 POP_BLOCK
+
+              5     >>   34 LOAD_FAST                0 (a)
+                         36 RETURN_VALUE
+        */
+        // for_stmt: 'for' exprlist 'in' testlist ':' suite ('else' ':' suite)?;
+        // exprlist: (expr|star_expr) (',' (expr|star_expr))* (',')?;
+        var setupLoopIdx = ActiveProgram.AddInstruction(ByteCodes.SETUP_LOOP, -1, context);
+        var setupLoopFixup = new JumpOpcodeFixer(ActiveProgram.Code, setupLoopIdx);
+
+        Visit(context.testlist());
+
+        var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+        var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+        var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+
+        foreach (var expr in context.exprlist().expr())
+        {
+            // I don't have complete confidence in setting the names explicitly like this, but visiting
+            // the expr winds up just create LOAD_GLOBAL instead of the STORE_FAST we actually need.
+            generateStoreForVariable(expr.GetText(), context);
+            //Visit(expr);
+        }
+
+        Visit(context.suite(0));
+
+        ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+        int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
+        forIterFixup.Fixup(pop_block_i);
+
+        setupLoopFixup.Fixup(ActiveProgram.Code.Count);
+
+        return null;
+    }
+
     /// <summary>
     /// Finds the first occurrance of the given text in the context's children.
     /// </summary>

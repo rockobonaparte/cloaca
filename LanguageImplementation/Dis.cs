@@ -226,6 +226,15 @@ namespace LanguageImplementation
                             cursor += 2;
                         }
                         break;
+                    case ByteCodes.GET_ITER:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "GET_ITER", null, null);
+                        cursor += 1;
+                        break;
+                    case ByteCodes.FOR_ITER:
+                        cursor += 1;
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "FOR_ITER", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
                     case ByteCodes.POP_BLOCK:
                         // TODO: Block targets should have a >> cursor next to them.
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "POP_BLOCK", null, null);

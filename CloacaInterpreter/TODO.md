@@ -10,6 +10,39 @@ Need to implement for-loops. Main thing:
 * Implement iterators for list and dict
 * Implement iterators for .NET enumerables
 
+```
+>>> def for_loop():
+...   a = 0
+...   for i in range(0, 10, 1):
+...     a += i
+...   return a
+...
+>>> from dis import dis
+>>> dis(for_loop)
+  2           0 LOAD_CONST               1 (0)
+              2 STORE_FAST               0 (a)
+
+  3           4 SETUP_LOOP              28 (to 34)
+              6 LOAD_GLOBAL              0 (range)
+              8 LOAD_CONST               1 (0)
+             10 LOAD_CONST               2 (10)
+             12 LOAD_CONST               3 (1)
+             14 CALL_FUNCTION            3
+             16 GET_ITER
+        >>   18 FOR_ITER                12 (to 32)
+             20 STORE_FAST               1 (i)
+
+  4          22 LOAD_FAST                0 (a)
+             24 LOAD_FAST                1 (i)
+             26 INPLACE_ADD
+             28 STORE_FAST               0 (a)
+             30 JUMP_ABSOLUTE           18
+        >>   32 POP_BLOCK
+
+  5     >>   34 LOAD_FAST                0 (a)
+             36 RETURN_VALUE
+```
+
 ### Found Issues
 * I should be able to catch .NET exceptions with my except block.
 
