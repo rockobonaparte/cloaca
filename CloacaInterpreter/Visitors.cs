@@ -594,6 +594,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
         forIterFixup.Fixup(pop_block_i);
 
+        // else-clause. If there's no else then we're done with the loop.
+        if(context.suite().Length > 1)
+        {
+            Visit(context.suite(1));
+        }
         setupLoopFixup.Fixup(ActiveProgram.Code.Count);
 
         return null;
