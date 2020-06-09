@@ -85,7 +85,22 @@ namespace LanguageImplementation
             get; private set;
         }
 
-        public int HandlerAddress
+        /// <summary>
+        /// End of block as an offset from the current position when the block was created.
+        /// </summary>
+        public int HandlerOffset
+        {
+            get; private set;
+        }
+
+        /// <summary>
+        /// Address to the opcode that spurred the creation of this block. Or rather, the instruction AFTER the
+        /// instruction that created the block. OriginAdress + HandlerOffset = address of instruction to run if
+        /// skipping this block.
+        /// 
+        /// Note that I don't know how this varies from CPython.
+        /// </summary>
+        public int OriginAddress
         {
             get; private set;
         }
@@ -95,11 +110,12 @@ namespace LanguageImplementation
             get; private set;
         }
 
-        public Block(ByteCodes opcode, int handlerAddress, int stackSize)
+        public Block(ByteCodes opcode, int originAddress, int handlerOffset, int stackSize)
         {
             this.Opcode = opcode;
-            this.HandlerAddress = handlerAddress;
+            this.HandlerOffset = handlerOffset;
             this.StackSize = stackSize;
+            this.OriginAddress = originAddress;
         }
     }
 

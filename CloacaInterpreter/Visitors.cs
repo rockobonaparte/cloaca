@@ -235,6 +235,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
+    {
+        ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
+        return null;
+    }
+
     public override object VisitReturn_stmt([NotNull] CloacaParser.Return_stmtContext context)
     {
         if(context.testlist() == null)

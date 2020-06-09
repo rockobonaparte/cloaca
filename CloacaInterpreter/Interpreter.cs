@@ -357,12 +357,12 @@ namespace CloacaInterpreter
                                 // We'll now go to the except routine.
                                 context.DataStack.Push(context.CurrentException);
                                 context.CurrentException = null;
-                                context.Cursor = block.HandlerAddress;
+                                context.Cursor = block.HandlerOffset;
                                 break;
                             }
                             else if (block.Opcode == ByteCodes.SETUP_FINALLY)
                             {
-                                context.Cursor = block.HandlerAddress;
+                                context.Cursor = block.HandlerOffset;
                                 break;
                             }
                         }
@@ -905,7 +905,7 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var loopResumptionPoint = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                context.BlockStack.Push(new Block(ByteCodes.SETUP_LOOP, loopResumptionPoint, context.DataStack.Count));
+                                context.BlockStack.Push(new Block(ByteCodes.SETUP_LOOP, context.Cursor, loopResumptionPoint, context.DataStack.Count));
                             }
                             break;
                         case ByteCodes.POP_BLOCK:
@@ -931,7 +931,7 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var exceptionCatchPoint = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, context.Cursor + exceptionCatchPoint, context.DataStack.Count));
+                                context.BlockStack.Push(new Block(ByteCodes.SETUP_EXCEPT, context.Cursor, context.Cursor + exceptionCatchPoint, context.DataStack.Count));
                             }
                             break;
                         case ByteCodes.SETUP_FINALLY:
@@ -939,7 +939,7 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var finallyClausePoint = context.CodeBytes.GetUShort(context.Cursor);
                                 context.Cursor += 2;
-                                context.BlockStack.Push(new Block(ByteCodes.SETUP_FINALLY, context.Cursor + finallyClausePoint, context.DataStack.Count));
+                                context.BlockStack.Push(new Block(ByteCodes.SETUP_FINALLY, context.Cursor, context.Cursor + finallyClausePoint, context.DataStack.Count));
                             }
                             break;
                         case ByteCodes.JUMP_ABSOLUTE:
@@ -956,6 +956,13 @@ namespace CloacaInterpreter
 
                                 // Offset is based off of the NEXT instruction so add one.
                                 context.Cursor += jumpOffset + 2;
+                                continue;
+                            }
+                        case ByteCodes.BREAK_LOOP:
+                            {
+                                int newPosition = context.BlockStack.Peek().OriginAddress + context.BlockStack.Peek().HandlerOffset;
+                                UnrollCurrentBlock(context);
+                                context.Cursor = newPosition;
                                 continue;
                             }
                         case ByteCodes.GET_ITER:
@@ -1331,7 +1338,7 @@ namespace CloacaInterpreter
                                 var currentBlock = context.BlockStack.Count == 0 ? null : context.BlockStack.Peek();
                                 if (currentBlock != null && currentBlock.Opcode == ByteCodes.SETUP_FINALLY)
                                 {
-                                    context.Cursor = currentBlock.HandlerAddress;
+                                    context.Cursor = currentBlock.HandlerOffset;
                                 }
 
                                 break;

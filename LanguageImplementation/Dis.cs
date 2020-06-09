@@ -264,6 +264,12 @@ namespace LanguageImplementation
                             cursor += 2;
                         }
                         break;
+                    case ByteCodes.BREAK_LOOP:
+                        {
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BREAK_LOOP", null, null);
+                            cursor += 1;
+                            break;
+                        }
                     case ByteCodes.WAIT:
                         // TODO: Block targets should have a >> cursor next to them.
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "WAIT", null, null);
