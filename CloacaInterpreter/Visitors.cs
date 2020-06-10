@@ -21,17 +21,37 @@ public class ParseException : Exception
     }
 }
 
+/// <summary>
+/// Helper class while visiting nodes that tracks loop blocks we have created. This is particularly
+/// used by continue statements to figure out what it's going to end up continuing to.
+/// </summary>
+public class LoopBlockRecord
+{
+    // Integer byte code address for the instruction that starts the loop
+    public int LoopOrigin
+    {
+        get; private set;
+    }
+
+    public LoopBlockRecord(int loopOrigin)
+    {
+        LoopOrigin = loopOrigin;
+    }
+}
+
 public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 {
     public CodeObjectBuilder RootProgram;
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
+    private Stack<LoopBlockRecord> LoopBlocks;
 
     public CloacaBytecodeVisitor()
     {
         RootProgram = new CodeObjectBuilder();
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
+        LoopBlocks = new Stack<LoopBlockRecord>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -238,6 +258,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
     {
         ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
+        return null;
+    }
+
+    public override object VisitContinue_stmt([NotNull] CloacaParser.Continue_stmtContext context)
+    {
+        ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, LoopBlocks.Peek().LoopOrigin, context);
         return null;
     }
 
@@ -523,22 +549,29 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         Visit(context.test());
         var pop_jump_fixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
-
-        Visit(context.suite(0));
-
-        ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, setupLoopIdx, context);
-        int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
-        pop_jump_fixup.FixupAbsolute(pop_block_i);
-
-        // Else clause? We will have two suites.
-        if (context.suite().Length > 1)
+        LoopBlocks.Push(new LoopBlockRecord(setupLoopIdx));       // Remember we're getting the location after adding an instruction, not before.
+        try
         {
-            Visit(context.suite(1));
+            Visit(context.suite(0));
+
+            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, setupLoopIdx, context);
+            int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
+            pop_jump_fixup.FixupAbsolute(pop_block_i);
+
+            // Else clause? We will have two suites.
+            if (context.suite().Length > 1)
+            {
+                Visit(context.suite(1));
+            }
+
+            setupLoopFixup.Fixup(ActiveProgram.Code.Count);
+
+            return null;
         }
-
-        setupLoopFixup.Fixup(ActiveProgram.Code.Count);
-
-        return null;
+        finally
+        {
+            LoopBlocks.Pop();
+        }
     }
 
     public override object VisitFor_stmt([NotNull] CloacaParser.For_stmtContext context)
@@ -584,30 +617,38 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
         var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
-        var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
-
-        foreach (var expr in context.exprlist().expr())
+        LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
+        try
         {
-            // I don't have complete confidence in setting the names explicitly like this, but visiting
-            // the expr winds up just create LOAD_GLOBAL instead of the STORE_FAST we actually need.
-            generateStoreForVariable(expr.GetText(), context);
-            //Visit(expr);
+            var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+
+            foreach (var expr in context.exprlist().expr())
+            {
+                // I don't have complete confidence in setting the names explicitly like this, but visiting
+                // the expr winds up just create LOAD_GLOBAL instead of the STORE_FAST we actually need.
+                generateStoreForVariable(expr.GetText(), context);
+                //Visit(expr);
+            }
+
+            Visit(context.suite(0));
+
+            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+            int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
+            forIterFixup.Fixup(pop_block_i);
+
+            // else-clause. If there's no else then we're done with the loop.
+            if (context.suite().Length > 1)
+            {
+                Visit(context.suite(1));
+            }
+            setupLoopFixup.Fixup(ActiveProgram.Code.Count);
+
+            return null;
         }
-
-        Visit(context.suite(0));
-
-        ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
-        int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
-        forIterFixup.Fixup(pop_block_i);
-
-        // else-clause. If there's no else then we're done with the loop.
-        if(context.suite().Length > 1)
+        finally
         {
-            Visit(context.suite(1));
+            LoopBlocks.Pop();
         }
-        setupLoopFixup.Fixup(ActiveProgram.Code.Count);
-
-        return null;
     }
 
     /// <summary>

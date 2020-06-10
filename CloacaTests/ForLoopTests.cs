@@ -79,7 +79,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Continue statement is going to be really troublesome to implement using the current visitor.")]
         public void ForLoopRangeContinue()
         {
             runBasicTest(
