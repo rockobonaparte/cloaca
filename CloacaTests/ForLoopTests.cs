@@ -95,7 +95,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("For-loops of lists not yet implemented")]
         public void ForInList()
         {
             runBasicTest(

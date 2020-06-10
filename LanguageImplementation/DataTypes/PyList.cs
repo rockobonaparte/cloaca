@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes.Exceptions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -31,6 +32,13 @@ namespace LanguageImplementation.DataTypes
                 }
                 return __instance;
             }
+        }
+
+        [ClassMember]
+        public static PyObject __iter__(PyObject self)
+        {
+            var asList = self as PyList;
+            return PyListIterator.Create(asList);
         }
 
         [ClassMember]
@@ -228,6 +236,70 @@ namespace LanguageImplementation.DataTypes
         public void SetList(List<PyObject> newList)
         {
             list = newList;
+        }
+    }
+
+    public class PyListIteratorClass : PyClass
+    {
+        private static PyListIteratorClass __instance;
+
+        public static PyListIteratorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyListIteratorClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyListIteratorClass(CodeObject __init__) :
+            base("list_iterator", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyRangeIterator.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyListIterator>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static PyObject __next__(PyObject self)
+        {
+            var asIterator = self as PyListIterator;
+            if (asIterator.CurrentIdx >= asIterator.IteratedList.list.Count)
+            {
+                throw new StopIterationException();
+            }
+            else
+            {
+                asIterator.CurrentIdx += 1;
+                return PyListClass.__getitem__(asIterator.IteratedList, asIterator.CurrentIdx - 1);
+            }
+        }
+    }
+
+    public class PyListIterator : PyObject
+    {
+        public int CurrentIdx;
+        public PyList IteratedList;
+
+        public PyListIterator() : base(PyListClass.Instance)
+        {
+
+        }
+
+        public static PyListIterator Create(PyList list)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyListIterator>(PyListIteratorClass.Instance);
+            iterator.CurrentIdx = 0;
+            iterator.IteratedList = list;
+
+            return iterator;
         }
     }
 }

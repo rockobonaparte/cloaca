@@ -264,6 +264,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         #region Cast Conversions
+        public static implicit operator PyInteger(int asInt) => PyInteger.Create(asInt);
         public static explicit operator sbyte(PyInteger pyint) => (sbyte)pyint.InternalValue;
         public static explicit operator byte(PyInteger pyint) => (byte)pyint.InternalValue;
         public static explicit operator short(PyInteger pyint) => (short)pyint.InternalValue;

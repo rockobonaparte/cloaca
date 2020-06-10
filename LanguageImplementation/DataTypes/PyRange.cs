@@ -36,7 +36,6 @@ namespace LanguageImplementation.DataTypes
         {
             var asPyRange = self as PyRange;
             return PyRangeIterator.Create(asPyRange);
-            throw new NotImplementedException();
         }
     }
 
