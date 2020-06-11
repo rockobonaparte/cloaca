@@ -108,8 +108,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("For-loops of dicts not yet implemented")]
-        public void ForInDict()
+        public void ForInDictKeys()
         {
             runBasicTest(
                 "testdict = {100: 'foo', 200: 'bar'}\n" +
@@ -122,7 +121,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("For-loops of dicts not yet implemented")]
+        [Ignore("For-loops of dict items not yet implemented")]
         public void ForInDictItems()
         {
             runBasicTest(

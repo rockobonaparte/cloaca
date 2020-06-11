@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes.Exceptions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -32,6 +33,14 @@ namespace LanguageImplementation.DataTypes
                 return __instance;
             }
         }
+
+        [ClassMember]
+        public static PyObject __iter__(PyObject self)
+        {
+            var asDict = self as PyDict;
+            return PyKeyIterator.Create(asDict);
+        }
+
 
         [ClassMember]
         public static PyBool __contains__(PyDict self, PyObject k)
@@ -344,6 +353,65 @@ namespace LanguageImplementation.DataTypes
         public override string ToString()
         {
             return "PyDict(contents are not yet displayed)";
+        }
+    }
+
+    public class PyKeyIteratorClass : PyClass
+    {
+        private static PyKeyIteratorClass __instance;
+
+        public static PyKeyIteratorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyKeyIteratorClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyKeyIteratorClass(CodeObject __init__) :
+            base("key_iterator", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyRangeIterator.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyListIterator>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static PyObject __next__(PyObject self)
+        {
+            var asKeyIterator = self as PyKeyIterator;
+            if(!asKeyIterator.Keys.MoveNext())
+            {
+                throw new StopIterationException();
+            }
+            else
+            {
+                return (PyObject) asKeyIterator.Keys.Current;
+            }
+        }
+    }
+
+    public class PyKeyIterator : PyObject
+    {
+        public IEnumerator Keys;
+
+        public PyKeyIterator() : base(PyKeyIteratorClass.Instance)
+        {
+        }
+
+        public static PyKeyIterator Create(PyDict dict)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyKeyIterator>(PyKeyIteratorClass.Instance);
+            iterator.Keys = dict.dict.Keys.GetEnumerator();
+            return iterator;
         }
     }
 }

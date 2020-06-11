@@ -9,6 +9,8 @@ Need to implement for-loops. Main thing:
 * Generate appropriate code for the loops
 * Implement iterators for list and dict
 * Implement iterators for .NET enumerables
+* Don't forget __repr__ for the iterators!
+* Revise __next__ to return object because the containers can have all kinds of crap in them.
 
 ```
 >>> def for_loop():
@@ -168,7 +170,18 @@ Part 3: Hardening
   * Longs
 * Lists
     * Slices
-  * Sets
+* Sets
+* Dictionary missing methods
+  * clear
+  * copy
+  * fromkeys
+  * get
+  * pop
+  * popitem
+  * setdefault
+  * update
+  * values
+  * Update keys and items to use the set() type.
 * Strings (part 2)
   * str() function for various numeric/bool/other data types
   * Concatenate strings
@@ -204,8 +217,6 @@ Part 3: Hardening
 	* reduce
 * For-loops
   * Generators
-     * range
-     * list iterator
      * dictionary iterator
      * .NET IEnumerable support
      * .NET dictionary support comparable to dictionary iterators
