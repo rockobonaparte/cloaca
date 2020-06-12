@@ -900,6 +900,30 @@ namespace CloacaInterpreter
                             }
                             context.Cursor += 2;
                             break;
+                        case ByteCodes.UNPACK_SEQUENCE:
+                            { 
+                                context.Cursor += 1;
+                                var unpack_count = context.CodeBytes.GetUShort(context.Cursor);
+                                var tuple = (PyTuple)context.DataStack.Pop();
+                                if (unpack_count < tuple.Values.Length)
+                                {
+                                    context.CurrentException = new TypeError("ValueError: too many values to unpack (expected " + unpack_count + ")");
+                                }
+                                else if(unpack_count > tuple.Values.Length)
+                                {
+                                    context.CurrentException = new TypeError("ValueError: not enough values to unpack (expected " + unpack_count + ", got " + tuple.Values.Length + ")");
+                                }
+                                else
+                                {
+                                    // Push in reverse order
+                                    for(int tuple_i = tuple.Values.Length-1; tuple_i >= 0; --tuple_i)
+                                    {
+                                        context.DataStack.Push(tuple.Values[tuple_i]);
+                                    }
+                                }
+                            }
+                            context.Cursor += 2;
+                            break;
                         case ByteCodes.SETUP_LOOP:
                             {
                                 context.Cursor += 1;

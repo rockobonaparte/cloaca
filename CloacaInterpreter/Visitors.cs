@@ -622,10 +622,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
 
+            // If there's actually more than one expression here then we're dealing with a tuple and we need to have
+            // it unpacked.
+            if(context.exprlist().expr().Length > 1)
+            {
+                ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.exprlist().expr().Length, context);
+            }
+
             foreach (var expr in context.exprlist().expr())
             {
                 // I don't have complete confidence in setting the names explicitly like this, but visiting
-                // the expr winds up just create LOAD_GLOBAL instead of the STORE_FAST we actually need.
+                // the expr winds up just creating LOAD_GLOBAL instead of the STORE_FAST we actually need.
                 generateStoreForVariable(expr.GetText(), context);
                 //Visit(expr);
             }

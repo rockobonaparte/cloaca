@@ -18,6 +18,14 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
     }
 
+    public class ValueError : PyException
+    {
+        public ValueError(string msg) : base(msg)
+        {
+
+        }
+    }
+
     public class ModuleNotFoundError : PyException
     { 
         public ModuleNotFoundError(string msg) : base(msg)

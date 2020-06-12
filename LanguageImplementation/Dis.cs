@@ -218,6 +218,11 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
+                    case ByteCodes.UNPACK_SEQUENCE:
+                        cursor += 1;
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "UNPACK_SEQUENCE", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
                     case ByteCodes.SETUP_LOOP:
                         {
                             cursor += 1;
