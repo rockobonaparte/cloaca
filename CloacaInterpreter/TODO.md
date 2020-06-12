@@ -10,7 +10,8 @@ Need to implement for-loops. Main thing:
 * Implement iterators for list and dict
 * Implement iterators for .NET enumerables
 * Don't forget __repr__ for the iterators!
-* Revise __next__ to return object because the containers can have all kinds of crap in them.
+* Don't lean so much on PyObject types for the Python containers because you might put all kind of objects (not just PyObjects) in them.
+  * Revise __next__ to return object because the containers can have all kinds of crap in them.
 
 ```
 >>> def for_loop():
@@ -171,6 +172,9 @@ Part 3: Hardening
 * Lists
     * Slices
 * Sets
+  * Create from literals
+  * Main implementation
+  * Iterator
 * Dictionary missing methods
   * clear
   * copy

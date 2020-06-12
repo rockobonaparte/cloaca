@@ -121,7 +121,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("For-loops of dict items not yet implemented")]
         public void ForInDictItems()
         {
             runBasicTest(

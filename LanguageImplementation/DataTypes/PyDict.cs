@@ -182,7 +182,8 @@ namespace LanguageImplementation.DataTypes
             //
             // items(...) method of builtins.dict instance
             //     D.items() -> a set-like object providing a view on D's items
-            throw new NotImplementedException();
+            var asPyDict = self as PyDict;
+            return PyDict_Items.Create(asPyDict);
         }
 
         // TODO: Should be return something like a PySet
@@ -379,7 +380,7 @@ namespace LanguageImplementation.DataTypes
 
             // We have to replace PyTypeObject.DefaultNew with one that creates a PyRangeIterator.
             // TODO: Can this be better consolidated?
-            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyListIterator>(null);
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyKeyIterator>(null);
             var methodInfo = ((MethodCallExpression)expr.Body).Method;
             __new__ = new WrappedCodeObject("__new__", methodInfo, this);
         }
@@ -388,13 +389,13 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __next__(PyObject self)
         {
             var asKeyIterator = self as PyKeyIterator;
-            if(!asKeyIterator.Keys.MoveNext())
+            if (!asKeyIterator.Keys.MoveNext())
             {
                 throw new StopIterationException();
             }
             else
             {
-                return (PyObject) asKeyIterator.Keys.Current;
+                return (PyObject)asKeyIterator.Keys.Current;
             }
         }
     }
@@ -414,4 +415,120 @@ namespace LanguageImplementation.DataTypes
             return iterator;
         }
     }
+
+    #region dict.items() iteration
+    public class PyDict_ItemsClass : PyClass
+    {
+        private static PyDict_ItemsClass __instance;
+
+        public static PyDict_ItemsClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyDict_ItemsClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyDict_ItemsClass(CodeObject __init__) :
+            base("dict_items", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyDict_Items>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static PyObject __iter__(PyObject self)
+        {
+            var asDict = self as PyDict_Items;
+            return PyDictItemsIterator.Create(asDict.Dict);
+        }
+    }
+
+    public class PyDict_Items : PyObject
+    {
+        public PyDict Dict;
+
+        public PyDict_Items() : base(PyDict_ItemsClass.Instance)
+        {
+        }
+
+        public static PyDict_Items Create(PyDict dict)
+        {
+            var dict_items = PyTypeObject.DefaultNew<PyDict_Items>(PyDict_ItemsClass.Instance);
+            dict_items.Dict = dict;
+            return dict_items;
+        }
+    }
+
+
+    public class PyDictItemsIteratorClass : PyClass
+    {
+        private static PyDictItemsIteratorClass __instance;
+
+        public static PyDictItemsIteratorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyDictItemsIteratorClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyDictItemsIteratorClass(CodeObject __init__) :
+            base("dict_itemiterator", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyDictItemsIterator>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static PyObject __next__(PyObject self)
+        {
+            var asKeyIterator = self as PyDictItemsIterator;
+            if (!asKeyIterator.Keys.MoveNext())
+            {
+                throw new StopIterationException();
+            }
+            else
+            {
+                var key = (PyObject) asKeyIterator.Keys.Current;
+                return PyTuple.Create(new PyObject[] { key, PyDictClass.__getitem__(asKeyIterator.Dict, key) });
+            }
+        }
+    }
+
+    public class PyDictItemsIterator : PyObject
+    {
+        public IEnumerator Keys;
+        public PyDict Dict;
+
+        public PyDictItemsIterator() : base(PyDictItemsIteratorClass.Instance)
+        {
+        }
+
+        public static PyDictItemsIterator Create(PyDict dict)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyDictItemsIterator>(PyDictItemsIteratorClass.Instance);
+            iterator.Keys = dict.dict.Keys.GetEnumerator();
+            iterator.Dict = dict;
+            return iterator;
+        }
+    }
+
+    #endregion dict.items() iteration
 }
