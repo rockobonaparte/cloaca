@@ -5,9 +5,26 @@ using LanguageImplementation.DataTypes.Exceptions;
 using System.Collections.Generic;
 using LanguageImplementation;
 using System.Reflection;
+using System.Numerics;
 
 namespace CloacaTests
 {
+    public class ForLoopTestDotNetContainers
+    {
+        public int[] IntArray;
+        public List<int> IntList;
+        public Dictionary<int, int> IntDict;
+
+        public ForLoopTestDotNetContainers()
+        {
+            IntArray = new int[] { 1, 2, 3 };
+            IntList = new List<int>() { 1, 2, 3 };
+            IntDict = new Dictionary<int, int>() { { 1, 1000 },
+                { 2, 2000 },
+                { 3, 3000 }};
+        }
+    }
+
     [TestFixture]
     public class ForLoopTests : RunCodeTest
     {
@@ -153,31 +170,63 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Need to actually stub in")]
         public void ForLoopDotNetArray()
         {
-
+            runBasicTest(
+                "a = 0\n" +
+                "for i in containers.IntArray:\n\n" +
+                "   a += i\n", new Dictionary<string, object>()
+            {
+                { "containers", new ForLoopTestDotNetContainers() }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new BigInteger(1 + 2 + 3) }
+            }), 1);
         }
 
         [Test]
-        [Ignore("Need to actually stub in")]
         public void ForLoopDotNetList()
         {
-
+            runBasicTest(
+                "a = 0\n" +
+                "for i in containers.IntList:\n\n" +
+                "   a += i\n", new Dictionary<string, object>()
+            {
+                { "containers", new ForLoopTestDotNetContainers() }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new BigInteger(1 + 2 + 3) }
+            }), 1);
         }
 
         [Test]
-        [Ignore("Need to actually stub in")]
         public void ForLoopDotNetDict()
         {
-
+            runBasicTest(
+                "a = 0\n" +
+                "for i in containers.IntDict.Keys:\n\n" +
+                "   a += i\n", new Dictionary<string, object>()
+            {
+                { "containers", new ForLoopTestDotNetContainers() }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new BigInteger(1 + 2 + 3) }
+            }), 1);
         }
 
         [Test]
-        [Ignore("Need to actually stub in")]
         public void ForLoopDotNetDictItems()
         {
-
+            runBasicTest(
+                "a = 0\n" +
+                "for kv in containers.IntDict:\n\n" +
+                "   a += kv.Key + kv.Value\n", new Dictionary<string, object>()
+            {
+                { "containers", new ForLoopTestDotNetContainers() }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", new BigInteger(1 + 2 + 3 + 1000 + 2000 + 3000) }
+            }), 1);
         }
     }
 }

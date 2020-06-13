@@ -11,6 +11,7 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 using CloacaInterpreter.ModuleImporting;
 using System.Net.Http.Headers;
+using System.Collections;
 
 namespace CloacaInterpreter
 {
@@ -995,11 +996,8 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var tos = context.DataStack.Pop();
                                 var asPyObject = tos as PyObject;
-                                if(asPyObject == null)
-                                {
-                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + tos.GetType().Name);
-                                }
-                                else
+                                var enumerableType = tos as IEnumerable;
+                                if (asPyObject != null)
                                 {
                                     var __call__ = asPyObject.__getattribute__("__iter__");
                                     var functionToRun = (IPyCallable)__call__;
@@ -1018,6 +1016,14 @@ namespace CloacaInterpreter
                                         throw new InvalidCastException("__iter__ for type " + tos.GetType().Name + " returned None.");
                                     }
                                 }
+                                else if(enumerableType != null)
+                                {
+                                    context.DataStack.Push(enumerableType.GetEnumerator());
+                                }
+                                else
+                                {
+                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + tos.GetType().Name);
+                                }
                                 continue;
                             }
                         case ByteCodes.FOR_ITER:
@@ -1030,11 +1036,8 @@ namespace CloacaInterpreter
 
                                 var iterator = context.DataStack.Pop();
                                 var asPyObject = iterator as PyObject;
-                                if (asPyObject == null)
-                                {
-                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + iterator.GetType().Name);
-                                }
-                                else
+                                var asEnumerator = iterator as IEnumerator;
+                                if (asPyObject != null)
                                 {
                                     var __call__ = asPyObject.__getattribute__("__next__");
                                     var functionToRun = (IPyCallable)__call__;
@@ -1070,7 +1073,7 @@ namespace CloacaInterpreter
                                             }
                                         }
                                     }
-                                    catch(TargetInvocationException maybeItIsStopIterationException)
+                                    catch (TargetInvocationException maybeItIsStopIterationException)
                                     {
                                         // Thanks to all the async Task shenanigans, we don't get StopIterationException directly from .NET
                                         // code but instead get it wrapped up in some TargetInvocationException puke that we have to peel back.
@@ -1084,6 +1087,23 @@ namespace CloacaInterpreter
                                             throw;
                                         }
                                     }
+                                }
+                                else if(asEnumerator != null)
+                                {
+                                    if(!asEnumerator.MoveNext())
+                                    {
+                                        context.Cursor += jumpOffset + 2;
+                                    }
+                                    else
+                                    {
+                                        context.DataStack.Push(iterator);   // Make sure that iterator gets put back on top!
+                                        context.DataStack.Push(asEnumerator.Current);
+                                        context.Cursor += 2;
+                                    }
+                                }
+                                else
+                                {
+                                    throw new InvalidCastException("Could not extract an iterator from an object of type " + iterator.GetType().Name);
                                 }
                                 continue;
                             }

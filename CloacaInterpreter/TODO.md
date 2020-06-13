@@ -3,12 +3,7 @@
 
 ## Current Issues: For-Loops
 
-Need to implement for-loops. Main thing:
-* Implement range with __iter__() method that returns range_iterator
-* Implement range_iterator with __next()__ method that returns next element, then StopIteration
-* Generate appropriate code for the loops
-* Implement iterators for list and dict
-* Implement iterators for .NET enumerables
+Need to implement for-loops. Main things that are left:
 * Don't forget __repr__ for the iterators!
 * Don't lean so much on PyObject types for the Python containers because you might put all kind of objects (not just PyObjects) in them.
   * Revise __next__ to return object because the containers can have all kinds of crap in them.
@@ -266,6 +261,7 @@ Part 3: Hardening
     most-significant byte in the series and the number of them determines how far we go. So the interpreter should just assume to fetch into an int and just shift that value over and continue fetching when it seeds EXTENDED_ARG. This makes things
 	prettier too since we don't have to worry about moving the cursor forward a mixed amount of times based on opcode. It's always two.
 * More .NET integration
+  * Verify expected type conversions. This first came up adding a PyInteger with an int. The result was a BigInteger when it maybe should be PyInteger?
   * Generic class support.
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
   * .NET container support for
