@@ -4,7 +4,6 @@
 ## Current Issues: For-Loops
 
 Need to implement for-loops. Main things that are left:
-* Don't forget __repr__ for the iterators!
 * Don't lean so much on PyObject types for the Python containers because you might put all kind of objects (not just PyObjects) in them.
   * Revise __next__ to return object because the containers can have all kinds of crap in them.
 
@@ -135,6 +134,10 @@ Part 3: Hardening
 * Add more PyNetConverter rules across the different data types (int-float, float-int, and bool for good measure)
 * NoneType needs to be formalized as an object and type.  
   * Add a __repr__
+* __repr__
+  * Create a universal __repr__ helper for nested types
+  * __repr__ helper seemlessly works with .NET types
+  * Implement __repr__ for iterators
 * Switch to wordcode. I thought I had already done this! Wow!
 * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
@@ -218,14 +221,8 @@ Part 3: Hardening
     * map
 	* filter
 	* reduce
-* For-loops
-  * Generators
-     * dictionary iterator
-     * .NET IEnumerable support
-     * .NET dictionary support comparable to dictionary iterators
-     * yield statement
-  * continue statement
-  * break statement
+* Generators
+  * yield statement
 * Exceptions
   * Show call stack for scripts that failed in .NET code
     * Bonus points: Interleave with .NET stack trace!
