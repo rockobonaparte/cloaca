@@ -1,128 +1,32 @@
 ﻿Cloaca TODO
 ===========
 
-## Current Issues: For-Loops
-
-Need to implement for-loops. Main things that are left:
-* Don't lean so much on PyObject types for the Python containers because you might put all kind of objects (not just PyObjects) in them.
-
-```
->>> def for_loop():
-...   a = 0
-...   for i in range(0, 10, 1):
-...     a += i
-...   return a
-...
->>> from dis import dis
->>> dis(for_loop)
-  2           0 LOAD_CONST               1 (0)
-              2 STORE_FAST               0 (a)
-
-  3           4 SETUP_LOOP              28 (to 34)
-              6 LOAD_GLOBAL              0 (range)
-              8 LOAD_CONST               1 (0)
-             10 LOAD_CONST               2 (10)
-             12 LOAD_CONST               3 (1)
-             14 CALL_FUNCTION            3
-             16 GET_ITER
-        >>   18 FOR_ITER                12 (to 32)
-             20 STORE_FAST               1 (i)
-
-  4          22 LOAD_FAST                0 (a)
-             24 LOAD_FAST                1 (i)
-             26 INPLACE_ADD
-             28 STORE_FAST               0 (a)
-             30 JUMP_ABSOLUTE           18
-        >>   32 POP_BLOCK
-
-  5     >>   34 LOAD_FAST                0 (a)
-             36 RETURN_VALUE
-```
-
-### Found Issues
-* I should be able to catch .NET exceptions with my except block.
-
-## Older Issues with Integration
-Scheduler should accept labels for input scripts so stack traces can show their origination.
-
-Couldn't run this:
-```
-GlobalState.Instance.DialogSubsystem.Prompt(prompt_text, ["No", "Yes"])
-```
-The array couldn't be recognized as a string array. Not surprised. It's a pain to code around it so I'd like to see if I can do
-some more sophisticated conversions.
-
-Need to figure out how to embed methods into a module without necessarily needing to pass PyModule as the first argument.
-
-## Scheduling Functions from Other Contexts
-It currently seems to work but needs more aggressively testing to make sure we're not blowing up the parent context.
-
-The scheduler also waits to see the block stack is completely clear. I guess I need to worry about that too haha. We should try some
-stuff that involves blocks with functions inside of them getting rammed into the scheduler.
-
-The tests needs to alter some other state--maybe with an increment--to see if the child context is escaping out and double-tapping
-parent code.
-
-## Scope
-Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
-I ended up looking at the length of argument names.
-
-* Document import process in official documentation
+Part 3: Hardening
+* Documentation 
+  * Document import process in official documentation
     * Explain how to embed your own modules
     * Explain how to use the file-based importer
-    * Explain how generics are done. IronPython uses a special[T, K](arg1, arg2) convention.
-* Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
-* Helpers to create .NET types from base types.
-* Module isolation: Finders and loaders (and their state) are being kept in the interpreter, not the context, so all scripts
-  are sharing that state. We might not want that--although it could be convenient to do that for most scripts.
-
-An advanced problem to eventually worry about is atomicity. If the scheduler starts interrupting scripts in the middle of doing stuff, we
-might have an incomplete state that could wreck other things that run after--including the parent runtime.
-
-
-Overview of module import process:
-1. Look in sys.modules for the request module. sys.modules is a dict of module names to modules and serves as a cache.
-2. Fall back to finders to try to locate the module. Typical ones: built-ins, frozen, and paths. Each finder tries in turn and returns None if it fails.
-   It can be resolved from sys.meta_path. "Meta path finders must implement a method called find_spec() which takes three arguments: a name, an import path,
-   and (optionally) a target module." Note that frozen modules are for precompiled Python executables. We won't implement that.
-
-All modules have a module spec defined as __spec__. These defines how the module is loaded. It is of ModuleSpec class. The loader attribute specifically
-states which loader to use to load the module. There's a peculiar chicken-and-egg thing happening here. I don't fully get it.
-
-The path finder normally looks in:
-1. sys.path
-2. sys.path_hooks
-3. sys.path_importer_cache
-4. __path__ attribute on package objects
-We probably don't have to directly replicate this.
-
-This is probably enough to get things rolling...
-
-Each context will need to track which modules it has imported. Don't make that global to the interpreter. However, we can have the binding mechanisms global.
-
-
-There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
-without a reference to the interpreter and then fill it in afterwards.
-
-Embedding Notes:
-Consider updating DefaultNew so we can pass constructor args in one step to objects we're creating on-the-fly if it isn't a huge pain.
-Add Create() calls to all the other Python types even if we don't directly construct them (yet). Just get in the habit of having them. Make it part of interface?
-
-Consider moving CloacaBytecodeVisitor from CloacaInterpreter to LanguageImplementation. I spent a few minutes trying to find it again after
-a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
-
-Errors from scheduled scripts in Unity disappear into the ether. We need a hookup to receive them and report them to Unity's log. I am guessing it
-would have to come from the scheduler.
-
-Part 3: Hardening
-* *args
-  * Implement
-  * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
-* kwargs
-  * Pure-Python kwargs
-  * Calling .NET functions with optionals as if they were kwargs
-  * Embedding functions that can take kwargs. This will likely use a special PyDict subclass to designate it's for kwargs. Either
-    that or some kind of decorator.
+  * Explain how generics are done. IronPython uses a special[T, K](arg1, arg2) convention.
+* General architecture
+  * There is a bit of a circular dependency chain between the scheduler and the interpreter. Currently, we start the scheduler
+    without a reference to the interpreter and then fill it in afterwards. Can we simplify this?
+  * Simplify some of the boilerplate between PyClass and PyObject without relying on dynamic dictionary lookups.
+  * Figure out a one-liner to embed methods without having to use GetMethod(methodName). My hope is to retain compile-time checking of the binding.
+  * Try to move CloacaBytecodeVisitor from CloacaInterpreter to LanguageImplementation. I spent a few minutes trying to find it again after
+    a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
+  * Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
+    I ended up looking at the length of argument names.
+  * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
+  * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
+* Extended argument types
+  * `*args`
+    * Implement
+    * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
+  * `**kwargs`
+    * Pure-Python kwargs
+    * Calling .NET functions with optionals as if they were kwargs
+    * Embedding functions that can take kwargs. This will likely use a special PyDict subclass to designate it's for kwargs. Either
+      that or some kind of decorator.
 * Cleanup WrappedCode object. Consolidate everything added across the different method lookup conditions into streamlined calls.
   * Cleanup findBestMethodMatch
   * Cleanup injector
@@ -131,33 +35,22 @@ Part 3: Hardening
   * Document the behavior
   * Try to diagram the behavior of the scenarios
 * Add more PyNetConverter rules across the different data types (int-float, float-int, and bool for good measure)
-* NoneType needs to be formalized as an object and type.  
+* NoneType needs to be formalized as an object and type.
+  * Create PyClass
   * Add a __repr__
 * __repr__
   * Create a universal __repr__ helper for nested types
   * __repr__ helper seemlessly works with .NET types
   * Implement __repr__ for iterators
+  * Implement ToString() for containers using the __repr__ helpers
 * Switch to wordcode. I thought I had already done this! Wow!
-* Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Integration with parent runtime
   * Call Python function through interpreter
-  * Primitive Boxing/unboxing
-     * Int
-	 * BigInt
-	 * Float
-	 * Decimal types
-	 * strings
-	 * bools
-  * [PYSTRING TO OBJECT] Shouldn't we assign PyString to object instead of casting it?
-  * Object wrapping. Start with wrapping a generic object. All fields should also get boxed/unboxed which will
-    likely mess around with how primitive boxing/unboxing is done.
   * PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
     to needing to call the class to properly create the objects.
 	  * This may be as simple as writing a factory.
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
 	    cause the right constructor to get invoked.
-  * Passing PyInteger where PyFloat is needed--and vice versa--shouldn't fail to invoke the wrapper
-* Container ToString(). Implement more than stub.
 * Python number type
   * Integer
      * Hex
@@ -167,7 +60,7 @@ Part 3: Hardening
   * Imaginary
   * Longs
 * Lists
-    * Slices
+  * Slices
 * Tuples
   * Incorporate UNPACK_SEQUENCE into general lvalue expressions and not just for-loops. In fact, try to use a general lvalue assigner that
     can handle UNPACK_SEQUENCE take care of it in general.
@@ -207,9 +100,6 @@ Part 3: Hardening
   * __class__.__name__
      * Add to class definitions
      * Use in error messages
-* Flush out other major operators
-  * += etc
-  * Logic operators
 * Scripting serialization
   * Scripting serialization of blocking code. Use that Reissue() idea for custom awaiters to resume loaded script state blocked on subsystems.
 * Functions
@@ -224,7 +114,6 @@ Part 3: Hardening
   * yield statement
 * Exceptions
   * Show call stack for scripts that failed in .NET code
-    * Bonus points: Interleave with .NET stack trace!
   * Full call stack when mixing between interpreted and .NET code.
   * Make sure you can catch exceptions thrown in interpreter and helpers from .NET helper code (SubscriptHelpers as reference)
   * assert statement (it is a statement, not a function! Parentheses implies passing a tuple, which evaluates to true)
@@ -252,13 +141,9 @@ Part 3: Hardening
   * Having a FutureAwaiter immediately set a result without blocking in the scheduler causes problems, but it shouldn't...
      * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
        keen on making this check less strict.
-* Code bytes should generally take just one extra byte as an argument instead of two bytes. This apparently changed in 3.6: https://stackoverflow.com/questions/50806427/how-to-get-size-of-python-opcode. Question posted online in comp.lang.python.
-  * All instructions are two bytes (wordcode) in 3.6+ and that includes ones that normally don't need arguments. Use the EXTENDED_ARG opcode to stage wider data. They are ordered most significant bytes to list; the first EXTENDED_ARG byte is the
-    most-significant byte in the series and the number of them determines how far we go. So the interpreter should just assume to fetch into an int and just shift that value over and continue fetching when it seeds EXTENDED_ARG. This makes things
-	prettier too since we don't have to worry about moving the cursor forward a mixed amount of times based on opcode. It's always two.
 * More .NET integration
+  * Container types should be able to accept object type, not just PyObject. We could use .NET objects for a keys in a PyDict, for example.
   * Verify expected type conversions. This first came up adding a PyInteger with an int. The result was a BigInteger when it maybe should be PyInteger?
-  * Generic class support.
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
   * .NET container support for
     * Enumerating
@@ -269,6 +154,8 @@ Part 3: Hardening
   * Advanced overload: Check if there could be multiple applicable overloads
     * consider an error if this collision is a real possibility, or else resolve it in the typical .NET way if there is a
      typical way to manage this.
+  * Try to box array types (if possible). Came from wanting to support this: `GlobalState.Instance.DialogSubsystem.Prompt(prompt_text, ["No", "Yes"])` where the array
+    argument is actually a .NET array.
   * Imports
     * [DISAMBIGUATE GENERIC IMPORTS] Replace clr generic type import with a more robust system that can manage Type<T> and Type<T, K>
 * Fixed 'and' 'or': BINARY_AND and BINARY_OR are being used for 'and' and 'or' tests but they should be used for '&' and '|'. For the logical tests, I guess we
@@ -276,6 +163,9 @@ Part 3: Hardening
 * Need to implement __hash__ and use it in our data types.
 * Need to implement __getattr__ properly as the alternative to __getattribute__
 * Modules
+  * Module isolation: Finders and loaders (and their state) are being kept in the interpreter, not the context, so all scripts
+    are sharing that state. We might not want that--although it could be convenient to do that for most scripts.
+  * Figure out how to embed methods into a module without necessarily needing to pass PyModule as the first argument.
   * [MODULE_INIT] Start running __init__.py files when importing.
   * [PRECOMPILE_LOAD] Precompile modules and load the precompiled versions
   * Implementing import
@@ -293,6 +183,7 @@ Part 3: Hardening
     * [SYS.SCHEDULE - RETURN TASK - PYCALLABLE] Handle for all callables (WrappedCodeObject)
   * Scheduler additions 
     * YieldNow()
+    * Scheduler should accept labels for input scripts so stack traces can show their origination.
   * SysModule wrapper should be easier to represent
     * Shouldn't need so much boilerplate
     * Should be able to create PyLists instead of C# arrays.
@@ -301,7 +192,7 @@ Part 3: Hardening
   * External global declaration.
   * Exception checks for parsing external global declarations that then use that name for function parameters.
   * Nonlocal keyword.
-
+* Stackless Python channels for cross-coroutine communication.
 
 
 Tech debt:
