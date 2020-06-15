@@ -268,7 +268,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __next__(PyObject self)
+        public static object __next__(PyObject self)
         {
             var asIterator = self as PyListIterator;
             if (asIterator.CurrentIdx >= asIterator.IteratedList.list.Count)

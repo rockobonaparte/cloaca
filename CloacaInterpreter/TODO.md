@@ -5,7 +5,6 @@
 
 Need to implement for-loops. Main things that are left:
 * Don't lean so much on PyObject types for the Python containers because you might put all kind of objects (not just PyObjects) in them.
-  * Revise __next__ to return object because the containers can have all kinds of crap in them.
 
 ```
 >>> def for_loop():

@@ -386,7 +386,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __next__(PyObject self)
+        public static object __next__(PyObject self)
         {
             var asKeyIterator = self as PyKeyIterator;
             if (!asKeyIterator.Keys.MoveNext())
@@ -497,7 +497,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __next__(PyObject self)
+        public static object __next__(PyObject self)
         {
             var asKeyIterator = self as PyDictItemsIterator;
             if (!asKeyIterator.Keys.MoveNext())

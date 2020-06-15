@@ -89,7 +89,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __next__(PyObject self)
+        public static object __next__(PyObject self)
         {
             var asIterator = self as PyRangeIterator;
             if(asIterator.Current >= asIterator.Max)
