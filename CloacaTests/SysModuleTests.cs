@@ -136,7 +136,6 @@ namespace CloacaTests
             {
             }), 2);
 
-            // [TODO][PYSTRING TO OBJECT] Shouldn't we assign PyString to object instead of casting it?
             Assert.That(sack.inside, Is.EqualTo("sys"));
         }
     }

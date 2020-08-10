@@ -294,7 +294,7 @@ namespace LanguageImplementation
                 }
 
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
-                for (; args_i < args.Length || params_i < args.Length;)
+                for (; args_i < args.Length || params_i < parameters.Length;)
                 {
                     while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
                     {
@@ -318,8 +318,8 @@ namespace LanguageImplementation
                         found = false;
                         break;
                     }
-                    // Ran out of arguments for our parameters... if they aren't optional at this point ("params")
-                    else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false))
+                    // Ran out of arguments for our parameters... if they aren't optional at this point ("params" or string foo="bar")
+                    else if (args_i >= args.Length && params_i < parameters.Length && !parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false) && !parameters[params_i].IsOptional)
                     {
                         found = false;
                         break;
