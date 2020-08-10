@@ -54,6 +54,16 @@ namespace CloacaTests
             return AnInteger;
         }
 
+        /// <summary>
+        /// Used to test a static call that takes a parameter.
+        /// </summary>
+        /// <param name="test_input">The input parameter as a number to be tested as one or not</param>
+        /// <returns>True if the input is 1, false otherwise.</returns>
+        public static bool IsOne(int test_input)
+        {
+            return test_input == 1;
+        }
+
         // Two of these are defined so they can be subscribed separately as events and kept distinct.
         public void SubscribeSetAnInteger1(int newInteger)
         {
@@ -313,6 +323,22 @@ namespace CloacaTests
             {
                 { "a", 0 },
                 { "b", 1 }
+            }), 1);
+        }
+
+        [Test]
+        public void StaticCall()
+        {
+            runBasicTest(
+                "a = ReflectIntoPython.IsOne(1)\n" +
+                "b = ReflectIntoPython.IsOne(2)\n",
+                new Dictionary<string, object>()
+            {
+                { "ReflectIntoPython", typeof(ReflectIntoPython) }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", true },
+                { "b", false },
             }), 1);
         }
 
