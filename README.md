@@ -82,6 +82,18 @@ I do have the basics in Python:
 
 Then add on top of this a scheduler that can gleefully leap between scripts as they get blocked on awaitables.
 
+We can flip this around and I can list things I have not done at all:
+1. Support any of the standard Python libraries. I have some ambitions of trying to get a pure-Python one to work to demonstrate
+   compatibility.
+2. Python's own async-await. Hypocritically, for all the focus on green threading and coroutines, I do not support Python's own
+   syntax for this kind of thing.
+3. Multithreading. I don't personally plan to implement multithreading.
+4. Type checking and PEP-484 type hints. I had not even started using this standard when I started the project due to my day job
+   trying to stick to the most ancient Python possible. Angels sang when I used it for the first time and I feel bad I missed it. 
+5. Any standard I/O. No files, sockets, whatever. I import .NET libraries or embeddable calls to do these operations.
+
+There's a [document listing current levels of support](support.md) for things and a [todo document that maps TODO items](todo.md).
+
 ## State serialization?
 
 Uhh I haven't really pushed on this yet. My intention ultimately is to be able to save a script's context using a serializer,
@@ -93,6 +105,9 @@ My game serializer is another ridiculous thing. When I described it to somebody,
 does it so it's not unheard of." I then realized I had done a bad thing.
 
 ## How do I use this glorious mess?
+
+Here is a [manual](manual.md) but this isn't a widely used project so the documentation has not been battered by multiple people
+trying it.
 
 A good start is to look at Form1_Load in Form1.cs in the CloacaGuiDemo project. It shows setting up a basic runtime, adding
 your own embeddable stuff to it, scheduling independent scripts, and interacting with the REPL. A method of sleeping without
@@ -116,4 +131,4 @@ This project is available under the Python Software Foundation License.
 ## Acknowledgments
 
 * The grammar was defined from https://github.com/antlr/grammars-v4/blob/master/python3/Python3.g4
-  * MIT license
+  * The grammar is MIT license
