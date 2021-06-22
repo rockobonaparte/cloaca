@@ -10,7 +10,6 @@ using System.Reflection;
 using LanguageImplementation.DataTypes.Exceptions;
 
 using CloacaInterpreter.ModuleImporting;
-using System.Net.Http.Headers;
 using System.Collections;
 
 namespace CloacaInterpreter
