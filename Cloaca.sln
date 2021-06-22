@@ -30,11 +30,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Python3ParseTest", "Python3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4C899826-4206-4640-9728-83628EB5BB27}"
 	ProjectSection(SolutionItems) = preProject
+		collections.md = collections.md
 		manual.md = manual.md
 		README.md = README.md
 		support.md = support.md
 		CloacaInterpreter\TODO.md = CloacaInterpreter\TODO.md
 	EndProjectSection
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "StandardPythonLibrary", "StandardPythonLibrary\StandardPythonLibrary.pyproj", "{1121E1EA-555E-47BD-9DCD-EC2E908D605A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -86,6 +89,8 @@ Global
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{878B4537-317D-414A-A6E0-ACEEB027728D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1121E1EA-555E-47BD-9DCD-EC2E908D605A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1121E1EA-555E-47BD-9DCD-EC2E908D605A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

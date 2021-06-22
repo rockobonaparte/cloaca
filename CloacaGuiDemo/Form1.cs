@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using CloacaInterpreter;
+using CloacaInterpreter.ModuleImporting;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
@@ -63,8 +65,12 @@ namespace CloacaGuiDemo
                 richTextBox1.Font = new Font("lucida console", 12, FontStyle.Regular);
             }
 
+            var repoRoots = new List<string>();
+            repoRoots.Add(@"C:\coding\cloaca_git\StandardPythonLibrary");
+
             repl = new Repl();
             repl.WhenReplCommandDone += WhenReplDone;
+            repl.Interpreter.AddModuleFinder(new FileBasedModuleFinder(repoRoots, new FileBasedModuleLoader()));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(Form1).GetMethod("print_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("quit", typeof(Form1).GetMethod("quit_func"), this));
             repl.Interpreter.AddBuiltin(new WrappedCodeObject("set_blip", typeof(Form1).GetMethod("set_blip_wrapper"), this));
