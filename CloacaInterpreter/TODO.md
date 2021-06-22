@@ -2,6 +2,25 @@
 ===========
 
 Part 3: Hardening
+* FAANG Python coding interview obsessions with Python modules
+  * collections
+    * See what you can pull from Python's own source code for this
+    * deque
+      * appendleft
+      * extendleft
+      * count
+      * pop
+      * popleft
+      * rotate
+    * defaultdict
+    * OrderedDict
+      * Because somebody dumped this one on me randomly in an interview
+    * Counter
+  * heapq
+    * See what you can pull from Python's own source code for this
+    * heappish
+    * heappop
+    * heapify
 * Documentation 
   * Document import process in official documentation
     * Explain how to embed your own modules
