@@ -593,5 +593,49 @@ namespace CloacaTests
                 }), 1, new string[] { "foo" });
 
         }
+
+        [Test]
+        [Ignore("Variable arguments are not yet supported")]
+        public void Vargs()
+        {
+            string program =
+                "def varg_sum(*args):\n" +
+                "   ret_sum = 0\n" +
+                "   for arg in args:\n" +
+                "      ret_sum += arg\n" +
+                "   return ret_sum\n" +
+                "a = foo(1, 7, 11)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(19) }
+                }), 1, new string[] { "foo" });
+        }
+
+        /// <summary>
+        /// This test isn't really testing vargs in any more meaningful way than we already are with the base Vargs test, but
+        /// we are adding the unpacking operator because it often gets used for functions with variable arguments when fed a list.
+        /// </summary>
+        [Test]
+        [Ignore("Variable arguments are not yet supported")]
+        public void VargsUnpackingOperator()
+        {
+            string program =
+                "def varg_sum(*args):\n" +
+                "   ret_sum = 0\n" +
+                "   for arg in args:\n" +
+                "      ret_sum += arg\n" +
+                "   return ret_sum\n" +
+                "to_unpack = [1, 7, 11]\n" +
+                "a = foo(*to_unpack)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(19) }
+                }), 1, new string[] { "foo" });
+        }
+
     }
 }
