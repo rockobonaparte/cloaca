@@ -595,7 +595,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Variable arguments are not yet supported")]
         public void Vargs()
         {
             string program =
@@ -604,7 +603,7 @@ namespace CloacaTests
                 "   for arg in args:\n" +
                 "      ret_sum += arg\n" +
                 "   return ret_sum\n" +
-                "a = foo(1, 7, 11)\n";
+                "a = varg_sum(1, 7, 11)\n";
 
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
@@ -628,7 +627,7 @@ namespace CloacaTests
                 "      ret_sum += arg\n" +
                 "   return ret_sum\n" +
                 "to_unpack = [1, 7, 11]\n" +
-                "a = foo(*to_unpack)\n";
+                "a = varg_sum(*to_unpack)\n";
 
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>

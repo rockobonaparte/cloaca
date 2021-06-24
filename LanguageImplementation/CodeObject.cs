@@ -253,6 +253,7 @@ namespace LanguageImplementation
             newCodeObj.Constants = Constants;
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
+            newCodeObj.Flags = Flags;
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {
