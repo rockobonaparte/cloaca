@@ -20,7 +20,7 @@ Part 3: Hardening
   * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Extended argument types
   * `*args`
-    * Implement
+    * [DONE] Implement
     * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
   * `**kwargs`
     * Pure-Python kwargs
@@ -81,6 +81,9 @@ Part 3: Hardening
   * update
   * values
   * Update keys and items to use the set() type.
+* Packing and unpacking operators
+  * [CALL_FUNCTION_EX] use CALL_FUNCTION_EX when calling a function taking vargs that's being fed unpacked data
+  * Consult: https://stackabuse.com/unpacking-in-python-beyond-parallel-assignment
 * Strings (part 2)
   * str() function for various numeric/bool/other data types
   * Concatenate strings

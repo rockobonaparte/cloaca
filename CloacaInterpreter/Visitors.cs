@@ -1071,6 +1071,35 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
+    {
+        // We particularly need to see if there are variable arguments or keyword arguments so we can flag them in the code object we're making.
+        // Those flags will make sure we put stuff in the right names.
+        if(context.GetText().StartsWith("*"))
+        {
+            if(context.GetText().StartsWith("**"))
+            {
+                if ((ActiveProgram.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
+                {
+                    throw new Exception("SyntaxError: invalid syntax (more than one kwarg declaration).");
+                }
+
+                ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
+                throw new NotImplementedException("Keyword args (specified with ** are not supported yet");
+            }
+            else
+            {
+                if((ActiveProgram.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                {
+                    throw new Exception("SyntaxError: invalid syntax (more than one varg declaration).");
+                }
+
+                ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
+            }
+        }
+        return base.VisitTypedargslist(context);
+    }
+
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.NAME().GetText();
