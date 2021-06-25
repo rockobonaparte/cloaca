@@ -18,7 +18,7 @@ namespace LanguageImplementation
         //   co_consts	        tuple of constants used in the bytecode
         //   co_filename	    name of file in which this code object was created
         //   co_firstlineno	    number of first line in Python source code
-        //   co_flags	        bitmap of CO_* flags, read more here
+        //   co_flags	        bitmap of CO_* flags
         //   co_lnotab	        encoded mapping of line numbers to bytecode indices
         //   co_freevars	    tuple of names of free variables (referenced via a function’s closure)
         //   co_kwonlyargcount	number of keyword only arguments (not including ** arg)
@@ -41,6 +41,19 @@ namespace LanguageImplementation
 
         public byte[] lnotab;
         public int firstlineno;
+        public int Flags;
+
+        // co_flag settings
+        // The following flag bits are defined for co_flags: bit 0x04 is set if the function uses the *arguments syntax to
+        // accept an arbitrary number of positional arguments; bit 0x08 is set if the function uses the **keywords syntax
+        // to accept arbitrary keyword arguments; bit 0x20 is set if the function is a generator
+        //
+        // Future feature declarations(from __future__ import division) also use bits in co_flags to indicate whether a
+        // code object was compiled with a particular feature enabled: bit 0x2000 is set if the function was compiled with
+        // future division enabled; bits 0x10 and 0x1000 were used in earlier versions of Python.
+        public const int CO_FLAGS_VARGS = 0x04;
+        public const int CO_FLAGS_KWARGS = 0x08;
+        public const int CO_FLAGS_GENERATOR = 0x20;
 
         public CodeObject(byte[] code)
         {
@@ -52,6 +65,7 @@ namespace LanguageImplementation
             Constants = new List<object>();
             ArgVarNames = new List<string>();
             Names = new List<string>();
+            Flags = 0;
         }
 
 
@@ -239,6 +253,7 @@ namespace LanguageImplementation
             newCodeObj.Constants = Constants;
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
+            newCodeObj.Flags = Flags;
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {
