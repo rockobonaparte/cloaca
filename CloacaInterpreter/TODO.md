@@ -39,7 +39,7 @@ Part 3: Hardening
   * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Extended argument types
   * `*args`
-    * Implement
+    * [DONE] Implement
     * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
   * `**kwargs`
     * Pure-Python kwargs
