@@ -315,6 +315,8 @@ namespace LanguageImplementation.DataTypes
 
     public class PyDict : PyObject, IEnumerable
     {
+        // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
+        //       We could use .NET objects for a keys in a PyDict, for example.
         internal Dictionary<PyObject, PyObject> dict;
         public PyDict()
         {

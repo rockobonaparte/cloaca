@@ -193,6 +193,9 @@ namespace LanguageImplementation.DataTypes
         {
             list = new List<PyObject>();
         }
+
+        // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
+        //       We could use .NET objects for a keys in a PyDict, for example.
         public PyList(List<PyObject> existingList)
         {
             list = existingList;

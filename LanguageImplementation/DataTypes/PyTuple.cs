@@ -144,6 +144,8 @@ namespace LanguageImplementation.DataTypes
             this.Values = values;
         }
 
+        // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
+        //       We could use .NET objects for a keys in a PyDict, for example.
         public static PyTuple Create(List<PyObject> values)
         {
             var pyTuple = PyTypeObject.DefaultNew<PyTuple>(PyTupleClass.Instance);

@@ -88,6 +88,7 @@ Part 3: Hardening
   * Create from literals
   * Main implementation
   * Iterator
+  * Interoperation with sets (some notes about needing them there?)
 * Dictionary missing methods
   * clear
   * copy
@@ -161,7 +162,7 @@ Part 3: Hardening
      * Probably just want to document this since it comes down to notifying the scheduler when the result is set, and I'm not 
        keen on making this check less strict.
 * More .NET integration
-  * Container types should be able to accept object type, not just PyObject. We could use .NET objects for a keys in a PyDict, for example.
+  * [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject. We could use .NET objects for a keys in a PyDict, for example.
   * Verify expected type conversions. This first came up adding a PyInteger with an int. The result was a BigInteger when it maybe should be PyInteger?
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
   * .NET container support for
