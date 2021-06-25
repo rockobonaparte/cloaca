@@ -612,6 +612,7 @@ namespace CloacaTests
                 }), 1, new string[] { "foo" });
         }
 
+        // TODO: [CALL_FUNCTION_EX] use CALL_FUNCTION_EX when calling a function taking vargs that's being fed unpacked data
         /// <summary>
         /// This test isn't really testing vargs in any more meaningful way than we already are with the base Vargs test, but
         /// we are adding the unpacking operator because it often gets used for functions with variable arguments when fed a list.
