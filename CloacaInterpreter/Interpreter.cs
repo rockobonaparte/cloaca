@@ -217,9 +217,44 @@ namespace CloacaInterpreter
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
             // Assigning argument's initial values.
+            // We might have variable arguments as well as keyword arguments.
+            int vargsIdx = -1;
+            int kwargsIdx = -1;
+            if((frame.Program.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+            {
+                vargsIdx = frame.Program.ArgVarNames.Count - 1;
+            }
+            if((frame.Program.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
+            {
+                kwargsIdx = frame.Program.ArgVarNames.Count - 1;
+                vargsIdx -= 1;
+            }
+
+            // This will probably eventually turn into two, decoupled indices with full vargs and kwargs
+            // support.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
+                if(argIdx == kwargsIdx)
+                {
+                    throw new NotImplementedException("Keyword arguments are not yet implemented");
+                }
+                else if(argIdx == vargsIdx)
+                {
+                    // Gobble up the rest of the arguments into a tuple. This will get more involved when
+                    // we potentially could have keyword arguments going on at the same time.
+                    var vargs = new List<PyObject>();
+                    while (argIdx < args.Length)
+                    {
+                        vargs.Add((PyObject) args[argIdx]);
+                        ++argIdx;
+                    }
+                    PyTuple.Create(vargs);
+                    frame.AddLocal(frame.Program.ArgVarNames[vargsIdx], vargs);
+                }
+                else
+                {
+                    frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
+                }
             }
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
