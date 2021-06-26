@@ -629,8 +629,8 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Implement kwargs is a work-in-progress")]
-        public void KwargsDefaultCombinations()
+        [Ignore("Implementing defaults is a work-in-progress")]
+        public void DefaultCombinations()
         {
             string program =
                 "def kwarg_math(a=1, b=3):\n" +
@@ -657,8 +657,8 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Implement kwargs is a work-in-progress")]
-        public void KwargsVargsArgs()
+        [Ignore("Implementing defaults is a work-in-progress")]
+        public void DefaultsVargsArgs()
         {
             string program =
                 "def varg_sum(initial, *args, addon=0):\n" +
@@ -677,6 +677,43 @@ namespace CloacaTests
                 }), 1);
         }
 
+        [Test]
+        [Ignore("Implementing defaults/kwargs is a work-in-progress. This isn't even syntactically correct right now; I'm not sure how to use mad1")]
+        public void DefaultsVargsArgsKwargs()
+        {
+            string program =
+                "def mad1(initial, addon=0, *numbers, **kwargs):\n" +
+                "   ret_sum = initial\n" +
+                "   for number in numbers:\n" +
+                "      ret_sum += kwargs['mult1'] * number + addon\n" +
+                "   return ret_sum\n" +
+                "\n" +
+                "def mad2(initial, *numbers, addon=0, **kwargs):\n" +
+                "   ret_sum = initial\n" +
+                "   for number in numbers:\n" +
+                "      ret_sum += kwargs['mult2'] * number + addon\n" +
+                "   return ret_sum\n" +
+                "\n" +
+                "kwarg = { 'mult1': 10, 'mult2': 100 }\n" +
+                "a = mad1(1, 7, 11, kwarg)\n" +
+                "b = mad1(1, addon=6, 11, kwarg)\n" +
+                "c = mad1(1, addon=1, 11, 12, kwarg)\n" +
+                "d = mad2(1, 7, 11, kwarg)\n" +
+                "e = mad2(1, 11, addon=6, kwarg)\n" +
+                "f = mad2(1, 11, 12, addon=1, kwarg)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    // These values have not been properly established yet since we're not even sure what are legal calls and what they do yet.
+                    { "a", PyInteger.Create(19) },
+                    { "b", PyInteger.Create(19) },
+                    { "c", PyInteger.Create(19) },
+                    { "d", PyInteger.Create(19) },
+                    { "e", PyInteger.Create(19) },
+                    { "f", PyInteger.Create(19) }
+                }), 1);
+        }
 
         // TODO: [CALL_FUNCTION_EX] use CALL_FUNCTION_EX when calling a function taking vargs that's being fed unpacked data
         /// <summary>

@@ -28,6 +28,38 @@ So the plan:
 5. Come back to try to implement a more completion version of collections
 
 
+## Keyword Arguments Notes
+The default settings for some keyword arguments are in the function's __defaults__ as a set. We don't have sets yet so we're going to
+have to hack around that for now (tuple?)
+
+Setting **kwargs is distinct from just having named defaults. So you'd look at the number of arguments, the number of __defaults__, and
+fill back from the end.
+
+Yuck.
+
+```python
+>>> def all_in_my_mouth(a, *b, **c, d=1):
+  File "<stdin>", line 1
+    def all_in_my_mouth(a, *b, **c, d=1):
+                                    ^
+SyntaxError: invalid syntax
+>>> def all_in_my_mouth(a, *b, d=1, **c):
+...    pass
+...
+>>> def all_in_my_mouth(a, d=1, *b, **c):
+...    pass
+...
+>>>
+```
+
+
+What does this even do?
+def pyle(a, b=2, *c, **d):
+  print(a)
+  print(b)
+  print(c)
+  print(d)
+
 
 ## Current issues
 
