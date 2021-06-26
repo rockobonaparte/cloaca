@@ -609,8 +609,74 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(19) }
-                }), 1, new string[] { "foo" });
+                }), 1);
         }
+
+        [Test]
+        [Ignore("Implement kwargs is a work-in-progress")]
+        public void KwargsOnly()
+        {
+            string program =
+                "def kwarg_math(**kwargs):\n" +
+                "   return kwargs['a'] + 10 * kwargs['b']\n" +
+                "a = kwarg_math(a=1, b=3)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(31) }
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Implement kwargs is a work-in-progress")]
+        public void KwargsDefaultCombinations()
+        {
+            string program =
+                "def kwarg_math(a=1, b=3):\n" +
+                "   return a + 10 * b\n" +
+                "a = kwarg_math()\n" +
+                "b = kwarg_math(2)\n" +
+                "c = kwarg_math(2, 4)\n" +
+                "d = kwarg_math(a=2, b=4)\n" +
+                "e = kwarg_math(a=4, b=2)\n" +
+                "f = kwarg_math(a=2)\n" +
+                "g = kwarg_math(b=4)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(31) },
+                    { "b", PyInteger.Create(32) },
+                    { "c", PyInteger.Create(42) },
+                    { "d", PyInteger.Create(42) },
+                    { "e", PyInteger.Create(42) },
+                    { "f", PyInteger.Create(32) },
+                    { "g", PyInteger.Create(41) },
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Implement kwargs is a work-in-progress")]
+        public void KwargsVargsArgs()
+        {
+            string program =
+                "def varg_sum(initial, *args, addon=0):\n" +
+                "   ret_sum = initial\n" +
+                "   for arg in args:\n" +
+                "      ret_sum += arg + addon\n" +
+                "   return ret_sum\n" +
+                "a = varg_sum(1, 7, 11)\n" +
+                "b = varg_sum(1, 7, 11, addon=-1)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(19) },
+                    { "b", PyInteger.Create(17) }       // *args only has [7, 11] so we only add -1 twice.
+                }), 1);
+        }
+
 
         // TODO: [CALL_FUNCTION_EX] use CALL_FUNCTION_EX when calling a function taking vargs that's being fed unpacked data
         /// <summary>
@@ -634,7 +700,7 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(19) }
-                }), 1, new string[] { "foo" });
+                }), 1);
         }
 
     }
