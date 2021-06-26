@@ -629,7 +629,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Implementing defaults is a work-in-progress")]
+        [Ignore("This is next but we need to get default arguments parsing correctly without wrecking everything else.")]
         public void DefaultCombinations()
         {
             string program =

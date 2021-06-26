@@ -125,11 +125,11 @@ funcdef			: 'def' NAME parameters ('->' test)? ':' suite;
 
 parameters		: '(' (typedargslist)? ')';
 
-// There's a lot of test blocks here that we're blowing off.
-typedargslist	: (tfpdef (',' tfpdef)* (',' ('*' (tfpdef)? (',' tfpdef)* (',' ('**' tfpdef (',')?)?)?
+typedargslist   : (tfpdef ('=' test)? (',' tfpdef ('=' test)?)* (',' ('*' (tfpdef)? (',' tfpdef ('=' test)?)* (',' ('**' tfpdef (',')?)?)?
 				| '**' tfpdef (',')?)?)?
-				| '*' (tfpdef)? (',' tfpdef)* (',' ('**' tfpdef (',')?)?)?
+				| '*' (tfpdef)? (',' tfpdef ('=' test)?)* (',' ('**' tfpdef (',')?)?)?
 				| '**' tfpdef (',')?);
+
 tfpdef: NAME (':' test)?;
 varargslist: (vfpdef ('=' test)? (',' vfpdef ('=' test)?)* (',' (
         '*' (vfpdef)? (',' vfpdef ('=' test)?)* (',' ('**' vfpdef (',')?)?)?
