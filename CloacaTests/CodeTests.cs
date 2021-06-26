@@ -657,6 +657,22 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Precalculated defaults not yet implemented")]
+        public void PrecalculatedDefaults()
+        {
+            string program =
+                "jkl = 33" +
+                "def kwarg_math(a=1+jkl):\n" +
+                "   return a\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(34) }
+                }), 1);
+        }
+
+        [Test]
         [Ignore("Implementing defaults is a work-in-progress")]
         public void DefaultsVargsArgs()
         {
