@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
+using LanguageImplementation.DataTypes;
 
 namespace LanguageImplementation
 {
@@ -42,6 +43,7 @@ namespace LanguageImplementation
         public byte[] lnotab;
         public int firstlineno;
         public int Flags;
+        public List<PyObject> Defaults;
 
         // co_flag settings
         // The following flag bits are defined for co_flags: bit 0x04 is set if the function uses the *arguments syntax to

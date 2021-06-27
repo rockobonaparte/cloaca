@@ -1073,19 +1073,38 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
     {
-
+        // Hunting for defaults, *args, and **kwargs. Oh, and regular ole' parameter names without any gravy.
         for(int child_i = 0; child_i < context.children.Count; ++child_i)
         {
             if(context.children[child_i].GetText() == "*")
             {
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
+                Visit(context.children[child_i]);
             }
             else if (context.children[child_i].GetText() == "**")
             {
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
+                Visit(context.children[child_i]);
+                throw new NotImplementedException("Keyword args using **kwargs format are not yet supported.");
+            }
+            else if (context.children[child_i].GetText() == "=")
+            {
+                // Next one up is a default! Hacky McHack for now; we'll just assume it's a PyInteger while we figure out
+                // all the mechanics here.
+                var defaultText = context.children[child_i+1].GetText();
+                if(ActiveProgram.Defaults == null)
+                {
+                    ActiveProgram.Defaults = new List<PyObject>();
+                }
+                ActiveProgram.Defaults.Add(new PyInteger(int.Parse(context.children[child_i + 1].GetText())));
+                child_i += 1;
+            }
+            else
+            {
+                Visit(context.children[child_i]);
             }
         }
-        return base.VisitTypedargslist(context);
+        return null;
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)

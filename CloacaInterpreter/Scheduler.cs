@@ -276,7 +276,7 @@ namespace CloacaInterpreter
         {
             if(args.Length != program.ArgVarNames.Count)
             {
-                throw new Exception("The given code object requires " + program.ArgCount + " arguments but only " + args.Length + " arguments were given");
+                throw new Exception("The given code object requires " + program.ArgCount + " arguments but " + args.Length + " arguments were given");
             }
 
             var scheduleState = PrepareFrameContext(program, context);
