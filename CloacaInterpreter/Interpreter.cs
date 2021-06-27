@@ -1160,6 +1160,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var argCount = context.CodeBytes.GetUShort(context.Cursor);
+                                var argsLeft = argCount;        // Arguments left after pre-processing defaults.
 
                                 // Expectation: There's a tuple on the top of the stack that has the names we have to assign in the
                                 // order they have to be assigned.
@@ -1175,7 +1176,112 @@ namespace CloacaInterpreter
                                 for(int defaultIdx = assignments.Values.Length-1; defaultIdx >= 0; --defaultIdx)
                                 {
                                     scratchDict[assignments.Values[defaultIdx]] = context.DataStack.Pop();
+                                    argsLeft -= 1;
                                 }
+                                
+
+
+                                ////////////////////////////////////// BEGIN COPY-PASTA FROM CALL_FUNCTION //////////////////////////////////
+                                // This is annoying. The arguments are at the top of the stack while
+                                // the function is under them, but we need the function to assign the
+                                // values. So we'll just copy them off piecemeal. Hence they'll show up
+                                // in reverse order.
+                                var args = new List<object>();
+                                for (int argIdx = 0; argIdx < argsLeft; ++argIdx)               // CHANGE: argCount -> argsLeft
+                                {
+                                    args.Insert(0, context.DataStack.Pop());
+                                }
+
+                                object abstractFunctionToRun = context.DataStack.Pop();
+                                var asPyObject = abstractFunctionToRun as PyObject;
+
+                                if (asPyObject == null)
+                                {
+                                    // BOOKMARK: Can't convert this PyObject to something where we can determine what the defaults are.
+                                    // So start to generate the code and then step into this opcode to figure out what you're actually
+                                    // getting.
+                                    //
+                                    // The idea was to look at varnames, accounting for number of arguments. The first varnames are the
+                                    // parameters. We can then use those names to cross-reference our lookup dictionary of defaults.
+
+
+                                    //var asCodeObject = asPyObject as WrappedCodeObject;
+                                    // NEW SECTION: Potentially out-of-order default overrides
+                                    // Assign default arguments from defaults dictionary in order they would be expected.
+                                    for (int argIdx = argsLeft; argIdx < argCount; ++argIdx)
+                                    {
+
+                                    }
+
+                                    // NEW SECTION: Defaults as defined from original code object
+                                    // Call function using defaults for any parameters which we don't otherwise have an argument
+
+                                    try
+                                    {
+                                        var __call__ = asPyObject.__getattribute__("__call__");
+                                        var functionToRun = (IPyCallable)__call__;
+
+                                        // Copypasta from next if clause. Hopefully this will replace it!
+                                        var returned = await functionToRun.Call(this, context, args.ToArray());
+                                        if (returned != null && !(returned is FutureVoidAwaiter))
+                                        {
+                                            if (returned is IGetsFutureAwaiterResult)
+                                            {
+                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                            }
+                                            context.DataStack.Push(returned);
+                                        }
+                                        else if (returned == null)
+                                        {
+                                            context.DataStack.Push(NoneType.Instance);
+                                        }
+                                        context.Cursor += 2;
+                                        break;
+                                    }
+                                    catch (EscapedPyException e)
+                                    {
+                                        // We'll just proceed as usual.
+                                    }
+                                }
+                                else if (abstractFunctionToRun is Type)
+                                {
+                                    // Maybe it's a .NET type we imported. If we're trying to invoke the type, then that
+                                    // means we're trying to call a constructor on it.
+                                    // Tagging with [EMBEDDING - .NET TYPES]
+                                    // We might want to generally do this better.
+                                    abstractFunctionToRun = new PyDotNetClassProxy(abstractFunctionToRun as Type);
+                                }
+
+                                // Treat this kind of like an else if. We don't do that literally because we have
+                                // to test for __call__ in the PyObject, and also because it might not be a PyObject
+                                // to begin with.
+                                if (abstractFunctionToRun is IPyCallable)
+                                {
+                                    var functionToRun = (IPyCallable)abstractFunctionToRun;
+
+                                    var returned = await functionToRun.Call(this, context, args.ToArray());
+                                    if (returned != null && !(returned is FutureVoidAwaiter))
+                                    {
+                                        if (returned is IGetsFutureAwaiterResult)
+                                        {
+                                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                                        }
+                                        context.DataStack.Push(returned);
+                                    }
+                                    else if (returned == null)
+                                    {
+                                        context.DataStack.Push(NoneType.Instance);
+                                    }
+
+                                    context.Cursor += 2;
+                                }
+                                else
+                                {
+                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
+                                }
+
+                                ////////////////////////////////////// END COPY-PASTA FROM CALL_FUNCTION //////////////////////////////////
+                                
 
                                 break;
                             }
