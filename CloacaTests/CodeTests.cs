@@ -677,13 +677,13 @@ namespace CloacaTests
         {
             string program =
                 "jkl = 33" +
-                "def kwarg_math(a=1+jkl):\n" +
-                "   return a\n";
+                "def kwarg_math(a=1+jkl,b=3+jkl):\n" +
+                "   return a-b\n";
 
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", PyInteger.Create(34) }
+                    { "a", PyInteger.Create(1+33-3-33) }
                 }), 1);
         }
 
