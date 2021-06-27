@@ -1181,6 +1181,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, attrIdx, context);
 
                 }
+
+                // BOOKMARK: Default assignments come here and need incorporated into a tuple!
+
                 // A function that doesn't take any arguments doesn't have an arglist, but that is what 
                 // got triggered. The only way I know to make sure we trigger on it is to see if we match
                 // parentheses. There has to be a better way...

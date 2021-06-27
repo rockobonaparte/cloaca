@@ -629,6 +629,21 @@ namespace CloacaTests
         }
 
         [Test]
+        public void OneDefaultVariable()
+        {
+            string program =
+                "def defaults_math(a=1):\n" +
+                "   return a + 10\n" +
+                "a = defaults_math(a=2)\n";
+
+            runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(12) },
+                }), 1);
+        }
+
+        [Test]
         [Ignore("This is a work-in-progress. A very long, ugly work-in-progress.")]
         public void DefaultCombinations()
         {
