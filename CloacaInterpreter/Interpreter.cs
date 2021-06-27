@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Collections;
 using System.Collections.Generic;
-
-using LanguageImplementation;
-using LanguageImplementation.DataTypes;
 using System.Threading.Tasks;
 using System.Reflection;
 
+using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 
 using CloacaInterpreter.ModuleImporting;
-using System.Collections;
 
 namespace CloacaInterpreter
 {
@@ -371,6 +370,10 @@ namespace CloacaInterpreter
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
         public async Task Run(FrameContext context)
         {
+            // A general-purpose dictionary opcodes can use for scratchwork. Clear it before each use.
+            // We do this so we don't do a lot of allocation/deallocation for a scratch data structure.
+            var scratchDict = new System.Collections.Generic.Dictionary<object, object>();
+
             try
             {
                 while (context.Cursor < context.Code.Length)
@@ -1153,6 +1156,29 @@ namespace CloacaInterpreter
                             }
                             context.Cursor += 2;
                             break;
+                        case ByteCodes.CALL_FUNCTION_KW:
+                            {
+                                context.Cursor += 1;
+                                var argCount = context.CodeBytes.GetUShort(context.Cursor);
+
+                                // Expectation: There's a tuple on the top of the stack that has the names we have to assign in the
+                                // order they have to be assigned.
+                                // We then expect the assignments on the stack in reverse order. So:
+                                //
+                                // some_defaults(a=1, b=2)
+                                //
+                                // TOS   = (a,b)
+                                // TOS-1 = 2     (b's value)
+                                // TOS-2 = 1     (a's value)
+                                var assignments = (PyTuple)context.DataStack.Pop();
+                                scratchDict.Clear();
+                                for(int defaultIdx = assignments.Values.Length-1; defaultIdx >= 0; --defaultIdx)
+                                {
+                                    scratchDict[assignments.Values[defaultIdx]] = context.DataStack.Pop();
+                                }
+
+                                break;
+                            }
                         case ByteCodes.CALL_FUNCTION:
                             {
                                 context.Cursor += 1;
