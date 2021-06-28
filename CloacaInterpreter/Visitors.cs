@@ -1182,21 +1182,44 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
                 }
 
-                // BOOKMARK: Default assignments come here and need incorporated into a tuple!
-
                 // A function that doesn't take any arguments doesn't have an arglist, but that is what 
                 // got triggered. The only way I know to make sure we trigger on it is to see if we match
                 // parentheses. There has to be a better way...
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
                 {
+                    // Keyword argument names. Start setting this up if we run into a "foo=bar" argument.
+                    List<PyObject> specifiedKeywords = null;
+
                     int argIdx = 0;
                     for (argIdx = 0; trailer.arglist() != null &&
                         trailer.arglist().argument(argIdx) != null; ++argIdx)
                     {
-                        base.Visit(trailer.arglist().argument(argIdx));
+                        if (trailer.arglist().argument(argIdx).test().Length > 1)
+                        {
+                            // Keyword argument! Note we're not using C# 8.0 so we can't null coalesce this.
+                            if(specifiedKeywords == null)
+                            {
+                                specifiedKeywords = new List<PyObject>();
+                            }
+                            specifiedKeywords.Add(PyString.Create(trailer.arglist().argument(argIdx).test(0).GetText()));
+                            base.Visit(trailer.arglist().argument(argIdx).test(1));
+                        }
+                        else
+                        {
+                            base.Visit(trailer.arglist().argument(argIdx));
+                        }
                     }
 
-                    ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
+                    if (specifiedKeywords != null)
+                    {
+                        var keywordTuple = PyTuple.Create(specifiedKeywords);
+                        var keywordTupleIdx = ActiveProgram.Constants.AddGetIndex(keywordTuple);
+                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, keywordTupleIdx, context);
+                    }
+                    else
+                    {
+                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
+                    }
                 }
                 else
                 {
