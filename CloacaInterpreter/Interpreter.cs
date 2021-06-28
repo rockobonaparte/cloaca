@@ -1175,7 +1175,9 @@ namespace CloacaInterpreter
                                 scratchDict.Clear();
                                 for(int defaultIdx = assignments.Values.Length-1; defaultIdx >= 0; --defaultIdx)
                                 {
-                                    scratchDict[assignments.Values[defaultIdx]] = context.DataStack.Pop();
+                                    var asPyString = assignments.Values[defaultIdx];
+                                    var asString = asPyString.ToString();
+                                    scratchDict[asString] = context.DataStack.Pop();
                                     argsLeft -= 1;
                                 }
                                 
@@ -1195,27 +1197,26 @@ namespace CloacaInterpreter
                                 object abstractFunctionToRun = context.DataStack.Pop();
                                 var asPyObject = abstractFunctionToRun as PyObject;
 
-                                if (asPyObject == null)
+                                // The idea was to look at varnames, accounting for number of arguments. The first varnames are the
+                                // parameters. We can then use those names to cross-reference our lookup dictionary of defaults.
+                                var asCodeObject = abstractFunctionToRun as CodeObject;
+                                if (asCodeObject != null)
                                 {
-                                    // BOOKMARK: Can't convert this PyObject to something where we can determine what the defaults are.
-                                    // So start to generate the code and then step into this opcode to figure out what you're actually
-                                    // getting.
-                                    //
-                                    // The idea was to look at varnames, accounting for number of arguments. The first varnames are the
-                                    // parameters. We can then use those names to cross-reference our lookup dictionary of defaults.
-
-
-                                    //var asCodeObject = asPyObject as WrappedCodeObject;
                                     // NEW SECTION: Potentially out-of-order default overrides
                                     // Assign default arguments from defaults dictionary in order they would be expected.
                                     for (int argIdx = argsLeft; argIdx < argCount; ++argIdx)
                                     {
-
+                                        var keywordName = asCodeObject.ArgVarNames[argIdx];
+                                        var keywordDefinition = scratchDict[keywordName];
+                                        args.Add(keywordDefinition);
                                     }
 
                                     // NEW SECTION: Defaults as defined from original code object
                                     // Call function using defaults for any parameters which we don't otherwise have an argument
+                                }
 
+                                if (asPyObject != null)
+                                {
                                     try
                                     {
                                         var __call__ = asPyObject.__getattribute__("__call__");

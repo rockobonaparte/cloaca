@@ -634,12 +634,12 @@ namespace CloacaTests
             string program =
                 "def defaults_math(a=1):\n" +
                 "   return a + 10\n" +
-                "a = defaults_math(a=2)\n";
+                "result = defaults_math(a=2)\n";
 
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", PyInteger.Create(12) },
+                    { "result", PyInteger.Create(12) },
                 }), 1);
         }
 
