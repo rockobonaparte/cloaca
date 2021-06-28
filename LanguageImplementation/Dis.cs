@@ -296,6 +296,14 @@ namespace LanguageImplementation
                             cursor += 2;
                         }
                         break;
+                    case ByteCodes.CALL_FUNCTION_KW:
+                        {
+                            cursor += 1;
+                            var argCount = code.GetUShort(cursor);
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "CALL_FUNCTION_KW", argCount, null);
+                            cursor += 2;
+                        }
+                        break;
                     case ByteCodes.RETURN_VALUE:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "RETURN_VALUE", null, null);
                         cursor += 1;
