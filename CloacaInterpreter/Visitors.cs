@@ -1214,7 +1214,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     {
                         var keywordTuple = PyTuple.Create(specifiedKeywords);
                         var keywordTupleIdx = ActiveProgram.Constants.AddGetIndex(keywordTuple);
-                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, keywordTupleIdx, context);
+                        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, keywordTupleIdx, context);
+                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, argIdx, context);
                     }
                     else
                     {
