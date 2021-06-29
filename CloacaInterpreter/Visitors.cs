@@ -1091,6 +1091,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 // Next one up is a default! Hacky McHack for now; we'll just assume it's a PyInteger while we figure out
                 // all the mechanics here.
+                // TODO: [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
                 var defaultText = context.children[child_i+1].GetText();
                 if(ActiveProgram.Defaults == null)
                 {

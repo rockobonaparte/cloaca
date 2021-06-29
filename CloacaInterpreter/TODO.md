@@ -41,11 +41,13 @@ Part 3: Hardening
   * `*args`
     * [DONE] Implement
     * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
-  * `**kwargs`
+  * keyword arguments and `**kwargs`
+    * defaults based on code: `def foo(default=3+some_other_call())`
+      * [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
+      * We generally will need this to handle even the most basic types without writing a bunch of duplicate logic for creating the types. This is pretty high priority too since these can be pretty diverse.
     * Pure-Python kwargs
     * Calling .NET functions with optionals as if they were kwargs
-    * Embedding functions that can take kwargs. This will likely use a special PyDict subclass to designate it's for kwargs. Either
-      that or some kind of decorator.
+    * Embedding C# functions that have defaults and can take kwargs
 * Cleanup WrappedCode object. Consolidate everything added across the different method lookup conditions into streamlined calls.
   * Cleanup findBestMethodMatch
   * Cleanup injector

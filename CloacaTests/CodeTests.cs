@@ -672,10 +672,11 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Precalculated defaults not yet implemented")]
+        // TODO: [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
         public void PrecalculatedDefaults()
         {
             string program =
-                "jkl = 33" +
+                "jkl = 33\n" +
                 "def kwarg_math(a=1+jkl,b=3+jkl):\n" +
                 "   return a-b\n";
 
