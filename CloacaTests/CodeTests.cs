@@ -644,30 +644,29 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("This is a work-in-progress. A very long, ugly work-in-progress.")]
         public void DefaultCombinations()
         {
             string program =
                 "def defaults_math(a=1, b=3):\n" +
                 "   return a + 10 * b\n" +
-                "a = defaults_math()\n" +
-                "b = defaults_math(2)\n" +
-                "c = defaults_math(2, 4)\n" +
-                "d = defaults_math(a=2, b=4)\n" +
-                "e = defaults_math(a=4, b=2)\n" +
-                "f = defaults_math(a=2)\n" +
-                "g = defaults_math(b=4)\n";
+                "a = defaults_math()\n";
+                //"b = defaults_math(2)\n" +
+                //"c = defaults_math(2, 4)\n" +
+                //"d = defaults_math(a=2, b=4)\n" +
+                //"e = defaults_math(a=4, b=2)\n" +
+                //"f = defaults_math(a=2)\n" +
+                //"g = defaults_math(b=4)\n";
 
             runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(31) },
-                    { "b", PyInteger.Create(32) },
-                    { "c", PyInteger.Create(42) },
-                    { "d", PyInteger.Create(42) },
-                    { "e", PyInteger.Create(42) },
-                    { "f", PyInteger.Create(32) },
-                    { "g", PyInteger.Create(41) },
+                    //{ "b", PyInteger.Create(32) },
+                    //{ "c", PyInteger.Create(42) },
+                    //{ "d", PyInteger.Create(42) },
+                    //{ "e", PyInteger.Create(42) },
+                    //{ "f", PyInteger.Create(32) },
+                    //{ "g", PyInteger.Create(41) },
                 }), 1);
         }
 

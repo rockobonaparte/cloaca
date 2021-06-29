@@ -1304,7 +1304,24 @@ namespace CloacaInterpreter
                                 object abstractFunctionToRun = context.DataStack.Pop();
                                 var asPyObject = abstractFunctionToRun as PyObject;
 
-                                if(asPyObject != null)
+
+
+                                // NEW SECTION: This test is also in CALL_FUNCTION_KW and needs merging.
+                                var asCodeObject = abstractFunctionToRun as CodeObject;
+                                if (asCodeObject != null)
+                                {
+                                    // NEW SECTION: Defaults as defined from original code object
+                                    // Call function using defaults for any parameters which we don't otherwise have an argument
+                                    for (int argIdx = args.Count; argIdx < asCodeObject.ArgCount; ++argIdx)
+                                    {
+                                        var defaultIdx = asCodeObject.ArgCount - asCodeObject.Defaults.Count + argIdx;
+                                        args.Add(asCodeObject.Defaults[argIdx]);
+                                    }
+                                }
+
+
+
+                                if (asPyObject != null)
                                 {
                                     try
                                     {

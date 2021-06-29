@@ -248,7 +248,7 @@ namespace LanguageImplementation
         public CodeObject Build()
         {
             var newCodeObj = new CodeObject(Code.ToArray());
-            newCodeObj.ArgCount = ArgCount;
+            newCodeObj.ArgCount = ArgVarNames.Count;
             newCodeObj.Filename = Filename;
             newCodeObj.Name = Name;
             newCodeObj.VarNames = VarNames;
@@ -256,6 +256,7 @@ namespace LanguageImplementation
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
             newCodeObj.Flags = Flags;
+            newCodeObj.Defaults = Defaults;
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {
