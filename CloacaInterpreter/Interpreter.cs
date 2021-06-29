@@ -1204,11 +1204,19 @@ namespace CloacaInterpreter
                                 {
                                     // NEW SECTION: Potentially out-of-order default overrides
                                     // Assign default arguments from defaults dictionary in order they would be expected.
-                                    for (int argIdx = argsLeft; argIdx < argCount; ++argIdx)
+                                    for (int argIdx = argsLeft; argIdx < asCodeObject.ArgCount; ++argIdx)
                                     {
                                         var keywordName = asCodeObject.ArgVarNames[argIdx];
-                                        var keywordDefinition = scratchDict[keywordName];
-                                        args.Add(keywordDefinition);
+                                        if(scratchDict.ContainsKey(keywordName))
+                                        {
+                                            var keywordDefinition = scratchDict[keywordName];
+                                            args.Add(keywordDefinition);
+                                        }
+                                        else
+                                        {
+                                            var defaultIdx = asCodeObject.ArgCount - asCodeObject.Defaults.Count + argIdx;
+                                            args.Add(asCodeObject.Defaults[argIdx]);
+                                        }
                                     }
 
                                     // NEW SECTION: Defaults as defined from original code object
