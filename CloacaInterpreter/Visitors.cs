@@ -1097,7 +1097,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 {
                     ActiveProgram.Defaults = new List<PyObject>();
                 }
-                ActiveProgram.Defaults.Add(new PyInteger(int.Parse(context.children[child_i + 1].GetText())));
+
+                // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
+                // We will execute all of these defaults before the code object is finalized. This will ensure we execute defaults
+                // at the same time CPython does (right after definition).
+                var defaultBuilder = new CodeObjectBuilder();
+                defaultBuilder.Name = ActiveProgram.Name + "_$Default_" + context.children[child_i - 1].GetText();
+
+                // Now we're parsing the default assignment.
+                ProgramStack.Push(ActiveProgram);
+                ActiveProgram = defaultBuilder;
+
+                // BOOKMARK: What happens here. This is going to be fun.
+                Visit(context.children[child_i + 1]);
+
+                // BOOKMARK: Do I need to pop child_i?
+
+                //ActiveProgram.Defaults.Add(new PyInteger(int.Parse(context.children[child_i + 1].GetText())));
                 child_i += 1;
             }
             else
