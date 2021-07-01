@@ -43,7 +43,7 @@ namespace LanguageImplementation
         public byte[] lnotab;
         public int firstlineno;
         public int Flags;
-        public List<PyObject> Defaults;
+        public List<object> Defaults;
 
         // co_flag settings
         // The following flag bits are defined for co_flags: bit 0x04 is set if the function uses the *arguments syntax to

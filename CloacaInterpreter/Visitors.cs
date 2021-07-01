@@ -45,6 +45,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
+    private List<Action<FrameContext, IInterpreter>> postProcessActions;
+
 
     public CloacaBytecodeVisitor()
     {
@@ -52,6 +54,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
+        postProcessActions = new List<Action<FrameContext, IInterpreter>>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -1095,7 +1098,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 var defaultText = context.children[child_i+1].GetText();
                 if(ActiveProgram.Defaults == null)
                 {
-                    ActiveProgram.Defaults = new List<PyObject>();
+                    ActiveProgram.Defaults = new List<object>();
                 }
 
                 // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
@@ -1104,16 +1107,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 var defaultBuilder = new CodeObjectBuilder();
                 defaultBuilder.Name = ActiveProgram.Name + "_$Default_" + context.children[child_i - 1].GetText();
 
-                // Now we're parsing the default assignment.
+                // Now we're parsing the default assignment. It's a program even if it's just a simple declaration like None. They will be
+                // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
+                // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
+                // do them too.
                 ProgramStack.Push(ActiveProgram);
                 ActiveProgram = defaultBuilder;
-
-                // BOOKMARK: What happens here. This is going to be fun.
                 Visit(context.children[child_i + 1]);
+                ProgramStack.Pop();
+                postProcessActions.Add(async (frame_context, interpreter) =>
+                {
+                    object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);
+                    ActiveProgram.Defaults.Add(processedDefault);
+                });
 
-                // BOOKMARK: Do I need to pop child_i?
-
-                //ActiveProgram.Defaults.Add(new PyInteger(int.Parse(context.children[child_i + 1].GetText())));
+                // Move beyond the default assignment tokens so the for-loop starts at the next parameter.
                 child_i += 1;
             }
             else
