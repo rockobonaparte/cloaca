@@ -35,11 +35,23 @@ namespace CloacaTests
 
         protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
         {
+            // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
+            // the interpreter reference to the schedular after its initial constructor.
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
+            interpreter.DumpState = true;
+            foreach (var finder in moduleSpecFinders)
+            {
+                interpreter.AddModuleFinder(finder);
+            }
+            scheduler.SetInterpreter(interpreter);
+            scheduler.OnTaskScheduled += whenTaskScheduled;
+
             escapedExceptions = new List<ExceptionDispatchInfo>();
             CodeObject compiledProgram = null;
             try
             {
-                compiledProgram = ByteCodeCompiler.Compile(program, variablesIn);
+                compiledProgram = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
             }
             catch(CloacaParseException parseFailed)
             {
@@ -47,18 +59,6 @@ namespace CloacaTests
             }
 
             Dis.dis(compiledProgram);
-
-            // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
-            // the interpreter reference to the schedular after its initial constructor.
-            var scheduler = new Scheduler();
-            var interpreter = new Interpreter(scheduler);
-            interpreter.DumpState = true;
-            foreach(var finder in moduleSpecFinders)
-            {
-                interpreter.AddModuleFinder(finder);
-            }
-            scheduler.SetInterpreter(interpreter);
-            scheduler.OnTaskScheduled += whenTaskScheduled;
 
             var receipt = scheduler.Schedule(compiledProgram);
             context = receipt.Frame;

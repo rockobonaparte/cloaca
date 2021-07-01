@@ -45,7 +45,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
-    private List<Action<FrameContext, IInterpreter>> postProcessActions;
+    private List<Action<Scheduler>> postProcessActions;
 
 
     public CloacaBytecodeVisitor()
@@ -54,7 +54,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
-        postProcessActions = new List<Action<FrameContext, IInterpreter>>();
+        postProcessActions = new List<Action<Scheduler>>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -65,6 +65,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             ActiveProgram.VarNames.Add(name);
         }
+    }
+
+    ///// <summary>
+    ///// Runs post-processing steps on the byte code before committing the final code object. This is used to do things like
+    ///// calculate default parameters. An interpreter instance is needed to run on these and produce the final values to be
+    ///// used. Callbacks are enqueued as the visitor visits the code, and need to be run here afterwards.
+    ///// </summary>
+    ///// <param name="frame_context">Context from which this byte code visitor is generating code.</param>
+    ///// <param name="interpreter">Interpreter instance that will execute any extra code necessary to finish off code visitation.</param>
+    public async void PostProcess(Scheduler scheduler)
+    {
+        foreach(var action in postProcessActions)
+        {
+            await action.Invoke(scheduler);
+        }
+        postProcessActions.Clear();
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
@@ -1115,10 +1131,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ActiveProgram = defaultBuilder;
                 Visit(context.children[child_i + 1]);
                 ProgramStack.Pop();
-                postProcessActions.Add(async (frame_context, interpreter) =>
+                postProcessActions.Add(async (scheduler) =>
                 {
-                    object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);
-                    ActiveProgram.Defaults.Add(processedDefault);
+                    var record = await scheduler.Schedule(defaultBuilder);
+                    ActiveProgram.Defaults.Add(record.Frame.DataStack.Pop());       // TOS is result of evaluating expression
+                    //object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);
+                    //ActiveProgram.Defaults.Add(processedDefault);
                 });
 
                 // Move beyond the default assignment tokens so the for-loop starts at the next parameter.
