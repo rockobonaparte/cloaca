@@ -7,6 +7,7 @@ using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation;
 using System;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -277,10 +278,10 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CantAssignToNone()
+        public async Task CantAssignToNone()
         {
             FrameContext runContext = null;
-            Assert.Throws<Exception>(
+            Assert.ThrowsAsync<Exception>(
               async () => {
                   runContext = await runProgram(
                     "None = 1\n", new Dictionary<string, object>(), 1);
@@ -502,7 +503,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void NamesAreNotDefinedMultipleTimes()
+        public async Task NamesAreNotDefinedMultipleTimes()
         {
             FrameContext runContext = await runProgram(
                 "class Foo:\n" +

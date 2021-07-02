@@ -239,7 +239,7 @@ namespace CloacaTests
     public class ClrImporterCodeTests : RunCodeTest
     {
         [Test]
-        public async void ImportSystemEnvironmentInCode()
+        public async Task ImportSystemEnvironmentInCode()
         {
             var finishedFrame = await runProgram(
                 "import clr\n" +
@@ -252,7 +252,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void ImportGenericList()
+        public async Task ImportGenericList()
         {
             var finishedFrame = await runProgram(
                 "import clr\n" +
@@ -271,7 +271,7 @@ namespace CloacaTests
         /// just reinforces that we can ingest this stuff externally from imports.
         /// </summary>
         [Test]
-        public async void Guid()
+        public async Task Guid()
         {
             var finishedFrame = await runProgram(
                 "import clr\n" +
@@ -318,7 +318,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void BasicImport()
+        public async Task BasicImport()
         {
             var finishedFrame = await runProgram(
                 "import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -328,7 +328,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TwoLevelImport()
+        public async Task TwoLevelImport()
         {
             var finishedFrame = await runProgram(
                 "import foo.bar\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -338,7 +338,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TwoImportsOneLine()
+        public async Task TwoImportsOneLine()
         {
             var finishedFrame = await runProgram(
                 "import foo, foo2\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -350,7 +350,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void AliasedImport()
+        public async Task AliasedImport()
         {
             var finishedFrame = await runProgram(
                 "import foo as fruit\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -360,7 +360,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void FromImport()
+        public async Task FromImport()
         {
             var finishedFrame = await runProgram(
                 "from foo import FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -370,7 +370,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void FromCommaImport()
+        public async Task FromCommaImport()
         {
             var finishedFrame = await runProgram(
                 "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -382,7 +382,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void FromImportStar()
+        public async Task FromImportStar()
         {
             var finishedFrame = await runProgram(
                 "from foo import *\n", new Dictionary<string, object>(), moduleFinders, 1);
@@ -397,7 +397,7 @@ namespace CloacaTests
 
         [Test]
         [Ignore("We can set module import levels but the current module system doesn't have an awareness of hierarchical position (yet).")]
-        public async void FromDotDotImportStar()
+        public async Task FromDotDotImportStar()
         {
             // TODO: Need to actually set this test up to be a level below or whatever.
 

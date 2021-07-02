@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using LanguageImplementation;
 using System.Reflection;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -33,7 +34,7 @@ namespace CloacaTests
         {
             FrameContext runContext = null;
 
-            var exc = Assert.Throws<TargetInvocationException>(
+            var exc = Assert.ThrowsAsync<TargetInvocationException>(
               async () => {
                 runContext = await runProgram(
                 "test_range = range(0, 2, 1)\n" +

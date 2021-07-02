@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using LanguageImplementation.DataTypes;
 
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -11,14 +12,14 @@ namespace CloacaTests
     public class ObjectTests : RunCodeTest
     {
         [Test]
-        public async void DeclareClass()
+        public async Task DeclareClass()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   pass\n", new Dictionary<string, object>(), 1);
         }
 
         [Test]
-        public async void DeclareAndCreateClassNoConstructor()
+        public async Task DeclareAndCreateClassNoConstructor()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   pass\n" +
@@ -28,7 +29,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareAndCreateClassFrom__call__()
+        public async Task DeclareAndCreateClassFrom__call__()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   pass\n" +
@@ -38,7 +39,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareAndCreateClassDefaultConstructor()
+        public async Task DeclareAndCreateClassDefaultConstructor()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self):\n" +
@@ -51,7 +52,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareConstructor()
+        public async Task DeclareConstructor()
         {
             var context = await runProgram("a = 1\n" +
                                            "class Foo:\n" +
@@ -68,7 +69,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareConstructorArgument()
+        public async Task DeclareConstructorArgument()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self, new_a):\n" +
@@ -81,7 +82,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareClassMember()
+        public async Task DeclareClassMember()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self):\n" +
@@ -94,7 +95,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void AccessClassMember()
+        public async Task AccessClassMember()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self):\n" +
@@ -109,7 +110,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void AccessClassMethod()
+        public async Task AccessClassMethod()
         {
             //>>> def make_foo():
             //...   class Foo:
@@ -143,7 +144,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void SubclassBasic()
+        public async Task SubclassBasic()
         {
             /*
              *   2           0 LOAD_BUILD_CLASS
@@ -192,7 +193,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void SubclassSuperconstructor()
+        public async Task SubclassSuperconstructor()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self):\n" +
@@ -211,7 +212,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void ObjectCallsBaseMethods()
+        public async Task ObjectCallsBaseMethods()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   pass\n" +
@@ -224,7 +225,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void IntCallsBaseMethods()
+        public async Task IntCallsBaseMethods()
         {
             var context = await runProgram("f = 1\n" +
                                            "lt = f.__getattribute__('__lt__')\n", new Dictionary<string, object>(), 1);

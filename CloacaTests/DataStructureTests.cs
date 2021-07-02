@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -12,7 +12,7 @@ namespace CloacaTests
     public class DataStructureTests : RunCodeTest
     {
         [Test]
-        public async void DeclareBasicDictionary()
+        public async Task DeclareBasicDictionary()
         {
             // The peephole optimizer figures out basic, constant dictionaries and diverts them to
             // BUILD_CONST_KEY_MAP, so I have to use a more obtuse example here to show BUILD_MAP.
@@ -40,7 +40,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DictionaryReadWrite()
+        public async Task DictionaryReadWrite()
         {
             var context = await runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
                 "b = a[\"foo\"]\n" +
@@ -57,7 +57,7 @@ namespace CloacaTests
 
 
         [Test]
-        public async void IndexIntoDictWithVariable()
+        public async Task IndexIntoDictWithVariable()
         {
             var context = await runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
                                          "b = \"foo\"\n" +
@@ -69,7 +69,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void ListReadWrite()
+        public async Task ListReadWrite()
         {
             var context = await runProgram("a = [1, 2]\n" +
                 "b = a[0]\n" +
@@ -82,7 +82,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareBasicTuple()
+        public async Task DeclareBasicTuple()
         {
             // The peephole optimizer for reference Python code can turn the constants straight into a tuple.
             // That's a huge pain, so here's an example that throws in some math to show how it goes under
@@ -112,7 +112,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareSingleElementTuple()
+        public async Task DeclareSingleElementTuple()
         {
             var context = await runProgram("a = (\"foo\",)\n", new Dictionary<string, object>(), 1);
             var variables = context.DumpVariables();
@@ -122,7 +122,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareBasicList()
+        public async Task DeclareBasicList()
         {
             // 2 0 LOAD_CONST               1 ('foo')
             //   2 LOAD_CONST               2(1)
@@ -139,7 +139,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void DeclareNewlineBasicList()
+        public async Task DeclareNewlineBasicList()
         {
             // This scenario stumbles into a problem with parsing where NEWLINE tokens can get inserted into the list declaration.
             // I'm having some fusses with that online so I wanted to put in a test to ensure whatever I do with the grammar
@@ -158,7 +158,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void IndexIntoListWithVariable()
+        public async Task IndexIntoListWithVariable()
         {
             var context = await runProgram("a = [\"foo\", 1]\n" +
                                          "b = 0\n" +

@@ -464,10 +464,10 @@ namespace CloacaTests
         // 4. Get mad if you try to attach an event to another event using +=/-=. It's stupid but you did it once and the null pointer
         //    exception isn't enough to call it out.
         [Test]
-        public async void ReturningEventDotNet()
+        public async Task ReturningEventDotNet()
         {
             FrameContext runContext = null;
-            Assert.Throws<Exception>(
+            Assert.ThrowsAsync<Exception>(
                 async () =>
                 {
                     runContext = await runProgram
@@ -485,7 +485,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallGenericMethod()
+        public async Task CallGenericMethod()
         {
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
@@ -502,7 +502,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallGenericExtensionMethod()
+        public async Task CallGenericExtensionMethod()
         {
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
@@ -521,7 +521,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallGenericExtensionMethodNoArgs()
+        public async Task CallGenericExtensionMethodNoArgs()
         {
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
@@ -537,7 +537,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallExtensionMethod()
+        public async Task CallExtensionMethod()
         {
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
@@ -553,7 +553,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallExtensionMethodWithArgs()
+        public async Task CallExtensionMethodWithArgs()
         {
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
@@ -569,7 +569,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallDotNetOptionalsImplicit()
+        public async Task CallDotNetOptionalsImplicit()
         {
             FrameContext runContext = await runProgram(
                 "a = obj.Kwargs()\n",
@@ -584,7 +584,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void CallDotNetOptionalsImplicitInOrder()
+        public async Task CallDotNetOptionalsImplicitInOrder()
         {
             FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(2, 20)\n",
@@ -601,7 +601,7 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Cannot support this until we support kwargs")]
-        public async void CallDotNetOptionalsExplicitInOrder()
+        public async Task CallDotNetOptionalsExplicitInOrder()
         {
             FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(first=2, second=20)\n",
@@ -617,7 +617,7 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Cannot support this until we support kwargs.")]
-        public async void CallDotNetOptionalsExplicitOutOfOrder()
+        public async Task CallDotNetOptionalsExplicitOutOfOrder()
         {
             FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(second=20, first=2)\n",
@@ -731,7 +731,7 @@ namespace CloacaTests
 
         // Cousin to DataStructureTests.ListReadWrite
         [Test]
-        public async void ListReadWrite()
+        public async Task ListReadWrite()
         {
             var context = await runProgram(
                 "b = a[0]\n" +
@@ -749,7 +749,7 @@ namespace CloacaTests
 
         // Just like ListReadWrite, but we're assigning a PyInteger to a .NET integer
         [Test]
-        public async void ListReadWriteDoNetInt()
+        public async Task ListReadWriteDoNetInt()
         {
             var context = await runProgram(
                 "b = a[0]\n" +

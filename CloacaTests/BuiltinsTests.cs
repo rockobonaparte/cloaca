@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -12,7 +12,7 @@ namespace CloacaTests
     public class BuiltinTests : RunCodeTest
     {
         [Test]
-        public async void IsSubclass()
+        public async Task IsSubclass()
         {
             var context = await runProgram("class Foo:\n" +
                                            "   def __init__(self):\n" +

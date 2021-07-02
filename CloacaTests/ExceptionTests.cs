@@ -6,6 +6,7 @@ using NUnit.Framework;
 using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -13,9 +14,9 @@ namespace CloacaTests
     public class ExceptionTests : RunCodeTest
     {
         [Test]
-        public async void RaiseException()
+        public async Task RaiseException()
         {
-            Assert.Throws(typeof(EscapedPyException), async () =>
+            Assert.ThrowsAsync(typeof(EscapedPyException), async () =>
             {
                 var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
             }, "Hello, World!");
@@ -25,7 +26,7 @@ namespace CloacaTests
         // They all have the same effect; this mostly just makes sure we don't totally choke on them.
         // Other tests will ensure we properly qualify the type of exception and use the value.
         [Test]
-        public async void TryExceptBlank()
+        public async Task TryExceptBlank()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -39,7 +40,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptTyped()
+        public async Task TryExceptTyped()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -54,7 +55,7 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Raising from an Exception class currently not supported")]
-        public async void RaiseFromClass()
+        public async Task RaiseFromClass()
         {
             var context = await runProgram(
                 "a = False\n" +
@@ -68,7 +69,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptAliasBasic()
+        public async Task TryExceptAliasBasic()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -81,7 +82,7 @@ namespace CloacaTests
             Assert.That(a, Is.EqualTo(PyInteger.Create(10)));
         }
         [Test]
-        public async void TryExceptFinally()
+        public async Task TryExceptFinally()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -97,11 +98,11 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryUnhandledFinally()
+        public async Task TryUnhandledFinally()
         {
             FrameContext runContext = null;
 
-            Assert.Throws<EscapedPyException>(
+            Assert.ThrowsAsync<EscapedPyException>(
               async () => {
                   runContext = await runProgram(
                     "a = 0\n" +
@@ -117,7 +118,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptElse()
+        public async Task TryExceptElse()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -133,7 +134,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptFinallyElse()
+        public async Task TryExceptFinallyElse()
         {
             var context = await runProgram(
                 "a = 0\n" +
@@ -152,7 +153,7 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Need to implement str()")]
-        public async void TryExceptAliasUseMessage()
+        public async Task TryExceptAliasUseMessage()
         {
             var context = await runProgram(
                 "a = 'Fail'\n" +
@@ -166,7 +167,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptAliasUseValue()
+        public async Task TryExceptAliasUseValue()
         {
             var context = await runProgram(
                 "class MeowException(Exception):\n" +
@@ -183,7 +184,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async void TryExceptTwoExceptions()
+        public async Task TryExceptTwoExceptions()
         {
             var context = await runProgram(
                 "class MeowException(Exception):\n" +
@@ -211,7 +212,7 @@ namespace CloacaTests
         private EscapedPyException escaped;
 
         [SetUp]
-        public async void RunMainTestCase()
+        public async Task RunMainTestCase()
         {
             try
             {
