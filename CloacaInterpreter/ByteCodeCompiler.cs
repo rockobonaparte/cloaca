@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Language;
 using LanguageImplementation;
@@ -20,7 +20,7 @@ namespace CloacaInterpreter
         /// dictionary maps the string key as the variable name and the value is the object to be referenced in the script.</param>
         /// <returns>The compiled code.</returns>
         /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
-        public static CodeObject Compile(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
+        public static async Task<CodeObject> Compile(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -36,7 +36,7 @@ namespace CloacaInterpreter
             var visitor = new CloacaBytecodeVisitor(variablesIn);
             visitor.Visit(antlrVisitorContext);
 
-            visitor.PostProcess(scheduler);
+            await visitor.PostProcess(scheduler);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
             return compiledProgram;

@@ -9,6 +9,7 @@ using LanguageImplementation.DataTypes;
 using Antlr4.Runtime;
 using NUnit.Framework;
 using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -33,7 +34,7 @@ namespace CloacaTests
             scheduled.SubmitterReceipt.WhenTaskExceptionEscaped -= taskHadException;
         }
 
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations)
         {
             // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
             // the interpreter reference to the schedular after its initial constructor.
@@ -51,7 +52,7 @@ namespace CloacaTests
             CodeObject compiledProgram = null;
             try
             {
-                compiledProgram = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
+                compiledProgram = await ByteCodeCompiler.Compile(program, variablesIn, scheduler);
             }
             catch(CloacaParseException parseFailed)
             {
@@ -61,7 +62,7 @@ namespace CloacaTests
             Dis.dis(compiledProgram);
 
             var receipt = scheduler.Schedule(compiledProgram);
-            context = receipt.Frame;
+            FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
@@ -86,31 +87,19 @@ namespace CloacaTests
             }
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
-        }
-
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
-        {
-            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
-        }
-
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
-        {
-            FrameContext context;
-            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
             return context;
         }
 
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> modulesSpecFinders, int expectedIterations)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
         {
-            FrameContext context;
-            runProgram(program, variablesIn, modulesSpecFinders, expectedIterations, out context);
+            FrameContext context = await runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations);
             return context;
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
+        protected async void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
             string[] ignoreVariables)
         {
-            var context = runProgram(program, variablesIn, expectedIterations);
+            var context = await runProgram(program, variablesIn, expectedIterations);
             var variables = new VariableMultimap(context);
             try
             {

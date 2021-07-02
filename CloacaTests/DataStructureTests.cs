@@ -12,7 +12,7 @@ namespace CloacaTests
     public class DataStructureTests : RunCodeTest
     {
         [Test]
-        public void DeclareBasicDictionary()
+        public async void DeclareBasicDictionary()
         {
             // The peephole optimizer figures out basic, constant dictionaries and diverts them to
             // BUILD_CONST_KEY_MAP, so I have to use a more obtuse example here to show BUILD_MAP.
@@ -30,8 +30,8 @@ namespace CloacaTests
             //              10 BUILD_MAP                2
             //              12 RETURN_VALUE
             // 
-            var interpreter = runProgram("a = { \"foo\": \"bar\", \"number\": 1 }\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("a = { \"foo\": \"bar\", \"number\": 1 }\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<PyString, object> {
                 { PyString.Create("foo"), PyString.Create("bar") },
@@ -40,12 +40,12 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DictionaryReadWrite()
+        public async void DictionaryReadWrite()
         {
-            var interpreter = runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
+            var context = await runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
                 "b = a[\"foo\"]\n" +
                 "a[\"bar\"] = 200\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new Dictionary<PyString, object> {
                 { PyString.Create("foo"), PyInteger.Create(1) },
@@ -57,24 +57,24 @@ namespace CloacaTests
 
 
         [Test]
-        public void IndexIntoDictWithVariable()
+        public async void IndexIntoDictWithVariable()
         {
-            var interpreter = runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
+            var context = await runProgram("a = { \"foo\": 1, \"bar\": 2 }\n" +
                                          "b = \"foo\"\n" +
                                          "c = a[b]\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("c"));
             var element = (PyInteger)variables["c"];
             Assert.That(element, Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
-        public void ListReadWrite()
+        public async void ListReadWrite()
         {
-            var interpreter = runProgram("a = [1, 2]\n" +
+            var context = await runProgram("a = [1, 2]\n" +
                 "b = a[0]\n" +
                 "a[1] = 200\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new List<object> { PyInteger.Create(1), PyInteger.Create(200) }));
             Assert.That(variables.ContainsKey("b"));
@@ -82,7 +82,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DeclareBasicTuple()
+        public async void DeclareBasicTuple()
         {
             // The peephole optimizer for reference Python code can turn the constants straight into a tuple.
             // That's a huge pain, so here's an example that throws in some math to show how it goes under
@@ -104,32 +104,32 @@ namespace CloacaTests
             // 
             //   3          16 LOAD_FAST                1(a)
             //   18 RETURN_VALUE
-            var interpreter = runProgram("a = (\"foo\", 1)\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("a = (\"foo\", 1)\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var tuple = (PyTuple) variables["a"];
             Assert.That(tuple.Values, Is.EquivalentTo(new object[] { PyString.Create("foo"), PyInteger.Create(1) }));
         }
 
         [Test]
-        public void DeclareSingleElementTuple()
+        public async void DeclareSingleElementTuple()
         {
-            var interpreter = runProgram("a = (\"foo\",)\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("a = (\"foo\",)\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var tuple = (PyTuple)variables["a"];
             Assert.That(tuple.Values, Is.EquivalentTo(new object[] { PyString.Create("foo") }));
         }
 
         [Test]
-        public void DeclareBasicList()
+        public async void DeclareBasicList()
         {
             // 2 0 LOAD_CONST               1 ('foo')
             //   2 LOAD_CONST               2(1)
             //   4 BUILD_LIST               2
             //   6 STORE_FAST               0(a)
-            var interpreter = runProgram("a = [\"foo\", 1]\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("a = [\"foo\", 1]\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             List<object> referenceList = new List<object>();
             referenceList.Add(PyString.Create("foo"));
@@ -139,17 +139,17 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DeclareNewlineBasicList()
+        public async void DeclareNewlineBasicList()
         {
             // This scenario stumbles into a problem with parsing where NEWLINE tokens can get inserted into the list declaration.
             // I'm having some fusses with that online so I wanted to put in a test to ensure whatever I do with the grammar
             // to make the REPL work doesn't also break this situation.
-            var interpreter = runProgram("a = [\n" +
+            var context = await runProgram("a = [\n" +
                                          "\n" +
                                          "# Look at me, I'm a riot!\n" +
                                          "1\n" +
                                          "]\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             List<object> referenceList = new List<object>();
             referenceList.Add(PyInteger.Create(1));
@@ -158,12 +158,12 @@ namespace CloacaTests
         }
 
         [Test]
-        public void IndexIntoListWithVariable()
+        public async void IndexIntoListWithVariable()
         {
-            var interpreter = runProgram("a = [\"foo\", 1]\n" +
+            var context = await runProgram("a = [\"foo\", 1]\n" +
                                          "b = 0\n" +
                                          "c = a[b]\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables.ContainsKey("c"));
             var element = (PyString)variables["c"];
             Assert.That(element, Is.EqualTo(PyString.Create("foo")));

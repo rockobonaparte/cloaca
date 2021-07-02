@@ -8,7 +8,7 @@ using Language;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using CloacaInterpreter;
-
+using System.Threading.Tasks;
 
 /// <summary>
 /// Use to raise parsing issues while we figure out a better way to do this.
@@ -45,7 +45,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
-    private List<Action<Scheduler>> postProcessActions;
+    private List<Func<Scheduler, Task>> postProcessActions;
 
 
     public CloacaBytecodeVisitor()
@@ -54,7 +54,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
-        postProcessActions = new List<Action<Scheduler>>();
+        postProcessActions = new List<Func<Scheduler, Task>>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -74,7 +74,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     ///// </summary>
     ///// <param name="frame_context">Context from which this byte code visitor is generating code.</param>
     ///// <param name="interpreter">Interpreter instance that will execute any extra code necessary to finish off code visitation.</param>
-    public async void PostProcess(Scheduler scheduler)
+    public async Task PostProcess(Scheduler scheduler)
     {
         foreach(var action in postProcessActions)
         {

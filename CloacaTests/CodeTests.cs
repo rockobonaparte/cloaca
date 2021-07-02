@@ -277,13 +277,13 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CantAssignToNone()
+        public async void CantAssignToNone()
         {
             FrameContext runContext = null;
             Assert.Throws<Exception>(
-              () => {
-                  runProgram(
-                    "None = 1\n", new Dictionary<string, object>(), 1, out runContext);
+              async () => {
+                  runContext = await runProgram(
+                    "None = 1\n", new Dictionary<string, object>(), 1);
               }, "SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
 
@@ -502,10 +502,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void NamesAreNotDefinedMultipleTimes()
+        public async void NamesAreNotDefinedMultipleTimes()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "class Foo:\n" +
                 "  def __init__(self):\n" +
                 "    self.a = 1\n" +
@@ -514,7 +513,7 @@ namespace CloacaTests
                 "a = 3\n" +
                 "foo.a = 2\n" +
                 "foo.a = a\n",
-                new Dictionary<string, object>(), 1, out runContext);
+                new Dictionary<string, object>(), 1);
 
             Assert.That(runContext.LocalNames.Count, Is.EqualTo(3));
             Assert.That(runContext.LocalNames.Contains("Foo"));

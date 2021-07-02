@@ -464,36 +464,36 @@ namespace CloacaTests
         // 4. Get mad if you try to attach an event to another event using +=/-=. It's stupid but you did it once and the null pointer
         //    exception isn't enough to call it out.
         [Test]
-        public void ReturningEventDotNet()
+        public async void ReturningEventDotNet()
         {
             FrameContext runContext = null;
             Assert.Throws<Exception>(
-                () =>
+                async () =>
                 {
-                    runProgram("obj = ReflectIntoPython(1337, 'I did it!')\n" +
-                               "obj.ReturnIntTakeIntEvent += obj.SubscribeReturnInteger\n" +
-                               "obj.TriggerReturningIntEvent(111)\n" +
-                               "obj.ReturnIntTakeIntEvent -= obj.SubscribeReturnInteger\n" +
-                               "a = obj.AnInteger\n", new Dictionary<string, object>()
-                               {
-                                   { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
-                               }, 1, out runContext);
+                    runContext = await runProgram
+                        ("obj = ReflectIntoPython(1337, 'I did it!')\n" +
+                         "obj.ReturnIntTakeIntEvent += obj.SubscribeReturnInteger\n" +
+                         "obj.TriggerReturningIntEvent(111)\n" +
+                         "obj.ReturnIntTakeIntEvent -= obj.SubscribeReturnInteger\n" +
+                         "a = obj.AnInteger\n", new Dictionary<string, object>()
+                         {
+                            { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
+                         }, 1);
                 }, "Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
                     "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
                     "a return type anyways?");
         }
 
         [Test]
-        public void CallGenericMethod()
+        public async void CallGenericMethod()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
-            }, 1, out runContext);
+            }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var aInstance = (ReflectIntoPython)variables["a"];
@@ -502,10 +502,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallGenericExtensionMethod()
+        public async void CallGenericExtensionMethod()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "b = MockMaterial()\n" +
                 "b.color = 333\n" +
@@ -514,7 +513,7 @@ namespace CloacaTests
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) },
                 { "MockMaterial", typeof(MockMaterial) }
-            }, 1, out runContext);
+            }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var aInstance = (MockMaterial)variables["a"];
@@ -522,16 +521,15 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallGenericExtensionMethodNoArgs()
+        public async void CallGenericExtensionMethodNoArgs()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.AGenericExtensionMethodNoArgs(ReflectIntoPython)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
-            }, 1, out runContext);
+            }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var aInstance = (bool)variables["a"];
@@ -539,16 +537,15 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallExtensionMethod()
+        public async void CallExtensionMethod()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.AnExtensionMethod()\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
-            }, 1, out runContext);
+            }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -556,16 +553,15 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallExtensionMethodWithArgs()
+        public async void CallExtensionMethodWithArgs()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.AnExtensionMethodWithArgs(1)\n",
                 new Dictionary<string, object>()
             {
                 { "ReflectIntoPython", new PyDotNetClassProxy(typeof(ReflectIntoPython)) }
-            }, 1, out runContext);
+            }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -573,15 +569,14 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallDotNetOptionalsImplicit()
+        public async void CallDotNetOptionalsImplicit()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "a = obj.Kwargs()\n",
                 new Dictionary<string, object>()
                 {
                     { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
-                }, 1, out runContext);
+                }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -589,15 +584,14 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CallDotNetOptionalsImplicitInOrder()
+        public async void CallDotNetOptionalsImplicitInOrder()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(2, 20)\n",
                 new Dictionary<string, object>()
                 {
                     { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
-                }, 1, out runContext);
+                }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -607,15 +601,14 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Cannot support this until we support kwargs")]
-        public void CallDotNetOptionalsExplicitInOrder()
+        public async void CallDotNetOptionalsExplicitInOrder()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(first=2, second=20)\n",
                 new Dictionary<string, object>()
                 {
                     { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
-                }, 1, out runContext);
+                }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -624,15 +617,14 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Cannot support this until we support kwargs.")]
-        public void CallDotNetOptionalsExplicitOutOfOrder()
+        public async void CallDotNetOptionalsExplicitOutOfOrder()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "a = obj.Kwargs(second=20, first=2)\n",
                 new Dictionary<string, object>()
                 {
                     { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
-                }, 1, out runContext);
+                }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
             var a = (int)variables["a"];
@@ -739,16 +731,16 @@ namespace CloacaTests
 
         // Cousin to DataStructureTests.ListReadWrite
         [Test]
-        public void ListReadWrite()
+        public async void ListReadWrite()
         {
-            var interpreter = runProgram(
+            var context = await runProgram(
                 "b = a[0]\n" +
                 "a[1] = twohundred\n", new Dictionary<string, object>()
                 {
                     { "a", new int[] {1, 2} },
                     { "twohundred", 200 }
                 }, 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables["b"], Is.EqualTo(1));
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 200 }));
@@ -757,15 +749,15 @@ namespace CloacaTests
 
         // Just like ListReadWrite, but we're assigning a PyInteger to a .NET integer
         [Test]
-        public void ListReadWriteDoNetInt()
+        public async void ListReadWriteDoNetInt()
         {
-            var interpreter = runProgram(
+            var context = await runProgram(
                 "b = a[0]\n" +
                 "a[1] = 200\n", new Dictionary<string, object>()
                 {
                     { "a", new int[] {1, 2} },
                 }, 1);
-            var variables = interpreter.DumpVariables();
+            var variables = context.DumpVariables();
             Assert.That(variables["b"], Is.EqualTo(1));
             Assert.That(variables.ContainsKey("a"));
             Assert.That(variables["a"], Is.EquivalentTo(new int[] { 1, 200 }));

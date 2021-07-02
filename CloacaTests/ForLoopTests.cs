@@ -34,14 +34,14 @@ namespace CloacaTests
             FrameContext runContext = null;
 
             var exc = Assert.Throws<TargetInvocationException>(
-              () => {
-                  runProgram(
+              async () => {
+                runContext = await runProgram(
                 "test_range = range(0, 2, 1)\n" +
                 "itr = test_range.__iter__()\n" +
                 "raised_exception = False\n" +
                 "i0 = itr.__next__()\n" +
                 "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
-                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1, out runContext);
+                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1);
               });
 
             Assert.That(exc.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));

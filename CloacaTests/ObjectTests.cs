@@ -11,56 +11,56 @@ namespace CloacaTests
     public class ObjectTests : RunCodeTest
     {
         [Test]
-        public void DeclareClass()
+        public async void DeclareClass()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   pass\n", new Dictionary<string, object>(), 1);
+            var context = await runProgram("class Foo:\n" +
+                                           "   pass\n", new Dictionary<string, object>(), 1);
         }
 
         [Test]
-        public void DeclareAndCreateClassNoConstructor()
+        public async void DeclareAndCreateClassNoConstructor()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   pass\n" +
-                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("class Foo:\n" +
+                                           "   pass\n" +
+                                           "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables, Contains.Key("bar"));
         }
 
         [Test]
-        public void DeclareAndCreateClassFrom__call__()
+        public async void DeclareAndCreateClassFrom__call__()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   pass\n" +
-                                         "bar = Foo.__call__()\n", new Dictionary<string, object>(), 1);
-            var variables = interpreter.DumpVariables();
+            var context = await runProgram("class Foo:\n" +
+                                           "   pass\n" +
+                                           "bar = Foo.__call__()\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
             Assert.That(variables, Contains.Key("bar"));
         }
 
         [Test]
-        public void DeclareAndCreateClassDefaultConstructor()
+        public async void DeclareAndCreateClassDefaultConstructor()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      pass\n" +
-                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      pass\n" +
+                                           "bar = Foo()\n", new Dictionary<string, object>(), 1);
 
-            var variables = new VariableMultimap(interpreter);
+            var variables = new VariableMultimap(context);
             Assert.That(variables.ContainsKey("bar"));
             var bar = variables.Get("bar", typeof(PyObject));
         }
 
         [Test]
-        public void DeclareConstructor()
+        public async void DeclareConstructor()
         {
-            var interpreter = runProgram("a = 1\n" +
-                                         "class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      global a\n" +
-                                         "      a = 2\n" +
-                                         "\n" +
-                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("a = 1\n" +
+                                           "class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      global a\n" +
+                                           "      a = 2\n" +
+                                           "\n" +
+                                           "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var reference = new VariableMultimap(new TupleList<string, object> {
                 { "a", PyInteger.Create(2) }
             });
@@ -68,48 +68,48 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DeclareConstructorArgument()
+        public async void DeclareConstructorArgument()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self, new_a):\n" +
-                                         "      self.a = new_a\n" +
-                                         "\n" +
-                                         "bar = Foo(2)\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self, new_a):\n" +
+                                           "      self.a = new_a\n" +
+                                           "\n" +
+                                           "bar = Foo(2)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        public void DeclareClassMember()
+        public async void DeclareClassMember()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      self.a = 1\n" +
-                                         "\n" +
-                                         "bar = Foo()\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      self.a = 1\n" +
+                                           "\n" +
+                                           "bar = Foo()\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject) variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
-        public void AccessClassMember()
+        public async void AccessClassMember()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      self.a = 1\n" +
-                                         "\n" +
-                                         "bar = Foo()\n" + 
-                                         "b = bar.a\n" +
-                                         "bar.a = 2\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      self.a = 1\n" +
+                                           "\n" +
+                                           "bar = Foo()\n" + 
+                                           "b = bar.a\n" +
+                                           "bar.a = 2\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        public void AccessClassMethod()
+        public async void AccessClassMethod()
         {
             //>>> def make_foo():
             //...   class Foo:
@@ -128,22 +128,22 @@ namespace CloacaTests
             //             12 STORE_FAST               0 (Foo)
             //             14 LOAD_CONST               0 (None)
             //             16 RETURN_VALUE
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      self.a = 1\n" +
-                                         "\n" +
-                                         "   def change_a(self, new_a):\n"+
-                                         "      self.a = new_a\n" +
-                                         "\n" +
-                                         "bar = Foo()\n" +
-                                         "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      self.a = 1\n" +
+                                           "\n" +
+                                           "   def change_a(self, new_a):\n"+
+                                           "      self.a = new_a\n" +
+                                           "\n" +
+                                           "bar = Foo()\n" +
+                                           "bar.change_a(2)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        public void SubclassBasic()
+        public async void SubclassBasic()
         {
             /*
              *   2           0 LOAD_BUILD_CLASS
@@ -176,59 +176,59 @@ namespace CloacaTests
              48 RETURN_VALUE
              */
 
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      self.a = 1\n" +
-                                         "\n" +
-                                         "class Bar(Foo):\n" +
-                                         "   def change_a(self, new_a):\n" +
-                                         "      self.a = self.a + new_a\n" +
-                                         "\n" +
-                                         "bar = Bar()\n" +
-                                         "bar.change_a(1)\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      self.a = 1\n" +
+                                           "\n" +
+                                           "class Bar(Foo):\n" +
+                                           "   def change_a(self, new_a):\n" +
+                                           "      self.a = self.a + new_a\n" +
+                                           "\n" +
+                                           "bar = Bar()\n" +
+                                           "bar.change_a(1)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        public void SubclassSuperconstructor()
+        public async void SubclassSuperconstructor()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   def __init__(self):\n" +
-                                         "      self.a = 1\n" +
-                                         "\n" +
-                                         "class Bar(Foo):\n" +
-                                         "   def __init__(self):\n" +
-                                         "      super().__init__()\n" +
-                                         "      self.b = 2\n" +
-                                         "\n" +
-                                         "bar = Bar()\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   def __init__(self):\n" +
+                                           "      self.a = 1\n" +
+                                           "\n" +
+                                           "class Bar(Foo):\n" +
+                                           "   def __init__(self):\n" +
+                                           "      super().__init__()\n" +
+                                           "      self.b = 2\n" +
+                                           "\n" +
+                                           "bar = Bar()\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var bar = (PyObject)variables.Get("bar");
             Assert.That(bar.__dict__["a"], Is.EqualTo(PyInteger.Create(1)));
             Assert.That(bar.__dict__["b"], Is.EqualTo(PyInteger.Create(2)));
         }
 
         [Test]
-        public void ObjectCallsBaseMethods()
+        public async void ObjectCallsBaseMethods()
         {
-            var interpreter = runProgram("class Foo:\n" +
-                                         "   pass\n" +
-                                         "\n" +
-                                         "f = Foo()\n" +
-                                         "testing = f.__eq__(f)\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("class Foo:\n" +
+                                           "   pass\n" +
+                                           "\n" +
+                                           "f = Foo()\n" +
+                                           "testing = f.__eq__(f)\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var testing = (PyBool)variables.Get("testing");
             Assert.That(testing, Is.EqualTo(PyBool.True));
         }
 
         [Test]
-        public void IntCallsBaseMethods()
+        public async void IntCallsBaseMethods()
         {
-            var interpreter = runProgram("f = 1\n" +
-                                         "lt = f.__getattribute__('__lt__')\n", new Dictionary<string, object>(), 1);
-            var variables = new VariableMultimap(interpreter);
+            var context = await runProgram("f = 1\n" +
+                                           "lt = f.__getattribute__('__lt__')\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
             var testing = variables.Get("lt");
             Assert.That(testing, Is.Not.Null);
         }
