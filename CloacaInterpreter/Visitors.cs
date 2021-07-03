@@ -45,7 +45,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
-    private List<Func<Scheduler, Task>> postProcessActions;
+    private List<Func<IScheduler, Task>> postProcessActions;
 
 
     public CloacaBytecodeVisitor()
@@ -54,7 +54,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
-        postProcessActions = new List<Func<Scheduler, Task>>();
+        postProcessActions = new List<Func<IScheduler, Task>>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -74,7 +74,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     ///// </summary>
     ///// <param name="frame_context">Context from which this byte code visitor is generating code.</param>
     ///// <param name="interpreter">Interpreter instance that will execute any extra code necessary to finish off code visitation.</param>
-    public async Task PostProcess(Scheduler scheduler)
+    public async Task PostProcess(IScheduler scheduler)
     {
         foreach(var action in postProcessActions)
         {

@@ -20,7 +20,7 @@ namespace CloacaInterpreter
         /// dictionary maps the string key as the variable name and the value is the object to be referenced in the script.</param>
         /// <returns>The compiled code.</returns>
         /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
-        public static async Task<CodeObject> Compile(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
+        public static async Task<CodeObject> Compile(string program, Dictionary<string, object> variablesIn, IScheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);

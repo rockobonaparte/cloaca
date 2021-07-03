@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation
@@ -119,6 +121,87 @@ namespace LanguageImplementation
         }
     }
 
+    /// <summary>
+    /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
+    /// 
+    /// You can await on it to suspend the holder of the record until the associated task finishes.
+    /// </summary>
+    public class TaskEventRecord : INotifyCompletion
+    {
+        public FrameContext Frame { get; protected set; }
+        public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
+        public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
+        public event OnTaskExceptionEscaped WhenTaskExceptionEscaped = (ignoredRecord, ignoredExc) => { };
+        public bool Completed { get; protected set; }
+        public object ExtraMetadata;
+
+        private Action continuationIfAwaited;
+
+        public TaskEventRecord(FrameContext frame)
+        {
+            Frame = frame;
+            Completed = false;
+            EscapedExceptionInfo = null;
+            ExtraMetadata = null;
+        }
+
+        public void NotifyCompleted()
+        {
+            Completed = true;
+            WhenTaskCompleted(this);
+        }
+
+        public void NotifyEscapedException(ExceptionDispatchInfo escapedInfo)
+        {
+            Completed = true;
+            EscapedExceptionInfo = escapedInfo;
+            WhenTaskExceptionEscaped(this, escapedInfo);
+        }
+
+        #region INotifyCompletion and custom awaiter
+
+        public void OnCompleted(Action continuation)
+        {
+            if (Completed)
+            {
+                continuationIfAwaited();
+            }
+            else
+            {
+                continuationIfAwaited = continuation;
+            }
+        }
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return Completed;
+            }
+        }
+
+        public Task Continue()
+        {
+            continuationIfAwaited?.Invoke();
+            return Task.FromResult(this);
+        }
+
+        public TaskEventRecord GetAwaiter()
+        {
+            return this;
+        }
+
+        public TaskEventRecord GetResult()
+        {
+            return this;
+        }
+
+        #endregion INotifyCompletion and custom awaiter
+    }
+
+    public delegate void OnTaskCompleted(TaskEventRecord record);
+    public delegate void OnTaskExceptionEscaped(TaskEventRecord record, ExceptionDispatchInfo exc);
+
     public interface IScheduler
     {
         // This is called when the currently-active script is blocking. Call this right before invoking
@@ -131,6 +214,25 @@ namespace LanguageImplementation
 
         // Use to cooperatively stop running for just a single tick.
         void SetYielded(FrameContext frame, ISubscheduledContinuation continuation);
+
+        /// <summary>
+        /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
+        /// in order to do any other housekeeping like inject variables into it.
+        /// </summary>
+        /// <param name="program">The code to schedule.</param>
+        /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
+        TaskEventRecord Schedule(CodeObject program);
+
+        TaskEventRecord Schedule(CodeObject program, FrameContext context);
+
+        /// <summary>
+        /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
+        /// in function calls that need to be spun up as independent coroutines.
+        /// </summary>
+        /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
+        /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
+        /// <returns></returns>
+        TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args);
     }
 
     public interface IInterpreter

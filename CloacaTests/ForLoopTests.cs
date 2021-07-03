@@ -30,7 +30,7 @@ namespace CloacaTests
     public class ForLoopTests : RunCodeTest
     {
         [Test]
-        public void Range()
+        public async Task Range()
         {
             FrameContext runContext = null;
 

@@ -96,9 +96,7 @@ namespace CloacaInterpreter.ModuleImporting
         {
             var foundPath = (string)spec.LoaderState;
             var inFile = File.ReadAllText(foundPath);
-            //var moduleCode = ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
-            throw new NotImplementedException("Hacking around and not passing the scheduler to all byte code compilers yet");
-            CodeObject moduleCode = null;
+            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
             await interpreter.CallInto(context, moduleCode, new object[0]);
 
             if(context.EscapedDotNetException != null)
