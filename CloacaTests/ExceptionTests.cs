@@ -16,10 +16,9 @@ namespace CloacaTests
         [Test]
         public async Task RaiseException()
         {
-            Assert.ThrowsAsync(typeof(EscapedPyException), async () =>
-            {
-                var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
-            }, "Hello, World!");
+            var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            Assert.NotNull(context.CurrentException);
+            Assert.That(context.CurrentException.__dict__["message"], Is.EqualTo("Hello, World!"));
         }
 
         // TryExceptBlank, TryExceptTyped, and TryExceptAliasBasic work their way up to a more and more advanced except block
@@ -100,17 +99,15 @@ namespace CloacaTests
         [Test]
         public async Task TryUnhandledFinally()
         {
-            FrameContext runContext = null;
-
-            Assert.ThrowsAsync<EscapedPyException>(
-              async () => {
-                  runContext = await runProgram(
+            FrameContext runContext = await runProgram(
                     "a = 0\n" +
                     "try:\n" +
                     "  raise Exception('Hello, World!')\n" +
                     "finally:\n" +
                     "  a = 1\n", new Dictionary<string, object>(), 1);
-              }, "Hello, World!");
+
+            Assert.NotNull(runContext.CurrentException);
+            Assert.That(runContext.CurrentException.__dict__["message"], Is.EqualTo("Hello, World!"));
 
             var variables = new VariableMultimap(runContext);
             var a = (PyInteger)variables.Get("a");
@@ -131,6 +128,7 @@ namespace CloacaTests
             var variables = new VariableMultimap(context);
             var a = (PyInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(PyInteger.Create(101)));
+            AssertNoDotNetExceptions();
         }
 
         [Test]
@@ -214,22 +212,16 @@ namespace CloacaTests
         [SetUp]
         public async Task RunMainTestCase()
         {
-            try
-            {
-                var ignored = runProgram(
-                    "class MeowException(Exception):\n" +
-                    "  def __init__(self, number):\n" +
-                    "    self.number = number\n" +
-                    "\n" +
-                    "def meow_loudly():\n" +
-                    "   raise MeowException(1)\n" +
-                    "\n" +
-                    "meow_loudly()\n", new Dictionary<string, object>(), 1);
-            }
-            catch(EscapedPyException e)
-            {
-                escaped = e;
-            }            
+            var ignored = await runProgram(
+                "class MeowException(Exception):\n" +
+                "  def __init__(self, number):\n" +
+                "    self.number = number\n" +
+                "\n" +
+                "def meow_loudly():\n" +
+                "   raise MeowException(1)\n" +
+                "\n" +
+                "meow_loudly()\n", new Dictionary<string, object>(), 1);
+            escaped = (EscapedPyException) ignored.EscapedDotNetException;
         }
 
         [Test]

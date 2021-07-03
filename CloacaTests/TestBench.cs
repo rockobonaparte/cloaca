@@ -73,22 +73,32 @@ namespace CloacaTests
             var scheduler_task = scheduler.RunUntilDone();
             scheduler_task.Wait();
             Assert.That(receipt.Completed);
-            if(receipt.EscapedExceptionInfo != null)
-            {
-                receipt.EscapedExceptionInfo.Throw();
-            }
+
+            //if(receipt.EscapedExceptionInfo != null)
+            //{
+            //    receipt.EscapedExceptionInfo.Throw();
+            //}
 
             // For now, just throw the topmost exception if we have one. It would mean if there are
             // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
             // debug them.
-            if(escapedExceptions.Count > 0)
-            {
-                escapedExceptions[0].Throw();
-            }
+            //if(escapedExceptions.Count > 0)
+            //{
+            //    escapedExceptions[0].Throw();
+            //}
 
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
             return context;
         }
+
+        public void AssertNoDotNetExceptions()
+        {
+            if(escapedExceptions.Count > 0)
+            {
+                escapedExceptions[0].Throw();
+            }
+        }
+
 
         protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
         {

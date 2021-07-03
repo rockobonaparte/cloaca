@@ -466,11 +466,10 @@ namespace CloacaTests
         [Test]
         public async Task ReturningEventDotNet()
         {
-            FrameContext runContext = null;
-            Assert.ThrowsAsync<Exception>(
-                async () =>
-                {
-                    runContext = await runProgram
+            string failNote = "Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
+                    "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
+                    "a return type anyways?";
+            FrameContext runContext = await runProgram
                         ("obj = ReflectIntoPython(1337, 'I did it!')\n" +
                          "obj.ReturnIntTakeIntEvent += obj.SubscribeReturnInteger\n" +
                          "obj.TriggerReturningIntEvent(111)\n" +
@@ -479,9 +478,8 @@ namespace CloacaTests
                          {
                             { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
                          }, 1);
-                }, "Attempted to bind a callable to an event that requires a return type. We don't support this type of binding.  " +
-                    "All our callables have to be async, and that meddles with signature of basic return values. Why are you using an event with " +
-                    "a return type anyways?");
+            Assert.NotNull(runContext.EscapedDotNetException);
+            Assert.That(runContext.EscapedDotNetException.Message, Is.EqualTo(failNote));
         }
 
         [Test]
