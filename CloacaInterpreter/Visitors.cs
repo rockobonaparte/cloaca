@@ -1133,6 +1133,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ProgramStack.Pop();
                 postProcessActions.Add(async (scheduler) =>
                 {
+                    // BOOKMARK: Seems we're getting deadlocked here with the scheduler? I think we have to notify to pause
+                    //           current execution since we now need to run defaultBuilder.
+                    var currentFrame = scheduler.GetCurrentTask().Frame;
+                    var voidAwaiter = new FutureVoidAwaiter(scheduler, currentFrame);
+                    scheduler.NotifyBlocked(currentFrame, voidAwaiter);
+
                     var record = await scheduler.Schedule(defaultBuilder);
                     ActiveProgram.Defaults.Add(record.Frame.DataStack.Pop());       // TOS is result of evaluating expression
                     //object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);

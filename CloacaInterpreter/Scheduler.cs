@@ -37,20 +37,6 @@ namespace CloacaInterpreter
         }
     }
 
-    public class ScheduledTaskRecord
-    {
-        public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
-        public ISubscheduledContinuation Continuation;
-        public TaskEventRecord SubmitterReceipt;
-
-        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation, TaskEventRecord submitterReceipt)
-        {
-            Frame = frame;
-            Continuation = continuation;
-            SubmitterReceipt = submitterReceipt;
-        }
-    }
-
     /// <summary>
     /// Manages all tasklets and how they're alternated through the interpreter.
     /// </summary>

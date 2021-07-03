@@ -202,6 +202,20 @@ namespace LanguageImplementation
     public delegate void OnTaskCompleted(TaskEventRecord record);
     public delegate void OnTaskExceptionEscaped(TaskEventRecord record, ExceptionDispatchInfo exc);
 
+    public class ScheduledTaskRecord
+    {
+        public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
+        public ISubscheduledContinuation Continuation;
+        public TaskEventRecord SubmitterReceipt;
+
+        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation, TaskEventRecord submitterReceipt)
+        {
+            Frame = frame;
+            Continuation = continuation;
+            SubmitterReceipt = submitterReceipt;
+        }
+    }
+
     public interface IScheduler
     {
         // This is called when the currently-active script is blocking. Call this right before invoking
@@ -233,6 +247,43 @@ namespace LanguageImplementation
         /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
         /// <returns></returns>
         TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args);
+
+        /// <summary>
+        /// Returns a copy of a list of all active tasks currently in the scheduler.
+        /// </summary>
+        /// <returns>All active tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are active.
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksActive();
+
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as blocked in the scheduler. Blocked tasks are waiting on an asynchronous result.
+        /// </summary>
+        /// <returns>All blocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksBlocked();
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as unblocked in the scheduler. These are tasks that have finished yielding or otherwise
+        /// got a value asynchronously that will let their scripts continue. Normally investigating this will not find much since these are moved into the
+        /// active queue after each scheduler tick. It is mostly useful for particular scheduler diagnostics.
+        /// </summary>
+        /// <returns>All unblocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksUnblocked();
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as yielded in the scheduler. These are tasks that have taken a break from running. This
+        /// can happen either from an explicit yield instruction, or they have exhausted their prescribed run time--if that is even a thing with this scheduler.
+        /// </summary>
+        /// <returns>All yielded tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        ScheduledTaskRecord[] GetTasksYielded();
+
+        /// <summary>
+        /// Gets the task currently running. This could be null if no task is running.
+        /// </summary>
+        /// <returns>The task that's currently running. This could be null if no task is running.</returns>
+        ScheduledTaskRecord GetCurrentTask();
     }
 
     public interface IInterpreter
