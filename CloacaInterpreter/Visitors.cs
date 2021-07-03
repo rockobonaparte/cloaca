@@ -1143,9 +1143,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                         scheduler.NotifyBlocked(currentFrame, voidAwaiter);
                     }
 
-                    var record = scheduler.Schedule(defaultBuilder);
-                    var result = await record.GetResult();
-                    ActiveProgram.Defaults.Add(result.Frame.DataStack.Pop());       // TOS is result of evaluating expression
+
+                    // BOOKMARK: Somehow defaultBuilder winds up having the function's body, not the default, by the time
+                    // we run this calculation. What the fuck!?
+                    var defaultPrecalcCode = defaultBuilder.Build();
+                    var receipt = await scheduler.Schedule(defaultPrecalcCode);
+                    ActiveProgram.Defaults.Add(receipt.Frame.DataStack.Pop());
+                    //var record = await scheduler.Schedule(defaultPrecalcCode);
+                    //var result = record.GetResult();
+                    //ActiveProgram.Defaults.Add(result.Frame.DataStack.Pop());       // TOS is result of evaluating expression
                     //object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);
                     //ActiveProgram.Defaults.Add(processedDefault);
                 });

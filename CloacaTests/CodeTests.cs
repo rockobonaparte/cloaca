@@ -614,14 +614,14 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Implement kwargs is a work-in-progress")]
-        public void KwargsOnly()
+        public async Task KwargsOnly()
         {
             string program =
                 "def kwarg_math(**kwargs):\n" +
                 "   return kwargs['a'] + 10 * kwargs['b']\n" +
                 "a = kwarg_math(a=1, b=3)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(31) }
@@ -629,14 +629,14 @@ namespace CloacaTests
         }
 
         [Test]
-        public void OneDefaultVariable()
+        public async Task OneDefaultVariable()
         {
             string program =
                 "def defaults_math(a=1):\n" +
                 "   return a + 10\n" +
                 "result = defaults_math(a=2)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "result", PyInteger.Create(12) },
@@ -645,7 +645,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DefaultCombinations()
+        public async Task DefaultCombinations()
         {
             string program =
                 "def defaults_math(a=1, b=3):\n" +
@@ -658,7 +658,7 @@ namespace CloacaTests
                 "f = defaults_math(a=2)\n" +
                 "g = defaults_math(b=4)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(31) },

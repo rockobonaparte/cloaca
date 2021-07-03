@@ -51,15 +51,32 @@ namespace CloacaTests
 
             escapedExceptions = new List<ExceptionDispatchInfo>();
             CodeObject compiledProgram = null;
+            Task<CodeObject> compiledTask = null;
             try
             {
-                compiledProgram = await ByteCodeCompiler.Compile(program, variablesIn, scheduler);
+                // This is awaitable now but relies on the scheduler. We'll tick the scheduler
+                // awhile until this resolves.
+                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
             }
-            catch(CloacaParseException parseFailed)
+            catch (CloacaParseException parseFailed)
             {
                 Assert.Fail(parseFailed.Message);
             }
 
+            for (int tries = 1; tries < 1000 && !compiledTask.IsCompleted && escapedExceptions.Count == 0; ++tries)
+            {
+                scheduler.Tick();
+            }
+
+            if(!compiledTask.IsCompleted)
+            {
+                Assert.Fail("Compilation did not finish with interpreter after 1,000 scheduler ticks");
+            }
+            else if(escapedExceptions.Count > 0)
+            {
+                escapedExceptions[0].Throw();
+            }
+            compiledProgram = await compiledTask;
             Dis.dis(compiledProgram);
 
             receipt = scheduler.Schedule(compiledProgram);
@@ -116,7 +133,7 @@ namespace CloacaTests
             return context;
         }
 
-        protected async void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
+        protected async Task runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
             string[] ignoreVariables)
         {
             var context = await runProgram(program, variablesIn, expectedIterations);
@@ -131,20 +148,20 @@ namespace CloacaTests
             }
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations)
+        protected async Task runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations)
         {
-            runBasicTest(program, variablesIn, expectedVariables, expectedIterations, new string[0]);
+            await runBasicTest(program, variablesIn, expectedVariables, expectedIterations, new string[0]);
         }
 
 
-        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations)
+        protected async Task runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations)
         {
-            runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, new string[0]);
+            await runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, new string[0]);
         }
 
-        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations, string[] ignoreVariables)
+        protected async Task runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations, string[] ignoreVariables)
         {
-            runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, ignoreVariables);
+            await runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, ignoreVariables);
         }
     }
 }
