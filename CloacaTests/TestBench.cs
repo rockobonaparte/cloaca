@@ -17,6 +17,7 @@ namespace CloacaTests
     public class RunCodeTest
     {
         protected List<ExceptionDispatchInfo> escapedExceptions;
+        protected TaskEventRecord receipt;
 
         protected void taskHadException(TaskEventRecord taskRecord, ExceptionDispatchInfo exc)
         {
@@ -61,7 +62,7 @@ namespace CloacaTests
 
             Dis.dis(compiledProgram);
 
-            var receipt = scheduler.Schedule(compiledProgram);
+            receipt = scheduler.Schedule(compiledProgram);
             FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
             {
@@ -97,6 +98,15 @@ namespace CloacaTests
             {
                 escapedExceptions[0].Throw();
             }
+        }
+
+        public void AssertNoExceptions()
+        {
+            if(receipt.EscapedExceptionInfo != null)
+            {
+                receipt.EscapedExceptionInfo.Throw();
+            }
+            AssertNoDotNetExceptions();
         }
 
 

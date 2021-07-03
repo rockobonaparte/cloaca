@@ -641,6 +641,7 @@ namespace CloacaTests
                 {
                     { "result", PyInteger.Create(12) },
                 }), 1);
+            AssertNoExceptions();
         }
 
         [Test]
@@ -668,6 +669,7 @@ namespace CloacaTests
                     { "f", PyInteger.Create(32) },
                     { "g", PyInteger.Create(41) },
                 }), 1);
+            AssertNoDotNetExceptions();
         }
 
         [Test]
