@@ -2,6 +2,8 @@
 ===========
 
 Part 3: Hardening
+* Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
+  like to throw suppressed exceptions
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this
