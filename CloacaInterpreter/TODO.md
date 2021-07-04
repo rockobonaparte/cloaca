@@ -76,7 +76,7 @@ Part 3: Hardening
     to needing to call the class to properly create the objects.
 	  * This may be as simple as writing a factory.
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
-	    cause the right constructor to get invoked.
+	    cause the right constructor to get invoked.     
 * Python number type
   * Integer
      * Hex

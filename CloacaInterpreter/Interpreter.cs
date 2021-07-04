@@ -219,15 +219,18 @@ namespace CloacaInterpreter
             // We might have variable arguments as well as keyword arguments.
             int vargsIdx = -1;
             int kwargsIdx = -1;
-            if((frame.Program.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
-            {
-                vargsIdx = frame.Program.ArgVarNames.Count - 1;
-            }
-            if((frame.Program.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
+            if ((frame.Program.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
             {
                 kwargsIdx = frame.Program.ArgVarNames.Count - 1;
                 vargsIdx -= 1;
             }
+            if ((frame.Program.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+            {
+                vargsIdx = frame.Program.ArgVarNames.Count - 1;
+            }
+
+            kwargsIdx -= frame.Program.Defaults.Count;
+            vargsIdx -= frame.Program.Defaults.Count;
 
             // This will probably eventually turn into two, decoupled indices with full vargs and kwargs
             // support.
@@ -1297,7 +1300,7 @@ namespace CloacaInterpreter
                         case ByteCodes.CALL_FUNCTION:
                             {
                                 context.Cursor += 1;
-                                var argCount = context.CodeBytes.GetUShort(context.Cursor);             // Currently not using.
+                                var argCount = context.CodeBytes.GetUShort(context.Cursor);
 
                                 // This is annoying. The arguments are at the top of the stack while
                                 // the function is under them, but we need the function to assign the
@@ -1318,9 +1321,34 @@ namespace CloacaInterpreter
                                 var asCodeObject = abstractFunctionToRun as CodeObject;
                                 if (asCodeObject != null)
                                 {
+                                    //// Are some of these arguments for vargs? We'll need to relocate them into a tuple.
+                                    var fixedArgCount = argCount;
+
+                                    fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
+                                    fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_KWARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
+                                    // If we have some vargs, we need to repackage into a tuple. That tuple might be empty!
+                                    if ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                                    {
+                                        var vargs = new List<PyObject>();
+                                        if(asCodeObject.ArgCount < fixedArgCount)
+                                        {
+                                            var range = args.GetRange(asCodeObject.ArgCount, argCount - asCodeObject.ArgCount);
+                                            foreach(var item in range)
+                                            {
+                                                // TODO: PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
+                                                vargs.Add((PyObject)item);
+                                                args.RemoveAt(asCodeObject.ArgCount);
+                                            }
+
+                                            var vargsTuple = PyTuple.Create(vargs);
+                                            args.Insert(asCodeObject.ArgCount, vargsTuple);
+                                        }
+                                    }
+
+
                                     // NEW SECTION: Defaults as defined from original code object
                                     // Call function using defaults for any parameters which we don't otherwise have an argument
-                                    for (int argIdx = args.Count; argIdx < asCodeObject.ArgCount; ++argIdx)
+                                        for (int argIdx = args.Count; argIdx < asCodeObject.ArgCount; ++argIdx)
                                     {
                                         var defaultIdx = asCodeObject.ArgCount - asCodeObject.Defaults.Count + argIdx;
                                         args.Add(asCodeObject.Defaults[argIdx]);

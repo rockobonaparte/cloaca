@@ -1159,6 +1159,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
+                // Count this as a positional argument if we haven't encountered *args or **kwargs yet
+                if(context.children[child_i].GetText() != "," && 
+                    (ActiveProgram.Flags & (CodeObject.CO_FLAGS_VARGS | CodeObject.CO_FLAGS_KWARGS)) == 0)
+                {
+                    ActiveProgram.ArgCount += 1;
+                }
                 Visit(context.children[child_i]);
             }
         }

@@ -704,8 +704,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Implementing defaults is a work-in-progress")]
-        public void DefaultsVargsArgs()
+        public async Task DefaultsVargsArgs()
         {
             string program =
                 "def varg_sum(initial, *args, addon=0):\n" +
@@ -714,13 +713,17 @@ namespace CloacaTests
                 "      ret_sum += arg + addon\n" +
                 "   return ret_sum\n" +
                 "a = varg_sum(1, 7, 11)\n" +
-                "b = varg_sum(1, 7, 11, addon=-1)\n";
+                "b = varg_sum(1, 7, 11, addon=-1)\n" +
+                "c = varg_sum(1)\n" +
+                "d = varg_sum(2, addon=3)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(19) },
-                    { "b", PyInteger.Create(17) }       // *args only has [7, 11] so we only add -1 twice.
+                    { "b", PyInteger.Create(17) },      // *args only has [7, 11] so we only add -1 twice.
+                    { "c", PyInteger.Create(1) },
+                    { "d", PyInteger.Create(2) }        // There are now *args so addon actually doesn't get used
                 }), 1);
         }
 
