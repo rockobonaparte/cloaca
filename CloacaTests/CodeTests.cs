@@ -672,20 +672,35 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Precalculated defaults not yet implemented")]
-        // TODO: [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
-        public void PrecalculatedDefaults()
+        [Ignore("We don't convey the outer scope into these functions yet, but it is valid Python syntax to do so for defaults.")]
+        public async Task UseOuterscopeInDefaults()
         {
             string program =
                 "jkl = 33\n" +
                 "def kwarg_math(a=1+jkl,b=3+jkl):\n" +
-                "   return a-b\n";
+                "   return a-b\n" +
+                "a = kwarg_math()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(1+33-3-33) }
                 }), 1);
+        }
+
+        [Test]
+        public async Task PrecalculatedDefaults()
+        {
+            string program =
+                "def kwarg_math(a=1+2*3-4,b=20-5+3):\n" +
+                "   return a-b\n" +
+                "a = kwarg_math()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(1+2*3-4 - (20-5+3)) }
+                }), 3);
         }
 
         [Test]

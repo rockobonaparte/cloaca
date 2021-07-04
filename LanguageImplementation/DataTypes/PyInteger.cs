@@ -31,6 +31,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // TODO [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger(PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
         private static void castOperands(PyObject self, PyObject other, out PyInteger selfOut, out PyInteger otherOut, string operation)
         {
             selfOut = self as PyInteger;
@@ -76,6 +77,7 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyObject __sub__(PyObject self, PyObject other)
         {
+            // TODO [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger(PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
             PyInteger a, b;
             castOperands(self, other, out a, out b, "subtraction");
             var newPyInteger = PyInteger.Create(a.InternalValue - b.InternalValue);
