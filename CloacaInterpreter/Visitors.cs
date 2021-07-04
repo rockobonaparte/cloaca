@@ -1117,7 +1117,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ActiveProgram.Defaults = new List<object>();
                 }
 
+                // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
                 int visit_child_i_copy = child_i + 1;
+                string visit_builder_name = ActiveProgram.Name + "_$Default_" + context.children[visit_child_i_copy].GetText();
+                var defaultsList = ActiveProgram.Defaults;
                 postProcessActions.Add(async (scheduler) =>
                 {
                     // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
@@ -1128,7 +1131,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // time the lambda runs, it'll contain the function body's code instead and error. I still have no idea how
                     // that actually happens!
                     var defaultBuilder = new CodeObjectBuilder();
-                    defaultBuilder.Name = ActiveProgram.Name + "_$Default_" + context.children[child_i - 1].GetText();
+                    defaultBuilder.Name = visit_builder_name;
 
                     // Now we're parsing the default assignment. It's a program even if it's just a simple declaration like None. They will be
                     // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
@@ -1150,11 +1153,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     }
 
 
-                    // BOOKMARK: Somehow defaultBuilder winds up having the function's body, not the default, by the time
-                    // we run this calculation. What the fuck!?
+                    // BOOKMARK: We get stuck at the awaiter here. What can we do to unjam it when it finished? We see it
+                    // finishes and we see the IsCompleted flag get set.
                     var defaultPrecalcCode = defaultBuilder.Build();
-                    var receipt = await scheduler.Schedule(defaultPrecalcCode);
-                    ActiveProgram.Defaults.Add(receipt.Frame.DataStack.Pop());
+                    var task = scheduler.Schedule(defaultPrecalcCode);
+                    task.WhenTaskCompleted += (ignored) =>
+                    {
+                        task.Continue();
+                    };
+                    var receipt = await task;
+
+
+
+                    defaultsList.Add(receipt.Frame.DataStack.Pop());
                     //var record = await scheduler.Schedule(defaultPrecalcCode);
                     //var result = record.GetResult();
                     //ActiveProgram.Defaults.Add(result.Frame.DataStack.Pop());       // TOS is result of evaluating expression
@@ -1171,6 +1182,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
         }
         return null;
+    }
+
+    private void Task_WhenTaskCompleted(TaskEventRecord record)
+    {
+        throw new NotImplementedException();
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)

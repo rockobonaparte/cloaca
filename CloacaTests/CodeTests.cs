@@ -640,7 +640,7 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "result", PyInteger.Create(12) },
-                }), 1);
+                }), 2);                 // Two iterations since we have to execute the a=1 default as a separate run.
             AssertNoExceptions();
         }
 
@@ -668,7 +668,7 @@ namespace CloacaTests
                     { "e", PyInteger.Create(24) },
                     { "f", PyInteger.Create(32) },
                     { "g", PyInteger.Create(41) },
-                }), 1);
+                }), 3);                 // a=1 and b=3 are all their own iterations
             AssertNoDotNetExceptions();
         }
 
