@@ -1117,22 +1117,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ActiveProgram.Defaults = new List<object>();
                 }
 
-                // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
-                // We will execute all of these defaults before the code object is finalized. This will ensure we execute defaults
-                // at the same time CPython does (right after definition).
-                var defaultBuilder = new CodeObjectBuilder();
-                defaultBuilder.Name = ActiveProgram.Name + "_$Default_" + context.children[child_i - 1].GetText();
-
-                // Now we're parsing the default assignment. It's a program even if it's just a simple declaration like None. They will be
-                // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
-                // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
-                // do them too.
-                ProgramStack.Push(ActiveProgram);
-                ActiveProgram = defaultBuilder;
-                Visit(context.children[child_i + 1]);
-                ProgramStack.Pop();
+                int visit_child_i_copy = child_i + 1;
                 postProcessActions.Add(async (scheduler) =>
                 {
+                    // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
+                    // We will execute all of these defaults before the code object is finalized. This will ensure we execute defaults
+                    // at the same time CPython does (right after definition).
+                    //
+                    // Funny story: If I set up this default builder outside this lambda, it'll be correctly set, but by the
+                    // time the lambda runs, it'll contain the function body's code instead and error. I still have no idea how
+                    // that actually happens!
+                    var defaultBuilder = new CodeObjectBuilder();
+                    defaultBuilder.Name = ActiveProgram.Name + "_$Default_" + context.children[child_i - 1].GetText();
+
+                    // Now we're parsing the default assignment. It's a program even if it's just a simple declaration like None. They will be
+                    // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
+                    // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
+                    // do them too.
+                    ProgramStack.Push(ActiveProgram);
+                    ActiveProgram = defaultBuilder;
+                    Visit(context.children[visit_child_i_copy]);
+                    ProgramStack.Pop();
+
                     // BOOKMARK: Seems we're getting deadlocked here with the scheduler? I think we have to notify to pause
                     //           current execution since we now need to run defaultBuilder.
                     var currentTask = scheduler.GetCurrentTask();
