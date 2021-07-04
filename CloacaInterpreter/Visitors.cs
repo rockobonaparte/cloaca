@@ -1142,35 +1142,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     Visit(context.children[visit_child_i_copy]);
                     ProgramStack.Pop();
 
-                    // BOOKMARK: Seems we're getting deadlocked here with the scheduler? I think we have to notify to pause
-                    //           current execution since we now need to run defaultBuilder.
                     var currentTask = scheduler.GetCurrentTask();
-                    if (currentTask != null)
-                    {
-                        var currentFrame = currentTask.Frame;
-                        var voidAwaiter = new FutureVoidAwaiter(scheduler, currentFrame);
-                        scheduler.NotifyBlocked(currentFrame, voidAwaiter);
-                    }
-
-
-                    // BOOKMARK: We get stuck at the awaiter here. What can we do to unjam it when it finished? We see it
-                    // finishes and we see the IsCompleted flag get set.
                     var defaultPrecalcCode = defaultBuilder.Build();
                     var task = scheduler.Schedule(defaultPrecalcCode);
+
+                    // There isn't anything to actual unblock us when the code finished and the result is ready, so we need
+                    // to kick the task in the ass in order to unblock the task.
                     task.WhenTaskCompleted += (ignored) =>
                     {
                         task.Continue();
                     };
                     var receipt = await task;
 
-
-
                     defaultsList.Add(receipt.Frame.DataStack.Pop());
-                    //var record = await scheduler.Schedule(defaultPrecalcCode);
-                    //var result = record.GetResult();
-                    //ActiveProgram.Defaults.Add(result.Frame.DataStack.Pop());       // TOS is result of evaluating expression
-                    //object processedDefault = await interpreter.CallInto(frame_context, defaultBuilder, new object[0]);
-                    //ActiveProgram.Defaults.Add(processedDefault);
                 });
 
                 // Move beyond the default assignment tokens so the for-loop starts at the next parameter.
