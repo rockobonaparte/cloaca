@@ -2,9 +2,11 @@
 ===========
 
 Part 3: Hardening
-* [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger (PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
-* Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
-  like to throw suppressed exceptions
+* Things that leaked out while implementing defaults:
+  * [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger (PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
+  * Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
+    like to throw suppressed exceptions
+  * Combine the CALL_FUNCTION implementations_
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this
@@ -223,7 +225,7 @@ Part 3: Hardening
 
 
 Tech debt:
-* *[Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
+* [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
 * Implement full atom rule
   * Requires yield
 * Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.
