@@ -641,7 +641,6 @@ namespace CloacaTests
                 {
                     { "result", PyInteger.Create(12) },
                 }), 2);                 // Two iterations since we have to execute the a=1 default as a separate run.
-            AssertNoExceptions();
         }
 
         [Test]

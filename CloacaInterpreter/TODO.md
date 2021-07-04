@@ -222,7 +222,7 @@ Part 3: Hardening
 
 
 Tech debt:
-* Implement BYTES_LITERAL
+* *[Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
 * Implement full atom rule
   * Requires yield
 * Class and objects -- particularly stuff with __new__ and __init__ -- are a mess.

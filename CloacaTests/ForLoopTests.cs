@@ -38,10 +38,9 @@ namespace CloacaTests
                 "raised_exception = False\n" +
                 "i0 = itr.__next__()\n" +
                 "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
-                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1);
+                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1, false);
 
-
-            //Assert.That(exc.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));
+            // TODO: [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)
             Assert.NotNull(runContext.EscapedDotNetException);
             Assert.That(runContext.EscapedDotNetException.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));
 

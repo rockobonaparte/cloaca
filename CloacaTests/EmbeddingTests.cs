@@ -477,7 +477,7 @@ namespace CloacaTests
                          "a = obj.AnInteger\n", new Dictionary<string, object>()
                          {
                             { "ReflectIntoPython", new WrappedCodeObject(typeof(ReflectIntoPython).GetConstructors()) }
-                         }, 1);
+                         }, 1, false);
             Assert.NotNull(runContext.EscapedDotNetException);
             Assert.That(runContext.EscapedDotNetException.Message, Is.EqualTo(failNote));
         }

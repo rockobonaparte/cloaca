@@ -16,7 +16,7 @@ namespace CloacaTests
         [Test]
         public async Task RaiseException()
         {
-            var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1);
+            var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1, false);
             Assert.NotNull(context.CurrentException);
             Assert.That(context.CurrentException.__dict__["message"], Is.EqualTo("Hello, World!"));
         }
@@ -104,7 +104,7 @@ namespace CloacaTests
                     "try:\n" +
                     "  raise Exception('Hello, World!')\n" +
                     "finally:\n" +
-                    "  a = 1\n", new Dictionary<string, object>(), 1);
+                    "  a = 1\n", new Dictionary<string, object>(), 1, false);
 
             Assert.NotNull(runContext.CurrentException);
             Assert.That(runContext.CurrentException.__dict__["message"], Is.EqualTo("Hello, World!"));
@@ -220,7 +220,7 @@ namespace CloacaTests
                 "def meow_loudly():\n" +
                 "   raise MeowException(1)\n" +
                 "\n" +
-                "meow_loudly()\n", new Dictionary<string, object>(), 1);
+                "meow_loudly()\n", new Dictionary<string, object>(), 1, false);
             escaped = (EscapedPyException) ignored.EscapedDotNetException;
         }
 

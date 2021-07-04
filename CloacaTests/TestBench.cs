@@ -35,7 +35,7 @@ namespace CloacaTests
             scheduled.SubmitterReceipt.WhenTaskExceptionEscaped -= taskHadException;
         }
 
-        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, bool checkExceptions=true)
         {
             // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
             // the interpreter reference to the schedular after its initial constructor.
@@ -92,26 +92,21 @@ namespace CloacaTests
             scheduler_task.Wait();
             Assert.That(receipt.Completed);
 
-            //if(receipt.EscapedExceptionInfo != null)
-            //{
-            //    receipt.EscapedExceptionInfo.Throw();
-            //}
-
-            // For now, just throw the topmost exception if we have one. It would mean if there are
-            // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
-            // debug them.
-            //if(escapedExceptions.Count > 0)
-            //{
-            //    escapedExceptions[0].Throw();
-            //}
-
+            if(checkExceptions)
+            {
+                AssertNoExceptions();
+            }
+            
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
             return context;
         }
 
         public void AssertNoDotNetExceptions()
         {
-            if(escapedExceptions.Count > 0)
+            // For now, just throw the topmost exception if we have one. It would mean if there are
+            // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
+            // debug them.
+            if (escapedExceptions.Count > 0)
             {
                 escapedExceptions[0].Throw();
             }
@@ -127,9 +122,9 @@ namespace CloacaTests
         }
 
 
-        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, bool checkExceptions=true)
         {
-            FrameContext context = await runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations);
+            FrameContext context = await runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, checkExceptions);
             return context;
         }
 
