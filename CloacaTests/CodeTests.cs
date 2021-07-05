@@ -13,9 +13,27 @@ namespace CloacaTests
 {
     class ArgParamMatcher
     {
-        public static object[] Resolve(object[] inParams)
+        public static object[] Resolve(CodeObject co, object[] inArgs, Dictionary<string, object> keywords=null)
         {
-            return inParams;
+            var defaultsStart = co.ArgCount - co.Defaults.Count;
+            var outArgs = new object[co.VarNames.Count];
+
+            int inArg = 0;
+            for(int outArgIdx = 0; outArgIdx < outArgs.Length; ++outArgIdx)
+            {
+                if(inArg >= inArgs.Length)
+                {
+                    outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                    inArg += 1;
+                }
+                else
+                {
+                    outArgs[outArgIdx] = inArgs[inArg];
+                    inArg += 1;
+                }
+            }
+
+            return outArgs;
         }
     }
 
@@ -31,9 +49,28 @@ namespace CloacaTests
         [Test]
         public void OneToOne()
         {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("onevar");
+
             var inParams = new object[1];
-            var outParams = ArgParamMatcher.Resolve(inParams);
-            Assert.That(inParams, Is.EqualTo(outParams));
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public void OneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("has_default");
+
+            var inParams = new object[0];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(new object[] { -1 }));
         }
     }
 
