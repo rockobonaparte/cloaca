@@ -23,7 +23,15 @@ namespace CloacaTests
             {
                 if(inArg >= inArgs.Length)
                 {
-                    outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                    var varName = co.VarNames[inArg];
+                    if (keywords != null && keywords.ContainsKey(varName))
+                    {
+                        outArgs[outArgIdx] = keywords[varName];
+                    }
+                    else
+                    {
+                        outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                    }
                     inArg += 1;
                 }
                 else
@@ -46,6 +54,15 @@ namespace CloacaTests
     [TestFixture]
     public class ArgParamMatchTests
     {
+        public void InOutTest(CodeObject co, object[][] ins, Dictionary<string, object>[] keywordsIn, object[][] outs)
+        {
+            for(int i = 0; i < ins.Length; ++i)
+            {
+                var outParams = ArgParamMatcher.Resolve(co, ins[i], keywordsIn[i]);
+                Assert.That(outParams, Is.EqualTo(outs[i]));                
+            }
+        }
+
         [Test]
         public void OneToOne()
         {
@@ -71,6 +88,44 @@ namespace CloacaTests
             var inParams = new object[0];
             var outParams = ArgParamMatcher.Resolve(co, inParams);
             Assert.That(outParams, Is.EqualTo(new object[] { -1 }));
+        }
+
+        [Test]
+        public void TwoParamsOneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("onevar");
+            co.VarNames.Add("has_default");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+                new object[] { },
+                new object[] { 7 },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                new Dictionary<string, object> { { "onevar", 4 }, { "has_default", 5 } },
+                new Dictionary<string, object> { { "onevar", 6 } },
+                new Dictionary<string, object> { { "has_default", 8 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, -1 },
+                new object[] { 4, 5 },
+                new object[] { 6, -1 },
+                new object[] { 7, 8 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
         }
     }
 
