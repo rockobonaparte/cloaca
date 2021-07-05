@@ -91,6 +91,37 @@ namespace CloacaTests
         }
 
         [Test]
+        public void TwoParams()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("one");
+            co.VarNames.Add("two");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                new Dictionary<string, object> { { "two", 4 } },
+                new Dictionary<string, object> { { "one", 5 }, { "two", 6 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, 4 },
+                new object[] { 5, 6 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
         public void TwoParamsOneDefault()
         {
             var co = new CodeObject(new byte[0]);
