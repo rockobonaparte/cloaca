@@ -11,6 +11,32 @@ using System.Threading.Tasks;
 
 namespace CloacaTests
 {
+    class ArgParamMatcher
+    {
+        public static object[] Resolve(object[] inParams)
+        {
+            return inParams;
+        }
+    }
+
+    /// <summary>
+    /// Tests our helper for matching positional, keyword, defaults, vargs, and kwargs
+    /// between parameters and their arguments. The different ways this could get done
+    /// had gotten out of hand and was become cumbersome to hit in code tests. Also,
+    /// the implementation of it was also getting out of hand and we really needed a helper.
+    /// </summary>
+    [TestFixture]
+    public class ArgParamMatchTests
+    {
+        [Test]
+        public void OneToOne()
+        {
+            var inParams = new object[1];
+            var outParams = ArgParamMatcher.Resolve(inParams);
+            Assert.That(inParams, Is.EqualTo(outParams));
+        }
+    }
+
     [TestFixture]
     public class Basics : RunCodeTest
     {
