@@ -712,10 +712,10 @@ namespace CloacaTests
                 "   for arg in args:\n" +
                 "      ret_sum += arg + addon\n" +
                 "   return ret_sum\n" +
-                "a = varg_sum(1, 7, 11)\n" +
-                "b = varg_sum(1, 7, 11, addon=-1)\n" +
-                "c = varg_sum(1)\n" +
-                "d = varg_sum(2, addon=3)\n";
+                "a = varg_sum(1, 7, 11)\n";
+                //"b = varg_sum(1, 7, 11, addon=-1)\n" +
+                //"c = varg_sum(1)\n" +
+                //"d = varg_sum(2, addon=3)\n";
 
             await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>

@@ -93,6 +93,7 @@ Part 3: Hardening
   * Incorporate UNPACK_SEQUENCE into general lvalue expressions and not just for-loops. In fact, try to use a general lvalue assigner that
     can handle UNPACK_SEQUENCE take care of it in general.
   * Support grammar for UNPACK_EX (partial unpack).
+  * [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
 * Sets
   * Create from literals
   * Main implementation
