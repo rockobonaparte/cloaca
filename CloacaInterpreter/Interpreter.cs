@@ -250,8 +250,8 @@ namespace CloacaInterpreter
                         vargs.Add((PyObject) args[argIdx]);
                         ++argIdx;
                     }
-                    PyTuple.Create(vargs);
-                    frame.AddLocal(frame.Program.ArgVarNames[vargsIdx], vargs);
+                    var asPyTuple = PyTuple.Create(vargs);
+                    frame.AddLocal(frame.Program.ArgVarNames[vargsIdx], asPyTuple);
                 }
                 else
                 {
@@ -1326,24 +1326,24 @@ namespace CloacaInterpreter
 
                                     fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
                                     fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_KWARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
-                                    // If we have some vargs, we need to repackage into a tuple. That tuple might be empty!
-                                    if ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
-                                    {
-                                        var vargs = new List<PyObject>();
-                                        if(asCodeObject.ArgCount < fixedArgCount)
-                                        {
-                                            var range = args.GetRange(asCodeObject.ArgCount, argCount - asCodeObject.ArgCount);
-                                            foreach(var item in range)
-                                            {
-                                                // TODO: PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
-                                                vargs.Add((PyObject)item);
-                                                args.RemoveAt(asCodeObject.ArgCount);
-                                            }
+                                    //// If we have some vargs, we need to repackage into a tuple. That tuple might be empty!
+                                    //if ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                                    //{
+                                    //    var vargs = new List<PyObject>();
+                                    //    if(asCodeObject.ArgCount < fixedArgCount)
+                                    //    {
+                                    //        var range = args.GetRange(asCodeObject.ArgCount, argCount - asCodeObject.ArgCount);
+                                    //        foreach(var item in range)
+                                    //        {
+                                    //            // TODO: PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
+                                    //            vargs.Add((PyObject)item);
+                                    //            args.RemoveAt(asCodeObject.ArgCount);
+                                    //        }
 
-                                            var vargsTuple = PyTuple.Create(vargs);
-                                            args.Insert(asCodeObject.ArgCount, vargsTuple);
-                                        }
-                                    }
+                                    //        var vargsTuple = PyTuple.Create(vargs);
+                                    //        args.Insert(asCodeObject.ArgCount, vargsTuple);
+                                    //    }
+                                    //}
 
 
                                     // NEW SECTION: Defaults as defined from original code object

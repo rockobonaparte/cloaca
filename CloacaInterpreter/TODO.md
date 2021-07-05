@@ -2,11 +2,13 @@
 ===========
 
 Part 3: Hardening
-* Things that leaked out while implementing defaults:
+* Things that leaked out while implementing defaults parameters/keyword arguments:
   * [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger (PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
   * Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
     like to throw suppressed exceptions
   * Combine the CALL_FUNCTION implementations_
+  * Deal with the situation where some monster uses * or / in their parameters to force a switch to keyword-only.
+    * Add unit test and put this todo there
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this
