@@ -63,6 +63,15 @@ def pyle(a, b=2, *c, **d):
 
 ## Current issues
 
+I have been targeting heapq. I was missing vargs, defaults, and keyword arguments, but they have since been implemented. What I don't have are **kwargs and default-only.
+
+heapq has `merge`:
+`def merge(*iterables, key=None, reverse=False):`
+
+We don't support defaults after *args right now.
+
+List comprehensions are also missing.
+
 Vomit from trying to import heapq
 ```
 There were parse errors:

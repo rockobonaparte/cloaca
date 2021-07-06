@@ -44,8 +44,6 @@ Part 3: Hardening
   * Figure out a one-liner to embed methods without having to use GetMethod(methodName). My hope is to retain compile-time checking of the binding.
   * Try to move CloacaBytecodeVisitor from CloacaInterpreter to LanguageImplementation. I spent a few minutes trying to find it again after
     a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
-  * Need to lookup what ArgCount is supposed to do in the CodeObject again. It was zero when I created a test routine that had one argument.
-    I ended up looking at the length of argument names.
   * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
   * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
 * Extended argument types

@@ -2,7 +2,7 @@
 
 A deranged attempt at a Python 3-like bytecode interpreter in C# with green threading and state serialization.
 
-## What The Hell?
+## Wait, What?!
 I am working on a game in my free time, or rather I keep winding up working on the tools for a game in my free time
 because I such at concentrating. I got caught up when it came to NPC scripting and general game rule scripting. I
 am using Unity, and I can write C# just fine, but:
@@ -46,11 +46,11 @@ touch at the same time. Each thread also devours about a megabyte just for the r
 
 ### Why the name?
 
-Cloaca is part of a snake's butt. Yes, I know Python is named from Monty Python, not snakes. I think that makes it even
-more horrible. This is my own self-deprecation at work. Calling the project "this is a bad use of time but I'm doing it
-for personal reasons so nyaaaah" is too long. What's funny is that other people have also called their own projects
-"Cloaca!" I can change it but if somebody complains to me that they're the one entitled to name their project after
-a snake's butt then I'm just sorry for you. I'll rename it to Blue Steel or Magnum.
+This is my own self-deprecation at work. Calling the project "this is a bad use of time but I'm doing it for personal
+reasons so nyaaaah" is too long, so I have named it after an organ in a snake's butt. What's funny is that
+other people have also called their own projects "Cloaca!" I can change it but if somebody complains to me that they're
+the one entitled to name their project after a snake's butt then I'm just sorry for you. I'll rename it to Blue Steel
+or Magnum.
 
 ### How are you implementing re-entrant code?
 I started with IEnumerables but that implementation turned feral and had to be put out of its misery behind the tool shed.
@@ -92,7 +92,7 @@ We can flip this around and I can list things I have not done at all:
    trying to stick to the most ancient Python possible. Angels sang when I used it for the first time and I feel bad I missed it. 
 5. Any standard I/O. No files, sockets, whatever. I import .NET libraries or embeddable calls to do these operations.
 
-There's a [document listing current levels of support](support.md) for things and a [todo document that maps TODO items](todo.md).
+There's a [document listing current levels of support](support.md) for things and a [todo document that maps TODO items](TODO.md).
 
 ## State serialization?
 
