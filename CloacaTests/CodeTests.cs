@@ -34,7 +34,7 @@ namespace CloacaTests
                 }
                 else
                 {
-                    vargs = new object[num_vargs];
+                    vargs = new object[0];
                 }
                 outArgsLength += 1;
             }
@@ -63,7 +63,7 @@ namespace CloacaTests
                         }
                         else
                         {
-                            outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                            outArgs[outArgIdx] = co.Defaults[inArg - defaultsStart];
                         }
                     }
                     inArg += 1;
@@ -104,7 +104,7 @@ namespace CloacaTests
             for(int i = 0; i < ins.Length; ++i)
             {
                 var outParams = ArgParamMatcher.Resolve(co, ins[i], keywordsIn[i]);
-                Assert.That(outParams, Is.EqualTo(outs[i]));                
+                Assert.That(outParams, Is.EqualTo(outs[i]), "Failed Test #" + (i + 1));
             }
         }
 
@@ -230,6 +230,48 @@ namespace CloacaTests
             };
 
             InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void ArgsDefaultsVargs()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 4;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("a");
+            co.VarNames.Add("b");
+            co.VarNames.Add("c");
+            co.VarNames.Add("d");
+            co.VarNames.Add("e");
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.Defaults.Add(-2);
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, 5 },
+                new object[] { 6, 7, 8, 9 },
+                new object[] { 10, 11, 12 },
+                new object[] { 13, 14 },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                null,
+                null,
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, PyTuple.Create(new object[] { 5 }) },
+                new object[] { 6, 7, 8, 9, PyTuple.Create(new object[0]) },
+                new object[] { 10, 11, 12, -2, PyTuple.Create(new object[0]) },
+                new object[] { 13, 14, -1, -2, PyTuple.Create(new object[0]) },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+
         }
     }
 
