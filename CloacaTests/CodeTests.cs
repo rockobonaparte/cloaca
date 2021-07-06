@@ -19,6 +19,9 @@ namespace CloacaTests
             bool hasVargs = (co.Flags & CodeObject.CO_FLAGS_VARGS) > 0;
             var defaultsStart = co.ArgCount - co.Defaults.Count;
 
+            // The number of actual output arguments is not given straightforwardly. ArgCount gets use
+            // the first positional and keyword arguments, but then we might have *args and **kwargs, which
+            // are designated by flags.
             var outArgsLength = co.ArgCount;
 
             var num_vargs = inArgs.Length - co.ArgCount;
@@ -53,9 +56,9 @@ namespace CloacaTests
                     else 
                     {
                         // Use the default
-                        // If it's a variable argument (*args) then the default is an empty tuple.
                         if (hasVargs && inArg == co.ArgCount)
                         {
+                            // If it's a variable argument (*args) then the default is an empty tuple.
                             outArgs[outArgIdx] = PyTuple.Create(vargs);
                         }
                         else
