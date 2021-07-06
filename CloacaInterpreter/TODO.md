@@ -2,6 +2,17 @@
 ===========
 
 Part 3: Hardening
+* Things that leaked out while implementing defaults parameters/keyword arguments:
+  * [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger (PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
+  * Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
+    like to throw suppressed exceptions
+  * Combine the CALL_FUNCTION implementations_
+  * Deal with the situation where some monster uses * or / in their parameters to force a switch to keyword-only.
+    * Add unit test and put this todo there
+  * [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
+  * [**kwargs] Support kwargs
+  * [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
+  * [DEFAULTS SCOPE] Pass outer scope to defaults
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this
@@ -41,11 +52,13 @@ Part 3: Hardening
   * `*args`
     * [DONE] Implement
     * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
-  * `**kwargs`
+  * keyword arguments and `**kwargs`
+    * defaults based on code: `def foo(default=3+some_other_call())`
+      * [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
+      * We generally will need this to handle even the most basic types without writing a bunch of duplicate logic for creating the types. This is pretty high priority too since these can be pretty diverse.
     * Pure-Python kwargs
     * Calling .NET functions with optionals as if they were kwargs
-    * Embedding functions that can take kwargs. This will likely use a special PyDict subclass to designate it's for kwargs. Either
-      that or some kind of decorator.
+    * Embedding C# functions that have defaults and can take kwargs
 * Cleanup WrappedCode object. Consolidate everything added across the different method lookup conditions into streamlined calls.
   * Cleanup findBestMethodMatch
   * Cleanup injector
@@ -69,7 +82,7 @@ Part 3: Hardening
     to needing to call the class to properly create the objects.
 	  * This may be as simple as writing a factory.
 	  * Need to be able to use the proper PyTuple constructor to pass in a list. Right now, invoking the class with a the tuple contents doesn't
-	    cause the right constructor to get invoked.
+	    cause the right constructor to get invoked.     
 * Python number type
   * Integer
      * Hex
@@ -84,6 +97,8 @@ Part 3: Hardening
   * Incorporate UNPACK_SEQUENCE into general lvalue expressions and not just for-loops. In fact, try to use a general lvalue assigner that
     can handle UNPACK_SEQUENCE take care of it in general.
   * Support grammar for UNPACK_EX (partial unpack).
+  * [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
+  * [TUPLE OBJECT] Support regular objects in tuples along with dunders like __eq__
 * Sets
   * Create from literals
   * Main implementation
@@ -219,6 +234,7 @@ Part 3: Hardening
 
 
 Tech debt:
+* [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
 * Implement BYTES_LITERAL
 * Implement full atom rule
   * Requires yield

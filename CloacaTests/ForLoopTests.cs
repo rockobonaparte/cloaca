@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using LanguageImplementation;
 using System.Reflection;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -29,22 +30,19 @@ namespace CloacaTests
     public class ForLoopTests : RunCodeTest
     {
         [Test]
-        public void Range()
+        public async Task Range()
         {
-            FrameContext runContext = null;
-
-            var exc = Assert.Throws<TargetInvocationException>(
-              () => {
-                  runProgram(
+            FrameContext runContext = await runProgram(
                 "test_range = range(0, 2, 1)\n" +
                 "itr = test_range.__iter__()\n" +
                 "raised_exception = False\n" +
                 "i0 = itr.__next__()\n" +
                 "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
-                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1, out runContext);
-              });
+                "i2 = itr.__next__()\n", new Dictionary<string, object>(), 1, false);
 
-            Assert.That(exc.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));
+            // TODO: [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)
+            Assert.NotNull(runContext.EscapedDotNetException);
+            Assert.That(runContext.EscapedDotNetException.InnerException.GetType(), Is.EqualTo(typeof(StopIterationException)));
 
             var variables = new VariableMultimap(runContext);
             var i0 = (PyInteger)variables.Get("i0");

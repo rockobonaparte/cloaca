@@ -4,6 +4,7 @@ using System.IO;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
 using System.Threading.Tasks;
+using System;
 
 namespace CloacaInterpreter.ModuleImporting
 {
@@ -95,7 +96,7 @@ namespace CloacaInterpreter.ModuleImporting
         {
             var foundPath = (string)spec.LoaderState;
             var inFile = File.ReadAllText(foundPath);
-            var moduleCode = ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>());
+            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
             await interpreter.CallInto(context, moduleCode, new object[0]);
 
             if(context.EscapedDotNetException != null)

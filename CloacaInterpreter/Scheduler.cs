@@ -37,101 +37,6 @@ namespace CloacaInterpreter
         }
     }
 
-    public class ScheduledTaskRecord
-    {
-        public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
-        public ISubscheduledContinuation Continuation;
-        public TaskEventRecord SubmitterReceipt;
-
-        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation, TaskEventRecord submitterReceipt)
-        {
-            Frame = frame;
-            Continuation = continuation;
-            SubmitterReceipt = submitterReceipt;
-        }
-    }
-
-    public delegate void OnTaskCompleted(TaskEventRecord record);
-    public delegate void OnTaskExceptionEscaped(TaskEventRecord record, ExceptionDispatchInfo exc);
-
-    /// <summary>
-    /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
-    /// 
-    /// You can await on it to suspend the holder of the record until the associated task finishes.
-    /// </summary>
-    public class TaskEventRecord : INotifyCompletion
-    {
-        public FrameContext Frame { get; protected set; }
-        public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
-        public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
-        public event OnTaskExceptionEscaped WhenTaskExceptionEscaped = (ignoredRecord, ignoredExc) => { };
-        public bool Completed { get; protected set; }
-        public object ExtraMetadata;
-
-        private Action continuationIfAwaited;
-         
-        public TaskEventRecord(FrameContext frame)
-        {
-            Frame = frame;
-            Completed = false;
-            EscapedExceptionInfo = null;
-            ExtraMetadata = null;
-        }
-
-        public void NotifyCompleted()
-        {
-            Completed = true;
-            WhenTaskCompleted(this);
-        }
-
-        public void NotifyEscapedException(ExceptionDispatchInfo escapedInfo)
-        {
-            Completed = true;
-            EscapedExceptionInfo = escapedInfo;
-            WhenTaskExceptionEscaped(this, escapedInfo);
-        }
-
-        #region INotifyCompletion and custom awaiter
-
-        public void OnCompleted(Action continuation)
-        {
-            if (Completed)
-            {
-                continuationIfAwaited();
-            }
-            else
-            {
-                continuationIfAwaited = continuation;
-            }
-        }
-
-        public bool IsCompleted
-        {
-            get
-            {
-                return Completed;
-            }
-        }
-
-        public Task Continue()
-        {
-            continuationIfAwaited?.Invoke();
-            return Task.FromResult(this);
-        }
-
-        public TaskEventRecord GetAwaiter()
-        {
-            return this;
-        }
-
-        public TaskEventRecord GetResult()
-        {
-            return this;
-        }
-
-        #endregion INotifyCompletion and custom awaiter
-    }
-
     /// <summary>
     /// Manages all tasklets and how they're alternated through the interpreter.
     /// </summary>
@@ -276,7 +181,7 @@ namespace CloacaInterpreter
         {
             if(args.Length != program.ArgVarNames.Count)
             {
-                throw new Exception("The given code object requires " + program.ArgCount + " arguments but only " + args.Length + " arguments were given");
+                throw new Exception("The given code object requires " + program.ArgCount + " arguments but " + args.Length + " arguments were given");
             }
 
             var scheduleState = PrepareFrameContext(program, context);

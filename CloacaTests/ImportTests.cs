@@ -239,9 +239,9 @@ namespace CloacaTests
     public class ClrImporterCodeTests : RunCodeTest
     {
         [Test]
-        public void ImportSystemEnvironmentInCode()
+        public async Task ImportSystemEnvironmentInCode()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import clr\n" +
                 "clr.AddReference('mscorlib')\n" +
                 "from System import Environment\n" +
@@ -252,9 +252,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ImportGenericList()
+        public async Task ImportGenericList()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import clr\n" +
                 "clr.AddReference('mscorlib')\n" +
                 "from System.Collections.Generic import List\n" +
@@ -271,9 +271,9 @@ namespace CloacaTests
         /// just reinforces that we can ingest this stuff externally from imports.
         /// </summary>
         [Test]
-        public void Guid()
+        public async Task Guid()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import clr\n" +
                 "clr.AddReference('mscorlib')\n" +
                 "from System import Guid\n" +
@@ -318,9 +318,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BasicImport()
+        public async Task BasicImport()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             var foo = finishedFrame.GetVariable("foo");
@@ -328,9 +328,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void TwoLevelImport()
+        public async Task TwoLevelImport()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import foo.bar\n", new Dictionary<string, object>(), moduleFinders, 1);
             
             var foobar = finishedFrame.GetVariable("foo.bar");
@@ -338,9 +338,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void TwoImportsOneLine()
+        public async Task TwoImportsOneLine()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import foo, foo2\n", new Dictionary<string, object>(), moduleFinders, 1);
             
             var foo = finishedFrame.GetVariable("foo");
@@ -350,9 +350,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void AliasedImport()
+        public async Task AliasedImport()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "import foo as fruit\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             var fooFruit = finishedFrame.GetVariable("fruit");
@@ -360,9 +360,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void FromImport()
+        public async Task FromImport()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "from foo import FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             var importedFooThing = finishedFrame.GetVariable("FooThing");
@@ -370,9 +370,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void FromCommaImport()
+        public async Task FromCommaImport()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             var importedFooThing = finishedFrame.GetVariable("FooThing");
@@ -382,9 +382,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void FromImportStar()
+        public async Task FromImportStar()
         {
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "from foo import *\n", new Dictionary<string, object>(), moduleFinders, 1);
 
             var importedFooThing = finishedFrame.GetVariable("FooThing");
@@ -397,11 +397,11 @@ namespace CloacaTests
 
         [Test]
         [Ignore("We can set module import levels but the current module system doesn't have an awareness of hierarchical position (yet).")]
-        public void FromDotDotImportStar()
+        public async Task FromDotDotImportStar()
         {
             // TODO: Need to actually set this test up to be a level below or whatever.
 
-            var finishedFrame = runProgram(
+            var finishedFrame = await runProgram(
                 "from .. import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
             // TODO: Assert *something*
         }

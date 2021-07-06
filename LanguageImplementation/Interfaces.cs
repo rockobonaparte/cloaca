@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation
@@ -119,6 +121,101 @@ namespace LanguageImplementation
         }
     }
 
+    /// <summary>
+    /// Returned from scheduling so the submitter has information about what was scheduled and when it finishes/finished
+    /// 
+    /// You can await on it to suspend the holder of the record until the associated task finishes.
+    /// </summary>
+    public class TaskEventRecord : INotifyCompletion
+    {
+        public FrameContext Frame { get; protected set; }
+        public ExceptionDispatchInfo EscapedExceptionInfo { get; protected set; }
+        public event OnTaskCompleted WhenTaskCompleted = (ignored) => { };
+        public event OnTaskExceptionEscaped WhenTaskExceptionEscaped = (ignoredRecord, ignoredExc) => { };
+        public bool Completed { get; protected set; }
+        public object ExtraMetadata;
+
+        private Action continuationIfAwaited;
+
+        public TaskEventRecord(FrameContext frame)
+        {
+            Frame = frame;
+            Completed = false;
+            EscapedExceptionInfo = null;
+            ExtraMetadata = null;
+        }
+
+        public void NotifyCompleted()
+        {
+            Completed = true;
+            WhenTaskCompleted(this);
+        }
+
+        public void NotifyEscapedException(ExceptionDispatchInfo escapedInfo)
+        {
+            Completed = true;
+            EscapedExceptionInfo = escapedInfo;
+            WhenTaskExceptionEscaped(this, escapedInfo);
+        }
+
+        #region INotifyCompletion and custom awaiter
+
+        public void OnCompleted(Action continuation)
+        {
+            if (Completed)
+            {
+                continuationIfAwaited();
+            }
+            else
+            {
+                continuationIfAwaited = continuation;
+            }
+        }
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return Completed;
+            }
+        }
+
+        public Task Continue()
+        {
+            continuationIfAwaited?.Invoke();
+            return Task.FromResult(this);
+        }
+
+        public TaskEventRecord GetAwaiter()
+        {
+            return this;
+        }
+
+        public TaskEventRecord GetResult()
+        {
+            return this;
+        }
+
+        #endregion INotifyCompletion and custom awaiter
+    }
+
+    public delegate void OnTaskCompleted(TaskEventRecord record);
+    public delegate void OnTaskExceptionEscaped(TaskEventRecord record, ExceptionDispatchInfo exc);
+
+    public class ScheduledTaskRecord
+    {
+        public FrameContext Frame;          // Also serves to uniquely identify this record in the scheduler's queues.
+        public ISubscheduledContinuation Continuation;
+        public TaskEventRecord SubmitterReceipt;
+
+        public ScheduledTaskRecord(FrameContext frame, ISubscheduledContinuation continuation, TaskEventRecord submitterReceipt)
+        {
+            Frame = frame;
+            Continuation = continuation;
+            SubmitterReceipt = submitterReceipt;
+        }
+    }
+
     public interface IScheduler
     {
         // This is called when the currently-active script is blocking. Call this right before invoking
@@ -131,6 +228,62 @@ namespace LanguageImplementation
 
         // Use to cooperatively stop running for just a single tick.
         void SetYielded(FrameContext frame, ISubscheduledContinuation continuation);
+
+        /// <summary>
+        /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
+        /// in order to do any other housekeeping like inject variables into it.
+        /// </summary>
+        /// <param name="program">The code to schedule.</param>
+        /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
+        TaskEventRecord Schedule(CodeObject program);
+
+        TaskEventRecord Schedule(CodeObject program, FrameContext context);
+
+        /// <summary>
+        /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
+        /// in function calls that need to be spun up as independent coroutines.
+        /// </summary>
+        /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
+        /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
+        /// <returns></returns>
+        TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args);
+
+        /// <summary>
+        /// Returns a copy of a list of all active tasks currently in the scheduler.
+        /// </summary>
+        /// <returns>All active tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are active.
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksActive();
+
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as blocked in the scheduler. Blocked tasks are waiting on an asynchronous result.
+        /// </summary>
+        /// <returns>All blocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksBlocked();
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as unblocked in the scheduler. These are tasks that have finished yielding or otherwise
+        /// got a value asynchronously that will let their scripts continue. Normally investigating this will not find much since these are moved into the
+        /// active queue after each scheduler tick. It is mostly useful for particular scheduler diagnostics.
+        /// </summary>
+        /// <returns>All unblocked tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        /// </returns>
+        ScheduledTaskRecord[] GetTasksUnblocked();
+
+        /// <summary>
+        /// Returns a copy of a list of all tasks that are currently marked as yielded in the scheduler. These are tasks that have taken a break from running. This
+        /// can happen either from an explicit yield instruction, or they have exhausted their prescribed run time--if that is even a thing with this scheduler.
+        /// </summary>
+        /// <returns>All yielded tasks in this scheduler. This list is a copy so manipulating the list doesn't directly manipulate which tasks are blocked
+        ScheduledTaskRecord[] GetTasksYielded();
+
+        /// <summary>
+        /// Gets the task currently running. This could be null if no task is running.
+        /// </summary>
+        /// <returns>The task that's currently running. This could be null if no task is running.</returns>
+        ScheduledTaskRecord GetCurrentTask();
     }
 
     public interface IInterpreter

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
+using LanguageImplementation.DataTypes;
 
 namespace LanguageImplementation
 {
@@ -28,7 +29,20 @@ namespace LanguageImplementation
         //   co_stacksize	    virtual machine stack space required
         //   co_varnames	    tuple of names of arguments and local variables
         //
-        public int ArgCount;            // co_argcount
+        // ArgCount here maps to co_argcount. This tracks the number of positional arguments, which will include defaults
+        // that don't follow a variable/keyword argument(s).
+        // >>> def derp(first, second, third=3, fourth=4):
+        // ...   pass
+        // ...
+        // >>> derp.__code__.co_argcount
+        // 4
+        // >>> def derp(first, second, *args, third=3, fourth=4):
+        // ...   pass
+        // ...
+        // >>> derp.__code__.co_argcount
+        // 2
+        public int ArgCount;
+
         public List<string> VarNames;   // co_varnames (not really; this should be a tuple used by LOAD_FAST/STORE_FAST
         public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LOAD_FAST/STORE_FAST
         public List<string> Names;      // co_names. Referenced by LOAD/STORE_NAME, LOAD/STORE_ATTR and globals.
@@ -42,6 +56,7 @@ namespace LanguageImplementation
         public byte[] lnotab;
         public int firstlineno;
         public int Flags;
+        public List<object> Defaults;
 
         // co_flag settings
         // The following flag bits are defined for co_flags: bit 0x04 is set if the function uses the *arguments syntax to
@@ -254,6 +269,7 @@ namespace LanguageImplementation
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
             newCodeObj.Flags = Flags;
+            newCodeObj.Defaults = Defaults != null ? Defaults : new List<object>();
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {

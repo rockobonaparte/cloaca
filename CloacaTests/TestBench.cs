@@ -9,6 +9,7 @@ using LanguageImplementation.DataTypes;
 using Antlr4.Runtime;
 using NUnit.Framework;
 using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -16,6 +17,7 @@ namespace CloacaTests
     public class RunCodeTest
     {
         protected List<ExceptionDispatchInfo> escapedExceptions;
+        protected TaskEventRecord receipt;
 
         protected void taskHadException(TaskEventRecord taskRecord, ExceptionDispatchInfo exc)
         {
@@ -33,35 +35,52 @@ namespace CloacaTests
             scheduled.SubmitterReceipt.WhenTaskExceptionEscaped -= taskHadException;
         }
 
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, out FrameContext context)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> moduleSpecFinders, int expectedIterations, bool checkExceptions=true)
         {
-            escapedExceptions = new List<ExceptionDispatchInfo>();
-            CodeObject compiledProgram = null;
-            try
-            {
-                compiledProgram = ByteCodeCompiler.Compile(program, variablesIn);
-            }
-            catch(CloacaParseException parseFailed)
-            {
-                Assert.Fail(parseFailed.Message);
-            }
-
-            Dis.dis(compiledProgram);
-
             // TODO: This dependency association is kind of gross. It's almost circular and is broken by assigning
             // the interpreter reference to the schedular after its initial constructor.
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
-            foreach(var finder in moduleSpecFinders)
+            foreach (var finder in moduleSpecFinders)
             {
                 interpreter.AddModuleFinder(finder);
             }
             scheduler.SetInterpreter(interpreter);
             scheduler.OnTaskScheduled += whenTaskScheduled;
 
-            var receipt = scheduler.Schedule(compiledProgram);
-            context = receipt.Frame;
+            escapedExceptions = new List<ExceptionDispatchInfo>();
+            CodeObject compiledProgram = null;
+            Task<CodeObject> compiledTask = null;
+            try
+            {
+                // This is awaitable now but relies on the scheduler. We'll tick the scheduler
+                // awhile until this resolves.
+                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
+            }
+            catch (CloacaParseException parseFailed)
+            {
+                Assert.Fail(parseFailed.Message);
+            }
+
+            for (int tries = 1; tries < 1000 && !compiledTask.IsCompleted && escapedExceptions.Count == 0; ++tries)
+            {
+                scheduler.Tick();
+            }
+
+            if (!compiledTask.IsCompleted)
+            {
+                Assert.Fail("Compilation did not finish with interpreter after 1,000 scheduler ticks");
+            }
+            else if (escapedExceptions.Count > 0)
+            {
+                escapedExceptions[0].Throw();
+            }
+            compiledProgram = await compiledTask;
+            Dis.dis(compiledProgram);
+
+            receipt = scheduler.Schedule(compiledProgram);
+            FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
             {
                 context.SetVariable(varName, variablesIn[varName]);
@@ -72,45 +91,47 @@ namespace CloacaTests
             var scheduler_task = scheduler.RunUntilDone();
             scheduler_task.Wait();
             Assert.That(receipt.Completed);
+
+            if(checkExceptions)
+            {
+                AssertNoExceptions();
+            }
+            
+            Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
+            return context;
+        }
+
+        public void AssertNoDotNetExceptions()
+        {
+            // For now, just throw the topmost exception if we have one. It would mean if there are
+            // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
+            // debug them.
+            if (escapedExceptions.Count > 0)
+            {
+                escapedExceptions[0].Throw();
+            }
+        }
+
+        public void AssertNoExceptions()
+        {
             if(receipt.EscapedExceptionInfo != null)
             {
                 receipt.EscapedExceptionInfo.Throw();
             }
-
-            // For now, just throw the topmost exception if we have one. It would mean if there are
-            // multiple exceptions that we have a game of whack-a-mole going on as we sequentially
-            // debug them.
-            if(escapedExceptions.Count > 0)
-            {
-                escapedExceptions[0].Throw();
-            }
-
-            Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
+            AssertNoDotNetExceptions();
         }
 
-        protected void runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, out FrameContext context)
-        {
-            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
-        }
 
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations)
+        protected async Task<FrameContext> runProgram(string program, Dictionary<string, object> variablesIn, int expectedIterations, bool checkExceptions=true)
         {
-            FrameContext context;
-            runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, out context);
+            FrameContext context = await runProgram(program, variablesIn, new List<ISpecFinder>(), expectedIterations, checkExceptions);
             return context;
         }
 
-        protected FrameContext runProgram(string program, Dictionary<string, object> variablesIn, List<ISpecFinder> modulesSpecFinders, int expectedIterations)
-        {
-            FrameContext context;
-            runProgram(program, variablesIn, modulesSpecFinders, expectedIterations, out context);
-            return context;
-        }
-
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
+        protected async Task runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations,
             string[] ignoreVariables)
         {
-            var context = runProgram(program, variablesIn, expectedIterations);
+            var context = await runProgram(program, variablesIn, expectedIterations);
             var variables = new VariableMultimap(context);
             try
             {
@@ -122,20 +143,20 @@ namespace CloacaTests
             }
         }
 
-        protected void runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations)
+        protected async Task runBasicTest(string program, Dictionary<string, object> variablesIn, VariableMultimap expectedVariables, int expectedIterations)
         {
-            runBasicTest(program, variablesIn, expectedVariables, expectedIterations, new string[0]);
+            await runBasicTest(program, variablesIn, expectedVariables, expectedIterations, new string[0]);
         }
 
 
-        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations)
+        protected async Task runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations)
         {
-            runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, new string[0]);
+            await runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, new string[0]);
         }
 
-        protected void runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations, string[] ignoreVariables)
+        protected async Task runBasicTest(string program, VariableMultimap expectedVariables, int expectedIterations, string[] ignoreVariables)
         {
-            runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, ignoreVariables);
+            await runBasicTest(program, new Dictionary<string, object>(), expectedVariables, expectedIterations, ignoreVariables);
         }
     }
 }

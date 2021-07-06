@@ -214,9 +214,12 @@ namespace CloacaInterpreter
         /// 
         /// Look at InterpretAsync if you'd like to receive the text output directly and block until evaluation has
         /// completely finished.
+        /// 
+        /// This call still is async and blocks a little due to having to build the code. While evaluating the code, we
+        /// might have to actually execute code. For example, defaults in functions get evaluated at definition time.
         /// </summary>
         /// <param name="input">The code to interpret. Note that REPL code should have a trailing newline.</param>
-        public void Interpret(string input)
+        public async Task Interpret(string input)
         {
             CaughtError = false;
 
@@ -253,6 +256,7 @@ namespace CloacaInterpreter
 
             var visitor = new CloacaBytecodeVisitor(ContextVariables);
             visitor.Visit(antlrVisitorContext);
+            await visitor.PostProcess(Scheduler);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();
 

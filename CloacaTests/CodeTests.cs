@@ -4,19 +4,208 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation;
+using CloacaInterpreter;
 using System;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
+    /// <summary>
+    /// Tests our helper for matching positional, keyword, defaults, vargs, and kwargs
+    /// between parameters and their arguments. The different ways this could get done
+    /// had gotten out of hand and was become cumbersome to hit in code tests. Also,
+    /// the implementation of it was also getting out of hand and we really needed a helper.
+    /// </summary>
+    [TestFixture]
+    public class ArgParamMatchTests
+    {
+        public void InOutTest(CodeObject co, object[][] ins, Dictionary<string, object>[] keywordsIn, object[][] outs)
+        {
+            for (int i = 0; i < ins.Length; ++i)
+            {
+                var outParams = ArgParamMatcher.Resolve(co, ins[i], keywordsIn[i]);
+                Assert.That(outParams, Is.EqualTo(outs[i]), "Failed Test #" + (i + 1));
+            }
+        }
+
+        [Test]
+        public void OneToOne()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("onevar");
+
+            var inParams = new object[1];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public void OneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("has_default");
+
+            var inParams = new object[0];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(new object[] { -1 }));
+        }
+
+        [Test]
+        public void TwoParams()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("one");
+            co.VarNames.Add("two");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                new Dictionary<string, object> { { "two", 4 } },
+                new Dictionary<string, object> { { "one", 5 }, { "two", 6 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, 4 },
+                new object[] { 5, 6 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void TwoParamsOneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("onevar");
+            co.VarNames.Add("has_default");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+                new object[] { },
+                new object[] { 7 },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                new Dictionary<string, object> { { "onevar", 4 }, { "has_default", 5 } },
+                new Dictionary<string, object> { { "onevar", 6 } },
+                new Dictionary<string, object> { { "has_default", 8 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, -1 },
+                new object[] { 4, 5 },
+                new object[] { 6, -1 },
+                new object[] { 7, 8 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void VargsOnly()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 0;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("args");
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+            };
+            var outputs = new object[][]
+            {
+                new object[] { PyTuple.Create(new object[] { 1 }) },
+                new object[] { PyTuple.Create(new object[0]) }
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void ArgsDefaultsVargs()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 4;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("a");
+            co.VarNames.Add("b");
+            co.VarNames.Add("c");
+            co.VarNames.Add("d");
+            co.VarNames.Add("e");
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.Defaults.Add(-2);
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, 5 },
+                new object[] { 6, 7, 8, 9 },
+                new object[] { 10, 11, 12 },
+                new object[] { 13, 14 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 }, { "e", PyTuple.Create(new object[] { 19 }) } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, PyTuple.Create(new object[] { 5 }) },
+                new object[] { 6, 7, 8, 9, PyTuple.Create(new object[0]) },
+                new object[] { 10, 11, 12, -2, PyTuple.Create(new object[0]) },
+                new object[] { 13, 14, -1, -2, PyTuple.Create(new object[0]) },
+                new object[] { 15, 16, 17, 18, PyTuple.Create(new object[] { 19 }) },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+
+        }
+    }
+
     [TestFixture]
     public class Basics : RunCodeTest
     {
         [Test]
-        public void SimpleAssignment()
+        public async Task SimpleAssignment()
         {
-            runBasicTest("a = 10\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = 10\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyInteger.Create(10) }
             }), 1);
@@ -27,9 +216,9 @@ namespace CloacaTests
         /// We didn't run this well before.
         /// </summary>
         [Test]
-        public void SimpleAssignmentAndLoad()
+        public async Task SimpleAssignmentAndLoad()
         {
-            runBasicTest("a = 10\n" +
+            await runBasicTest("a = 10\n" +
                          "a\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyInteger.Create(10) }
@@ -37,27 +226,27 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SimpleIntMath()
+        public async Task SimpleIntMath()
         {
-            runBasicTest("a = 10 * (2 + 4) / 3\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = 10 * (2 + 4) / 3\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyFloat.Create(20.0) }
             }), 1);
         }
 
         [Test]
-        public void SimpleFloatMath()
+        public async Task SimpleFloatMath()
         {
-            runBasicTest("a = 10.0 * (2.0 + 4.0) / 3.0\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = 10.0 * (2.0 + 4.0) / 3.0\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyFloat.Create(20.0) }
             }), 1);
         }
 
         [Test]
-        public void ComprehensiveArithmeticOperators()
+        public async Task ComprehensiveArithmeticOperators()
         {
-            runBasicTest(
+            await runBasicTest(
                 "x = 10\n" +
                 "a = x + 2\n" +
                 "b = x - 2\n" +
@@ -89,10 +278,10 @@ namespace CloacaTests
         }
 
         [Test]
-        public void RepeatedArithmeticOperators()
+        public async Task RepeatedArithmeticOperators()
         {
             // Making sure that we're properly parsing and generating all of these when there's multiples of the operator.
-            runBasicTest(
+            await runBasicTest(
                 "x = 100\n" +
                 "a = x + 2 + 3\n" +
                 "b = x - 2 - 3\n" +
@@ -102,7 +291,7 @@ namespace CloacaTests
                 "f = x // 2 // 3\n" +
                 "g = x ** 2 ** 3\n" +
                 "h = x & 3 & 2\n" +
-                "i = x | 13 | 1 \n" +                 
+                "i = x | 13 | 1 \n" +
                 "j = x ^ 2 ^ 1\n" +
                 "k = x >> 2 >> 3\n" +
                 "l = x << 2 << 3\n"
@@ -124,7 +313,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void AssignmentOperators()
+        public async Task AssignmentOperators()
         {
             // https://www.w3schools.com/python/python_operators.asp
             // +=	x += 3	x = x + 3	
@@ -139,7 +328,7 @@ namespace CloacaTests
             // ^=	x ^= 3	x = x ^ 3	
             // >>=	x >>= 3	x = x >> 3	
             // <<=	x <<= 3	x = x << 3
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "b = 10\n" +
                 "c = 10\n" +
@@ -182,37 +371,37 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SimpleStrAssign()
+        public async Task SimpleStrAssign()
         {
-            runBasicTest("a = 'Hello!'\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = 'Hello!'\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyString.Create("Hello!") }
             }), 1);
 
-            runBasicTest("a = \"Hello!\"\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = \"Hello!\"\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyString.Create("Hello!") }
             }), 1);
         }
 
         [Test]
-        public void SimpleBoolAssign()
+        public async Task SimpleBoolAssign()
         {
-            runBasicTest("a = True\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = True\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyBool.True }
             }), 1);
 
-            runBasicTest("a = False\n", new VariableMultimap(new TupleList<string, object>
+            await runBasicTest("a = False\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyBool.False }
             }), 1);
         }
 
         [Test]
-        public void Comparisons()
+        public async Task Comparisons()
         {
-            runBasicTest("a = 10\n" +
+            await runBasicTest("a = 10\n" +
                 "b = a < 10\n" +
                 "c = a == 10\n" +
                 "d = a != 10\n" +
@@ -234,9 +423,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void InvertWithNot()
+        public async Task InvertWithNot()
         {
-            runBasicTest("a = True\n" +
+            await runBasicTest("a = True\n" +
                 "b = not a\n",
             new VariableMultimap(new TupleList<string, object>
             {
@@ -246,9 +435,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void IsNoneIsNotNone()
+        public async Task IsNoneIsNotNone()
         {
-            runBasicTest("b = a is None\n" +
+            await runBasicTest("b = a is None\n" +
                 "c = a is not None\n",
             new Dictionary<string, object>
             {
@@ -262,7 +451,7 @@ namespace CloacaTests
             }), 1);
 
             // Now let's flip A around and make sure we're still cool.
-            runBasicTest("b = a is None\n" +
+            await runBasicTest("b = a is None\n" +
                 "c = a is not None\n",
             new Dictionary<string, object>
             {
@@ -277,20 +466,20 @@ namespace CloacaTests
         }
 
         [Test]
-        public void CantAssignToNone()
+        public async Task CantAssignToNone()
         {
             FrameContext runContext = null;
-            Assert.Throws<Exception>(
-              () => {
-                  runProgram(
-                    "None = 1\n", new Dictionary<string, object>(), 1, out runContext);
+            Assert.ThrowsAsync<Exception>(
+              async () => {
+                  runContext = await runProgram(
+                    "None = 1\n", new Dictionary<string, object>(), 1);
               }, "SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
 
         [Test]
-        public void BasicWait()
+        public async Task BasicWait()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10 * (2 + 4) / 3\n" +
                 "wait\n" +
                 "b = a + 3\n", new VariableMultimap(new TupleList<string, object>
@@ -301,9 +490,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BasicConditionalTrue()
+        public async Task BasicConditionalTrue()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "if a == 10:\n" +
                 "   a = 1\n" +
@@ -314,9 +503,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BasicConditionalExplicitTrue()
+        public async Task BasicConditionalExplicitTrue()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "if True:\n" +
                 "   a = 1\n" +
@@ -327,10 +516,10 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BasicConditionalOffTheEnd()
+        public async Task BasicConditionalOffTheEnd()
         {
             // Conditional is last opcode. We want to fall-through without going out of bounds
-            runBasicTest(
+            await runBasicTest(
                 "a = 9\n" +
                 "if a == 10:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
@@ -340,9 +529,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void BasicConditionalFalse()
+        public async Task BasicConditionalFalse()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "if a != 10:\n" +
                 "   a = 1\n" +
@@ -353,9 +542,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void IfElseInvert()
+        public async Task IfElseInvert()
         {
-            runBasicTest("blip = True\n" +
+            await runBasicTest("blip = True\n" +
                          "if blip is True:\n" +
                          "   blip = False\n" +
                          "else:\n" +
@@ -365,7 +554,7 @@ namespace CloacaTests
                 { "blip", PyBool.False }
             }), 1);
 
-            runBasicTest("blip = False\n" +
+            await runBasicTest("blip = False\n" +
                          "if blip is True:\n" +
                          "   blip = False\n" +
                          "else:\n" +
@@ -377,11 +566,11 @@ namespace CloacaTests
         }
 
         [Test]
-        public void LogicOperations()
+        public async Task LogicOperations()
         {
             // When first implemented, this was generated a bunch of loads
             // and then storing the last value pushed on the stack to d.
-            runBasicTest("d = a and a or b and not c\n",
+            await runBasicTest("d = a and a or b and not c\n",
             new Dictionary<string, object>
             {
                 { "a", PyBool.True },
@@ -393,7 +582,7 @@ namespace CloacaTests
                 { "d", PyBool.True }
             }), 1);
 
-            runBasicTest("d = a and a or b and not c\n",
+            await runBasicTest("d = a and a or b and not c\n",
             new Dictionary<string, object>
             {
                 { "a", PyBool.False },
@@ -407,11 +596,11 @@ namespace CloacaTests
         }
 
         [Test]
-        public void LogicIsNot()
+        public async Task LogicIsNot()
         {
             // When first implemented, this was generated a bunch of loads
             // and then storing the last value pushed on the stack to d.
-            runBasicTest("a = False\n" +
+            await runBasicTest("a = False\n" +
                          "b = a is not True\n",
             new VariableMultimap(new TupleList<string, object>
             {
@@ -420,9 +609,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void WhileBasic()
+        public async Task WhileBasic()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "while a < 3:\n" +
                 "   a = a + 1\n", new VariableMultimap(new TupleList<string, object>
@@ -432,7 +621,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void WhileElse()
+        public async Task WhileElse()
         {
             string program =
                 "while a < 3:\n" +
@@ -441,7 +630,7 @@ namespace CloacaTests
                 "   a = a + 100\n";
 
             // Runs while loop, then the else clause
-            runBasicTest(program,
+            await runBasicTest(program,
                 new Dictionary<string, object>
                 {
                     { "a", PyInteger.Create(0) }
@@ -451,8 +640,8 @@ namespace CloacaTests
                 }), 1);
 
             // Skips the while loop, runs the else clause
-            runBasicTest(program,
-                new Dictionary<string, object> 
+            await runBasicTest(program,
+                new Dictionary<string, object>
                 {
                     { "a", PyInteger.Create(10) }
                 }, new VariableMultimap(new TupleList<string, object>
@@ -462,7 +651,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SingleLayerIfElifElse()
+        public async Task SingleLayerIfElifElse()
         {
             string program =
                 "if a == 10:\n" +
@@ -473,7 +662,7 @@ namespace CloacaTests
                 "   a = 5\n" +
                 "a = a + 1\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new Dictionary<string, object>
                 {
                     { "a", PyInteger.Create(10) }
@@ -482,7 +671,7 @@ namespace CloacaTests
                     { "a", PyInteger.Create(2) }
                 }), 1);
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new Dictionary<string, object>
                 {
                     { "a", PyInteger.Create(11) }
@@ -491,7 +680,7 @@ namespace CloacaTests
                     { "a", PyInteger.Create(4) }
                 }), 1);
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new Dictionary<string, object>
                 {
                     { "a", PyInteger.Create(12) }
@@ -502,10 +691,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void NamesAreNotDefinedMultipleTimes()
+        public async Task NamesAreNotDefinedMultipleTimes()
         {
-            FrameContext runContext = null;
-            runProgram(
+            FrameContext runContext = await runProgram(
                 "class Foo:\n" +
                 "  def __init__(self):\n" +
                 "    self.a = 1\n" +
@@ -514,7 +702,7 @@ namespace CloacaTests
                 "a = 3\n" +
                 "foo.a = 2\n" +
                 "foo.a = a\n",
-                new Dictionary<string, object>(), 1, out runContext);
+                new Dictionary<string, object>(), 1);
 
             Assert.That(runContext.LocalNames.Count, Is.EqualTo(3));
             Assert.That(runContext.LocalNames.Contains("Foo"));
@@ -531,14 +719,14 @@ namespace CloacaTests
     public class FunctionTests : RunCodeTest
     {
         [Test]
-        public void VoidIntFunction()
+        public async Task VoidIntFunction()
         {
             string program =
                 "def foo():\n" +
                 "   return 1\n" +
                 "a = foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(1) }
@@ -546,14 +734,14 @@ namespace CloacaTests
         }
 
         [Test]
-        public void IntIntFunction()
+        public async Task IntIntFunction()
         {
             string program =
                 "def foo(x):\n" +
                 "   return x+1\n" +
                 "a = foo(3)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(4) }
@@ -561,7 +749,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void Int2IntFunction()
+        public async Task Int2IntFunction()
         {
             // Using a non-communative operator will help validate ordering
             string program =
@@ -569,7 +757,7 @@ namespace CloacaTests
                 "   return x - y\n" +
                 "a = foo(6, 2)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(4) }
@@ -577,7 +765,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void DoubleDefine()
+        public async Task DoubleDefine()
         {
             string program =
                 "def foo():\n" +
@@ -586,7 +774,7 @@ namespace CloacaTests
                 "   return 2\n" +
                 "a = foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(2) }
@@ -595,7 +783,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void Vargs()
+        public async Task Vargs()
         {
             string program =
                 "def varg_sum(*args):\n" +
@@ -605,11 +793,166 @@ namespace CloacaTests
                 "   return ret_sum\n" +
                 "a = varg_sum(1, 7, 11)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(19) }
-                }), 1, new string[] { "foo" });
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Implement kwargs is a work-in-progress")]
+        public async Task KwargsOnly()
+        {
+            string program =
+                "def kwarg_math(**kwargs):\n" +
+                "   return kwargs['a'] + 10 * kwargs['b']\n" +
+                "a = kwarg_math(a=1, b=3)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(31) }
+                }), 1);
+        }
+
+        [Test]
+        public async Task OneDefaultVariable()
+        {
+            string program =
+                "def defaults_math(a=1):\n" +
+                "   return a + 10\n" +
+                "result = defaults_math(a=2)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "result", PyInteger.Create(12) },
+                }), 2);                 // Two iterations since we have to execute the a=1 default as a separate run.
+        }
+
+        [Test]
+        public async Task DefaultCombinations()
+        {
+            string program =
+                "def defaults_math(a=1, b=3):\n" +
+                "   return a + 10 * b\n" +
+                "a = defaults_math()\n" +
+                "b = defaults_math(2)\n" +
+                "c = defaults_math(2, 4)\n" +
+                "d = defaults_math(a=2, b=4)\n" +
+                "e = defaults_math(a=4, b=2)\n" +
+                "f = defaults_math(a=2)\n" +
+                "g = defaults_math(b=4)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(31) },
+                    { "b", PyInteger.Create(32) },
+                    { "c", PyInteger.Create(42) },
+                    { "d", PyInteger.Create(42) },
+                    { "e", PyInteger.Create(24) },
+                    { "f", PyInteger.Create(32) },
+                    { "g", PyInteger.Create(41) },
+                }), 3);                 // a=1 and b=3 are all their own iterations
+            AssertNoDotNetExceptions();
+        }
+
+        // TODO: [DEFAULTS SCOPE] Pass outer scope to defaults
+        [Test]
+        [Ignore("We don't convey the outer scope into these functions yet, but it is valid Python syntax to do so for defaults.")]
+        public async Task UseOuterscopeInDefaults()
+        {
+            string program =
+                "jkl = 33\n" +
+                "def kwarg_math(a=1+jkl,b=3+jkl):\n" +
+                "   return a-b\n" +
+                "a = kwarg_math()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(1+33-3-33) }
+                }), 1);
+        }
+
+        [Test]
+        public async Task PrecalculatedDefaults()
+        {
+            string program =
+                "def kwarg_math(a=1+2*3-4,b=20-5+3):\n" +
+                "   return a-b\n" +
+                "a = kwarg_math()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(1+2*3-4 - (20-5+3)) }
+                }), 3);
+        }
+
+        [Test]
+        public async Task DefaultsVargsArgs()
+        {
+            string program =
+                "def varg_sum(initial, addon=0, *args):\n" +
+                "   ret_sum = initial\n" +
+                "   for arg in args:\n" +
+                "      ret_sum += arg + addon\n" +
+                "   return ret_sum\n" +
+                "a = varg_sum(1, 7, 11)\n" +
+                // [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
+                // "b = varg_sum(1, 7, 11, addon=-1)\n" +      // This should fail with TypeError: varg_sum() got multiple values for argument 'addon'
+                // "b = varg_sum(1, addon=-1, 7, 11)\n" +      // SyntaxError: positional argument follows keyword argument
+                "c = varg_sum(1)\n" +
+                "d = varg_sum(2, addon=3)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(19) },
+                    { "c", PyInteger.Create(1) },
+                    { "d", PyInteger.Create(2) }        // There are now *args so addon actually doesn't get used
+                }), 2);
+        }
+
+        [Test]
+        [Ignore("Implementing defaults/kwargs is a work-in-progress. This isn't even syntactically correct right now; I'm not sure how to use mad1")]
+        public async Task DefaultsVargsArgsKwargs()
+        {
+            string program =
+                "def mad1(initial, addon=0, *numbers, **kwargs):\n" +
+                "   ret_sum = initial\n" +
+                "   for number in numbers:\n" +
+                "      ret_sum += kwargs['mult1'] * number + addon\n" +
+                "   return ret_sum\n" +
+                "\n" +
+                "def mad2(initial, *numbers, addon=0, **kwargs):\n" +
+                "   ret_sum = initial\n" +
+                "   for number in numbers:\n" +
+                "      ret_sum += kwargs['mult2'] * number + addon\n" +
+                "   return ret_sum\n" +
+                "\n" +
+                "kwarg = { 'mult1': 10, 'mult2': 100 }\n" +
+                "a = mad1(1, 7, 11, kwarg)\n" +
+                "b = mad1(1, addon=6, 11, kwarg)\n" +
+                "c = mad1(1, addon=1, 11, 12, kwarg)\n" +
+                "d = mad2(1, 7, 11, kwarg)\n" +
+                "e = mad2(1, 11, addon=6, kwarg)\n" +
+                "f = mad2(1, 11, 12, addon=1, kwarg)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    // These values have not been properly established yet since we're not even sure what are legal calls and what they do yet.
+                    { "a", PyInteger.Create(19) },
+                    { "b", PyInteger.Create(19) },
+                    { "c", PyInteger.Create(19) },
+                    { "d", PyInteger.Create(19) },
+                    { "e", PyInteger.Create(19) },
+                    { "f", PyInteger.Create(19) }
+                }), 1);
         }
 
         // TODO: [CALL_FUNCTION_EX] use CALL_FUNCTION_EX when calling a function taking vargs that's being fed unpacked data
@@ -619,7 +962,7 @@ namespace CloacaTests
         /// </summary>
         [Test]
         [Ignore("Variable arguments are not yet supported")]
-        public void VargsUnpackingOperator()
+        public async Task VargsUnpackingOperator()
         {
             string program =
                 "def varg_sum(*args):\n" +
@@ -630,11 +973,11 @@ namespace CloacaTests
                 "to_unpack = [1, 7, 11]\n" +
                 "a = varg_sum(*to_unpack)\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(19) }
-                }), 1, new string[] { "foo" });
+                }), 1);
         }
 
     }

@@ -11,7 +11,7 @@ namespace InterpreterWaiting
 {
     class Program
     {
-        static CodeObject compileCode(string program, Dictionary<string, object> variablesIn)
+        static CodeObject compileCode(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -24,6 +24,7 @@ namespace InterpreterWaiting
 
             var visitor = new CloacaBytecodeVisitor(variablesIn);
             visitor.Visit(context);
+            visitor.PostProcess(scheduler);
 
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
             CodeObject compiledProgram = visitor.RootProgram.Build();
@@ -49,18 +50,19 @@ namespace InterpreterWaiting
                            "f = e + 2\n";
             var variablesIn = new Dictionary<string, object>();
 
-            CodeObject compiledProgram1 = compileCode(program1, variablesIn);
-            CodeObject compiledProgram2 = compileCode(program2, variablesIn);
-            CodeObject compiledProgram3 = compileCode(program3, variablesIn);
+            throw new NotImplementedException("Currently blocking out code here while figuring out how to get paramenter defaults to be calculated");
+            //CodeObject compiledProgram1 = compileCode(program1, variablesIn);
+            //CodeObject compiledProgram2 = compileCode(program2, variablesIn);
+            //CodeObject compiledProgram3 = compileCode(program3, variablesIn);
 
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
             scheduler.SetInterpreter(interpreter);
 
-            scheduler.Schedule(compiledProgram1);
-            scheduler.Schedule(compiledProgram2);
-            scheduler.Schedule(compiledProgram3);
+            //scheduler.Schedule(compiledProgram1);
+            //scheduler.Schedule(compiledProgram2);
+            //scheduler.Schedule(compiledProgram3);
 
             while(!scheduler.Done)
             {

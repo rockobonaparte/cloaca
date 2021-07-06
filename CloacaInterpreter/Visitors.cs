@@ -8,7 +8,7 @@ using Language;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 using CloacaInterpreter;
-
+using System.Threading.Tasks;
 
 /// <summary>
 /// Use to raise parsing issues while we figure out a better way to do this.
@@ -45,6 +45,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<CodeObjectBuilder> ProgramStack;
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
+    private List<Func<IScheduler, Task>> postProcessActions;
+
 
     public CloacaBytecodeVisitor()
     {
@@ -52,6 +54,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
+        postProcessActions = new List<Func<IScheduler, Task>>();
     }
 
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
@@ -62,6 +65,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             ActiveProgram.VarNames.Add(name);
         }
+    }
+
+    ///// <summary>
+    ///// Runs post-processing steps on the byte code before committing the final code object. This is used to do things like
+    ///// calculate default parameters. An interpreter instance is needed to run on these and produce the final values to be
+    ///// used. Callbacks are enqueued as the visitor visits the code, and need to be run here afterwards.
+    ///// </summary>
+    ///// <param name="frame_context">Context from which this byte code visitor is generating code.</param>
+    ///// <param name="interpreter">Interpreter instance that will execute any extra code necessary to finish off code visitation.</param>
+    public async Task PostProcess(IScheduler scheduler)
+    {
+        foreach (var action in postProcessActions)
+        {
+            await action.Invoke(scheduler);
+        }
+        postProcessActions.Clear();
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
@@ -77,7 +96,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
-        if(nameIdx >= 0)
+        if (nameIdx >= 0)
         {
             ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx, context);
             return;
@@ -92,7 +111,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private void generateStoreForVariable(string variableName, ParserRuleContext context)
     {
-        if(variableName == "None")
+        if (variableName == "None")
         {
             throw new Exception("SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
@@ -147,7 +166,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Assign them to lexer names breaks the context up for each field by their rate of occurrence,
         // not position. So I just have to do hard-coded string matches! Yay! =D
         Visit(context.factor(0));
-        for(int child_i = 2; child_i < context.children.Count; child_i+=2)
+        for (int child_i = 2; child_i < context.children.Count; child_i += 2)
         {
             Visit(context.children[child_i]);
             string operatorTxt = context.children[child_i - 1].GetText();
@@ -158,15 +177,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_MULTIPLY, context);
             }
-            else if(operatorTxt == "/")
+            else if (operatorTxt == "/")
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_TRUE_DIVIDE, context);
             }
-            else if(operatorTxt == "%")
+            else if (operatorTxt == "%")
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_MODULO, context);
             }
-            else if(operatorTxt == "//")
+            else if (operatorTxt == "//")
             {
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_FLOOR_DIVIDE, context);
             }
@@ -269,7 +288,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitReturn_stmt([NotNull] CloacaParser.Return_stmtContext context)
     {
-        if(context.testlist() == null)
+        if (context.testlist() == null)
         {
             var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
@@ -297,7 +316,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitGlobal_stmt([NotNull] CloacaParser.Global_stmtContext context)
     {
-        for(int name_i = 0; name_i < context.NAME().Length; ++name_i)
+        for (int name_i = 0; name_i < context.NAME().Length; ++name_i)
         {
             var name = context.NAME(name_i).GetText();
             ActiveProgram.Names.AddGetIndex(name);
@@ -307,34 +326,34 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
     {
-        if(context.testlist_star_expr().Length > 2 || 
+        if (context.testlist_star_expr().Length > 2 ||
             (context.GetToken(CloacaParser.ASSIGN, 0) == null && context.testlist_star_expr().Length == 2))
         {
             throw new Exception("Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
         }
 
         // Single-statement 
-        if(context.testlist_star_expr().Length == 1)
+        if (context.testlist_star_expr().Length == 1)
         {
             // (wait keyword) TODO: Remove when the wait keyword is turned into a function!
             if (context.testlist_star_expr(0).GetText() == "wait")
             {
                 VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
             }
-            else if(context.augassign() != null)
+            else if (context.augassign() != null)
             {
                 Visit(context.testlist());
                 Visit(context.testlist_star_expr(0));               // Generates load for destination
                 string augassign = context.augassign().GetText();
-                if(augassign == "+=")
+                if (augassign == "+=")
                 {
                     ActiveProgram.AddInstruction(ByteCodes.INPLACE_ADD, context);
                 }
-                else if(augassign == "-=")
+                else if (augassign == "-=")
                 {
                     ActiveProgram.AddInstruction(ByteCodes.INPLACE_SUBTRACT, context);
                 }
-                else if(augassign == "*=")
+                else if (augassign == "*=")
                 {
                     ActiveProgram.AddInstruction(ByteCodes.INPLACE_MULTIPLY, context);
                 }
@@ -434,7 +453,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 generateLoadForVariable(variableName, context);
 
                 int last_trailer_idx = maybeAtom.trailer().Length - 1;
-                for(int trailer_idx = 0; trailer_idx < last_trailer_idx; ++trailer_idx)
+                for (int trailer_idx = 0; trailer_idx < last_trailer_idx; ++trailer_idx)
                 {
                     var loadAttrName = maybeAtom.trailer()[trailer_idx].NAME().GetText();
                     var loadAttrIdx = ActiveProgram.Names.AddGetIndex(loadAttrName);
@@ -469,7 +488,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitFile_input([NotNull] CloacaParser.File_inputContext context)
     {
-        for(int i = 0; i < context.stmt().Length; ++i)
+        for (int i = 0; i < context.stmt().Length; ++i)
         {
             base.VisitStmt(context.stmt(i));
         }
@@ -624,7 +643,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             // If there's actually more than one expression here then we're dealing with a tuple and we need to have
             // it unpacked.
-            if(context.exprlist().expr().Length > 1)
+            if (context.exprlist().expr().Length > 1)
             {
                 ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.exprlist().expr().Length, context);
             }
@@ -666,9 +685,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     /// <returns></returns>
     private int getFirstIndexOfText(IList<Antlr4.Runtime.Tree.IParseTree> children, string text)
     {
-        for(int foundIdx = 0; foundIdx < children.Count; ++foundIdx)
+        for (int foundIdx = 0; foundIdx < children.Count; ++foundIdx)
         {
-            if(children[foundIdx].GetText() == text)
+            if (children[foundIdx].GetText() == text)
             {
                 return foundIdx;
             }
@@ -768,7 +787,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // else block
         int startOfElseBlock = ActiveProgram.Code.Count;
-        if(hasElse)
+        if (hasElse)
         {
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
@@ -855,7 +874,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         int nameIndex = findConstantIndex<string>(funcName);
-        if(nameIndex < 0)
+        if (nameIndex < 0)
         {
             ActiveProgram.Constants.Add(funcName);
             nameIndex = ActiveProgram.Constants.Count - 1;
@@ -872,7 +891,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // Did we end with a RETURN_VALUE? If not, return None. Kind of hacky but the alternative is tracking the
         // state for this, and it gets ugly if there are multiple blocks with returns in them.
-        if(ActiveProgram.Code.Count < 1 || ActiveProgram.Code[ActiveProgram.Code.Count-2] != (byte) ByteCodes.RETURN_VALUE)
+        if (ActiveProgram.Code.Count < 1 || ActiveProgram.Code[ActiveProgram.Code.Count - 2] != (byte)ByteCodes.RETURN_VALUE)
         {
             var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
@@ -896,7 +915,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
         //
         // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
-        if(context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
+        if (context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
         {
             var nameIdx = ActiveProgram.Names.AddGetIndex(funcName);
@@ -1015,7 +1034,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             for (int child_i = 2; child_i < context.children.Count; child_i += 2)
             {
                 Visit(context.children[child_i]);
-                Visit(context.children[child_i-1]);
+                Visit(context.children[child_i - 1]);
                 ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
             }
             return null;
@@ -1073,31 +1092,95 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
     {
-        // We particularly need to see if there are variable arguments or keyword arguments so we can flag them in the code object we're making.
-        // Those flags will make sure we put stuff in the right names.
-        if(context.GetText().StartsWith("*"))
+        if (ActiveProgram.Defaults == null)
         {
-            if(context.GetText().StartsWith("**"))
-            {
-                if ((ActiveProgram.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
-                {
-                    throw new Exception("SyntaxError: invalid syntax (more than one kwarg declaration).");
-                }
+            ActiveProgram.Defaults = new List<object>();
+        }
 
+        // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
+        // Hunting for defaults, *args, and **kwargs. Oh, and regular ole' parameter names without any gravy.
+        for (int child_i = 0; child_i < context.children.Count; ++child_i)
+        {
+            if (context.children[child_i].GetText() == "*")
+            {
+                ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
+                Visit(context.children[child_i]);
+            }
+            else if (context.children[child_i].GetText() == "**")
+            {
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
-                throw new NotImplementedException("Keyword args (specified with ** are not supported yet");
+                Visit(context.children[child_i]);
+                // TODO: [**kwargs] Support kwargs
+                throw new NotImplementedException("Keyword args using **kwargs format are not yet supported.");
+            }
+            else if (context.children[child_i].GetText() == "=")
+            {
+                if ((ActiveProgram.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                {
+                    throw new NotImplementedException("Keyword args using **kwargs format as well as through defaults are not yet supported.");
+                }
+                var defaultText = context.children[child_i + 1].GetText();
+
+                // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
+                int visit_child_i_copy = child_i + 1;
+                string visit_builder_name = ActiveProgram.Name + "_$Default_" + context.children[visit_child_i_copy].GetText();
+                var defaultsList = ActiveProgram.Defaults;
+                postProcessActions.Add(async (scheduler) =>
+                {
+                    // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
+                    // We will execute all of these defaults before the code object is finalized. This will ensure we execute defaults
+                    // at the same time CPython does (right after definition).
+                    //
+                    // Funny story: If I set up this default builder outside this lambda, it'll be correctly set, but by the
+                    // time the lambda runs, it'll contain the function body's code instead and error. I still have no idea how
+                    // that actually happens!
+                    var defaultBuilder = new CodeObjectBuilder();
+                    defaultBuilder.Name = visit_builder_name;
+
+                    // Now we're parsing the default assignment. It's a program even if it's just a simple declaration like None. They will be
+                    // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
+                    // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
+                    // do them too.
+                    ProgramStack.Push(ActiveProgram);
+                    ActiveProgram = defaultBuilder;
+                    Visit(context.children[visit_child_i_copy]);
+                    ProgramStack.Pop();
+
+                    var currentTask = scheduler.GetCurrentTask();
+                    var defaultPrecalcCode = defaultBuilder.Build();
+                    var task = scheduler.Schedule(defaultPrecalcCode);
+
+                    // There isn't anything to actual unblock us when the code finished and the result is ready, so we need
+                    // to kick the task in the ass in order to unblock the task.
+                    task.WhenTaskCompleted += (ignored) =>
+                    {
+                        task.Continue();
+                    };
+                    var receipt = await task;
+
+                    defaultsList.Add(receipt.Frame.DataStack.Pop());
+                });
+
+                // Move beyond the default assignment tokens so the for-loop starts at the next parameter.
+                child_i += 1;
             }
             else
             {
-                if((ActiveProgram.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                // Count this as a positional argument if we haven't encountered *args or **kwargs yet
+                if (context.children[child_i].GetText() != "," &&
+                    (ActiveProgram.Flags & (CodeObject.CO_FLAGS_VARGS | CodeObject.CO_FLAGS_KWARGS)) == 0)
                 {
-                    throw new Exception("SyntaxError: invalid syntax (more than one varg declaration).");
+                    ActiveProgram.ArgCount += 1;
                 }
-
-                ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
+                Visit(context.children[child_i]);
             }
         }
-        return base.VisitTypedargslist(context);
+        return null;
+    }
+
+    private void Task_WhenTaskCompleted(TaskEventRecord record)
+    {
+        throw new NotImplementedException();
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
@@ -1110,14 +1193,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
-    private int findConstantIndex<T>(T constant) where T:class
+    private int findConstantIndex<T>(T constant) where T : class
     {
-        for(int i = 0; i < ActiveProgram.Constants.Count; ++i)
+        for (int i = 0; i < ActiveProgram.Constants.Count; ++i)
         {
-            if(ActiveProgram.Constants[i] is T)
+            if (ActiveProgram.Constants[i] is T)
             {
                 var asT = ActiveProgram.Constants[i] as T;
-                if(constant == asT)
+                if (constant == asT)
                 {
                     return i;
                 }
@@ -1174,19 +1257,46 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, attrIdx, context);
 
                 }
+
                 // A function that doesn't take any arguments doesn't have an arglist, but that is what 
                 // got triggered. The only way I know to make sure we trigger on it is to see if we match
                 // parentheses. There has to be a better way...
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
                 {
+                    // Keyword argument names. Start setting this up if we run into a "foo=bar" argument.
+                    List<object> specifiedKeywords = null;
+
                     int argIdx = 0;
                     for (argIdx = 0; trailer.arglist() != null &&
                         trailer.arglist().argument(argIdx) != null; ++argIdx)
                     {
-                        base.Visit(trailer.arglist().argument(argIdx));
+                        if (trailer.arglist().argument(argIdx).test().Length > 1)
+                        {
+                            // Keyword argument! Note we're not using C# 8.0 so we can't null coalesce this.
+                            if (specifiedKeywords == null)
+                            {
+                                specifiedKeywords = new List<object>();
+                            }
+                            specifiedKeywords.Add(PyString.Create(trailer.arglist().argument(argIdx).test(0).GetText()));
+                            base.Visit(trailer.arglist().argument(argIdx).test(1));
+                        }
+                        else
+                        {
+                            base.Visit(trailer.arglist().argument(argIdx));
+                        }
                     }
 
-                    ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
+                    if (specifiedKeywords != null)
+                    {
+                        var keywordTuple = PyTuple.Create(specifiedKeywords);
+                        var keywordTupleIdx = ActiveProgram.Constants.AddGetIndex(keywordTuple);
+                        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, keywordTupleIdx, context);
+                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, argIdx, context);
+                    }
+                    else
+                    {
+                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
+                    }
                 }
                 else
                 {
@@ -1380,7 +1490,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 throw new Exception("Only one subclass is supported right now.");
             }
 
-            for(int i = 0; i < context.arglist().ChildCount; ++i)
+            for (int i = 0; i < context.arglist().ChildCount; ++i)
             {
                 generateLoadForVariable(context.arglist().argument(i).GetText(), context);
             }
@@ -1403,14 +1513,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var importLevelConstIdx = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(importLevelInt));
 
         int fromListIndex = -1;
-        if(moduleFromList == null || moduleFromList.Length == 0)
+        if (moduleFromList == null || moduleFromList.Length == 0)
         {
             fromListIndex = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
         }
         else
         {
             var moduleListPyStrings = new PyObject[moduleFromList.Length];
-            for(int i = 0; i < moduleFromList.Length; ++i)
+            for (int i = 0; i < moduleFromList.Length; ++i)
             {
                 moduleListPyStrings[i] = PyString.Create(moduleFromList[i]);
             }
@@ -1432,13 +1542,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         // Import-from code generation.
         //if(moduleFromList != null && moduleFromList.Length > 0)
-        else if(moduleFromList[0] == "*")
+        else if (moduleFromList[0] == "*")
         {
             ActiveProgram.AddInstruction(ByteCodes.IMPORT_STAR, context);
         }
         else
         {
-            for(int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
+            for (int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
             {
                 var fromNameConstIdx = ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
                 ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
@@ -1462,7 +1572,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // context.dotted_as_names().GetChild(2).GetText()
         // Every middle element is a comma between modules; skip
         var dotted_as_names = context.dotted_as_names();
-        for(int import_i = 0; import_i < dotted_as_names.ChildCount; import_i += 2)
+        for (int import_i = 0; import_i < dotted_as_names.ChildCount; import_i += 2)
         {
             var importChild = dotted_as_names.GetChild(import_i);
             var moduleName = dotted_as_names.GetChild(import_i).GetText();
@@ -1492,7 +1602,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Gotta keep going until we run out of dots. If we never had any dots in the first place,
         // then the first index we used is the module from which to import.
         var moduleName = context.GetChild(1).GetText();
-        for(int dotted_i = 2; context.GetChild(dotted_i).GetText().StartsWith("."); ++dotted_i)
+        for (int dotted_i = 2; context.GetChild(dotted_i).GetText().StartsWith("."); ++dotted_i)
         {
             moduleName += context.GetChild(dotted_i).GetText();
         }
@@ -1500,7 +1610,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var fromNames = new List<string>();
         var asNames = new List<string>();
         var endOfChildren = context.children.Count;
-        if (context.GetChild(endOfChildren-1).GetText() == "*")
+        if (context.GetChild(endOfChildren - 1).GetText() == "*")
         {
             fromNames.Add("*");
         }
