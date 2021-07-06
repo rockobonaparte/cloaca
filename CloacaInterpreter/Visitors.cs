@@ -1257,7 +1257,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
                 {
                     // Keyword argument names. Start setting this up if we run into a "foo=bar" argument.
-                    List<PyObject> specifiedKeywords = null;
+                    List<object> specifiedKeywords = null;
 
                     int argIdx = 0;
                     for (argIdx = 0; trailer.arglist() != null &&
@@ -1268,7 +1268,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                             // Keyword argument! Note we're not using C# 8.0 so we can't null coalesce this.
                             if(specifiedKeywords == null)
                             {
-                                specifiedKeywords = new List<PyObject>();
+                                specifiedKeywords = new List<object>();
                             }
                             specifiedKeywords.Add(PyString.Create(trailer.arglist().argument(argIdx).test(0).GetText()));
                             base.Visit(trailer.arglist().argument(argIdx).test(1));

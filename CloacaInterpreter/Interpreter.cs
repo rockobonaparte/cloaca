@@ -244,10 +244,10 @@ namespace CloacaInterpreter
                 {
                     // Gobble up the rest of the arguments into a tuple. This will get more involved when
                     // we potentially could have keyword arguments going on at the same time.
-                    var vargs = new List<PyObject>();
+                    var vargs = new List<object>();
                     while (argIdx < args.Length)
                     {
-                        vargs.Add((PyObject) args[argIdx]);
+                        vargs.Add(args[argIdx]);
                         ++argIdx;
                     }
                     var asPyTuple = PyTuple.Create(vargs);

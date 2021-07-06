@@ -56,7 +56,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __getitem__(PyTuple self, PyInteger i)
+        public static object __getitem__(PyTuple self, PyInteger i)
         {
             try
             {
@@ -67,31 +67,6 @@ namespace LanguageImplementation.DataTypes
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("IndexError: tuple index out of range");
             }
-        }
-
-        // TODO: Test
-        [ClassMember]
-        public static PyBool __eq__(PyTuple self, PyObject other)
-        {
-            var otherList = other as PyTuple;
-            if (otherList == null)
-            {
-                return PyBool.False;
-            }
-
-            if (otherList.Values.Length != self.Values.Length)
-            {
-                return PyBool.False;
-            }
-
-            for (int i = 0; i < self.Values.Length; ++i)
-            {
-                if (self.Values[i].__eq__(otherList.Values[i]).InternalValue == false)
-                {
-                    return PyBool.False;
-                }
-            }
-            return PyBool.True;
         }
 
         [ClassMember]
@@ -107,16 +82,23 @@ namespace LanguageImplementation.DataTypes
             PyString retStr = PyString.Create("(");
             for (int i = 0; i < asTuple.Values.Length; ++i)
             {
-                var pyObj = asTuple.Values[i];
-
-                var __repr__ = pyObj.__getattribute__(PyClass.__REPR__);
-                var functionToRun = __repr__ as IPyCallable;
-
-                var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });
-                if (returned != null)
+                var pyObj = asTuple.Values[i] as PyObject;
+                if (pyObj == null)
                 {
-                    var asPyString = (PyString)returned;
-                    retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(asTuple.Values[i].ToString()));
+                }
+                else
+                {
+
+                    var __repr__ = pyObj.__getattribute__(PyClass.__REPR__);
+                    var functionToRun = __repr__ as IPyCallable;
+
+                    var returned = await functionToRun.Call(interpreter, context, new object[] { pyObj });
+                    if (returned != null)
+                    {
+                        var asPyString = (PyString)returned;
+                        retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                    }
                 }
 
                 // Appending commas except on last index
@@ -141,7 +123,7 @@ namespace LanguageImplementation.DataTypes
 
     public class PyTuple : PyObject, IEnumerable
     {
-        public PyObject[] Values;
+        public object[] Values;
 
         public PyTuple()
         {
@@ -157,14 +139,14 @@ namespace LanguageImplementation.DataTypes
             this.Values = values;
         }
 
-        public static PyTuple Create(List<PyObject> values)
+        public static PyTuple Create(List<object> values)
         {
             var pyTuple = PyTypeObject.DefaultNew<PyTuple>(PyTupleClass.Instance);
             pyTuple.Values = values.ToArray();
             return pyTuple;
         }
 
-        public static PyTuple Create(PyObject[] values)
+        public static PyTuple Create(object[] values)
         {
             var pyTuple = PyTypeObject.DefaultNew<PyTuple>(PyTupleClass.Instance);
             pyTuple.Values = values;
