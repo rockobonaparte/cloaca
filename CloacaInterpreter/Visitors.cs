@@ -1092,6 +1092,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
     {
+        if (ActiveProgram.Defaults == null)
+        {
+            ActiveProgram.Defaults = new List<object>();
+        }
+
         // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
         // Hunting for defaults, *args, and **kwargs. Oh, and regular ole' parameter names without any gravy.
         for (int child_i = 0; child_i < context.children.Count; ++child_i)
@@ -1111,10 +1116,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             else if (context.children[child_i].GetText() == "=")
             {
                 var defaultText = context.children[child_i+1].GetText();
-                if(ActiveProgram.Defaults == null)
-                {
-                    ActiveProgram.Defaults = new List<object>();
-                }
 
                 // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
                 int visit_child_i_copy = child_i + 1;

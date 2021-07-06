@@ -269,7 +269,7 @@ namespace LanguageImplementation
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
             newCodeObj.Flags = Flags;
-            newCodeObj.Defaults = Defaults;
+            newCodeObj.Defaults = Defaults != null ? Defaults : new List<object>();
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {
