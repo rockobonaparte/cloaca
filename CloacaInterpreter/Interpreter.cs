@@ -324,6 +324,89 @@ namespace CloacaInterpreter
             await DynamicDispatchOperation(context, left, right, op_dunder, op_fallback, dotNetOp);
         }
 
+        private async Task commonCallFunction(FrameContext context, List<object> args, Dictionary<string, object> defaultOverrides=null)
+        {
+            object abstractFunctionToRun = context.DataStack.Pop();
+            var asPyObject = abstractFunctionToRun as PyObject;
+
+            var asCodeObject = abstractFunctionToRun as CodeObject;
+            object[] outArgs = null;
+            if (asCodeObject != null)
+            {
+                outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
+            }
+            else
+            {
+                outArgs = args.ToArray();
+            }
+
+            if (asPyObject != null)
+            {
+                try
+                {
+                    var __call__ = asPyObject.__getattribute__("__call__");
+                    var functionToRun = (IPyCallable)__call__;
+
+                    // Copypasta from next if clause. Hopefully this will replace it!
+                    var returned = await functionToRun.Call(this, context, outArgs);
+                    if (returned != null && !(returned is FutureVoidAwaiter))
+                    {
+                        if (returned is IGetsFutureAwaiterResult)
+                        {
+                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                        }
+                        context.DataStack.Push(returned);
+                    }
+                    else if (returned == null)
+                    {
+                        context.DataStack.Push(NoneType.Instance);
+                    }
+                    context.Cursor += 2;
+                    return;
+                }
+                catch (EscapedPyException e)
+                {
+                    // We'll just proceed as usual.
+                }
+            }
+            else if (abstractFunctionToRun is Type)
+            {
+                // Maybe it's a .NET type we imported. If we're trying to invoke the type, then that
+                // means we're trying to call a constructor on it.
+                // Tagging with [EMBEDDING - .NET TYPES]
+                // We might want to generally do this better.
+                abstractFunctionToRun = new PyDotNetClassProxy(abstractFunctionToRun as Type);
+            }
+
+            // Treat this kind of like an else if. We don't do that literally because we have
+            // to test for __call__ in the PyObject, and also because it might not be a PyObject
+            // to begin with.
+            if (abstractFunctionToRun is IPyCallable)
+            {
+                var functionToRun = (IPyCallable)abstractFunctionToRun;
+
+                var returned = await functionToRun.Call(this, context, outArgs);
+                if (returned != null && !(returned is FutureVoidAwaiter))
+                {
+                    if (returned is IGetsFutureAwaiterResult)
+                    {
+                        returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
+                    }
+                    context.DataStack.Push(returned);
+                }
+                else if (returned == null)
+                {
+                    context.DataStack.Push(NoneType.Instance);
+                }
+
+                context.Cursor += 2;
+            }
+            else
+            {
+                throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
+            }
+        }
+
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets
         /// our Python(ish) code!
@@ -1147,89 +1230,7 @@ namespace CloacaInterpreter
                                     args.Insert(0, context.DataStack.Pop());
                                 }
 
-                                object abstractFunctionToRun = context.DataStack.Pop();
-                                var asPyObject = abstractFunctionToRun as PyObject;
-
-                                var asCodeObject = abstractFunctionToRun as CodeObject;
-                                object[] outArgs = null;
-                                if (asCodeObject != null)
-                                {
-                                    outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
-                                }
-                                else
-                                {
-                                    outArgs = args.ToArray();
-                                }
-
-                                if (asPyObject != null)
-                                {
-                                    try
-                                    {
-                                        var __call__ = asPyObject.__getattribute__("__call__");
-                                        var functionToRun = (IPyCallable)__call__;
-
-                                        // Copypasta from next if clause. Hopefully this will replace it!
-                                        var returned = await functionToRun.Call(this, context, outArgs);
-                                        if (returned != null && !(returned is FutureVoidAwaiter))
-                                        {
-                                            if (returned is IGetsFutureAwaiterResult)
-                                            {
-                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
-                                            }
-                                            context.DataStack.Push(returned);
-                                        }
-                                        else if (returned == null)
-                                        {
-                                            context.DataStack.Push(NoneType.Instance);
-                                        }
-                                        context.Cursor += 2;
-                                        break;
-                                    }
-                                    catch (EscapedPyException e)
-                                    {
-                                        // We'll just proceed as usual.
-                                    }
-                                }
-                                else if (abstractFunctionToRun is Type)
-                                {
-                                    // Maybe it's a .NET type we imported. If we're trying to invoke the type, then that
-                                    // means we're trying to call a constructor on it.
-                                    // Tagging with [EMBEDDING - .NET TYPES]
-                                    // We might want to generally do this better.
-                                    abstractFunctionToRun = new PyDotNetClassProxy(abstractFunctionToRun as Type);
-                                }
-
-                                // Treat this kind of like an else if. We don't do that literally because we have
-                                // to test for __call__ in the PyObject, and also because it might not be a PyObject
-                                // to begin with.
-                                if (abstractFunctionToRun is IPyCallable)
-                                {
-                                    var functionToRun = (IPyCallable)abstractFunctionToRun;
-
-                                    var returned = await functionToRun.Call(this, context, outArgs);
-                                    if (returned != null && !(returned is FutureVoidAwaiter))
-                                    {
-                                        if (returned is IGetsFutureAwaiterResult)
-                                        {
-                                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
-                                        }
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else if (returned == null)
-                                    {
-                                        context.DataStack.Push(NoneType.Instance);
-                                    }
-
-                                    context.Cursor += 2;
-                                }
-                                else
-                                {
-                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
-                                }
-
-                                ////////////////////////////////////// END COPY-PASTA FROM CALL_FUNCTION //////////////////////////////////
-                                
-
+                                await commonCallFunction(context, args, defaultOverrides);
                                 break;
                             }
                         case ByteCodes.CALL_FUNCTION:
@@ -1247,85 +1248,7 @@ namespace CloacaInterpreter
                                     args.Insert(0, context.DataStack.Pop());
                                 }
 
-                                object abstractFunctionToRun = context.DataStack.Pop();
-                                var asPyObject = abstractFunctionToRun as PyObject;
-
-                                var asCodeObject = abstractFunctionToRun as CodeObject;
-                                object[] outArgs = null;
-                                if (asCodeObject != null)
-                                {
-                                    outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray());
-                                }
-                                else
-                                {
-                                    outArgs = args.ToArray();
-                                }
-
-                                if (asPyObject != null)
-                                {
-                                    try
-                                    {
-                                        var __call__ = asPyObject.__getattribute__("__call__");
-                                        var functionToRun = (IPyCallable)__call__;
-
-                                        // Copypasta from next if clause. Hopefully this will replace it!
-                                        var returned = await functionToRun.Call(this, context, outArgs);
-                                        if (returned != null && !(returned is FutureVoidAwaiter))
-                                        {
-                                            if (returned is IGetsFutureAwaiterResult)
-                                            {
-                                                returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
-                                            }
-                                            context.DataStack.Push(returned);
-                                        }
-                                        else if (returned == null)
-                                        {
-                                            context.DataStack.Push(NoneType.Instance);
-                                        }
-                                        context.Cursor += 2;
-                                        break;
-                                    }
-                                    catch (EscapedPyException e)
-                                    {
-                                        // We'll just proceed as usual.
-                                    }
-                                }
-                                else if(abstractFunctionToRun is Type)
-                                {
-                                    // Maybe it's a .NET type we imported. If we're trying to invoke the type, then that
-                                    // means we're trying to call a constructor on it.
-                                    // Tagging with [EMBEDDING - .NET TYPES]
-                                    // We might want to generally do this better.
-                                    abstractFunctionToRun = new PyDotNetClassProxy(abstractFunctionToRun as Type);
-                                }
-
-                                // Treat this kind of like an else if. We don't do that literally because we have
-                                // to test for __call__ in the PyObject, and also because it might not be a PyObject
-                                // to begin with.
-                                if (abstractFunctionToRun is IPyCallable)
-                                {
-                                    var functionToRun = (IPyCallable)abstractFunctionToRun;
-
-                                    var returned = await functionToRun.Call(this, context, outArgs);
-                                    if (returned != null && !(returned is FutureVoidAwaiter))
-                                    {
-                                        if(returned is IGetsFutureAwaiterResult)
-                                        {
-                                            returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
-                                        }
-                                        context.DataStack.Push(returned);
-                                    }
-                                    else if(returned == null)
-                                    {
-                                        context.DataStack.Push(NoneType.Instance);
-                                    }
-
-                                    context.Cursor += 2;
-                                }
-                                else
-                                {
-                                    throw new InvalidCastException("Cannot use " + abstractFunctionToRun.GetType() + " as a callable function");
-                                }
+                                await commonCallFunction(context, args);
                                 break;
                             }
                         case ByteCodes.RETURN_VALUE:
