@@ -1092,8 +1092,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
     {
+        // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
         // Hunting for defaults, *args, and **kwargs. Oh, and regular ole' parameter names without any gravy.
-        for(int child_i = 0; child_i < context.children.Count; ++child_i)
+        for (int child_i = 0; child_i < context.children.Count; ++child_i)
         {
             if(context.children[child_i].GetText() == "*")
             {
@@ -1104,6 +1105,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
                 Visit(context.children[child_i]);
+                // TODO: [**kwargs] Support kwargs
                 throw new NotImplementedException("Keyword args using **kwargs format are not yet supported.");
             }
             else if (context.children[child_i].GetText() == "=")

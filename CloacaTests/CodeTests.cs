@@ -4,13 +4,201 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-using LanguageImplementation.DataTypes.Exceptions;
 using LanguageImplementation;
+using CloacaInterpreter;
 using System;
 using System.Threading.Tasks;
 
 namespace CloacaTests
 {
+    /// <summary>
+    /// Tests our helper for matching positional, keyword, defaults, vargs, and kwargs
+    /// between parameters and their arguments. The different ways this could get done
+    /// had gotten out of hand and was become cumbersome to hit in code tests. Also,
+    /// the implementation of it was also getting out of hand and we really needed a helper.
+    /// </summary>
+    [TestFixture]
+    public class ArgParamMatchTests
+    {
+        public void InOutTest(CodeObject co, object[][] ins, Dictionary<string, object>[] keywordsIn, object[][] outs)
+        {
+            for(int i = 0; i < ins.Length; ++i)
+            {
+                var outParams = ArgParamMatcher.Resolve(co, ins[i], keywordsIn[i]);
+                Assert.That(outParams, Is.EqualTo(outs[i]), "Failed Test #" + (i + 1));
+            }
+        }
+
+        [Test]
+        public void OneToOne()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("onevar");
+
+            var inParams = new object[1];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public void OneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("has_default");
+
+            var inParams = new object[0];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(new object[] { -1 }));
+        }
+
+        [Test]
+        public void TwoParams()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("one");
+            co.VarNames.Add("two");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                new Dictionary<string, object> { { "two", 4 } },
+                new Dictionary<string, object> { { "one", 5 }, { "two", 6 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, 4 },
+                new object[] { 5, 6 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void TwoParamsOneDefault()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 2;
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.VarNames.Add("onevar");
+            co.VarNames.Add("has_default");
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3 },
+                new object[] { },
+                new object[] { },
+                new object[] { 7 },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                new Dictionary<string, object> { { "onevar", 4 }, { "has_default", 5 } },
+                new Dictionary<string, object> { { "onevar", 6 } },
+                new Dictionary<string, object> { { "has_default", 8 } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 3, -1 },
+                new object[] { 4, 5 },
+                new object[] { 6, -1 },
+                new object[] { 7, 8 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void VargsOnly()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 0;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("args");
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+            };
+            var outputs = new object[][]
+            {
+                new object[] { PyTuple.Create(new object[] { 1 }) },
+                new object[] { PyTuple.Create(new object[0]) }
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void ArgsDefaultsVargs()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 4;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("a");
+            co.VarNames.Add("b");
+            co.VarNames.Add("c");
+            co.VarNames.Add("d");
+            co.VarNames.Add("e");
+            co.Defaults = new List<object>();
+            co.Defaults.Add(-1);
+            co.Defaults.Add(-2);
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, 5 },
+                new object[] { 6, 7, 8, 9 },
+                new object[] { 10, 11, 12 },
+                new object[] { 13, 14 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+                null,
+                null,
+                new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 }, { "e", PyTuple.Create(new object[] { 19 }) } },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { 1, 2, 3, 4, PyTuple.Create(new object[] { 5 }) },
+                new object[] { 6, 7, 8, 9, PyTuple.Create(new object[0]) },
+                new object[] { 10, 11, 12, -2, PyTuple.Create(new object[0]) },
+                new object[] { 13, 14, -1, -2, PyTuple.Create(new object[0]) },
+                new object[] { 15, 16, 17, 18, PyTuple.Create(new object[] { 19 }) },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+
+        }
+    }
+
     [TestFixture]
     public class Basics : RunCodeTest
     {

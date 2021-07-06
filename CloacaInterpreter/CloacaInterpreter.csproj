@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgParamMatcher.cs" />
     <Compile Include="Builtins.cs" />
     <Compile Include="ByteCodeCompiler.cs" />
     <Compile Include="ClrModule.cs" />
