@@ -261,6 +261,7 @@ namespace CloacaTests
                 new object[] { 6, 7, 8, 9 },
                 new object[] { 10, 11, 12 },
                 new object[] { 13, 14 },
+                new object[] { },
             };
             var keywordsIn = new Dictionary<string, object>[]
             {
@@ -268,6 +269,7 @@ namespace CloacaTests
                 null,
                 null,
                 null,
+                new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 }, { "e", PyTuple.Create(new object[] { 19 }) } },
             };
             var outputs = new object[][]
             {
@@ -275,6 +277,7 @@ namespace CloacaTests
                 new object[] { 6, 7, 8, 9, PyTuple.Create(new object[0]) },
                 new object[] { 10, 11, 12, -2, PyTuple.Create(new object[0]) },
                 new object[] { 13, 14, -1, -2, PyTuple.Create(new object[0]) },
+                new object[] { 15, 16, 17, 18, PyTuple.Create(new object[] { 19 }) },
             };
 
             InOutTest(co, inputs, keywordsIn, outputs);
