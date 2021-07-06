@@ -97,6 +97,7 @@ Part 3: Hardening
     can handle UNPACK_SEQUENCE take care of it in general.
   * Support grammar for UNPACK_EX (partial unpack).
   * [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
+  * [TUPLE OBJECT] Support regular objects in tuples along with dunders like __eq__
 * Sets
   * Create from literals
   * Main implementation

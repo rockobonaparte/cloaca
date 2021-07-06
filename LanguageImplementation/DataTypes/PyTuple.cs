@@ -55,6 +55,43 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // TODO: Test
+        [ClassMember]
+        public static PyBool __eq__(PyTuple self, PyObject other)
+        {
+            var otherTuple = other as PyTuple;
+            if (otherTuple == null)
+            {
+                return PyBool.False;
+            }
+
+            if (otherTuple.Values.Length != self.Values.Length)
+            {
+                return PyBool.False;
+            }
+
+            for (int i = 0; i < self.Values.Length; ++i)
+            {
+                var selfValue = self.Values[i] as PyObject;
+                var otherValue = otherTuple.Values[i] as PyObject;
+
+                if(selfValue != null && otherValue != null)
+                {
+                    if (selfValue.__eq__(otherValue).InternalValue == false)
+                    {
+                        return PyBool.False;
+                    }
+                }
+                else
+                {
+                    // TODO: [TUPLE OBJECT] Support regular objects in tuples along with dunders like __eq__
+                    throw new NotImplementedException("PyTuple cannot compare non-PyObject types yet");
+                }
+
+            }
+            return PyBool.True;
+        }
+
         [ClassMember]
         public static object __getitem__(PyTuple self, PyInteger i)
         {
