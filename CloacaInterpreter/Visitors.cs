@@ -1104,6 +1104,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
                 Visit(context.children[child_i]);
+                // TODO: [**kwargs] Support kwargs
                 throw new NotImplementedException("Keyword args using **kwargs format are not yet supported.");
             }
             else if (context.children[child_i].GetText() == "=")

@@ -14,6 +14,13 @@ namespace CloacaTests
     class ArgParamMatcher
     {
         // TODO [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
+        // TODO [**kwargs] Support kwargs
+        // If this gets too unweildy in its current form, then consider something like a state machine. Once you 
+        // are done processing one type of argument, you don't process any more of them, so there is some state
+        // transition in this code. As written, it's obscured and goofy. However, the state machine might get pretty
+        // gross. Since we can move forward to any of the subsequent states based on circumstance, the earlier
+        // transitions would have a lot more logic in them to determine where to go next, and I think a lot of that
+        // logic would repeat.
         public static object[] Resolve(CodeObject co, object[] inArgs, Dictionary<string, object> keywords=null)
         {
             bool hasVargs = (co.Flags & CodeObject.CO_FLAGS_VARGS) > 0;

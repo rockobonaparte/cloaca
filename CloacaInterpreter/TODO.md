@@ -10,6 +10,7 @@ Part 3: Hardening
   * Deal with the situation where some monster uses * or / in their parameters to force a switch to keyword-only.
     * Add unit test and put this todo there
   * [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
+  * [**kwargs] Support kwargs
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this
