@@ -334,10 +334,6 @@ namespace CloacaInterpreter
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
         public async Task Run(FrameContext context)
         {
-            // A general-purpose dictionary opcodes can use for scratchwork. Clear it before each use.
-            // We do this so we don't do a lot of allocation/deallocation for a scratch data structure.
-            var scratchDict = new System.Collections.Generic.Dictionary<object, object>();
-
             try
             {
                 while (context.Cursor < context.Code.Length)
@@ -1136,22 +1132,15 @@ namespace CloacaInterpreter
                                 // TOS-1 = 2     (b's value)
                                 // TOS-2 = 1     (a's value)
                                 var assignments = (PyTuple)context.DataStack.Pop();
-                                scratchDict.Clear();
+                                var defaultOverrides = new Dictionary<string, object>();
                                 for(int defaultIdx = assignments.Values.Length-1; defaultIdx >= 0; --defaultIdx)
                                 {
                                     var asPyString = assignments.Values[defaultIdx];
                                     var asString = asPyString.ToString();
-                                    scratchDict[asString] = context.DataStack.Pop();
+                                    defaultOverrides[asString] = context.DataStack.Pop();
                                     argsLeft -= 1;
                                 }
                                 
-
-
-                                ////////////////////////////////////// BEGIN COPY-PASTA FROM CALL_FUNCTION //////////////////////////////////
-                                // This is annoying. The arguments are at the top of the stack while
-                                // the function is under them, but we need the function to assign the
-                                // values. So we'll just copy them off piecemeal. Hence they'll show up
-                                // in reverse order.
                                 var args = new List<object>();
                                 for (int argIdx = 0; argIdx < argsLeft; ++argIdx)               // CHANGE: argCount -> argsLeft
                                 {
@@ -1161,30 +1150,15 @@ namespace CloacaInterpreter
                                 object abstractFunctionToRun = context.DataStack.Pop();
                                 var asPyObject = abstractFunctionToRun as PyObject;
 
-                                // The idea was to look at varnames, accounting for number of arguments. The first varnames are the
-                                // parameters. We can then use those names to cross-reference our lookup dictionary of defaults.
                                 var asCodeObject = abstractFunctionToRun as CodeObject;
+                                object[] outArgs = null;
                                 if (asCodeObject != null)
                                 {
-                                    // NEW SECTION: Potentially out-of-order default overrides
-                                    // Assign default arguments from defaults dictionary in order they would be expected.
-                                    for (int argIdx = argsLeft; argIdx < asCodeObject.ArgCount; ++argIdx)
-                                    {
-                                        var keywordName = asCodeObject.ArgVarNames[argIdx];
-                                        if(scratchDict.ContainsKey(keywordName))
-                                        {
-                                            var keywordDefinition = scratchDict[keywordName];
-                                            args.Add(keywordDefinition);
-                                        }
-                                        else
-                                        {
-                                            var defaultIdx = asCodeObject.ArgCount - asCodeObject.Defaults.Count + argIdx;
-                                            args.Add(asCodeObject.Defaults[argIdx]);
-                                        }
-                                    }
-
-                                    // NEW SECTION: Defaults as defined from original code object
-                                    // Call function using defaults for any parameters which we don't otherwise have an argument
+                                    outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
+                                }
+                                else
+                                {
+                                    outArgs = args.ToArray();
                                 }
 
                                 if (asPyObject != null)
@@ -1195,7 +1169,7 @@ namespace CloacaInterpreter
                                         var functionToRun = (IPyCallable)__call__;
 
                                         // Copypasta from next if clause. Hopefully this will replace it!
-                                        var returned = await functionToRun.Call(this, context, args.ToArray());
+                                        var returned = await functionToRun.Call(this, context, outArgs);
                                         if (returned != null && !(returned is FutureVoidAwaiter))
                                         {
                                             if (returned is IGetsFutureAwaiterResult)
@@ -1232,7 +1206,7 @@ namespace CloacaInterpreter
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                                    var returned = await functionToRun.Call(this, context, args.ToArray());
+                                    var returned = await functionToRun.Call(this, context, outArgs);
                                     if (returned != null && !(returned is FutureVoidAwaiter))
                                     {
                                         if (returned is IGetsFutureAwaiterResult)

@@ -1115,6 +1115,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else if (context.children[child_i].GetText() == "=")
             {
+                if((ActiveProgram.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
+                {
+                    throw new NotImplementedException("Keyword args using **kwargs format as well as through defaults are not yet supported.");
+                }
                 var defaultText = context.children[child_i+1].GetText();
 
                 // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
