@@ -215,48 +215,9 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
-            // Assigning argument's initial values.
-            // We might have variable arguments as well as keyword arguments.
-            int vargsIdx = -1;
-            int kwargsIdx = -1;
-            if ((frame.Program.Flags & CodeObject.CO_FLAGS_KWARGS) > 0)
-            {
-                kwargsIdx = frame.Program.ArgVarNames.Count - 1;
-                vargsIdx -= 1;
-            }
-            if ((frame.Program.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
-            {
-                vargsIdx = frame.Program.ArgVarNames.Count - 1;
-            }
-
-            kwargsIdx -= frame.Program.Defaults.Count;
-            vargsIdx -= frame.Program.Defaults.Count;
-
-            // This will probably eventually turn into two, decoupled indices with full vargs and kwargs
-            // support.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                if(argIdx == kwargsIdx)
-                {
-                    throw new NotImplementedException("Keyword arguments are not yet implemented");
-                }
-                else if(argIdx == vargsIdx)
-                {
-                    // Gobble up the rest of the arguments into a tuple. This will get more involved when
-                    // we potentially could have keyword arguments going on at the same time.
-                    var vargs = new List<object>();
-                    while (argIdx < args.Length)
-                    {
-                        vargs.Add(args[argIdx]);
-                        ++argIdx;
-                    }
-                    var asPyTuple = PyTuple.Create(vargs);
-                    frame.AddLocal(frame.Program.ArgVarNames[vargsIdx], asPyTuple);
-                }
-                else
-                {
-                    frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
-                }
+                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
             }
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
@@ -1315,47 +1276,16 @@ namespace CloacaInterpreter
                                 object abstractFunctionToRun = context.DataStack.Pop();
                                 var asPyObject = abstractFunctionToRun as PyObject;
 
-
-
-                                // NEW SECTION: This test is also in CALL_FUNCTION_KW and needs merging.
                                 var asCodeObject = abstractFunctionToRun as CodeObject;
+                                object[] outArgs = null;
                                 if (asCodeObject != null)
                                 {
-                                    //// Are some of these arguments for vargs? We'll need to relocate them into a tuple.
-                                    var fixedArgCount = argCount;
-
-                                    fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
-                                    fixedArgCount = (ushort) ((asCodeObject.Flags & CodeObject.CO_FLAGS_KWARGS) > 0 ? fixedArgCount - 1 : fixedArgCount);
-                                    //// If we have some vargs, we need to repackage into a tuple. That tuple might be empty!
-                                    //if ((asCodeObject.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
-                                    //{
-                                    //    var vargs = new List<PyObject>();
-                                    //    if(asCodeObject.ArgCount < fixedArgCount)
-                                    //    {
-                                    //        var range = args.GetRange(asCodeObject.ArgCount, argCount - asCodeObject.ArgCount);
-                                    //        foreach(var item in range)
-                                    //        {
-                                    //            // TODO: PyTuple trial: Creating native types needs to be simplified. Returning a PyTuple of other PyObject types is really tedious to do correctly due
-                                    //            vargs.Add((PyObject)item);
-                                    //            args.RemoveAt(asCodeObject.ArgCount);
-                                    //        }
-
-                                    //        var vargsTuple = PyTuple.Create(vargs);
-                                    //        args.Insert(asCodeObject.ArgCount, vargsTuple);
-                                    //    }
-                                    //}
-
-
-                                    // NEW SECTION: Defaults as defined from original code object
-                                    // Call function using defaults for any parameters which we don't otherwise have an argument
-                                        for (int argIdx = args.Count; argIdx < asCodeObject.ArgCount; ++argIdx)
-                                    {
-                                        var defaultIdx = asCodeObject.ArgCount - asCodeObject.Defaults.Count + argIdx;
-                                        args.Add(asCodeObject.Defaults[argIdx]);
-                                    }
+                                    outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray());
                                 }
-
-
+                                else
+                                {
+                                    outArgs = args.ToArray();
+                                }
 
                                 if (asPyObject != null)
                                 {
@@ -1365,7 +1295,7 @@ namespace CloacaInterpreter
                                         var functionToRun = (IPyCallable)__call__;
 
                                         // Copypasta from next if clause. Hopefully this will replace it!
-                                        var returned = await functionToRun.Call(this, context, args.ToArray());
+                                        var returned = await functionToRun.Call(this, context, outArgs);
                                         if (returned != null && !(returned is FutureVoidAwaiter))
                                         {
                                             if (returned is IGetsFutureAwaiterResult)
@@ -1402,7 +1332,7 @@ namespace CloacaInterpreter
                                 {
                                     var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                                    var returned = await functionToRun.Call(this, context, args.ToArray());
+                                    var returned = await functionToRun.Call(this, context, outArgs);
                                     if (returned != null && !(returned is FutureVoidAwaiter))
                                     {
                                         if(returned is IGetsFutureAwaiterResult)
