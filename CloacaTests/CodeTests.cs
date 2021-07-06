@@ -13,29 +13,71 @@ namespace CloacaTests
 {
     class ArgParamMatcher
     {
+        // TODO [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
         public static object[] Resolve(CodeObject co, object[] inArgs, Dictionary<string, object> keywords=null)
         {
+            bool hasVargs = (co.Flags & CodeObject.CO_FLAGS_VARGS) > 0;
             var defaultsStart = co.ArgCount - co.Defaults.Count;
-            var outArgs = new object[co.VarNames.Count];
+
+            var outArgsLength = co.ArgCount;
+
+            var num_vargs = inArgs.Length - co.ArgCount;
+            object[] vargs = null;
+            if (hasVargs)
+            { 
+                if (num_vargs > 0)
+                {
+                    vargs = new object[num_vargs];
+                }
+                else
+                {
+                    vargs = new object[num_vargs];
+                }
+                outArgsLength += 1;
+            }
+
+            var outArgs = new object[outArgsLength];
 
             int inArg = 0;
             for(int outArgIdx = 0; outArgIdx < outArgs.Length; ++outArgIdx)
             {
                 if(inArg >= inArgs.Length)
                 {
+                    // Out of inputs, now lean on defaults arguments
                     var varName = co.VarNames[inArg];
                     if (keywords != null && keywords.ContainsKey(varName))
                     {
+                        // Keyword argument
                         outArgs[outArgIdx] = keywords[varName];
                     }
-                    else
+                    else 
                     {
-                        outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                        // Use the default
+                        // If it's a variable argument (*args) then the default is an empty tuple.
+                        if (hasVargs && inArg == co.ArgCount)
+                        {
+                            outArgs[outArgIdx] = PyTuple.Create(vargs);
+                        }
+                        else
+                        {
+                            outArgs[outArgIdx] = co.Defaults[defaultsStart - inArg];
+                        }
                     }
                     inArg += 1;
                 }
+                else if(hasVargs && inArg >= co.ArgCount)
+                {
+                    // Variable arguments (*args)
+                    while (inArg < inArgs.Length)
+                    {
+                        vargs[inArg - co.ArgCount] = inArgs[inArg];
+                        ++inArg;
+                    }
+                    outArgs[outArgIdx] = PyTuple.Create(vargs);
+                }
                 else
                 {
+                    // Conventional, positional argument
                     outArgs[outArgIdx] = inArgs[inArg];
                     inArg += 1;
                 }
@@ -154,6 +196,34 @@ namespace CloacaTests
                 new object[] { 4, 5 },
                 new object[] { 6, -1 },
                 new object[] { 7, 8 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+        }
+
+        [Test]
+        public void VargsOnly()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 0;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("args");
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1 },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                null,
+                null,
+            };
+            var outputs = new object[][]
+            {
+                new object[] { PyTuple.Create(new object[] { 1 }) },
+                new object[] { PyTuple.Create(new object[0]) }
             };
 
             InOutTest(co, inputs, keywordsIn, outputs);
