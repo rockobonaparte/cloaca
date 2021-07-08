@@ -41,7 +41,8 @@ namespace LanguageImplementation
         // ...
         // >>> derp.__code__.co_argcount
         // 2
-        public int ArgCount;
+        public int ArgCount;            // co_argcount
+        public int KWOnlyArgCount;      // co_kwonlyargcount
 
         public List<string> VarNames;   // co_varnames (not really; this should be a tuple used by LOAD_FAST/STORE_FAST
         public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LOAD_FAST/STORE_FAST
@@ -56,7 +57,8 @@ namespace LanguageImplementation
         public byte[] lnotab;
         public int firstlineno;
         public int Flags;
-        public List<object> Defaults;
+        public List<object> Defaults;       // __defaults__
+        public List<object> KWDefaults;     // __kwdefaults__: Keyword-only defaults.
 
         // co_flag settings
         // The following flag bits are defined for co_flags: bit 0x04 is set if the function uses the *arguments syntax to
@@ -83,6 +85,21 @@ namespace LanguageImplementation
             Flags = 0;
         }
 
+        public bool HasVargs
+        {
+            get
+            {
+                return (Flags & CO_FLAGS_VARGS) > 0;
+            }
+        }
+
+        public bool HasKwargs
+        {
+            get
+            {
+                return (Flags & CO_FLAGS_KWARGS) > 0;
+            }
+        }
 
         /// <summary>
         /// Gets line of code corresponding to the given position in byte code
@@ -270,6 +287,8 @@ namespace LanguageImplementation
             newCodeObj.Names = Names;
             newCodeObj.Flags = Flags;
             newCodeObj.Defaults = Defaults != null ? Defaults : new List<object>();
+            newCodeObj.KWDefaults = KWDefaults != null ? KWDefaults : new List<object>();
+            newCodeObj.KWOnlyArgCount = KWOnlyArgCount;
 
             for (int i = 0; i < newCodeObj.Constants.Count; ++i)
             {

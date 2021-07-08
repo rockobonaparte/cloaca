@@ -13,6 +13,7 @@ Part 3: Hardening
   * [**kwargs] Support kwargs
   * [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
   * [DEFAULTS SCOPE] Pass outer scope to defaults
+  * [PARAM MATCHER ERRORS] Cast to actual TypeError
 * FAANG Python coding interview obsessions with Python modules
   * collections
     * See what you can pull from Python's own source code for this

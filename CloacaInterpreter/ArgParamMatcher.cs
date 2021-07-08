@@ -1,91 +1,276 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
+using System.Text;
 
 namespace CloacaInterpreter
 {
+    public enum ArgParamState
+    {
+        Initial,
+        Positional,
+        KeywordOverride,
+        KeywordOrDefault,
+        Variable,
+        KeywordOnly,
+        Finished,
+    }
     public class ArgParamMatcher
     {
         // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
         // TODO [ARGPARAMMATCHER ERRORS] Generate errors when input arguments don't match requirements of code object.
         // TODO [**kwargs] Support kwargs
-        // If this gets too unweildy in its current form, then consider something like a state machine. Once you 
-        // are done processing one type of argument, you don't process any more of them, so there is some state
-        // transition in this code. As written, it's obscured and goofy. However, the state machine might get pretty
-        // gross. Since we can move forward to any of the subsequent states based on circumstance, the earlier
-        // transitions would have a lot more logic in them to determine where to go next, and I think a lot of that
-        // logic would repeat.
         public static object[] Resolve(CodeObject co, object[] inArgs, Dictionary<string, object> keywords = null)
         {
-            bool hasVargs = (co.Flags & CodeObject.CO_FLAGS_VARGS) > 0;
-            var defaultsStart = co.ArgCount - co.Defaults.Count;
+            // This state machine model is definitely more verbose but it's much easier to maintain because:
+            // 1. We will loiter in only one section at a time so we can mentally compartmentalize what's happening.
+            // 2. We can be very explicit about what happens next.
+            var state = ArgParamState.Initial;
+            int inArg_i = 0;
+            int outArg_i = 0;
+            int default_i = 0;
 
-            // The number of actual output arguments is not given straightforwardly. ArgCount gets use
-            // the first positional and keyword arguments, but then we might have *args and **kwargs, which
-            // are designated by flags.
-            var outArgsLength = co.ArgCount;
+            object[] outArgs = new object[co.ArgCount + co.KWOnlyArgCount + (co.HasVargs ? 1 : 0)];
+            bool hasDefaults = co.Defaults.Count > 0;
+            bool hasKwOnlyArgs = co.KWOnlyArgCount > 0;
+            bool hasKeywords = keywords is null ? false : true;
 
-            var num_vargs = inArgs.Length - co.ArgCount;
-            object[] vargs = null;
-            if (hasVargs)
+            // Determine our true first state. Initial is just symbolic.
+            if (co.ArgCount > 0)
             {
-                if (num_vargs > 0)
+                state = ArgParamState.Positional;
+                if (inArgs.Length == 0)
                 {
-                    vargs = new object[num_vargs];
-                }
-                else
-                {
-                    vargs = new object[0];
-                }
-                outArgsLength += 1;
-            }
-
-            var outArgs = new object[outArgsLength];
-
-            int inArg = 0;
-            for (int outArgIdx = 0; outArgIdx < outArgs.Length; ++outArgIdx)
-            {
-                if (inArg >= inArgs.Length)
-                {
-                    // Out of inputs, now lean on defaults arguments
-                    var varName = co.VarNames[inArg];
-                    if (keywords != null && keywords.ContainsKey(varName))
+                    if (hasDefaults || hasKeywords)
                     {
-                        // Keyword argument
-                        outArgs[outArgIdx] = keywords[varName];
+                        state = ArgParamState.KeywordOverride;
+                    }
+                    else if (co.HasVargs)
+                    {
+                        state = ArgParamState.Variable;
+                    }
+                    else if (hasKwOnlyArgs)
+                    {
+                        state = ArgParamState.KeywordOnly;
                     }
                     else
                     {
-                        // Use the default
-                        if (hasVargs && inArg == co.ArgCount)
-                        {
-                            // If it's a variable argument (*args) then the default is an empty tuple.
-                            outArgs[outArgIdx] = PyTuple.Create(vargs);
-                        }
-                        else
-                        {
-                            outArgs[outArgIdx] = co.Defaults[inArg - defaultsStart];
-                        }
+                        state = ArgParamState.Finished;
                     }
-                    inArg += 1;
                 }
-                else if (hasVargs && inArg >= co.ArgCount)
+            }
+            else
+            {
+                if(co.HasVargs)
                 {
-                    // Variable arguments (*args)
-                    while (inArg < inArgs.Length)
-                    {
-                        vargs[inArg - co.ArgCount] = inArgs[inArg];
-                        ++inArg;
-                    }
-                    outArgs[outArgIdx] = PyTuple.Create(vargs);
+                    state = ArgParamState.Variable;
+                }
+                else if(hasKwOnlyArgs)
+                {
+                    state = ArgParamState.KeywordOnly;
                 }
                 else
                 {
-                    // Conventional, positional argument
-                    outArgs[outArgIdx] = inArgs[inArg];
-                    inArg += 1;
+                    state = ArgParamState.Finished;
+                }
+            }
+
+            if(state == ArgParamState.Initial)
+            {
+                throw new InvalidOperationException("Arg param state was still in initial state after checking entire environment.");
+            }
+
+            while (state != ArgParamState.Finished)
+            {
+                switch (state)
+                {
+                    case ArgParamState.Positional:
+                        while(inArg_i < inArgs.Length && inArg_i < co.ArgCount)
+                        {
+                            outArgs[outArg_i] = inArgs[inArg_i];
+                            outArg_i += 1;
+                            inArg_i += 1;
+                        }
+
+                        if(inArg_i < co.ArgCount)
+                        {
+                            if (hasKeywords || hasDefaults)
+                            {
+                                state = ArgParamState.KeywordOverride;
+                            }
+                            else if (co.HasVargs)
+                            {
+                                state = ArgParamState.Variable;
+                            }
+                            else
+                            {
+                                // TODO: [PARAM MATCHER ERRORS] Cast to actual TypeError
+                                throw new Exception("TypeError: " + co.Name + " takes " + co.ArgCount + " position arguments but " + inArgs.Length + " were given");
+                            }
+                        }
+                        else if(co.HasVargs)
+                        {
+                            state = ArgParamState.Variable;
+                        }
+                        else if(hasKwOnlyArgs)
+                        {
+                            state = ArgParamState.KeywordOnly;
+                        }
+                        else
+                        {
+                            state = ArgParamState.Finished;
+                        }
+                        break;
+                    case ArgParamState.KeywordOverride:
+                        {
+                            List<string> missingOverrides = null;
+                            while (inArg_i < co.ArgCount - co.Defaults.Count)
+                            {
+                                if (hasKeywords && keywords.ContainsKey(co.VarNames[outArg_i]))
+                                {
+                                    outArgs[outArg_i] = keywords[co.VarNames[outArg_i]];
+                                }
+                                else
+                                {
+                                    if (missingOverrides == null)
+                                    {
+                                        missingOverrides = new List<string>();
+                                    }
+                                    missingOverrides.Add(co.VarNames[outArg_i]);
+                                }
+                                ++inArg_i;
+                                ++outArg_i;
+                            }
+
+                            if(missingOverrides != null && missingOverrides.Count > 0)
+                            {
+                                // TODO: [PARAM MATCHER ERRORS] Cast to actual TypeError
+                                var errorBuilder = new StringBuilder("TypeError: " + co.Name + " missing " + co.ArgCount + " positional argument");
+                                if(missingOverrides.Count == 1)
+                                {
+                                    errorBuilder.Append(": ");
+                                    errorBuilder.Append(missingOverrides[0]);
+                                }
+                                else
+                                {
+                                    errorBuilder.Append("s: ");
+                                    for(int i = 0; i < missingOverrides.Count - 2; ++i)
+                                    {
+                                        errorBuilder.Append(missingOverrides[i]);
+                                        errorBuilder.Append(", ");                                        
+                                    }
+                                    errorBuilder.Append(missingOverrides[missingOverrides.Count - 2]);
+                                    errorBuilder.Append(" and ");
+                                    errorBuilder.Append(missingOverrides[missingOverrides.Count - 1]);
+                                }
+
+                                throw new Exception(errorBuilder.ToString());
+                            }
+                            else if(co.Defaults.Count > 0)
+                            {
+                                state = ArgParamState.KeywordOrDefault;
+                            }
+                            else if(co.HasVargs)
+                            {
+                                state = ArgParamState.Variable;
+                            }
+                            else if(co.HasKwargs)
+                            {
+                                state = ArgParamState.KeywordOnly;
+                            }
+                            else
+                            {
+                                state = ArgParamState.Finished;
+                            }
+                            
+                        }
+                        break;
+                    case ArgParamState.KeywordOrDefault:
+                        // We might not start at the first default; some positionals might have had a keyword override.
+                        default_i = outArg_i - (co.ArgCount - co.Defaults.Count);
+                        while (default_i < co.Defaults.Count || outArg_i < co.ArgCount)
+                        {
+                            if (hasKeywords && keywords.ContainsKey(co.VarNames[outArg_i]))
+                            {
+                                outArgs[outArg_i] = keywords[co.VarNames[outArg_i]];
+                            }
+                            else if(default_i < co.Defaults.Count)
+                            {
+                                outArgs[outArg_i] = co.Defaults[default_i];
+                            }
+                            else
+                            {
+                                // TODO: [PARAM MATCHER ERRORS] Cast to actual TypeError
+                                throw new Exception("TypeError: " + co.Name + " takes " + co.ArgCount + " position arguments but " + inArgs.Length + " were given");
+                            }
+                            default_i += 1;
+                            outArg_i += 1;
+                        }
+
+                        if (default_i >= co.Defaults.Count)
+                        {
+                            if(co.HasVargs)
+                            {
+                                state = ArgParamState.Variable;
+                            }
+                            else if(hasKwOnlyArgs)
+                            {
+                                state = ArgParamState.KeywordOnly;
+                            }
+                            else
+                            {
+                                state = ArgParamState.Finished;
+                            }
+                        }
+                        break;
+                    case ArgParamState.Variable:
+                        {
+                            var vargLength = inArgs.Length - inArg_i;
+                            vargLength = vargLength < 0 ? 0 : vargLength;
+                            object[] vargs = new object[vargLength];
+                            int varg_i = 0;
+                            // Variable arguments (*args)
+                            while (inArg_i < inArgs.Length)
+                            {
+                                vargs[varg_i] = inArgs[inArg_i];
+                                ++inArg_i;
+                                ++varg_i;
+                            }
+                            outArgs[outArg_i] = PyTuple.Create(vargs);
+                            outArg_i += 1;
+
+                            if(hasKwOnlyArgs)
+                            {
+                                state = ArgParamState.KeywordOnly;
+                            }
+                            else
+                            {
+                                state = ArgParamState.Finished;
+                            }
+                        }
+                        break;
+                    case ArgParamState.KeywordOnly:
+                        {
+                            int kwonly_i = 0;
+                            while(kwonly_i < co.KWDefaults.Count)
+                            {
+                                if(hasKeywords && keywords.ContainsKey(co.VarNames[outArg_i]))
+                                {
+                                    outArgs[outArg_i] = keywords[co.VarNames[outArg_i]];
+                                }
+                                else
+                                {
+                                    outArgs[outArg_i] = co.KWDefaults[kwonly_i];
+                                }
+
+                                ++kwonly_i;
+                                ++outArg_i;
+                            }
+                        }
+                        state = ArgParamState.Finished;
+                        break;
                 }
             }
 

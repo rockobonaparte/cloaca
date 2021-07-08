@@ -169,12 +169,15 @@ namespace CloacaTests
             co.Defaults.Add(-2);
             co.Flags |= CodeObject.CO_FLAGS_VARGS;
 
+            // The 5th case is commented out because it's actually illegal Python. I stubbed my toe on it when I created the arg param
+            // matcher state machine. It choked there and I verified in Python that it wouldn't have worked.
             var inputs = new object[][]
             {
                 new object[] { 1, 2, 3, 4, 5 },
                 new object[] { 6, 7, 8, 9 },
                 new object[] { 10, 11, 12 },
                 new object[] { 13, 14 },
+                //new object[] { },
                 new object[] { },
             };
             var keywordsIn = new Dictionary<string, object>[]
@@ -183,7 +186,8 @@ namespace CloacaTests
                 null,
                 null,
                 null,
-                new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 }, { "e", PyTuple.Create(new object[] { 19 }) } },
+                //new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 }, { "e", PyTuple.Create(new object[] { 19 }) } },
+                new Dictionary<string, object> { { "a", 15 }, { "b", 16 }, { "c", 17 }, { "d", 18 } },
             };
             var outputs = new object[][]
             {
@@ -191,12 +195,68 @@ namespace CloacaTests
                 new object[] { 6, 7, 8, 9, PyTuple.Create(new object[0]) },
                 new object[] { 10, 11, 12, -2, PyTuple.Create(new object[0]) },
                 new object[] { 13, 14, -1, -2, PyTuple.Create(new object[0]) },
-                new object[] { 15, 16, 17, 18, PyTuple.Create(new object[] { 19 }) },
+                //new object[] { 15, 16, 17, 18, PyTuple.Create(new object[] { 19 }) },
+                new object[] { 15, 16, 17, 18, PyTuple.Create(new object[0]) },
             };
 
             InOutTest(co, inputs, keywordsIn, outputs);
 
         }
+
+        /// <summary>
+        /// Testing variable arguments followed by keyword-only defaults. The function has a definition like:
+        /// def foo(*args, a=1, b=2):
+        /// 
+        /// a and b are actually keyword-only defaults.
+        /// </summary>
+        [Test]
+        public void VargsKeywordDefaults()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 0;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("args");
+            co.VarNames.Add("a");
+            co.VarNames.Add("b");
+            co.Defaults = new List<object>();
+            co.KWDefaults = new List<object>();
+            co.KWDefaults.Add(3);
+            co.KWDefaults.Add(4);
+            co.KWOnlyArgCount = 2;
+            co.Flags |= CodeObject.CO_FLAGS_VARGS;
+
+            var inputs = new object[][]
+            {
+                new object[] { 1, 2 },
+                new object[] { 1, 2 },
+                new object[] { 1, 2 },
+                new object[] { 1, 2 },
+                new object[] { },
+                new object[] { },
+            };
+            var keywordsIn = new Dictionary<string, object>[]
+            {
+                new Dictionary<string, object> { },
+                new Dictionary<string, object> { { "a", 200 }, { "b", 100 } },
+                new Dictionary<string, object> { { "a", 200 }, },
+                new Dictionary<string, object> { { "b", 100 }, },
+                new Dictionary<string, object> { { "a", 200 }, },
+                new Dictionary<string, object> { },
+            };
+            var outputs = new object[][]
+            {
+                new object[] { PyTuple.Create(new object[] { 1, 2 }), 3, 4 },
+                new object[] { PyTuple.Create(new object[] { 1, 2 }), 200, 100 },
+                new object[] { PyTuple.Create(new object[] { 1, 2 }), 200, 4 },
+                new object[] { PyTuple.Create(new object[] { 1, 2 }), 3, 100 },
+                new object[] { PyTuple.Create(new object[0]), 200, 4 },
+                new object[] { PyTuple.Create(new object[0]), 3, 4 },
+            };
+
+            InOutTest(co, inputs, keywordsIn, outputs);
+
+        }
+
     }
 
     [TestFixture]
@@ -798,6 +858,32 @@ namespace CloacaTests
                 {
                     { "a", PyInteger.Create(19) }
                 }), 1);
+        }
+
+        [Test]
+        public async Task VargsAndKwOnly()
+        {
+            string program =
+                "def varg_sum(*args, a=-1, b=2):\n" +
+                "   ret_sum = 0\n" +
+                "   for arg in args:\n" +
+                "      ret_sum += arg + a + b\n" +
+                "   return ret_sum\n" +
+                "o = varg_sum()\n" +
+                "a = varg_sum(1, 7, 11)\n" +
+                "b = varg_sum(1, 7, 11, a=1)\n" +
+                "c = varg_sum(1, 7, 11, b=1)\n" +
+                "d = varg_sum(1, 7, 11, a=1, b=-2)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "o", PyInteger.Create(0) },
+                    { "a", PyInteger.Create(22) },
+                    { "b", PyInteger.Create(28) },
+                    { "c", PyInteger.Create(19) },
+                    { "d", PyInteger.Create(16) },
+                }), 3);
         }
 
         [Test]

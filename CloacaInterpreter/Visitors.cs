@@ -239,6 +239,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitFactor([NotNull] CloacaParser.FactorContext context)
+    {
+        // Have to sneak in here to look for things like negative numbers. Very tedious and also pretty hacky!
+        if (context.GetText()[0] == '-')
+        {
+            LoadConstantNumber(context);
+            return null;
+        }
+        else
+        {
+            return base.VisitFactor(context);
+        }
+    }
+
     public override object VisitAtomNumber([NotNull] CloacaParser.AtomNumberContext context)
     {
         LoadConstantNumber(context);
@@ -1096,6 +1110,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             ActiveProgram.Defaults = new List<object>();
         }
+        if (ActiveProgram.KWDefaults == null)
+        {
+            ActiveProgram.KWDefaults = new List<object>();
+        }
 
         // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
         // Hunting for defaults, *args, and **kwargs. Oh, and regular ole' parameter names without any gravy.
@@ -1115,16 +1133,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else if (context.children[child_i].GetText() == "=")
             {
-                if ((ActiveProgram.Flags & CodeObject.CO_FLAGS_VARGS) > 0)
-                {
-                    throw new NotImplementedException("Keyword args using **kwargs format as well as through defaults are not yet supported.");
-                }
                 var defaultText = context.children[child_i + 1].GetText();
 
                 // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
                 int visit_child_i_copy = child_i + 1;
                 string visit_builder_name = ActiveProgram.Name + "_$Default_" + context.children[visit_child_i_copy].GetText();
-                var defaultsList = ActiveProgram.Defaults;
+
+                // Use defaults normally but hw kwdefaults if vargs was defined. We set this up in advance for the lambda so it uses
+                // the proper list when it finally runs.
+                List<object> defaultsList = ActiveProgram.Defaults;
+                if(ActiveProgram.HasVargs)
+                {
+                    defaultsList = ActiveProgram.KWDefaults;
+                    ActiveProgram.KWOnlyArgCount += 1;
+                }
+                
                 postProcessActions.Add(async (scheduler) =>
                 {
                     // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.

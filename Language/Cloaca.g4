@@ -220,7 +220,7 @@ atom: '(' (yield_expr|testlist_comp)? ')'  		# AtomParens
     |  '{' (dictorsetmaker)? '}'                # AtomCurlyBrackets     
     |  WAIT                                     # AtomWait              
 	|  NAME                                     # AtomName              
-	|  NUMBER                                   # AtomNumber            
+	|  NUMBER                                   # AtomNumber
 	|  STRING+                                  # AtomString            
 	|  '...'                                    # AtomDots              
 	|  'None'                                   # AtomNoneType          
