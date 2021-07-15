@@ -340,6 +340,10 @@ namespace LanguageImplementation
                             cursor += 2;
                         }
                         break;
+                    case ByteCodes.LIST_APPEND:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "LIST_APPEND", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.BINARY_SUBSCR:
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BINARY_SUBSCR", null, null);
                         cursor += 1;

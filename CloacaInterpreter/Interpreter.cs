@@ -1355,6 +1355,15 @@ namespace CloacaInterpreter
                                 context.DataStack.Push(list);
                             }
                             break;
+                        case ByteCodes.LIST_APPEND:
+                            {
+                                // TODO [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject. We could use .NET objects for a keys in a PyDict, for example.
+                                var toAppend = (PyObject) context.DataStack.Pop();
+                                var appendList = (PyList) context.DataStack.Peek();     // List stays TOS.
+                                PyListClass.append(appendList, toAppend);
+                                context.Cursor += 1;
+                            }
+                            break;
                         case ByteCodes.BINARY_SUBSCR:
                             {
                                 context.Cursor += 1;
