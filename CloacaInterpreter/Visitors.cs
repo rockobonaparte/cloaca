@@ -282,10 +282,159 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomSquareBrackets([NotNull] CloacaParser.AtomSquareBracketsContext context)
     {
-        // For now, we're assuming an atom of parentheses is a tuple
-        base.VisitAtomSquareBrackets(context);
-        ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+        if (context.testlist_comp() != null && context.testlist_comp().comp_for() != null)
+        {
+            // What we generally have to do:
+            // Create a code object for the list comprehension. The list will be called ".0"
+            //
+            // The list comprehension's inner context:
+            //   1. Build empty list with BUILD_LIST
+            //   2. Load it to .0
+            //   3. Set up the for loop
+            //   4. Generate code for the expression left of the for loop
+            //   5. Use LIST_APPEND to take each computer result from the iteration and put it into .0
+            //   6. Don't forget to return .0, which should be TOS by default.
+            // In the outer context:
+            //   1. Load up requirements to make the function (code object, made-up name)
+            //   2. Make it with MAKE_FUNCTION
+            //   3. Load list using LOAD_FAST
+            //   4. Get iterator using GET_ITER
+            //   5. Call list comp function
+
+            // BOOKMARK
+            // Make code object here and load it with LOAD_CONST. Call it "listcomp"
+            var newFunctionCode = new CodeObjectBuilder();
+            newFunctionCode.Name = "listcomp";
+
+            ActiveProgram.Constants.Add(newFunctionCode);
+            var compCodeIndex = ActiveProgram.Constants.Count - 1;
+
+            var callingProgram = ActiveProgram;
+            ProgramStack.Push(ActiveProgram);
+
+            ActiveProgram = newFunctionCode;
+            ActiveProgram.ArgCount = 1;
+            var listNameIdx = ActiveProgram.ArgVarNames.AddGetIndex(".0");
+            ActiveProgram.VarNames.Add(".0");
+
+            // We can't really use the for stmt logic here and it's annoying. We just come in with different-enough
+            // semantics.
+            // List comprehension header:
+            // BUILD_LIST
+            // LOAD_FAST  .0
+            // FOR_ITER   (past the loop)
+            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
+
+            // We may have one or more for statements in the list comprehension. We will recursively
+            // parse them and dump the list comprehension payload at the end. Treat it like each for
+            // statement is yet another layer of for-loops with the left side of the statements being
+            // the final, innermost block.
+            VisitComp_for(context.testlist_comp().comp_for(), context.testlist_comp().test(0), 0);
+
+            // List comprehension footer:
+            // JUMP_ABSOLUTE (back to the FOR_ITER)
+            // RETURN_VALUE
+            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+
+            // Back to the originator of the list comprehension...
+            ProgramStack.Pop();
+            ActiveProgram = callingProgram;
+
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
+            ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count-1, context);
+            ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
+
+            // Loading the list we'll be using.
+            Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
+            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
+        }
+        else
+        {
+            // For now, we're assuming an atom of parentheses is a tuple
+            base.VisitAtomSquareBrackets(context);
+            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+        }
         return null;
+    }
+
+
+    public void VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    {
+        var forIterIdx = ActiveProgram.Code.Count;
+        var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+        //LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.        
+        var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+
+        // List comprehension payload:
+        //
+        // STORE_FAST    iteration variable name, which should be context.testlist_comp().comp_for().exprlist().GetText()
+        // (stuff)       is context.testlist_comp().test(0).GetText() turned into code
+        // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
+        var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.exprlist().GetText());
+        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
+
+        if(context.comp_iter() != null)
+        {
+            // There are more for-loops. Whatever we just grabbed will be used to iterate into
+            // the next level.
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth+1, forIterIdx);
+        }
+        // Run the main list payload in the the bottommost comp_for().
+        else if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
+        {
+            Visit(innerPayloadContext);
+            // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
+            // comes out differently with wacky, wild list comprehensions.
+            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2 + listDepth, context);
+        }
+
+        var loopEnd = ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+        forIterFixup.Fixup(loopEnd);
+    }
+
+    public void VisitComp_iter([NotNull] CloacaParser.Comp_iterContext context, CloacaParser.TestContext innerPayloadContext, int listDepth, int prevForIterStart)
+    {
+        if (context.comp_for() != null)
+        {
+            Visit(context.comp_for().or_test());
+            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            VisitComp_for(context.comp_for(), innerPayloadContext, listDepth);
+        }
+        else if (context.comp_if() != null)
+        {
+            // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
+            VisitComp_if(context.comp_if(), innerPayloadContext, listDepth, prevForIterStart);
+        }
+        else
+        {
+            throw new Exception("Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
+        }
+    }
+
+    public void VisitComp_if([NotNull] CloacaParser.Comp_ifContext context, CloacaParser.TestContext innerPayloadContext, int listDepth, int prevForIterStart)
+    {
+        VisitTest_Nocond(context.test_nocond(), prevForIterStart);
+        if(context.comp_iter() != null)
+        {
+            // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth, prevForIterStart);
+        }
+    }
+
+    public void VisitTest_Nocond([NotNull] CloacaParser.Test_nocondContext context, int prevForIterStart)
+    {
+        if(context.lambdef_nocond() != null)
+        {
+            // Grammar has:
+            // test_nocond: or_test | lambdef_nocond;
+            // We're just going whole-hog on the or-test.
+            throw new NotImplementedException("lambdef_nocond branch of test_nocond syntax not yet implemented. You crazy lambda monster.");
+        }
+        Visit(context.or_test());
+        ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, prevForIterStart, context);
     }
 
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
@@ -1167,6 +1316,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ProgramStack.Push(ActiveProgram);
                     ActiveProgram = defaultBuilder;
                     Visit(context.children[visit_child_i_copy]);
+
                     ProgramStack.Pop();
 
                     var currentTask = scheduler.GetCurrentTask();

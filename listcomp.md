@@ -2,6 +2,21 @@
 
 These are some notes on working with list comprehensions and particularly how to generate code for them.
 
+List comprehensions have been implemented to a certain level of ability. These notes
+are partially for posterity but also in case we have some holes in the implementation
+we have to redo.
+
+## Parsing
+The actual Python grammar is much cleaner about detecting a list comprehension than the grammar I'm using for Cloaca. That
+Python3 grammar came from... somewhere. Maybe it's a really old Python grammar?
+
+Anyways, a list comprehension will pass through the AtomSquareBrackets visitor and will have comp_for defined:
+`context.testlist_comp().comp_for().GetText()`
+
+There's a problem in the parsing rule! :(
+The list comprehension is getting rid of all the white space, so [x for x in y], the comp_for becomes "[", "xforxiny", "]"
+n/m the children of comp_for are okay._
+
 ## Reference
 
 Using a base loop that just assigns each element to the new list like a copy.
@@ -154,3 +169,44 @@ Disassembly of <code object <listcomp> at 0x0000014A3E2B6F50, file "<stdin>", li
         >>   24 RETURN_VALUE
 >>>
 ```
+
+## General Scratchwork Notes
+[x for x in some_list]
+context.testlist_comp().test(0).GetText() is the x on the left
+
+context.testlist_comp().comp_for().or_test().GetText() is some_list on the right_
+
+context.testlist_comp().comp_for().exprlist().GetText() is the middle x
+
+
+context.testlist_comp().comp_for().GetText() is "forxinsome_list" but that's misleading; the children are properly separated
+
+
+
+
+## Double iterator notes
+Try to visit comp_for separately, which will have to set for comp_iter as well as comp_if
+
+`[word for words in a for word in words]`
+context.testlist_comp().comp_for().comp_iter().GetText()
+"forwordinwords"
+context.testlist_comp().comp_for().comp_iter().comp_for().GetText()
+"forwordinwords"
+So there can be many layers of comp_for and friends
+
+('for') is parsed out
+context.testlist_comp().comp_for().exprlist().GetText()
+"words"
+('in') is parsed out
+context.testlist_comp().comp_for().or_test().GetText()
+"a"
+
+
+
+double_list = [[1, 2], [3], [4, 5]]
+for sublist in double_list:
+    if len(sublist) > 1:
+        for x in sublist:
+            x + 1
+
+[x + 1 for sublist in double_list if len(sublist) > 1 for x in sublist]

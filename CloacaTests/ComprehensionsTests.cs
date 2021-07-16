@@ -19,7 +19,6 @@ namespace CloacaTests
     public class ComprehensionTests : RunCodeTest
     {
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
         public async Task BasicCopy()
         {
             string program =
@@ -40,7 +39,24 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
+        public async Task BasicCopyInlineList()
+        {
+            string program =
+                "b = [x for x in [1, 2, 3]]\n";
+
+            var list = PyList.Create();
+            list.list.Add(PyInteger.Create(1));
+            list.list.Add(PyInteger.Create(2));
+            list.list.Add(PyInteger.Create(3));
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", list }
+                }), 1);
+        }
+
+        [Test]
         public async Task ListCompMath()
         {
             string program =
@@ -58,13 +74,13 @@ namespace CloacaTests
                     { "b", b }
                 }), 1);
         }
+
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
         public async Task DoubleComprehension()
         {
             string program =
                 "a = [['Hello', 'World!'], ['Lets', 'Eat!']]\n" +
-                "b = [word for words in t for word in words]\n";
+                "b = [word for words in a for word in words]\n";
 
             var b = PyList.Create();
             b.list.Add(PyString.Create("Hello"));
@@ -78,5 +94,26 @@ namespace CloacaTests
                     { "b", b }
                 }), 1);
         }
+
+        [Test]
+        public async Task AdvancedDoubleComprehension()
+        {
+            string program =
+                "double_list = [[1, 2], [3], [4, 5]]\n" +
+                "b = [x + 1 for sublist in double_list if len(sublist) > 1 for x in sublist]\n";
+
+            var b = PyList.Create();
+            b.list.Add(PyInteger.Create(2));
+            b.list.Add(PyInteger.Create(3));
+            b.list.Add(PyInteger.Create(5));
+            b.list.Add(PyInteger.Create(6));
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", b }
+                }), 1);
+        }
+
     }
 }
