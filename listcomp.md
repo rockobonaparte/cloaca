@@ -1,3 +1,9 @@
+# List Comprehension Notes
+
+These are some notes on working with list comprehensions and particularly how to generate code for them.
+
+## Reference
+
 Using a base loop that just assigns each element to the new list like a copy.
 
 Actually coding the for-loop:
@@ -28,6 +34,7 @@ Actually coding the for-loop:
              26 RETURN_VALUE
 ```
 
+## Basic list comprehension
 Basic list comprehension:
 ```
 >>> def listcomp(x):
