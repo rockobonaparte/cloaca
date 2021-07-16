@@ -2,6 +2,17 @@
 
 These are some notes on working with list comprehensions and particularly how to generate code for them.
 
+## Parsing
+The actual Python grammar is much cleaner about detecting a list comprehension than the grammar I'm using for Cloaca. That
+Python3 grammar came from... somewhere. Maybe it's a really old Python grammar?
+
+Anyways, a list comprehension will pass through the AtomSquareBrackets visitor and will have comp_for defined:
+`context.testlist_comp().comp_for().GetText()`
+
+There's a problem in the parsing rule! :(
+The list comprehension is getting rid of all the white space, so [x for x in y], the comp_for becomes "[", "xforxiny", "]"
+n/m the children of comp_for are okay._
+
 ## Reference
 
 Using a base loop that just assigns each element to the new list like a copy.

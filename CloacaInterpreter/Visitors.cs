@@ -282,6 +282,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomSquareBrackets([NotNull] CloacaParser.AtomSquareBracketsContext context)
     {
+        if(context.testlist_comp() != null && context.testlist_comp().comp_for() != null)
+        {
+            throw new NotImplementedException("List comprehensions are not yet implemented");
+            // What we generally have to do:
+            // Create a code object for the list comprehension. The list will be called ".0"
+            //
+            // The list comprehension's inner context:
+            //   1. Build empty list with BUILD_LIST
+            //   2. Load it to .0
+            //   3. Set up the for loop
+            //   4. Generate code for the expression left of the for loop
+            //   5. Use LIST_APPEND to take each computer result from the iteration and put it into .0
+            //   6. Don't forget to return .0, which should be TOS by default.
+            // In the outer context:
+            //   1. Load up requirements to make the function (code object, made-up name)
+            //   2. Make it with MAKE_FUNCTION
+            //   3. Load list using LOAD_FAST
+            //   4. Get iterator using GET_ITER
+            //   5. Call list comp function
+            
+        }
+
         // For now, we're assuming an atom of parentheses is a tuple
         base.VisitAtomSquareBrackets(context);
         ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);

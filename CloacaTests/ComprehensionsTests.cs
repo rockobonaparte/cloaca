@@ -19,7 +19,6 @@ namespace CloacaTests
     public class ComprehensionTests : RunCodeTest
     {
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
         public async Task BasicCopy()
         {
             string program =
