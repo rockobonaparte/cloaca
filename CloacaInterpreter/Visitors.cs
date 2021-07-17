@@ -282,9 +282,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomSquareBrackets([NotNull] CloacaParser.AtomSquareBracketsContext context)
     {
-        if(context.testlist_comp() != null && context.testlist_comp().comp_for() != null)
+        if (context.testlist_comp() != null && context.testlist_comp().comp_for() != null)
         {
-            throw new NotImplementedException("List comprehensions are not yet implemented");
             // What we generally have to do:
             // Create a code object for the list comprehension. The list will be called ".0"
             //
@@ -301,12 +300,39 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             //   3. Load list using LOAD_FAST
             //   4. Get iterator using GET_ITER
             //   5. Call list comp function
-            
-        }
 
-        // For now, we're assuming an atom of parentheses is a tuple
-        base.VisitAtomSquareBrackets(context);
-        ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+            // BOOKMARK
+            // Make code object here and load it with LOAD_CONST. Call it "listcomp"
+            var newFunctionCode = new CodeObjectBuilder();
+            newFunctionCode.Name = "listcomp";
+
+            ActiveProgram.Constants.Add(newFunctionCode);
+            var compCodeIndex = ActiveProgram.Constants.Count - 1;
+
+            ProgramStack.Push(ActiveProgram);
+            ActiveProgram = newFunctionCode;
+
+            Visit(context.testlist_comp().test(0));
+
+            // Finishes list comprehension, Now we invoke it to actually run the list comprehension.
+            ProgramStack.Pop();
+
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);         // TODO: Put code object index here!
+            ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
+            ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
+
+            // Loading the list we'll be using.
+            Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
+            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, context);
+
+        }
+        else
+        {
+            // For now, we're assuming an atom of parentheses is a tuple
+            base.VisitAtomSquareBrackets(context);
+            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+        }
         return null;
     }
 
