@@ -309,22 +309,25 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ActiveProgram.Constants.Add(newFunctionCode);
             var compCodeIndex = ActiveProgram.Constants.Count - 1;
 
+            var callingProgram = ActiveProgram;
             ProgramStack.Push(ActiveProgram);
-            ActiveProgram = newFunctionCode;
 
+            ActiveProgram = newFunctionCode;
             Visit(context.testlist_comp().test(0));
 
             // Finishes list comprehension, Now we invoke it to actually run the list comprehension.
             ProgramStack.Pop();
+            ActiveProgram = callingProgram;
 
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);         // TODO: Put code object index here!
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
             ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count-1, context);
             ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
             // Loading the list we'll be using.
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
             ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, context);
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, compCodeIndex, context);
 
         }
         else
@@ -1215,6 +1218,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ProgramStack.Push(ActiveProgram);
                     ActiveProgram = defaultBuilder;
                     Visit(context.children[visit_child_i_copy]);
+
                     ProgramStack.Pop();
 
                     var currentTask = scheduler.GetCurrentTask();
