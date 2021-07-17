@@ -335,7 +335,7 @@ namespace LanguageImplementation
                     case ByteCodes.BUILD_LIST:
                         {
                             cursor += 1;
-                            var list_size = code.GetUShort(cursor-1);
+                            var list_size = code.GetUShort(cursor);
                             disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "BUILD_LIST", list_size, null);
                             cursor += 2;
                         }
