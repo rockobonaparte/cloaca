@@ -39,6 +39,25 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Not targeting this more sophisticated list comprehension yet")]
+        public async Task BasicCopyInlineList()
+        {
+            string program =
+                "b = [x for x in [1, 2, 3]\n";
+
+            var list = PyList.Create();
+            list.list.Add(PyInteger.Create(1));
+            list.list.Add(PyInteger.Create(2));
+            list.list.Add(PyInteger.Create(3));
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", list }
+                }), 1);
+        }
+
+        [Test]
         [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
         public async Task ListCompMath()
         {
