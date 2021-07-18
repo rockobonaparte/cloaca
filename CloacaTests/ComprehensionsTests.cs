@@ -57,7 +57,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
         public async Task ListCompMath()
         {
             string program =

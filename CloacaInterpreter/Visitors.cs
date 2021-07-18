@@ -341,10 +341,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             // List comprehension payload:
             //
-            // STORE_FAST  iteration variable name, which should be context.testlist_comp().test(0)
-            // Whatever is context.testlist_comp().test(0).GetText()
+            // STORE_FAST    iteration variable name, which should be context.testlist_comp().comp_for().exprlist().GetText()
+            // (stuff)       is context.testlist_comp().test(0).GetText() turned into code
             // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
-            var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.testlist_comp().test(0).GetText());
+            var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.testlist_comp().comp_for().exprlist().GetText());
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
             Visit(context.testlist_comp().test(0));
 
