@@ -165,3 +165,15 @@ Disassembly of <code object <listcomp> at 0x0000014A3E2B6F50, file "<stdin>", li
         >>   24 RETURN_VALUE
 >>>
 ```
+
+## General Scratchwork Notes
+[x for x in some_list]
+context.testlist_comp().test(0).GetText() is the x on the left
+
+context.testlist_comp().comp_for().or_test().GetText() is some_list on the right_
+
+context.testlist_comp().comp_for().exprlist(1).GetText() is the middle x
+
+
+context.testlist_comp().comp_for().GetText() is "forxinsome_list" but that's misleading; the children are properly separated
+

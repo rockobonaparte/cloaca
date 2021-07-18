@@ -313,13 +313,62 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ProgramStack.Push(ActiveProgram);
 
             ActiveProgram = newFunctionCode;
+            //Visit(context.testlist_comp().test(0));         // Currently, this just gets the left side of the expression without setting up the for-loop (nor returning the value).
+            // Visit(context.testlist_comp().comp_for());
+
+
+
+
+
+
+
+            // We can't really use the for stmt logic here and it's annoying. We just come in with different-enough
+            // semantics.
+            // List comprehension header:
+            // BUILD_LIST
+            // LOAD_FAST  .0
+            // FOR_ITER   (past the loop)
+            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
+            var listNameIdx = ActiveProgram.VarNames.AddGetIndex(".0");
+            var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
+
+            var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+            LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
+            var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+
+            // List comprehension payload is context.testlist_comp().test(0).GetText(), but with some shenanigans to
+            // store the result.
+            // TODO: Fix up. This is kind of stubbed right now. It looks like it just load versus storing the result.
             Visit(context.testlist_comp().test(0));
 
-            // Finishes list comprehension, Now we invoke it to actually run the list comprehension.
+            // List comprehension footer:
+            // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
+            // JUMP_ABSOLUTE (back to the FOR_ITER)
+            // RETURN_VALUE
+
+            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
+            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+            int post_for_iter = ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
+            forIterFixup.Fixup(post_for_iter);
+
+
+
+
+
+
+
+
+
+
+
+
+
+            // Back to the originator of the list comprehension...
             ProgramStack.Pop();
             ActiveProgram = callingProgram;
 
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
+            //ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
             ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count-1, context);
             ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
