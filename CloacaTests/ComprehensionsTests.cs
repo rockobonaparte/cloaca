@@ -39,11 +39,10 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not targeting this more sophisticated list comprehension yet")]
         public async Task BasicCopyInlineList()
         {
             string program =
-                "b = [x for x in [1, 2, 3]\n";
+                "b = [x for x in [1, 2, 3]]\n";
 
             var list = PyList.Create();
             list.list.Add(PyInteger.Create(1));
