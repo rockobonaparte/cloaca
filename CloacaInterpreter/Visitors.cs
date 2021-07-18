@@ -313,6 +313,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ProgramStack.Push(ActiveProgram);
 
             ActiveProgram = newFunctionCode;
+            ActiveProgram.ArgCount = 1;
+            var listNameIdx = ActiveProgram.ArgVarNames.AddGetIndex(".0");
+            ActiveProgram.VarNames.Add(".0");
+
             //Visit(context.testlist_comp().test(0));         // Currently, this just gets the left side of the expression without setting up the for-loop (nor returning the value).
             // Visit(context.testlist_comp().comp_for());
 
@@ -329,24 +333,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // LOAD_FAST  .0
             // FOR_ITER   (past the loop)
             ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
-            var listNameIdx = ActiveProgram.VarNames.AddGetIndex(".0");
             var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
 
             var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
             LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
             var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
 
-            // List comprehension payload is context.testlist_comp().test(0).GetText(), but with some shenanigans to
-            // store the result.
-            // TODO: Fix up. This is kind of stubbed right now. It looks like it just load versus storing the result.
+            // List comprehension payload:
+            //
+            // STORE_FAST  iteration variable name, which should be context.testlist_comp().test(0)
+            // Whatever is context.testlist_comp().test(0).GetText()
+            // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
+            var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.testlist_comp().test(0).GetText());
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
             Visit(context.testlist_comp().test(0));
 
+            // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
+            // comes out differently with wacky, wild list comprehensions.
+            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
+
             // List comprehension footer:
-            // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
             // JUMP_ABSOLUTE (back to the FOR_ITER)
             // RETURN_VALUE
-
-            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
             ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
             int post_for_iter = ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
             forIterFixup.Fixup(post_for_iter);
@@ -376,7 +384,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // Loading the list we'll be using.
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
             ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, compCodeIndex, context);
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
 
         }
         else

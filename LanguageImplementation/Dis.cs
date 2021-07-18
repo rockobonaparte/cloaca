@@ -342,9 +342,8 @@ namespace LanguageImplementation
                         break;
                     case ByteCodes.LIST_APPEND:
                         cursor += 1;
-                        // Yeah it's something we need to take but there doesn't seem to be a purpose to it. It seems to always be 2.
-                        var unused = code.GetUShort(cursor);
-                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "LIST_APPEND", unused, null);
+                        var stack_i = code.GetUShort(cursor);
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "LIST_APPEND", stack_i, null);
                         cursor += 2;
                         break;
                     case ByteCodes.BINARY_SUBSCR:
