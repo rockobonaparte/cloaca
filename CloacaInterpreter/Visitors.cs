@@ -317,15 +317,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             var listNameIdx = ActiveProgram.ArgVarNames.AddGetIndex(".0");
             ActiveProgram.VarNames.Add(".0");
 
-            //Visit(context.testlist_comp().test(0));         // Currently, this just gets the left side of the expression without setting up the for-loop (nor returning the value).
-            // Visit(context.testlist_comp().comp_for());
-
-
-
-
-
-
-
             // We can't really use the for stmt logic here and it's annoying. We just come in with different-enough
             // semantics.
             // List comprehension header:
@@ -359,24 +350,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             int post_for_iter = ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
             forIterFixup.Fixup(post_for_iter);
 
-
-
-
-
-
-
-
-
-
-
-
-
             // Back to the originator of the list comprehension...
             ProgramStack.Pop();
             ActiveProgram = callingProgram;
 
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
-            //ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
             ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
             ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count-1, context);
             ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
@@ -385,7 +363,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
             ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
             ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
-
         }
         else
         {
