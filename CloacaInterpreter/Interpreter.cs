@@ -1195,7 +1195,17 @@ namespace CloacaInterpreter
                                 // TOS is the function's qualified name
                                 context.Cursor += 1;
                                 var functionOpcode = context.CodeBytes.GetUShort(context.Cursor);             // Currently not using.
-                                string qualifiedName = (string)context.DataStack.Pop();
+                                object nameString = context.DataStack.Pop();
+                                string qualifiedName = null;
+                                if (nameString as PyString != null)
+                                {
+                                    qualifiedName = ((PyString)nameString).InternalValue;
+                                }
+                                else
+                                {
+                                    qualifiedName = (string)nameString;
+                                }
+
                                 CodeObject functionCode = (CodeObject)context.DataStack.Pop();
                                 context.DataStack.Push(functionCode);
                             }
