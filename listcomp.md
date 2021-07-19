@@ -180,6 +180,25 @@ context.testlist_comp().comp_for().GetText() is "forxinsome_list" but that's mis
 
 
 
+## Double iterator notes
+Try to visit comp_for separately, which will have to set for comp_iter as well as comp_if
+
+`[word for words in a for word in words]`
+context.testlist_comp().comp_for().comp_iter().GetText()
+"forwordinwords"
+context.testlist_comp().comp_for().comp_iter().comp_for().GetText()
+"forwordinwords"
+So there can be many layers of comp_for and friends_
+
+('for') is parsed out
+context.testlist_comp().comp_for().exprlist().GetText()
+"words"
+('in') is parsed out
+context.testlist_comp().comp_for().or_test().GetText()
+"a"
+
+
+
 double_list = [[1, 2], [3], [4, 5]]
 for sublist in double_list:
     if len(sublist) > 1:
