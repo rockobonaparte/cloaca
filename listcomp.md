@@ -177,3 +177,13 @@ context.testlist_comp().comp_for().exprlist().GetText() is the middle x
 
 context.testlist_comp().comp_for().GetText() is "forxinsome_list" but that's misleading; the children are properly separated
 
+
+
+
+double_list = [[1, 2], [3], [4, 5]]
+for sublist in double_list:
+    if len(sublist) > 1:
+        for x in sublist:
+            x + 1
+
+[x + 1 for sublist in double_list if len(sublist) > 1 for x in sublist]
