@@ -330,14 +330,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // parse them and dump the list comprehension payload at the end. Treat it like each for
             // statement is yet another layer of for-loops with the left side of the statements being
             // the final, innermost block.
-            VisitComp_for(context.testlist_comp().comp_for(), context.testlist_comp().test(0));
+            VisitComp_for(context.testlist_comp().comp_for(), context.testlist_comp().test(0), 0);
 
             // List comprehension footer:
             // JUMP_ABSOLUTE (back to the FOR_ITER)
             // RETURN_VALUE
-            //ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
             int post_for_iter = ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
-            //forIterFixup.Fixup(post_for_iter);
 
             // Back to the originator of the list comprehension...
             ProgramStack.Pop();
@@ -363,7 +361,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     }
 
 
-    public object VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext)
+    public object VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
     {
         var forIterIdx = ActiveProgram.Code.Count;
         var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
@@ -378,13 +376,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.exprlist().GetText());
         ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
 
+        if(context.comp_iter() != null)
+        {
+            if(context.comp_iter().comp_for() != null)
+            {
+                // There are more for-loops. Whatever we just grabbed will be used to iterate into
+                // the next level.
+                ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, iterVarIdx, context);
+                ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+                VisitComp_for(context.comp_iter().comp_for(), innerPayloadContext, listDepth + 1);
+            }
+            else
+            {
+                throw new Exception("Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
+            }
+        }
         // Run the main list payload in the the bottommost comp_for().
-        if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
+        else if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
         {
             Visit(innerPayloadContext);
             // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
             // comes out differently with wacky, wild list comprehensions.
-            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
+            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2 + listDepth, context);
         }
 
         var loopEnd = ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
