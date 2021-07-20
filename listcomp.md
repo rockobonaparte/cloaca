@@ -188,7 +188,7 @@ context.testlist_comp().comp_for().comp_iter().GetText()
 "forwordinwords"
 context.testlist_comp().comp_for().comp_iter().comp_for().GetText()
 "forwordinwords"
-So there can be many layers of comp_for and friends_
+So there can be many layers of comp_for and friends
 
 ('for') is parsed out
 context.testlist_comp().comp_for().exprlist().GetText()

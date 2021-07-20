@@ -324,31 +324,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // LOAD_FAST  .0
             // FOR_ITER   (past the loop)
             ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
-            var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
 
-            var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
-            LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
-            var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
-
-            // List comprehension payload:
-            //
-            // STORE_FAST    iteration variable name, which should be context.testlist_comp().comp_for().exprlist().GetText()
-            // (stuff)       is context.testlist_comp().test(0).GetText() turned into code
-            // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
-            var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.testlist_comp().comp_for().exprlist().GetText());
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
-            Visit(context.testlist_comp().test(0));
-
-            // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
-            // comes out differently with wacky, wild list comprehensions.
-            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
+            // We may have one or more for statements in the list comprehension. We will recursively
+            // parse them and dump the list comprehension payload at the end. Treat it like each for
+            // statement is yet another layer of for-loops with the left side of the statements being
+            // the final, innermost block.
+            VisitComp_for(context.testlist_comp().comp_for(), context.testlist_comp().test(0));
 
             // List comprehension footer:
             // JUMP_ABSOLUTE (back to the FOR_ITER)
             // RETURN_VALUE
-            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+            //ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
             int post_for_iter = ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
-            forIterFixup.Fixup(post_for_iter);
+            //forIterFixup.Fixup(post_for_iter);
 
             // Back to the originator of the list comprehension...
             ProgramStack.Pop();
@@ -373,6 +362,35 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+
+    public object VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext)
+    {
+        var forIterIdx = ActiveProgram.Code.Count;
+        var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+        //LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
+        var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+
+        // List comprehension payload:
+        //
+        // STORE_FAST    iteration variable name, which should be context.testlist_comp().comp_for().exprlist().GetText()
+        // (stuff)       is context.testlist_comp().test(0).GetText() turned into code
+        // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
+        var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.exprlist().GetText());
+        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
+
+        // Run the main list payload in the the bottommost comp_for().
+        if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
+        {
+            Visit(innerPayloadContext);
+            // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
+            // comes out differently with wacky, wild list comprehensions.
+            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2, context);
+        }
+
+        var loopEnd = ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+        forIterFixup.Fixup(loopEnd);
+        return null;
+    }
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
     {
         ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
