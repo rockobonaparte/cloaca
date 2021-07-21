@@ -335,7 +335,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // List comprehension footer:
             // JUMP_ABSOLUTE (back to the FOR_ITER)
             // RETURN_VALUE
-            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context) - 1;
+            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
 
             // Back to the originator of the list comprehension...
             ProgramStack.Pop();
