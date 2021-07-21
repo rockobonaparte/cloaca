@@ -157,6 +157,13 @@ namespace LanguageImplementation.DataTypes
         {
             return PyString.Create(((PyString)self).ToString());
         }
+
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asStr = (PyString)self;
+            return PyInteger.Create(asStr.InternalValue.Length);
+        }
     }
 
     public class PyString : PyObject

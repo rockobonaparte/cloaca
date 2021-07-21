@@ -65,8 +65,10 @@ namespace CloacaInterpreter
             var super_methodInfo = ((MethodCallExpression)super_expr.Body).Method;
             var super_wrapper = new WrappedCodeObject("super", super_methodInfo);
 
-            // Can't use an expression tree for dir because it is async; expression trees don't support async. :(
+            // Can't use an expression tree for dir and friend because it is async;
+            // expression trees don't support async. :(
             var dir_wrapper = new WrappedCodeObject("dir", typeof(Builtins).GetMethod("dir"));
+            var len_wrapper = new WrappedCodeObject("len", typeof(Builtins).GetMethod("len"));
 
             Expression<Action<PyTypeObject>> issubclass_expr = instance => Builtins.issubclass(null, null);
             var issubclass_methodInfo = ((MethodCallExpression)issubclass_expr.Body).Method;
@@ -91,6 +93,7 @@ namespace CloacaInterpreter
                 { "Exception", PyExceptionClass.Instance },
                 { "super", super_wrapper },
                 { "dir", dir_wrapper },
+                { "len", len_wrapper },
                 { "issubclass", issubclass_wrapper },
                 { "isinstance", isinstance_wrapper },
                 { "type", builtin_type_wrapper },
