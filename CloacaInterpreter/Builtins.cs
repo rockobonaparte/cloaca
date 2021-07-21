@@ -116,6 +116,22 @@ namespace CloacaInterpreter
             return retList;
         }
 
+        /// <summary>
+        /// Implements the len() command to get the length of containers.
+        /// </summary>
+        /// <param name="o">The object to inspect</param>
+        /// <returns>A PyList of the names of the methods and properties of this PyObject.</returns>        
+        //public static async Task<PyList> dir(IInterpreter interpreter, FrameContext context, PyObject o)
+        public static async Task<object> len(IInterpreter interpreter, FrameContext context, PyObject o)
+        {
+            // TODO:
+            // 0. Add tests
+            // 1. Implement __len__ in all our containers
+            // 2. Connect it here
+            // 3. Implement alternative for .NET containers that have Length or Count fields
+            throw new NotImplementedException("len() not yet implemented. How did I miss this!");
+        }
+
         public static PyClass builtin_type(PyObject obj)
         {
             return obj.__class__;
