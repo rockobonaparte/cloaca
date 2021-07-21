@@ -96,7 +96,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List comprehensions are not yet implemented. These tests are added in advance of supporting them.")]
+        [Ignore("comp_if only stubbed for now in code gen; found out len() was missing.")]
         public async Task AdvancedDoubleComprehension()
         {
             string program =

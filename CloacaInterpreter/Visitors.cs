@@ -361,7 +361,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     }
 
 
-    public object VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    public void VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
     {
         var forIterIdx = ActiveProgram.Code.Count;
         var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
@@ -378,18 +378,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         if(context.comp_iter() != null)
         {
-            if(context.comp_iter().comp_for() != null)
-            {
-                // There are more for-loops. Whatever we just grabbed will be used to iterate into
-                // the next level.
-                ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, iterVarIdx, context);
-                ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-                VisitComp_for(context.comp_iter().comp_for(), innerPayloadContext, listDepth + 1);
-            }
-            else
-            {
-                throw new Exception("Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
-            }
+            // There are more for-loops. Whatever we just grabbed will be used to iterate into
+            // the next level.
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, iterVarIdx, context);
+            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth+1);
         }
         // Run the main list payload in the the bottommost comp_for().
         else if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
@@ -402,8 +395,35 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         var loopEnd = ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
         forIterFixup.Fixup(loopEnd);
-        return null;
     }
+
+    public void VisitComp_iter([NotNull] CloacaParser.Comp_iterContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    {
+        if (context.comp_for() != null)
+        {
+            VisitComp_for(context.comp_for(), innerPayloadContext, listDepth);
+        }
+        else if (context.comp_if() != null)
+        {
+            // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
+            VisitComp_if(context.comp_if(), innerPayloadContext, listDepth);
+        }
+        else
+        {
+            throw new Exception("Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
+        }
+    }
+
+    public void VisitComp_if([NotNull] CloacaParser.Comp_ifContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    {
+        Visit(context.test_nocond());
+        if(context.comp_iter() != null)
+        {
+            // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth);
+        }
+    }
+
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
     {
         ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
