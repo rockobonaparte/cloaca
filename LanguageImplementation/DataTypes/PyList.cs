@@ -184,6 +184,13 @@ namespace LanguageImplementation.DataTypes
             }
             return (PyString) PyStringClass.__add__(retStr, PyString.Create("]"));
         }
+
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asList = (PyList)self;
+            return PyInteger.Create(asList.list.Count);
+        }
     }
 
     public class PyList : PyObject, IEnumerable
@@ -199,6 +206,13 @@ namespace LanguageImplementation.DataTypes
         public PyList(List<PyObject> existingList)
         {
             list = existingList;
+        }
+
+        public static PyList Create(List<PyObject> existingList)
+        {
+            var pyList = PyTypeObject.DefaultNew<PyList>(PyListClass.Instance);
+            pyList.list = existingList;
+            return pyList;
         }
 
         public static PyList Create()

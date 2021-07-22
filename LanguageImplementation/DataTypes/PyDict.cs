@@ -311,6 +311,13 @@ namespace LanguageImplementation.DataTypes
             }
             return (PyString)PyStringClass.__add__(retStr, PyString.Create("}"));
         }
+
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asDict = (PyDict)self;
+            return PyInteger.Create(asDict.InternalDict.Count);
+        }
     }
 
     public class PyDict : PyObject, IEnumerable
@@ -318,6 +325,14 @@ namespace LanguageImplementation.DataTypes
         // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
         //       We could use .NET objects for a keys in a PyDict, for example.
         internal Dictionary<PyObject, PyObject> dict;
+        public Dictionary<PyObject, PyObject> InternalDict
+        {
+            get
+            {
+                return dict;
+            }
+        }
+
         public PyDict()
         {
             dict = new Dictionary<PyObject, PyObject>();
