@@ -201,6 +201,13 @@ namespace LanguageImplementation.DataTypes
             list = existingList;
         }
 
+        public static PyList Create(List<PyObject> existingList)
+        {
+            var pyList = PyTypeObject.DefaultNew<PyList>(PyListClass.Instance);
+            pyList.list = existingList;
+            return pyList;
+        }
+
         public static PyList Create()
         {
             var pyList = PyTypeObject.DefaultNew<PyList>(PyListClass.Instance);

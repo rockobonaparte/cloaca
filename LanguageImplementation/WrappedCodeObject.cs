@@ -424,8 +424,8 @@ namespace LanguageImplementation
                             constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
                         }
                         Array.Copy(args, 0, generics, 0, numGenerics);
-                        Type monomorophedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
-                        asConstructor = monomorophedConstructor.GetConstructor(constructorInTypes);
+                        Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
+                        asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
                     }
                     return Task.FromResult(asConstructor.Invoke(final_args));
                 }

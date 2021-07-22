@@ -122,14 +122,60 @@ namespace CloacaInterpreter
         /// <param name="o">The object to inspect</param>
         /// <returns>A PyList of the names of the methods and properties of this PyObject.</returns>        
         //public static async Task<PyList> dir(IInterpreter interpreter, FrameContext context, PyObject o)
-        public static async Task<object> len(IInterpreter interpreter, FrameContext context, PyObject o)
+        public static async Task<PyInteger> len(IInterpreter interpreter, FrameContext context, object o)
         {
             // TODO:
-            // 0. Add tests
             // 1. Implement __len__ in all our containers
             // 2. Connect it here
             // 3. Implement alternative for .NET containers that have Length or Count fields
-            throw new NotImplementedException("len() not yet implemented. How did I miss this!");
+            var asPyObject = o as PyObject;
+            if(asPyObject == null)
+            {
+                if(!asPyObject.__dict__.ContainsKey("__len__"))
+                {
+                    throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                }
+                else
+                {
+                    var callable_len = asPyObject.__dict__["__len__"] as IPyCallable;
+                    if(callable_len == null)
+                    {
+                        // Yeah, same error as if __len__ was not found in the first place...
+                        throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                    }
+                    else
+                    {
+                        var retVal = await callable_len.Call(interpreter, context, new object[] { o });
+                        var asPyInteger = retVal as PyInteger;
+                        if(asPyInteger == null)
+                        {
+                            // Yeah, same error as if __len__ if it's a function but it returns moon crap.
+                            throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                        }
+                        return asPyInteger;
+                    }
+                }
+            }
+
+            var asArray = o as Array;
+            if(asArray != null)
+            {
+                return PyInteger.Create(asArray.Length);
+            }
+
+            // This code hasn't been vetted yet and I expect it fails. Count is more of a generic property than a 
+            // method, so this monomorphizing is probably incorrect.
+            // Still here? This might be, uh, an IEnumerable<T>
+            var asCountMethod = o.GetType().GetMethod("Count");
+            if (asCountMethod != null && asCountMethod.ContainsGenericParameters)
+            {
+                Type[] generics = o.GetType().GenericTypeArguments;
+                Type monomorphed = asCountMethod.DeclaringType.MakeGenericType(generics);
+                var asFinalMethod = monomorphed.GetMethod("Count");
+                return PyInteger.Create((int) await (Task.FromResult(asFinalMethod.Invoke(o, new object[0]))));
+            }
+
+            throw new Exception("TypeError: cannot calculate length for object of type " + o.GetType().Name);
         }
 
         public static PyClass builtin_type(PyObject obj)

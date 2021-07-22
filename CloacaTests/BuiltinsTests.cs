@@ -42,9 +42,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void NumericStringConversions()
+        public async Task NumericStringConversions()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a_string = '1'\n" +
                 "as_int = int(a_string)\n" +
                 "as_float = float(a_string)\n" +
@@ -60,6 +60,40 @@ namespace CloacaTests
                 { "int_str", PyString.Create("1") },
                 { "float_str", PyString.Create("1.0") },
                 { "bool_str", PyString.Create("True") },
+            }), 1);
+        }
+
+
+        [Test]
+        public async Task LenFunction()
+        {
+            var dictin = PyDict.Create();
+            dictin.InternalDict[PyString.Create("1")] = PyInteger.Create(1);
+            dictin.InternalDict[PyString.Create("2")] = PyInteger.Create(2);
+
+            await runBasicTest(
+                "listout = len(listin)\n" +
+                "dictout = len(dictin)\n" +
+                "tupleout = len(tuplein)\n" +
+                "strout = len(strin)", 
+                //"enumerableout = len(enumerablein)\n" +
+                //"arrayout = len(arrayin)\n" +
+                //"dotnotstrout = len(dotntstrin)\n",     // I think this should be IEnumerable but I'm not taking chances
+            new Dictionary<string, object>()
+            {
+                { "listin", PyList.Create(new List<PyObject>() { PyInteger.Create(1) }) },
+                { "dictin", dictin },
+                { "tuplein", PyTuple.Create(new object[] {1, 2, 3 }) },
+                { "strin", PyString.Create("1234") }
+            }, new VariableMultimap(new TupleList<string, object>
+            {
+                { "listout", PyInteger.Create(1) },
+                { "dictout", PyInteger.Create(2) },
+                { "tupleout", PyInteger.Create(3) },
+                { "strout", PyInteger.Create(4) },
+                //{ "enumerableout", PyInteger.Create(5) },
+                //{ "arrayout", PyInteger.Create(6) },
+                //{ "dotnotstrout", PyInteger.Create(7) },
             }), 1);
         }
     }
