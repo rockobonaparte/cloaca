@@ -121,13 +121,8 @@ namespace CloacaInterpreter
         /// </summary>
         /// <param name="o">The object to inspect</param>
         /// <returns>A PyList of the names of the methods and properties of this PyObject.</returns>        
-        //public static async Task<PyList> dir(IInterpreter interpreter, FrameContext context, PyObject o)
         public static async Task<PyInteger> len(IInterpreter interpreter, FrameContext context, object o)
         {
-            // TODO:
-            // 1. Implement __len__ in all our containers
-            // 2. Connect it here
-            // 3. Implement alternative for .NET containers that have Length or Count fields
             var asPyObject = o as PyObject;
             if(asPyObject != null)
             {
