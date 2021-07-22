@@ -163,16 +163,18 @@ namespace CloacaInterpreter
                 return PyInteger.Create(asArray.Length);
             }
 
-            // This code hasn't been vetted yet and I expect it fails. Count is more of a generic property than a 
-            // method, so this monomorphizing is probably incorrect.
-            // Still here? This might be, uh, an IEnumerable<T>
-            var asCountMethod = o.GetType().GetMethod("Count");
-            if (asCountMethod != null && asCountMethod.ContainsGenericParameters)
+            // Still here? This might be, uh, an IEnumerable<T> with a Count property...
+            var asCountProperty = o.GetType().GetProperty("Count");
+            if (asCountProperty != null)
             {
-                Type[] generics = o.GetType().GenericTypeArguments;
-                Type monomorphed = asCountMethod.DeclaringType.MakeGenericType(generics);
-                var asFinalMethod = monomorphed.GetMethod("Count");
-                return PyInteger.Create((int) await (Task.FromResult(asFinalMethod.Invoke(o, new object[0]))));
+                return PyInteger.Create((int) asCountProperty.GetValue(o));
+            }
+
+            // No? Look for a Length
+            var asLengthProperty = o.GetType().GetProperty("Length");
+            if (asLengthProperty != null)
+            {
+                return PyInteger.Create((int)asLengthProperty.GetValue(o));
             }
 
             throw new Exception("TypeError: cannot calculate length for object of type " + o.GetType().Name);
