@@ -153,6 +153,14 @@ namespace LanguageImplementation.DataTypes
             return !__eq__(self, other);
         }
 
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asTuple = (PyTuple)self;
+            return PyInteger.Create(asTuple.Values.Length);
+        }
+
+
         // TODO: [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
         //       You only implemented the bare minimum to use them with variable arguments. Look at PyList for
         //       some helpful takeaways.

@@ -37,6 +37,13 @@ namespace LanguageImplementation.DataTypes
             var asPyRange = self as PyRange;
             return PyRangeIterator.Create(asPyRange);
         }
+
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asPyRange = (PyRange)self;
+            return PyInteger.Create(Math.Abs((asPyRange.Max - asPyRange.Min)/asPyRange.Step));
+        }
     }
 
     public class PyRange : PyObject

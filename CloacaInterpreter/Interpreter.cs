@@ -93,6 +93,7 @@ namespace CloacaInterpreter
                 { "Exception", PyExceptionClass.Instance },
                 { "super", super_wrapper },
                 { "dir", dir_wrapper },
+                { "len", len_wrapper },
                 { "issubclass", issubclass_wrapper },
                 { "isinstance", isinstance_wrapper },
                 { "type", builtin_type_wrapper },

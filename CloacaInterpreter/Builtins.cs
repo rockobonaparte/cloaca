@@ -129,7 +129,7 @@ namespace CloacaInterpreter
             // 2. Connect it here
             // 3. Implement alternative for .NET containers that have Length or Count fields
             var asPyObject = o as PyObject;
-            if(asPyObject == null)
+            if(asPyObject != null)
             {
                 if(!asPyObject.__dict__.ContainsKey("__len__"))
                 {

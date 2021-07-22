@@ -75,25 +75,28 @@ namespace CloacaTests
                 "listout = len(listin)\n" +
                 "dictout = len(dictin)\n" +
                 "tupleout = len(tuplein)\n" +
-                "strout = len(strin)", 
-                //"enumerableout = len(enumerablein)\n" +
-                //"arrayout = len(arrayin)\n" +
-                //"dotnotstrout = len(dotntstrin)\n",     // I think this should be IEnumerable but I'm not taking chances
+                "strout = len(strin)\n" +
+                "rangeout = len(rangein)\n",
+            //"enumerableout = len(enumerablein)\n" +
+            //"arrayout = len(arrayin)\n" +
+            //"dotnotstrout = len(dotntstrin)\n",     // I think this should be IEnumerable but I'm not taking chances
             new Dictionary<string, object>()
             {
                 { "listin", PyList.Create(new List<PyObject>() { PyInteger.Create(1) }) },
                 { "dictin", dictin },
                 { "tuplein", PyTuple.Create(new object[] {1, 2, 3 }) },
-                { "strin", PyString.Create("1234") }
+                { "strin", PyString.Create("1234") },
+                { "rangein", PyRange.Create(5, 0, 1) },
             }, new VariableMultimap(new TupleList<string, object>
             {
                 { "listout", PyInteger.Create(1) },
                 { "dictout", PyInteger.Create(2) },
                 { "tupleout", PyInteger.Create(3) },
                 { "strout", PyInteger.Create(4) },
-                //{ "enumerableout", PyInteger.Create(5) },
-                //{ "arrayout", PyInteger.Create(6) },
-                //{ "dotnotstrout", PyInteger.Create(7) },
+                { "rangeout", PyInteger.Create(5) },
+                //{ "enumerableout", PyInteger.Create(6) },
+                //{ "arrayout", PyInteger.Create(7) },
+                //{ "dotnotstrout", PyInteger.Create(8) },
             }), 1);
         }
     }

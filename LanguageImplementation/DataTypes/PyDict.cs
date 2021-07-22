@@ -311,6 +311,13 @@ namespace LanguageImplementation.DataTypes
             }
             return (PyString)PyStringClass.__add__(retStr, PyString.Create("}"));
         }
+
+        [ClassMember]
+        public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asDict = (PyDict)self;
+            return PyInteger.Create(asDict.InternalDict.Count);
+        }
     }
 
     public class PyDict : PyObject, IEnumerable
