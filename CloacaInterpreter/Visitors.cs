@@ -355,7 +355,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             // For now, we're assuming an atom of parentheses is a tuple
             base.VisitAtomSquareBrackets(context);
-            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+
+            // List might be empty; declared as just []
+            if(context.testlist_comp() == null)
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
+            }
+            else
+            {
+                ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+            }
         }
         return null;
     }

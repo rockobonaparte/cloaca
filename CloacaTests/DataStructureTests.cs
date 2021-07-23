@@ -139,6 +139,17 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task DeclareEmptyList()
+        {
+            var context = await runProgram("a = []\n", new Dictionary<string, object>(), 1);
+            var variables = context.DumpVariables();
+            Assert.That(variables.ContainsKey("a"));
+            List<object> referenceList = new List<object>();
+            var list = (PyList)variables["a"];
+            Assert.That(list, Is.EquivalentTo(referenceList));
+        }
+
+        [Test]
         public async Task DeclareNewlineBasicList()
         {
             // This scenario stumbles into a problem with parsing where NEWLINE tokens can get inserted into the list declaration.
