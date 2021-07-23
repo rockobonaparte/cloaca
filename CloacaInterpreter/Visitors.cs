@@ -365,7 +365,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         var forIterIdx = ActiveProgram.Code.Count;
         var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
-        //LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
+        //LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.        
         var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
 
         // List comprehension payload:
@@ -380,9 +380,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             // There are more for-loops. Whatever we just grabbed will be used to iterate into
             // the next level.
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, iterVarIdx, context);
-            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth+1);
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth+1, forIterIdx);
         }
         // Run the main list payload in the the bottommost comp_for().
         else if (context.comp_iter() == null || context.comp_iter().comp_for() == null)
@@ -397,16 +395,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         forIterFixup.Fixup(loopEnd);
     }
 
-    public void VisitComp_iter([NotNull] CloacaParser.Comp_iterContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    public void VisitComp_iter([NotNull] CloacaParser.Comp_iterContext context, CloacaParser.TestContext innerPayloadContext, int listDepth, int prevForIterStart)
     {
         if (context.comp_for() != null)
         {
+            Visit(context.comp_for().or_test());
+            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
             VisitComp_for(context.comp_for(), innerPayloadContext, listDepth);
         }
         else if (context.comp_if() != null)
         {
             // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
-            VisitComp_if(context.comp_if(), innerPayloadContext, listDepth);
+            VisitComp_if(context.comp_if(), innerPayloadContext, listDepth, prevForIterStart);
         }
         else
         {
@@ -414,14 +414,27 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    public void VisitComp_if([NotNull] CloacaParser.Comp_ifContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
+    public void VisitComp_if([NotNull] CloacaParser.Comp_ifContext context, CloacaParser.TestContext innerPayloadContext, int listDepth, int prevForIterStart)
     {
-        Visit(context.test_nocond());
+        VisitTest_Nocond(context.test_nocond(), prevForIterStart);
         if(context.comp_iter() != null)
         {
             // CHECK IF LISTDEPTH NEEDS TO BE INCREMENTED HERE!
-            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth);
+            VisitComp_iter(context.comp_iter(), innerPayloadContext, listDepth, prevForIterStart);
         }
+    }
+
+    public void VisitTest_Nocond([NotNull] CloacaParser.Test_nocondContext context, int prevForIterStart)
+    {
+        if(context.lambdef_nocond() != null)
+        {
+            // Grammar has:
+            // test_nocond: or_test | lambdef_nocond;
+            // We're just going whole-hog on the or-test.
+            throw new NotImplementedException("lambdef_nocond branch of test_nocond syntax not yet implemented. You crazy lambda monster.");
+        }
+        Visit(context.or_test());
+        ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, prevForIterStart, context);
     }
 
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
