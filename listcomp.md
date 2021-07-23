@@ -2,6 +2,10 @@
 
 These are some notes on working with list comprehensions and particularly how to generate code for them.
 
+List comprehensions have been implemented to a certain level of ability. These notes
+are partially for posterity but also in case we have some holes in the implementation
+we have to redo.
+
 ## Parsing
 The actual Python grammar is much cleaner about detecting a list comprehension than the grammar I'm using for Cloaca. That
 Python3 grammar came from... somewhere. Maybe it's a really old Python grammar?

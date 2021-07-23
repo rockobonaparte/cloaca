@@ -143,7 +143,6 @@ Part 3: Hardening
   * Implement co_flags
   * Need to make sure that we can check and convert Python args in params field from wrapped calls
   * List/enumerable functional helpers:
-    * list comprehensions
     * map
 	* filter
 	* reduce
