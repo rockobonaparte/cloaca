@@ -113,7 +113,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         if (variableName == "None")
         {
-            throw new Exception("SyntaxError: can't assign to keyword (tried to assign to 'None')");
+            throw new Exception(context.Start.Line + ":" + context.Start.Column + " SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
 
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
@@ -151,7 +151,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
-                throw new Exception("The Cloaca VisitArith_expr cannot generate code for term rule operator: " + operatorTxt + " yet");
+                throw new Exception(context.Start.Line + ":" + context.Start.Column + " The Cloaca VisitArith_expr cannot generate code for term rule operator: " + operatorTxt + " yet");
             }
         }
         return null;
@@ -191,7 +191,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
-                throw new Exception("The Cloaca VisitTerm cannot generate code for term rule operator: " + operatorTxt + " yet");
+                throw new Exception(context.Start.Line + ":" + context.Start.Column + " The Cloaca VisitTerm cannot generate code for term rule operator: " + operatorTxt + " yet");
             }
         }
         return null;
@@ -419,7 +419,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            throw new Exception("Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
+            throw new Exception(context.Start.Line + ":" + context.Start.Column + " Unhandled situation between comp_iter and comp_for in list comprehension code gen.");
         }
     }
 
@@ -440,7 +440,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // Grammar has:
             // test_nocond: or_test | lambdef_nocond;
             // We're just going whole-hog on the or-test.
-            throw new NotImplementedException("lambdef_nocond branch of test_nocond syntax not yet implemented. You crazy lambda monster.");
+            throw new NotImplementedException(context.Start.Line + ":" + context.Start.Column + " lambdef_nocond branch of test_nocond syntax not yet implemented. You crazy lambda monster.");
         }
         Visit(context.or_test());
         ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, prevForIterStart, context);
@@ -501,7 +501,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (context.testlist_star_expr().Length > 2 ||
             (context.GetToken(CloacaParser.ASSIGN, 0) == null && context.testlist_star_expr().Length == 2))
         {
-            throw new Exception("Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
+            throw new Exception(context.Start.Line + ":" + context.Start.Column + " Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
         }
 
         // Single-statement 
@@ -567,7 +567,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 }
                 else
                 {
-                    throw new Exception("Unrecognized augassign: " + augassign);
+                    throw new Exception(context.Start.Line + ":" + context.Start.Column + " Unrecognized augassign: " + augassign);
                 }
 
                 // Re-use testlist_star_expr now as an LValue to store the result
@@ -1249,7 +1249,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
-                throw new Exception("The Cloaca VisitArith_expr cannot generate code for term rule operator: " + operatorTxt + " yet");
+                throw new Exception(context.Start.Line + ":" + context.Start.Column + " The Cloaca VisitArith_expr cannot generate code for term rule operator: " + operatorTxt + " yet");
             }
         }
         return null;
@@ -1287,7 +1287,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
                 Visit(context.children[child_i]);
                 // TODO: [**kwargs] Support kwargs
-                throw new NotImplementedException("Keyword args using **kwargs format are not yet supported.");
+                throw new NotImplementedException(context.Start.Line + ":" + context.Start.Column + " Keyword args using **kwargs format are not yet supported.");
             }
             else if (context.children[child_i].GetText() == "=")
             {
@@ -1567,7 +1567,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 ActiveProgram.Code.AddUShort((ushort)CompareOps.IsNot);
                 break;
             default:
-                throw new Exception("Unexpected comparison operator: " + context.op);
+                throw new Exception(context.Start.Line + ":" + context.Start.Column + " Unexpected comparison operator: " + context.op);
         }
 
         return null;
@@ -1669,7 +1669,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             if (context.arglist().ChildCount > 1)
             {
-                throw new Exception("Only one subclass is supported right now.");
+                throw new Exception(context.Start.Line + ":" + context.Start.Column + " Only one subclass is supported right now.");
             }
 
             for (int i = 0; i < context.arglist().ChildCount; ++i)
