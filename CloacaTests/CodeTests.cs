@@ -669,6 +669,44 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Unpacking is not yet supported")]
+        public async Task Unpack()
+        {
+            await runBasicTest(
+                "a, b = [1, 2]\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(1) },
+                { "b", PyInteger.Create(2) },
+            }), 1);
+        }
+
+        // Found a more elaborate version of this in heapq. Using this to implement unpack.
+        [Test]
+        [Ignore("Unpacking is not yet supported")]
+        public async Task UnpackMultiassign()
+        {
+            await runBasicTest(
+                "a, b = c = [1, 2]\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(1) },
+                { "b", PyInteger.Create(2) },
+                { "c", PyList.Create(new List<PyObject>() {PyInteger.Create(1), PyInteger.Create(2)}) },
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("Multiple assignment not yet supported")]
+        public async Task Multiassign()
+        {
+            await runBasicTest(
+                "a = b = 1\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(1) },
+                { "b", PyInteger.Create(1) },
+            }), 1);
+        }
+
+        [Test]
         public async Task WhileBasic()
         {
             await runBasicTest(
