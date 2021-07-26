@@ -989,21 +989,62 @@ namespace CloacaInterpreter
                             { 
                                 context.Cursor += 1;
                                 var unpack_count = context.CodeBytes.GetUShort(context.Cursor);
-                                var tuple = (PyTuple)context.DataStack.Pop();
-                                if (unpack_count < tuple.Values.Length)
+
+                                object[] iterable = null;
+                                var unpackee = context.DataStack.Pop();
+
+                                if(unpackee is PyTuple)
+                                {
+                                    iterable = (unpackee as PyTuple).Values;
+                                }
+                                else if(unpackee is PyList)
+                                {
+                                    iterable = (unpackee as PyList).list.ToArray();
+                                }
+                                else if(unpackee is PyDict)
+                                {
+                                    //iterable = (unpackee as PyDict).InternalDict.Keys;
+                                    throw new Exception("Cannot unpack dictionary/PyDict types yet");
+                                }
+                                else if(unpackee is PyString || unpackee is string)
+                                {
+                                    string theString = unpackee as string;
+                                    if(unpackee is PyString)
+                                    {
+                                        theString = (unpackee as PyString).ToString();
+                                    }
+                                    iterable = new object[theString.Length];
+                                    for(int char_i = 0; char_i < theString.Length; ++char_i)
+                                    {
+                                        iterable[char_i] = theString[char_i];
+                                    }
+                                }
+                                else if(unpackee is Array)
+                                {
+                                    var asArray = unpackee as Array;
+                                    iterable = new object[asArray.Length];
+                                    asArray.CopyTo(iterable, asArray.Length);
+                                }
+                                else
+                                {
+                                    // [UNPACK .NET] Unpack more .NET container types. This was put in TODO because there isn't a real silver bullet for this. We should handle most collection<T> and collection types
+                                    throw new Exception("TypeError: cannot unpack non-iterable " + unpackee.GetType().Name + " object");
+                                }
+
+                                if (unpack_count < iterable.Length)
                                 {
                                     context.CurrentException = new TypeError("ValueError: too many values to unpack (expected " + unpack_count + ")");
                                 }
-                                else if(unpack_count > tuple.Values.Length)
+                                else if(unpack_count > iterable.Length)
                                 {
-                                    context.CurrentException = new TypeError("ValueError: not enough values to unpack (expected " + unpack_count + ", got " + tuple.Values.Length + ")");
+                                    context.CurrentException = new TypeError("ValueError: not enough values to unpack (expected " + unpack_count + ", got " + iterable.Length + ")");
                                 }
                                 else
                                 {
                                     // Push in reverse order
-                                    for(int tuple_i = tuple.Values.Length-1; tuple_i >= 0; --tuple_i)
+                                    for(int unpack_i = iterable.Length-1; unpack_i >= 0; --unpack_i)
                                     {
-                                        context.DataStack.Push(tuple.Values[tuple_i]);
+                                        context.DataStack.Push(iterable[unpack_i]);
                                     }
                                 }
                             }

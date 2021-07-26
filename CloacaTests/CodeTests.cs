@@ -669,7 +669,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Unpacking is not yet supported")]
         public async Task Unpack()
         {
             await runBasicTest(
@@ -682,7 +681,6 @@ namespace CloacaTests
 
         // Found a more elaborate version of this in heapq. Using this to implement unpack.
         [Test]
-        [Ignore("Unpacking is not yet supported")]
         public async Task UnpackMultiassign()
         {
             await runBasicTest(

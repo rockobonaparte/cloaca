@@ -179,6 +179,7 @@ Part 3: Hardening
        keen on making this check less strict.
 * More .NET integration
   * [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject. We could use .NET objects for a keys in a PyDict, for example.
+  * [UNPACK .NET] Unpack more .NET container types. This was put in TODO because there isn't a real silver bullet for this. We should handle most collection<T> and collection types
   * Verify expected type conversions. This first came up adding a PyInteger with an int. The result was a BigInteger when it maybe should be PyInteger?
   * Implement .NET interface as a Python class and be able to pass to .NET methods requiring interface.
   * .NET container support for
