@@ -592,7 +592,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
             }
-            VisitLValueTestlist_star_expr(context.testlist_star_expr(lvalue_i).test()[0]);
+
+            // Multiple test statements means we are working with unpacked values ("a, b = [1, 2]").
+            if (context.testlist_star_expr(lvalue_i).test().Length > 1)
+            {
+                ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.testlist_star_expr(lvalue_i).test().Length, context);
+            }
+
+            for (int test_i = 0; test_i < context.testlist_star_expr(lvalue_i).test().Length; ++test_i)
+            {
+                VisitLValueTestlist_star_expr(context.testlist_star_expr(lvalue_i).test()[test_i]);
+            }
         }
 
         return null;

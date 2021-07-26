@@ -669,7 +669,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Unpacking is not yet supported")]
         public async Task Unpack()
         {
             await runBasicTest(
