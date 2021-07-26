@@ -498,12 +498,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
     {
-        if (context.testlist_star_expr().Length > 2 ||
-            (context.GetToken(CloacaParser.ASSIGN, 0) == null && context.testlist_star_expr().Length == 2))
-        {
-            throw new Exception(context.Start.Line + ":" + context.Start.Column + " Don't know how to evaluate an expr_stmt that isn't an assignment or wait statement");
-        }
-
         // Single-statement 
         if (context.testlist_star_expr().Length == 1)
         {
@@ -584,15 +578,24 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // can use test() instead. Augassign -> testlist -> test. Then you can use that LValueTestList_star_expr, although you'll still
         // have to figure out where to deal with the operators (probably implement VisitAugassign
 
-        // RValue is testlist_star_expr[1]
-        // LValue is testlist_star_expr[0]
+        // RValue is testlist_star_expr[last_index]
+        // LValue is testlist_star_expr[0...last_index-1]
         // Traverse the right hand side to get the assignment value on to the data stack
         // Then go down a special LValue version of the visitors for storing it.
-        Visit(context.testlist_star_expr()[1]);
-        VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+        Visit(context.testlist_star_expr(context.testlist_star_expr().Length-1));
+        for(int lvalue_i = context.testlist_star_expr().Length - 2; lvalue_i >= 0; --lvalue_i)
+        {
+            // Multiple assignment, we DUP_TOP to get the rvalue for each assignment other than the
+            // last one in the chain, which will consume the originally-produced rvalue.
+            // A single assignment should not trigger this at all and will immediately consume the rvalue.
+            if(lvalue_i > 0)
+            {
+                ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
+            }
+            VisitLValueTestlist_star_expr(context.testlist_star_expr(lvalue_i).test()[0]);
+        }
 
         return null;
-        //return base.VisitExpr_stmt(context);
     }
 
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)

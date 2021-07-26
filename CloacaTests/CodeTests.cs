@@ -695,7 +695,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Multiple assignment not yet supported")]
         public async Task Multiassign()
         {
             await runBasicTest(
