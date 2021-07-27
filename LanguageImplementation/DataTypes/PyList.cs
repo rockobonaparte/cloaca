@@ -69,7 +69,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __getitem__(PyList self, PyInteger i)
+        public static object __getitem__(PyList self, PyInteger i)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace LanguageImplementation.DataTypes
 
         // TODO: Test
         [ClassMember]
-        public static PyBool __eq__(PyList self, PyObject other)
+        public static PyBool __eq__(PyList self, object other)
         {
             var otherList = other as PyList;
             if(otherList == null)
@@ -120,7 +120,21 @@ namespace LanguageImplementation.DataTypes
 
             for(int i = 0; i < self.list.Count; ++i)
             {
-                if(self.list[i].__eq__(otherList.list[i]).InternalValue == false)
+                var selfPyObject = self.list[i] as PyObject;
+                var otherPyObject = otherList.list[i] as PyObject;
+
+                if(selfPyObject == null || otherPyObject == null)
+                {
+                    return PyBool.False;
+                }
+                else if(selfPyObject != null)
+                {
+                    if(selfPyObject.__eq__(otherPyObject).InternalValue == false)
+                    {
+                        return PyBool.False;
+                    }
+                }
+                else if(!self.list[i].Equals(otherList.list[i]))
                 {
                     return PyBool.False;
                 }
@@ -164,16 +178,25 @@ namespace LanguageImplementation.DataTypes
             PyString retStr = PyString.Create("[");
             for(int i = 0; i < asList.list.Count; ++i)
             {
-                var pyObj = asList.list[i];
-
-                var __repr__ = pyObj.__getattribute__(PyClass.__REPR__);
-                var functionToRun = __repr__ as IPyCallable;
-
-                var returned = await functionToRun.Call(interpreter, context, new object[0]);
-                if (returned != null)
+                var pyObj = asList.list[i] as PyObject;
+                if (pyObj != null)
                 {
-                    var asPyString = (PyString)returned;
-                    retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                    var __repr__ = pyObj.__getattribute__(PyClass.__REPR__);
+                    var functionToRun = __repr__ as IPyCallable;
+                    var returned = await functionToRun.Call(interpreter, context, new object[0]);
+                    if (returned != null)
+                    {
+                        var asPyString = (PyString)returned;
+                        retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                    }
+                }
+                else if(asList.list[i] == null)
+                {
+                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create("null"));
+                }
+                else
+                {
+                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(asList.list[i].ToString()));
                 }
 
                 // Appending commas except on last index
@@ -195,20 +218,20 @@ namespace LanguageImplementation.DataTypes
 
     public class PyList : PyObject, IEnumerable
     {
-        public List<PyObject> list;
+        public List<object> list;
         public PyList()
         {
-            list = new List<PyObject>();
+            list = new List<object>();
         }
 
         // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
         //       We could use .NET objects for a keys in a PyDict, for example.
-        public PyList(List<PyObject> existingList)
+        public PyList(List<object> existingList)
         {
             list = existingList;
         }
 
-        public static PyList Create(List<PyObject> existingList)
+        public static PyList Create(List<object> existingList)
         {
             var pyList = PyTypeObject.DefaultNew<PyList>(PyListClass.Instance);
             pyList.list = existingList;
@@ -250,7 +273,7 @@ namespace LanguageImplementation.DataTypes
             return "PyList(contents are not yet displayed)";
         }
 
-        public void SetList(List<PyObject> newList)
+        public void SetList(List<object> newList)
         {
             list = newList;
         }

@@ -997,14 +997,14 @@ namespace CloacaInterpreter
                                 {
                                     iterable = (unpackee as PyTuple).Values;
                                 }
-                                else if(unpackee is PyList)
-                                {
-                                    iterable = (unpackee as PyList).list;
-                                }
-                                else if(unpackee is PyDict)
-                                {
-                                    iterable = (unpackee as PyDict).InternalDict.Keys;
-                                }
+                                //else if(unpackee is PyList)
+                                //{
+                                //    iterable = (unpackee as PyList).list;
+                                //}
+                                //else if(unpackee is PyDict)
+                                //{
+                                //    iterable = (unpackee as PyDict).InternalDict.Keys;
+                                //}
                                 else if(unpackee is PyString || unpackee is string)
                                 {
                                     string theString = unpackee as string;
@@ -1036,7 +1036,7 @@ namespace CloacaInterpreter
                                 }
                                 else if(unpack_count > iterable.Length)
                                 {
-                                    context.CurrentException = new TypeError("ValueError: not enough values to unpack (expected " + unpack_count + ", got " + tuple.Values.Length + ")");
+                                    context.CurrentException = new TypeError("ValueError: not enough values to unpack (expected " + unpack_count + ", got " + iterable.Length + ")");
                                 }
                                 else
                                 {
