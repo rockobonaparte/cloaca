@@ -690,7 +690,7 @@ namespace CloacaTests
             {
                 { "a", PyInteger.Create(1) },
                 { "b", PyInteger.Create(2) },
-                { "c", PyList.Create(new List<PyObject>() {PyInteger.Create(1), PyInteger.Create(2)}) },
+                { "c", PyList.Create(new List<object>() {PyInteger.Create(1), PyInteger.Create(2)}) },
             }), 1);
         }
 

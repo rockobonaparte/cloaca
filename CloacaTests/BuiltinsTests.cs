@@ -82,7 +82,7 @@ namespace CloacaTests
                 "dotnetstrout = len(dotnetstrin)\n",     // I think this should be IEnumerable but I'm not taking chances
             new Dictionary<string, object>()
             {
-                { "listin", PyList.Create(new List<PyObject>() { PyInteger.Create(1) }) },
+                { "listin", PyList.Create(new List<object>() { PyInteger.Create(1) }) },
                 { "dictin", dictin },
                 { "tuplein", PyTuple.Create(new object[] {1, 2, 3 }) },
                 { "strin", PyString.Create("1234") },
