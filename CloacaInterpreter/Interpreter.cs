@@ -997,14 +997,15 @@ namespace CloacaInterpreter
                                 {
                                     iterable = (unpackee as PyTuple).Values;
                                 }
-                                //else if(unpackee is PyList)
-                                //{
-                                //    iterable = (unpackee as PyList).list;
-                                //}
-                                //else if(unpackee is PyDict)
-                                //{
-                                //    iterable = (unpackee as PyDict).InternalDict.Keys;
-                                //}
+                                else if(unpackee is PyList)
+                                {
+                                    iterable = (unpackee as PyList).list.ToArray();
+                                }
+                                else if(unpackee is PyDict)
+                                {
+                                    //iterable = (unpackee as PyDict).InternalDict.Keys;
+                                    throw new Exception("Cannot unpack dictionary/PyDict types yet");
+                                }
                                 else if(unpackee is PyString || unpackee is string)
                                 {
                                     string theString = unpackee as string;
