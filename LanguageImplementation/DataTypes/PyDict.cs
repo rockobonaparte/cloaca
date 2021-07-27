@@ -43,7 +43,7 @@ namespace LanguageImplementation.DataTypes
 
 
         [ClassMember]
-        public static PyBool __contains__(PyDict self, PyObject k)
+        public static PyBool __contains__(PyDict self, object k)
         {
             // Help on built-in function __contains__:
             //
@@ -60,7 +60,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static void __delitem__(PyDict self, PyObject k)
+        public static void __delitem__(PyDict self, object k)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyObject __getitem__(PyDict self, PyObject k)
+        public static object __getitem__(PyDict self, object k)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static void __setitem__(PyDict self, PyObject k, PyObject value)
+        public static void __setitem__(PyDict self, object k, object value)
         {
             if (self.dict.ContainsKey(k))
             {
@@ -102,7 +102,7 @@ namespace LanguageImplementation.DataTypes
 
         // TODO: Test
         [ClassMember]
-        public static PyBool __eq__(PyDict self, PyObject other)
+        public static PyBool __eq__(PyDict self, object other)
         {
             var otherDict = other as PyDict;
             if (otherDict == null)
@@ -123,7 +123,22 @@ namespace LanguageImplementation.DataTypes
                 }
 
                 var otherVal = otherDict.dict[pair.Key];
-                if (pair.Value.__eq__(otherVal).InternalValue == false)
+
+                var selfPyObject = pair.Value as PyObject;
+                var otherPyObject = otherVal as PyObject;
+
+                if (selfPyObject == null || otherPyObject == null)
+                {
+                    return PyBool.False;
+                }
+                else if (selfPyObject != null)
+                {
+                    if (selfPyObject.__eq__(otherPyObject).InternalValue == false)
+                    {
+                        return PyBool.False;
+                    }
+                }
+                else if (!pair.Value.Equals(otherVal))
                 {
                     return PyBool.False;
                 }
@@ -132,7 +147,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyBool __ne__(PyDict self, PyObject other)
+        public static PyBool __ne__(PyDict self, object other)
         {
             return !__eq__(self, other);
         }
@@ -150,7 +165,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyDict fromkeys(PyDict self, PyObject iterable, PyObject value)
+        public static PyDict fromkeys(PyDict self, PyObject iterable, object value)
         {
             // Help on built-in function fromkeys:
             // 
@@ -162,7 +177,7 @@ namespace LanguageImplementation.DataTypes
 
 
         [ClassMember]
-        public static PyDict get(PyDict self, PyObject k, PyObject d)
+        public static PyDict get(PyDict self, object k, object d)
         {
             // Help on built-in function get:
             // 
@@ -176,7 +191,7 @@ namespace LanguageImplementation.DataTypes
 
         // TODO: Should be return something like a PySet
         [ClassMember]
-        public static PyObject items(PyDict self)
+        public static object items(PyDict self)
         {
             // Help on built-in function items:
             //
@@ -198,7 +213,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyDict pop(PyDict self, PyObject k, PyObject d)
+        public static object pop(PyDict self, object k, object d)
         {
             // Help on built-in function pop:
             //
@@ -212,7 +227,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static PyDict popitem(PyDict self, PyObject k)
+        public static PyDict popitem(PyDict self, object k)
         {
             // Help on built-in function popitem:
             //
@@ -225,7 +240,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static void setdefault(PyDict self, PyObject k, PyObject d)
+        public static void setdefault(PyDict self, object k, object d)
         {
             // Help on built-in function setdefault:
             //
@@ -237,7 +252,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static void update(PyDict self, PyObject k, PyObject d)
+        public static void update(PyDict self, object k, object d)
         {
             //Help on built-in function update:
             //
@@ -264,8 +279,19 @@ namespace LanguageImplementation.DataTypes
             throw new NotImplementedException();
         }
 
-        private static async Task<PyString> __visit_repr(PyObject obj, IInterpreter interpreter, FrameContext context)
+        private static async Task<PyString> __visit_repr(object rawobj, IInterpreter interpreter, FrameContext context)
         {
+            if(rawobj == null)
+            {
+                return PyString.Create("null");
+            }
+            if(!(rawobj is PyObject))
+            {
+                return PyString.Create(rawobj.ToString());
+            }
+
+            var obj = rawobj as PyObject;
+
             var __repr__ = obj.__getattribute__(PyClass.__REPR__);
             var functionToRun = __repr__ as IPyCallable;
 
@@ -324,8 +350,8 @@ namespace LanguageImplementation.DataTypes
     {
         // TODO: [.NET PYCONTAINERS] Container types should be able to accept object type, not just PyObject.
         //       We could use .NET objects for a keys in a PyDict, for example.
-        internal Dictionary<PyObject, PyObject> dict;
-        public Dictionary<PyObject, PyObject> InternalDict
+        internal Dictionary<object, object> dict;
+        public Dictionary<object, object> InternalDict
         {
             get
             {
@@ -335,7 +361,7 @@ namespace LanguageImplementation.DataTypes
 
         public PyDict()
         {
-            dict = new Dictionary<PyObject, PyObject>();
+            dict = new Dictionary<object, object>();
         }
 
         public static PyDict Create()
@@ -523,8 +549,8 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                var key = (PyObject) asKeyIterator.Keys.Current;
-                return PyTuple.Create(new PyObject[] { key, PyDictClass.__getitem__(asKeyIterator.Dict, key) });
+                var key = (object) asKeyIterator.Keys.Current;
+                return PyTuple.Create(new object[] { key, PyDictClass.__getitem__(asKeyIterator.Dict, key) });
             }
         }
     }

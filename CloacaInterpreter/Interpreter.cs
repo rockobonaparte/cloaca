@@ -1003,8 +1003,7 @@ namespace CloacaInterpreter
                                 }
                                 else if(unpackee is PyDict)
                                 {
-                                    //iterable = (unpackee as PyDict).InternalDict.Keys;
-                                    throw new Exception("Cannot unpack dictionary/PyDict types yet");
+                                    iterable = (unpackee as PyDict).InternalDict.Keys.ToArray();
                                 }
                                 else if(unpackee is PyString || unpackee is string)
                                 {
