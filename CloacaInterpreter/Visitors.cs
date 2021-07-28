@@ -199,7 +199,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private void LoadConstantNumber(ParserRuleContext context)
     {
-        ActiveProgram.Constants.Add(ConstantsFactory.CreateNumber(context));
+        try
+        {
+            ActiveProgram.Constants.Add(ConstantsFactory.CreateNumber(context));
+        }
+        catch(Exception e)
+        {
+            throw new Exception("Error while trying to parse a constant number '" + context.GetText() + "' at " + context.Start.Line + ":" + context.Start.Column + " " + e.Message, e);
+        }
         ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1, context);
     }
 
