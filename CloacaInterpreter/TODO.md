@@ -230,6 +230,7 @@ Part 3: Hardening
   * Exception checks for parsing external global declarations that then use that name for function parameters.
   * Nonlocal keyword.
 * Stackless Python channels for cross-coroutine communication.
+* Ordinal type: ord(). PyOrdinal?
 
 
 Tech debt:

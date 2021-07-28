@@ -304,6 +304,19 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task NegativeNumber()
+        {
+            await runBasicTest(
+                "a = 10\n" +
+                "b = -a\n",
+                 new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(10) },
+                { "b", PyInteger.Create(-10) },
+            }), 1);
+        }
+
+        [Test]
         public async Task ComprehensiveArithmeticOperators()
         {
             await runBasicTest(

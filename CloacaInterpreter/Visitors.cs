@@ -251,7 +251,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Have to sneak in here to look for things like negative numbers. Very tedious and also pretty hacky!
         if (context.GetText()[0] == '-')
         {
-            LoadConstantNumber(context);
+            if (Char.IsDigit(context.GetText()[1]))
+            {
+                LoadConstantNumber(context);
+            }
+            else
+            {
+                base.VisitFactor(context);
+                ActiveProgram.AddInstruction(ByteCodes.UNARY_NEGATIVE, context);
+            }
             return null;
         }
         else

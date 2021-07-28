@@ -148,6 +148,10 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "INPLACE_LSHIFT", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.UNARY_NEGATIVE:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "UNARY_NEGATIVE", null, null);
+                        cursor += 1;
+                        break;
                     case ByteCodes.LOAD_CONST:
                         cursor += 1;
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "LOAD_CONST", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));

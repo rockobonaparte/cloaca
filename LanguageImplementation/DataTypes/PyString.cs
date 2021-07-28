@@ -164,6 +164,13 @@ namespace LanguageImplementation.DataTypes
             var asStr = (PyString)self;
             return PyInteger.Create(asStr.InternalValue.Length);
         }
+
+
+        [ClassMember]
+        public static PyFloat __neg__(PyObject self)
+        {
+            return PyFloat.Create(-((PyFloat)self).InternalValue);
+        }
     }
 
     public class PyString : PyObject

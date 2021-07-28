@@ -277,6 +277,24 @@ namespace CloacaInterpreter
             return context.CurrentException != null && context.BlockStack.Count == 0;
         }
 
+        // Unary form
+        private async Task DynamicDispatchOperation(FrameContext context, string op_dunder, Func<object, dynamic> dotNetOp)
+        {
+            dynamic a = context.DataStack.Pop();
+            var leftObj = a as PyObject;
+
+            if (leftObj == null)
+            {
+                context.DataStack.Push(dotNetOp(a));
+            }
+            else
+            {
+                PyObject returned = (PyObject)await leftObj.InvokeFromDict(this, context, op_dunder, new PyObject[] { });
+                context.DataStack.Push(returned);
+            }
+            context.Cursor += 1;
+        }
+
         // Sketching this out for now as an experiment. This looks like a job for multiple dispatch.
         private async Task DynamicDispatchOperation(FrameContext context, dynamic a, dynamic b,
             string op_dunder, string op_fallback, 
@@ -312,7 +330,6 @@ namespace CloacaInterpreter
             }
             context.Cursor += 1;
         }
-
 
         private async Task leftRightOperation(FrameContext context, string op_dunder, string op_fallback, Func<object, dynamic, dynamic> dotNetOp)
         {
@@ -549,6 +566,13 @@ namespace CloacaInterpreter
                                 }
                             });
                             break;
+                        case ByteCodes.UNARY_NEGATIVE:
+                            await DynamicDispatchOperation(context, "__neg__", (a) =>
+                            {
+                                return -(dynamic) a;
+                            });
+                            break;
+
                         case ByteCodes.BINARY_MULTIPLY:
                             await leftRightOperation(context, "__mul__", null,
                                 (left, right) => { return (dynamic)left * (dynamic)right; });

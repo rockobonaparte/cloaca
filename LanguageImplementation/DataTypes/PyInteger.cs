@@ -215,6 +215,12 @@ namespace LanguageImplementation.DataTypes
         {
             return PyString.Create(self.ToString());
         }
+
+        [ClassMember]
+        public static PyInteger __neg__(PyObject self)
+        {
+            return PyInteger.Create(-((PyInteger)self).InternalValue);
+        }
     }
 
     public class PyInteger : PyObject
