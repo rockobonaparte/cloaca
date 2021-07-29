@@ -48,6 +48,16 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
 
         /// <summary>
+        /// Creates an empty shell of a Python exception subclass.
+        /// </summary>
+        public PyException(PyClass subclass)
+        {
+            __class__ = subclass;
+            tb = null;
+            Message = null;
+        }
+
+        /// <summary>
         /// Create a new Python exception based on a message
         /// </summary>
         /// <param name="message">The exception message</param>
@@ -159,8 +169,18 @@ namespace LanguageImplementation.DataTypes.Exceptions
             }           
         }
 
+        public PyExceptionClass() : base("Exception", null, new PyClass[0])
+        {
+            Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
+            var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;
+            this.__new__ = new WrappedCodeObject("__new__", __new__methodInfo, this);
 
-        public PyExceptionClass() : base("Exception", null, null)
+            Expression<Action<PyTypeObject>> __init__expr = instance => __init__impl(null, null);
+            var __init__methodInfo = ((MethodCallExpression)__init__expr.Body).Method;
+            this.__init__ = new WrappedCodeObject("__init__", __init__methodInfo, this);
+        }
+
+        public PyExceptionClass(string classname, CodeObject __init__, PyClass[] bases) : base(classname, __init__, bases)
         {
             Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
             var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;

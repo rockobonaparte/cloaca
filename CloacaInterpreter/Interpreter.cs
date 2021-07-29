@@ -90,7 +90,6 @@ namespace CloacaInterpreter
 
             builtins = new Dictionary<string, object>
             {
-                { "Exception", PyExceptionClass.Instance },
                 { "super", super_wrapper },
                 { "dir", dir_wrapper },
                 { "len", len_wrapper },
@@ -102,6 +101,9 @@ namespace CloacaInterpreter
                 { "bool", bool_wrapper },
                 { "str", str_wrapper },
                 { "range", range_wrapper },
+                { "Exception", PyExceptionClass.Instance },
+                { "ImportError", ImportErrorClass.Instance },
+                { "ModuleNotFoundErrorClass", ModuleNotFoundErrorClass.Instance },
             };
 
             this.Scheduler = scheduler;
@@ -1569,7 +1571,7 @@ namespace CloacaInterpreter
 
                                     if(spec == null)
                                     {
-                                        context.CurrentException = new ModuleNotFoundError("ModuleNotFoundError: no module named '" + module_name + "'");
+                                        context.CurrentException = ModuleNotFoundErrorClass.Create("ModuleNotFoundError: no module named '" + module_name + "'");
                                     }
                                     else
                                     {                                       
