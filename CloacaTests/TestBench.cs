@@ -65,7 +65,7 @@ namespace CloacaTests
 
             for (int tries = 1; tries < 1000 && !compiledTask.IsCompleted && escapedExceptions.Count == 0; ++tries)
             {
-                scheduler.Tick();
+                await scheduler.Tick();
             }
 
             if (!compiledTask.IsCompleted)
