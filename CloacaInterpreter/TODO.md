@@ -47,6 +47,9 @@ Part 3: Hardening
     a hiatus in LanguageImplementation, and was actually shocked to find it in CloacaInterpreter.
   * Unit test configuration builder. The multiple overloads for runProgram and runBasicTest are just too overwhelming at this point.
   * Read up on the CPython data model: https://docs.python.org/3/reference/datamodel.html
+* Standard exceptions
+  * Create some helpers to assist in creating all the standard Python error types as builtins with the appropriate chain of command.
+    Look at how ModuleNotFoundError goes to ImportError goes to a generic PyException. It's pretty gross right now. 
 * Extended argument types
   * `*args`
     * [DONE] Implement
