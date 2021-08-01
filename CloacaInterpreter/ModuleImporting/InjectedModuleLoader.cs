@@ -28,7 +28,7 @@ namespace CloacaInterpreter.ModuleImporting
 
         public void AddNewModuleRoot(PyModule newModule)
         {
-            ModuleRoots.Add(newModule.Name, newModule);
+            ModuleRoots.Add(newModule.ResolveName(), newModule);
         }
 
         // Returns null if not found. We expect to not find some modules since the finder coexists with other finders

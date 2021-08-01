@@ -56,6 +56,7 @@ namespace CloacaTests
             {
                 // This is awaitable now but relies on the scheduler. We'll tick the scheduler
                 // awhile until this resolves.
+                // BOOKMARK: We need to give the namespace to Compile as well! We can have a default be __name__
                 compiledTask = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
             }
             catch (CloacaParseException parseFailed)
@@ -79,6 +80,8 @@ namespace CloacaTests
             compiledProgram = await compiledTask;
             Dis.dis(compiledProgram);
 
+            // BOOKMARK: schedule needs __name__. I think it should go into the compiled program somehow. Along with __file__ and __doc__
+            // What I need to do is pass along a module with the associated program in it. It's a module, not just a code object.
             receipt = scheduler.Schedule(compiledProgram);
             FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
