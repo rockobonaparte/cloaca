@@ -102,5 +102,18 @@ namespace CloacaTests
                 { "dotnetstrout", PyInteger.Create(8) },
             }), 1);
         }
+
+        // This is in builtins because __name__ is a "built-in variable"
+        [Test]
+        public async Task __name__()
+        {
+            await runBasicTest(
+                "name = __name__\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "name", PyString.Create("__main__") },
+            }), 1);
+        }
+
     }
 }

@@ -50,6 +50,13 @@ Part 3: Hardening
 * Standard exceptions
   * Create some helpers to assist in creating all the standard Python error types as builtins with the appropriate chain of command.
     Look at how ModuleNotFoundError goes to ImportError goes to a generic PyException. It's pretty gross right now. 
+  * Make sure traceback connects with the standard exceptions when we create them internally
+    * ```
+      >>> import butt
+          Traceback (most recent call list):
+          No traceback available. This exception was probably created outside of a running program.
+          'ModuleNotFoundError' object has no attribute named 'tb'
+      ```
 * Extended argument types
   * `*args`
     * [DONE] Implement

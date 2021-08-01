@@ -76,6 +76,27 @@ namespace LanguageImplementation
                 AddLocal(name, value);
             }
         }
+
+        /// <summary>
+        /// Get a local. Raises KeyNotFoundException if the named local could not be found. This is because
+        /// the local could actually be null, so we don't rely on null.
+        /// </summary>
+        /// <param name="name">The name of the local.</param>
+        /// <exception cref="KeyNotFoundException">A local with the given name is not registered with this context.</exception>
+        /// <returns>The value of the local, which might be null!</returns>
+        public object GetLocal(string name)
+        {
+            var nameIdx = LocalNames.IndexOf(name);
+            if (nameIdx == -1)
+            {
+                throw new KeyNotFoundException("'" + name + "' as not found amongst locals");
+            }
+            else
+            {
+                return Locals[nameIdx];
+            }
+        }
+
     }
 
     // Traditional block in Python has: frame, opcode, handler (pointer to next instruction outside of the loop), value stack size
@@ -299,7 +320,7 @@ namespace LanguageImplementation
         /// <param name="functionToRun">The code object to call into.</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
-        Task<object> CallInto(FrameContext context, CodeObject program, object[] args);
+        Task<object> CallInto(FrameContext context, CodeObject program, object[] args, string __name__="__main__");
 
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets

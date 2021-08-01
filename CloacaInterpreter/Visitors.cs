@@ -316,8 +316,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             //   4. Get iterator using GET_ITER
             //   5. Call list comp function
 
-            // BOOKMARK
-            // Make code object here and load it with LOAD_CONST. Call it "listcomp"
             var newFunctionCode = new CodeObjectBuilder();
             newFunctionCode.Name = "listcomp";
 
@@ -588,10 +586,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             return null;
         }
-
-        // BOOKMARK: Try to take this for the INPLACE operations. However, you'll have to scrap passing down the testlist. See if you
-        // can use test() instead. Augassign -> testlist -> test. Then you can use that LValueTestList_star_expr, although you'll still
-        // have to figure out where to deal with the operators (probably implement VisitAugassign
 
         // RValue is testlist_star_expr[last_index]
         // LValue is testlist_star_expr[0...last_index-1]

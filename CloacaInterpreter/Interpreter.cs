@@ -134,7 +134,8 @@ namespace CloacaInterpreter
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            await CallInto(context, classFrame, new object[0]);
+            // BOOKMARK: Figure out how to transfer __name__ down to here from the parent context.
+            await CallInto(context, classFrame, new object[0], context.GetVariable("__name__") + "." + name);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
@@ -200,12 +201,12 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
+        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, string __name__)
         {
             Frame nextFrame = new Frame();
             nextFrame.Program = functionToRun;
 
-            return await CallInto(context, nextFrame, args);
+            return await CallInto(context, nextFrame, args, __name__);
         }
 
         /// <summary>
@@ -217,9 +218,10 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that is making the call.</param>
         /// <param name="nextFrame">The frame to run through,</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
+        /// <param name="__name__">The value of the __name__ built-in to pass down to the new frame</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
+        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args, string __name__)
         {
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
@@ -229,6 +231,9 @@ namespace CloacaInterpreter
             {
                 frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
             }
+
+            // Add __name__
+            frame.AddLocal("__name__", __name__);
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
