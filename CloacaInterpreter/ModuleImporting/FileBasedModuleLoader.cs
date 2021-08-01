@@ -97,7 +97,9 @@ namespace CloacaInterpreter.ModuleImporting
             var foundPath = (string)spec.LoaderState;
             var inFile = File.ReadAllText(foundPath);
             var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
-            await interpreter.CallInto(context, moduleCode, new object[0]);
+
+            string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
+            await interpreter.CallInto(context, moduleCode, new object[0], modulename);
 
             if(context.EscapedDotNetException != null)
             {
@@ -106,9 +108,14 @@ namespace CloacaInterpreter.ModuleImporting
 
             var moduleFrame = context.callStack.Pop();
             var module = PyModule.Create(spec.Name);
+            
             for(int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
             {
-                module.__setattr__(moduleFrame.LocalNames[local_i], moduleFrame.Locals[local_i]);
+                var name = moduleFrame.LocalNames[local_i];
+                if (moduleFrame.Locals.ContainsKey(name))
+                {
+                    module.__setattr__(name, moduleFrame.Locals[name]);
+                }
             }
 
             return module;

@@ -816,8 +816,6 @@ namespace CloacaTests
             Assert.That(runContext.LocalNames.Contains("Foo"));
             Assert.That(runContext.LocalNames.Contains("foo"));
             Assert.That(runContext.LocalNames.Contains("a"));
-            Assert.That(runContext.Names.Count, Is.EqualTo(1));
-            Assert.That(runContext.Names.Contains("a"));
         }
 
         // TODO: Add test for basic parse error of things like missing newlines and poor indentation.

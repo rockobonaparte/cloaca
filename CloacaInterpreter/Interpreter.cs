@@ -17,6 +17,10 @@ namespace CloacaInterpreter
     public class Interpreter: IInterpreter
     {
         private Dictionary<string, object> builtins;
+        public Dictionary<string, object> GetBuiltins()
+        {
+            return builtins;
+        }
         public IScheduler Scheduler
         {
             get; protected set;
@@ -129,20 +133,19 @@ namespace CloacaInterpreter
         public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
-            Frame classFrame = new Frame(func);
+            Frame classFrame = new Frame(func, context);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            await CallInto(context, classFrame, new object[0]);
+            await CallInto(context, classFrame, new object[0], name);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
             // 2. A parent constructor, if existing
             // 3. Failing all that, a default constructor
-            var initIdx = classFrame.LocalNames.IndexOf("__init__");
-            CodeObject __init__ = null;
-            if(initIdx < 0)
+            CodeObject __init__ = classFrame.Locals.ContainsKey("__init__") ? (CodeObject) classFrame.Locals["__init__"] : null;
+            if (__init__ == null)
             {
                 if (bases != null && bases.Length > 0)
                 {
@@ -165,19 +168,15 @@ namespace CloacaInterpreter
                     __init__ = initBuilder.Build();
                 }
             }
-            else
-            {
-                __init__ = (CodeObject)classFrame.Locals[initIdx];
-            }
 
             var pyclass = new PyClass(name, __init__, bases);
 
-            foreach(var classMemberName in classFrame.Names)
+            foreach(var classMemberName in classFrame.LocalNames)
             {
                 var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
                 if (nameIdx >= 0)
                 {
-                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[nameIdx]);
+                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[classMemberName]);
                 }
                 else
                 {
@@ -200,12 +199,10 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args)
+        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, string __name__)
         {
-            Frame nextFrame = new Frame();
-            nextFrame.Program = functionToRun;
-
-            return await CallInto(context, nextFrame, args);
+            Frame nextFrame = new Frame(functionToRun, context);
+            return await CallInto(context, nextFrame, args, __name__);
         }
 
         /// <summary>
@@ -217,18 +214,23 @@ namespace CloacaInterpreter
         /// <param name="context">The context of script code that is making the call.</param>
         /// <param name="nextFrame">The frame to run through,</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
+        /// <param name="__name__">The value of the __name__ built-in to pass down to the new frame</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
+        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args, string __name__)
         {
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
+                frame.SetFastLocal(argIdx, args[argIdx]);
             }
+
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
                 frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
             }
+
+            // Add __name__
+            frame.AddLocal("__name__", PyString.Create(__name__));
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
@@ -665,69 +667,76 @@ namespace CloacaInterpreter
                         case ByteCodes.STORE_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
-
-                                bool foundVar = false;
+                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
 
                                 // Try to resolve locally, then globally, and then in our built-in namespace
+                                bool foundVar = false;
                                 foreach (var stackFrame in context.callStack)
                                 {
                                     // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
                                     var nameIdx = stackFrame.LocalNames.IndexOf(name);
                                     if (nameIdx >= 0)
                                     {
-                                        stackFrame.Locals[nameIdx] = context.DataStack.Pop();
+                                        stackFrame.Locals[name] = context.DataStack.Pop();
                                         foundVar = true;
                                         break;
                                     }
                                 }
 
-                                // If we don't find it, then we'll make it local!
-                                if (!foundVar)
+                                if(!foundVar)
                                 {
                                     context.callStack.Peek().AddLocal(name, context.DataStack.Pop());
                                 }
+
+                                // Incorrect attempt at a refactor. Don't look in LocalNames!
+                                //var stackFrame = context.callStack.Peek();
+                                //var localIdx = stackFrame.LocalNames.IndexOf(name);
+                                //if(localIdx >= 0)
+                                //{
+                                //    stackFrame.Locals.AddOrSet(name, context.DataStack.Pop());
+                                //}
+                                //else if(stackFrame.Globals.ContainsKey(name))
+                                //{
+                                //    stackFrame.Globals[name] = context.DataStack.Pop();
+                                //}
+                                //else if(builtins.ContainsKey(name))
+                                //{
+                                //    builtins[name] = context.DataStack.Pop();
+                                //}
+                                //else
+                                //{
+                                //    throw new Exception("'" + name + "' not found in local, global, nor built-in namespaces.");
+                                //}
                             }
-                            context.Cursor += 2;
+                                context.Cursor += 2;
                             break;
                         case ByteCodes.STORE_FAST:
                             {
                                 context.Cursor += 1;
                                 var localIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                context.Locals[localIdx] = context.DataStack.Pop();
+                                context.LocalFasts[localIdx] = context.DataStack.Pop();
                             }
                             context.Cursor += 2;
                             break;
                         case ByteCodes.STORE_GLOBAL:
                             {
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Program.Names[globalIdx];
+                                var toAssign = context.DataStack.Pop();
+
+                                // Yeah, it can override built-ins and that takes precedence. So you can declare a global print
+                                // and then reassign it, ruining it for others. :p
+                                if(builtins.ContainsKey(globalName))
                                 {
-                                    context.Cursor += 1;
-                                    var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var globalName = context.Program.Names[globalIdx];
-
-                                    bool foundVar = false;
-
-                                    foreach (var stackFrame in context.callStack)
-                                    {
-                                        // Skip current stack
-                                        if (stackFrame == context.callStack.Peek())
-                                        {
-                                            continue;
-                                        }
-
-                                        var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
-                                        if (nameIdx >= 0)
-                                        {
-                                            stackFrame.Locals[nameIdx] = context.DataStack.Pop();
-                                            foundVar = true;
-                                        }
-                                    }
-
-                                    if (!foundVar)
-                                    {
-                                        throw new Exception("Global '" + globalName + "' was not found!");
-                                    }
+                                    builtins[globalName] = toAssign;
                                 }
+                                else
+                                {
+                                    // This always wins. We add a new global if it's not already defined. Make sure you spelled it right!
+                                    context.callStack.Peek().Globals.AddOrSet(globalName, toAssign);
+                                }
+
                                 context.Cursor += 2;
                                 break;
                             }
@@ -759,7 +768,7 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
+                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
                                 context.DataStack.Push(context.GetVariable(name));
                             }
                             context.Cursor += 2;
@@ -767,7 +776,8 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_FAST:
                             {
                                 context.Cursor += 1;
-                                context.DataStack.Push(context.Locals[context.CodeBytes.GetUShort(context.Cursor)]);
+                                var fastIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                context.DataStack.Push(context.LocalFasts[fastIdx]);
                             }
                             context.Cursor += 2;
                             break;
@@ -778,27 +788,9 @@ namespace CloacaInterpreter
                                     var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
                                     var globalName = context.Program.Names[globalIdx];
 
-                                    object foundVar = null;
-
-                                    foreach (var stackFrame in context.callStack)
+                                    if(context.callStack.Peek().HasGlobal(globalName))
                                     {
-                                        // Skip current stack
-                                        if (stackFrame == context.callStack.Peek())
-                                        {
-                                            continue;
-                                        }
-
-                                        var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
-                                        if (nameIdx >= 0)
-                                        {
-                                            foundVar = stackFrame.Locals[nameIdx];
-                                            break;
-                                        }
-                                    }
-
-                                    if (foundVar != null)
-                                    {
-                                        context.DataStack.Push(foundVar);
+                                        context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
                                     }
                                     else if (builtins.ContainsKey(globalName))
                                     {
@@ -1549,7 +1541,7 @@ namespace CloacaInterpreter
                                 var fromlist = context.DataStack.Pop();
                                 var import_level = context.DataStack.Pop();
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
-                                var module_name = context.Names[import_name_i];
+                                var module_name = context.LocalNames[import_name_i];
 
                                 PyModule foundModule = null;
                                 if (context.SysModules.ContainsKey(module_name))
@@ -1632,14 +1624,7 @@ namespace CloacaInterpreter
                                             varIndex = context.LocalNames.AddGetIndex(starImported.Key);
                                         }
 
-                                        if (varIndex >= context.Locals.Count)
-                                        {
-                                            context.Locals.Add(starImported.Value);
-                                        }
-                                        else
-                                        {
-                                            context.Locals[varIndex] = starImported.Value;
-                                        }
+                                        context.Locals.AddOrSet(context.LocalNames[varIndex], starImported.Value);
                                     }
                                 }
                                 break;

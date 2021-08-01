@@ -17,14 +17,17 @@ namespace LanguageImplementation
 
         public Stack<Frame> callStack;
 
-        public FrameContext() : this(new Stack<Frame>())
+        public Dictionary<string, object> Builtins;
+
+        public FrameContext(Dictionary<string, object> builtins) : this(new Stack<Frame>(), builtins)
         {
         }
 
-        public FrameContext(Stack<Frame> callStack)
+        public FrameContext(Stack<Frame> callStack, Dictionary<string, object> builtins)
         {
             StartDepth = callStack.Count;
             this.callStack = callStack;
+            this.Builtins = builtins;
             SysModules = new Dictionary<string, PyModule>();
         }
 
@@ -35,7 +38,7 @@ namespace LanguageImplementation
         /// <param name="subFrames">The frame stack to use for the subcontext.</param>
         /// <returns>A new FrameContext that has this FrameContext's variable state but the
         /// new callstack based on rootFrame.</returns>
-        public FrameContext CreateSubcontext(Stack<Frame> subFrames)
+        public FrameContext CreateSubcontext(Stack<Frame> subFrames, Dictionary<string, object> builtins)
         {
             Stack<Frame> reverseStack = new Stack<Frame>();
             foreach (var parentFrame in callStack)
@@ -48,7 +51,7 @@ namespace LanguageImplementation
             }
 
             int subStartDepth = callStack.Count;
-            FrameContext newContext = new FrameContext(reverseStack);
+            FrameContext newContext = new FrameContext(reverseStack, builtins);
             newContext.StartDepth = subStartDepth;
             return newContext;
         }
@@ -117,19 +120,19 @@ namespace LanguageImplementation
             }
         }
 
-        public List<object> Locals
+        public List<object> LocalFasts
+        {
+            get
+            {
+                return callStack.Peek().LocalFasts;
+            }
+        }
+
+        public Dictionary<string, object> Locals
         {
             get
             {
                 return callStack.Peek().Locals;
-            }
-        }
-
-        public List<string> Names
-        {
-            get
-            {
-                return callStack.Peek().Names;
             }
         }
 
@@ -139,6 +142,12 @@ namespace LanguageImplementation
             {
                 return callStack.Peek().LocalNames;
             }
+        }
+
+        public object GetLocal(int name_i)
+        {
+            var name = LocalNames[name_i];
+            return Locals[name];
         }
 
         /// <summary>
@@ -151,17 +160,22 @@ namespace LanguageImplementation
         public object GetVariable(string name)
         {
             // Try to resolve locally, then globally, and then in our built-in namespace
-            foreach (var stackFrame in callStack)
-            {
-                // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                var nameIdx = stackFrame.LocalNames.IndexOf(name);
-                if (nameIdx >= 0)
-                {
-                    return stackFrame.Locals[nameIdx];
-                }
-            }
+            var stackFrame = callStack.Peek();
 
-            throw new Exception("'" + name + "' not found in local or global namespaces, and we don't resolve built-ins yet.");
+            // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
+            if (stackFrame.Locals.ContainsKey(name))
+            {
+                return stackFrame.Locals[name];
+            }
+            else if(stackFrame.Globals.ContainsKey(name))
+            {
+                return stackFrame.Globals[name];
+            }
+            else if(Builtins.ContainsKey(name))
+            {
+                return Builtins[name];
+            }
+            throw new Exception("'" + name + "' not found in local, global, nor built-in namespaces.");
         }
 
         public void AddVariable(string name, object value)
@@ -170,12 +184,8 @@ namespace LanguageImplementation
             if (nameIdx == -1)
             {
                 LocalNames.Add(name);
-                Locals.Add(value);
             }
-            else
-            {
-                Locals[nameIdx] = value;
-            }
+            Locals.AddOrSet(name, value);
         }
 
         public void SetVariable(string name, object value)
@@ -185,7 +195,7 @@ namespace LanguageImplementation
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);
             }
-            Locals[varIdx] = value;
+            Locals.AddOrSet(name, value);
         }
 
         public bool HasVariable(string name)
@@ -204,12 +214,7 @@ namespace LanguageImplementation
 
         public Dictionary<string, object> DumpVariables()
         {
-            var variables = new Dictionary<string, object>();
-            for (int i = 0; i < LocalNames.Count; ++i)
-            {
-                variables.Add(LocalNames[i], Locals[i]);
-            }
-            return variables;
+            return Locals;
         }
     }
 }

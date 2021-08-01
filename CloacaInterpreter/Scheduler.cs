@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
@@ -148,6 +149,11 @@ namespace CloacaInterpreter
             this.Interpreter = interpreter;
         }
 
+        public TaskEventRecord Schedule(CodeObject program, PyModule module)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
         /// in order to do any other housekeeping like inject variables into it.
@@ -156,7 +162,7 @@ namespace CloacaInterpreter
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         public TaskEventRecord Schedule(CodeObject program)
         {
-            var scheduleState = PrepareFrameContext(program);
+            var scheduleState = PrepareFrameContext(program, Interpreter.GetBuiltins());
             unblocked.Add(scheduleState);
             OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
@@ -188,7 +194,7 @@ namespace CloacaInterpreter
 
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                scheduleState.Frame.SetVariable(program.ArgVarNames[argIdx], args[argIdx]);
+                scheduleState.Frame.LocalFasts[argIdx] = args[argIdx];
             }
 
             unblocked.Add(scheduleState);
@@ -203,31 +209,56 @@ namespace CloacaInterpreter
         /// <param name="newProgram">The code to prepare to run.</param>
         /// <returns>Scheduling state containing the the context that the interpreter can use to run the program as
         /// well as the continuation to kick it off (and resume it later).</returns>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram)
+        /// <param name="builtins">Mapping of builtins the frame can reference for resolving builtin calls</param>
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, Dictionary<string, object> builtins)
         {
-            return PrepareFrameContext(newProgram, null);
+            // We get an Exception here the first time we run anything in a net Visual Studio instance here, so keep
+            // a breakpoint on this, stop what you're doing, and figure out what its problem is.
+            return PrepareFrameContext(newProgram, null, builtins);
         }
 
         /// <summary>
         /// Creates a new frame context as a child of the super context. If the super context is null, then this
         /// context is considered a root context. If it is defined, this context is considered a subcontext.
         /// Subcontexts come up when defining functions in functions and then scheduling them out.
+        /// 
+        /// There's some miscellaneous management of builtins based on what is passed:
+        /// 1. superContext != null: new frame's built-ins assigned to superContext's builtins.
+        /// 2. superContext == null; seperateBuiltins != null: new frame's built-ins assigned to separateBuiltins.
+        /// 3. superContext == null; separateBuiltins == null: new frame's built-ins assigned to an empty dictionary.
         /// </summary>
         /// <param name="newProgram"></param>
-        /// <param name="superContext"></param>
+        /// <param name="superContext">The parent context under which this context would run. Will extract builtins from here and not
+        /// separateBuiltins if this is not null.</param>
+        /// <param name="separateBuiltins">Built-ins to use by this frame context if a superContext is not defined</param>
         /// <returns></returns>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext)
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext, Dictionary<string, object> separateBuiltins=null)
         {
             var newFrameStack = new Stack<Frame>();
-            var rootFrame = new Frame(newProgram);
+            Frame rootFrame = new Frame(newProgram, superContext);
 
-            foreach (string name in newProgram.VarNames)
-            {
-                rootFrame.AddLocal(name, null);
-            }
+            // At the root level in CPython, locals() == globals(). They are the same object.
+            // They have the same id and everything!
+            //
+            // Set module-level globals here if they haven't been established by the module.
+            rootFrame.AddOnlyNewGlobal("__name__", PyString.Create("__main__"));
+            rootFrame.Locals = rootFrame.Globals;
 
             newFrameStack.Push(rootFrame);
-            FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack) : new FrameContext(newFrameStack);
+
+            FrameContext subContext;
+            if (superContext != null) 
+            {
+                subContext = superContext.CreateSubcontext(newFrameStack, superContext.Builtins);
+            } else if(separateBuiltins != null)
+            {
+                subContext = new FrameContext(newFrameStack, separateBuiltins);
+            }
+            else
+            {
+                subContext = new FrameContext(newFrameStack, new Dictionary<string, object>());
+            }
+                
 
             var initialContinuation = new InitialScheduledContinuation(this.Interpreter, subContext);
             return new ScheduledTaskRecord(subContext, initialContinuation, new TaskEventRecord(subContext));

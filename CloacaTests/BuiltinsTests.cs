@@ -102,5 +102,34 @@ namespace CloacaTests
                 { "dotnetstrout", PyInteger.Create(8) },
             }), 1);
         }
+
+        // This is in builtins because __name__ is a "built-in variable"
+        [Test]
+        public async Task __name__()
+        {
+            await runBasicTest(
+                "name = __name__\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "name", PyString.Create("__main__") },
+            }), 1);
+        }
+
+        /// <summary>
+        /// This particularly makes sure that __name__ is presented to the compiler for when it sets up defaults.
+        /// </summary>
+        [Test]
+        public async Task __name__def_default()
+        {
+            await runBasicTest(
+                "def returns_name(name=__name__):\n" +
+                "   return name\n" +
+                "name = returns_name()\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "name", PyString.Create("__main__") },
+            }), 2);
+        }
+
     }
 }

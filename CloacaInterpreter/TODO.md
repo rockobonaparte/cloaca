@@ -50,6 +50,13 @@ Part 3: Hardening
 * Standard exceptions
   * Create some helpers to assist in creating all the standard Python error types as builtins with the appropriate chain of command.
     Look at how ModuleNotFoundError goes to ImportError goes to a generic PyException. It's pretty gross right now. 
+  * Make sure traceback connects with the standard exceptions when we create them internally
+    * ```
+      >>> import butt
+          Traceback (most recent call list):
+          No traceback available. This exception was probably created outside of a running program.
+          'ModuleNotFoundError' object has no attribute named 'tb'
+      ```
 * Extended argument types
   * `*args`
     * [DONE] Implement
@@ -101,6 +108,7 @@ Part 3: Hardening
   * Support grammar for UNPACK_EX (partial unpack).
   * [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
   * [TUPLE OBJECT] Support regular objects in tuples along with dunders like __eq__
+  * __init__ should recycle the object (since tuples can't be changed)
 * Sets
   * Create from literals
   * Main implementation
@@ -376,3 +384,122 @@ True
 
 We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
 to pull out __call__. We will probably have to expand from there when we try to support static methods.
+
+
+## Notes for supporting __main__
+What we need to actually schedule are not programs per se but modules containing programs. By default, we should
+create a module called "__main__" and that name should then become part of the module's underpinnings. Then the question
+is how to figure out how to get to __name__ from inside the module correctly.
+
+Main comes into globals, which then becomes the first-level's locals. Then what happens when something lower down tries to references it?
+1. Figure out how __name__ is loaded in a root module by stepping through the interpreter after assigning something to __name__
+2. Contrast to how it's done in a function
+3. Compare to how you're currently doing it
+4. (work will naturally follow from the comparison)
+
+If I do in the REPL:
+a = \_\_name\_\_
+
+CPython will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST). It's an "implicit global" in CPython code generation.
+
+Cloaca also does LOAD_NAME now, so it's down to getting it to work!
+
+I think LOAD_FAST and STORE_FAST have been rendered moot in current implementation. Is this were localsplus would come in?_
+
+In CPython, a code object has
+co_names, which I believe is used for LOAD/STORE_NAME
+co_varnames, which I believe is used for LOAD/STORE_FAST
+
+I am assuming localsplus manages the fast values, while locals manages the name values. I should be able to write a little dilly to see where it goes each time.
+
+At the root level, assigning values that have not been defined before should be names, not fasts. I figured this out by
+doing `a = 10` in the interpreter and seeing it generate a STORE_NAME, not a STORE_FAST. Actually, that could just be from the
+REPL. I should import that and see what happens.
+
+Values read before assigned are assumed to be global:
+```
+>>> b = 10
+>>> def who():
+...   a = b
+...
+>>> dis(who)
+  2           0 LOAD_GLOBAL              0 (b)
+              2 STORE_FAST               0 (a)
+              4 LOAD_CONST               0 (None)
+              6 RETURN_VALUE
+```
+
+The relevant bit in ceval.c:
+
+```
+
+    op = 0;
+    optype = OP_NAME;
+    scope = PyST_GetScope(c->u->u_ste, mangled);
+    switch (scope) {
+    case FREE:
+        dict = c->u->u_freevars;
+        optype = OP_DEREF;
+        break;
+    case CELL:
+        dict = c->u->u_cellvars;
+        optype = OP_DEREF;
+        break;
+    case LOCAL:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_FAST;
+        break;
+    case GLOBAL_IMPLICIT:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_GLOBAL;
+        break;
+    case GLOBAL_EXPLICIT:
+        optype = OP_GLOBAL;
+        break;
+    default:
+        /* scope can be 0 */
+        break;
+    }
+```
+So I think it can tell it's actually in function code, and only then does it generate FASTs.
+
+Yeah, if I run from the command-line, I can see root module code is NAME, not FAST:
+```
+C:\temp\20210810>python -m dis butt.py
+  1           0 LOAD_CONST               0 (10)
+              2 STORE_NAME               0 (a)
+              4 LOAD_CONST               1 (None)
+              6 RETURN_VALUE
+```
+
+
+
+I expect I'll have to implement something in the visitor to track if I'm parsing a function block so that I
+properly switch between LOAD/STORE_NAME and LOAD/STORE_FAST like CPython does.
+
+This comes from compile.c:
+```
+    case LOCAL:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_FAST;
+        break;
+```
+
+
+I suspect this code would fail; I don't think the global would get generated. I think I need to be tracking this
+in code generation!
+```
+>>> def crap():
+...   a = 3
+...   b = sys.platform
+...
+>>> dis(crap)
+  2           0 LOAD_CONST               1 (3)
+              2 STORE_FAST               0 (a)
+
+  3           4 LOAD_GLOBAL              0 (sys)
+              6 LOAD_ATTR                1 (platform)
+              8 STORE_FAST               1 (b)
+             10 LOAD_CONST               0 (None)
+             12 RETURN_VALUE
+```

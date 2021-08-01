@@ -47,6 +47,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<LoopBlockRecord> LoopBlocks;
     private List<Func<IScheduler, Task>> postProcessActions;
 
+    /// <summary>
+    /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
+    /// We don't use LOAD/STORE_FAST here.
+    /// </summary>
+    public bool IsRootProgram => ActiveProgram == RootProgram;
 
     public CloacaBytecodeVisitor()
     {
@@ -63,7 +68,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         foreach (var name in existingVariables.Keys)
         {
-            ActiveProgram.VarNames.Add(name);
+            ActiveProgram.Names.Add(name);
         }
     }
 
@@ -85,6 +90,38 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
     {
+        // If the variable starts with a dunder, use LOAD_NAME.
+        // Well, in the CPython source, it just checks if the first character is an underscore:
+        // 3.9 source
+        // compile.c: 3901
+        //
+        //     /* XXX Leave assert here, but handle __doc__ and the like better */
+        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
+        //
+        // ...and the mode previously fell through to OP_NAME, so we'll use LOADNAME
+        //
+        // It's kind of bizarre.
+        //
+        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
+        // particularly ensure that we don't try to use LOAD_FAST on it.
+        //
+        // Ultimately, I think we'll need to track if we're in a function block or not, but I expect bugs bugs bugs
+        // (well, I have bugs bugs bugs right now without doing it like CPython).
+        //
+        // This comes from compile.c:
+        //     case LOCAL:
+        //          if (c->u->u_ste->ste_type == FunctionBlock)
+        //          optype = OP_FAST;
+        //          break;
+        //
+        if (variableName.StartsWith("__"))
+        {
+            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
+            return;
+        }
+
+
         // If it's in VarNames, we use it from there. If not, 
         // we assume it's global and deal with it at run time if
         // we can't find it.
@@ -92,6 +129,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (idx >= 0)
         {
             ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
+            return;
+        }
+        else if(IsRootProgram)
+        {
+            var rootNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
             return;
         }
 
@@ -116,6 +159,35 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             throw new Exception(context.Start.Line + ":" + context.Start.Column + " SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
 
+        // If the variable starts with a dunder, use STORE_NAME.
+        // Well, in the CPython source, it just checks if the first character is an underscore:
+        // 3.9 source
+        // compile.c: 3901
+        //
+        //     /* XXX Leave assert here, but handle __doc__ and the like better */
+        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
+        //
+        // ...and the mode previously fell through to OP_NAME, so we'll use STORENAME
+        //
+        // It's kind of bizarre.
+        //
+        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
+        // particularly ensure that we don't try to use STORE_FAST on it.
+        //
+        // This comes from compile.c:
+        //     case LOCAL:
+        //          if (c->u->u_ste->ste_type == FunctionBlock)
+        //          optype = OP_FAST;
+        //          break;
+        //
+        // We just flip it around and use _NAME if we're in the root.
+        if (variableName.StartsWith("__") || IsRootProgram)
+        {
+            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
+            return;
+        }
+
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
         {
@@ -125,6 +197,25 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             var idx = ActiveProgram.VarNames.AddGetIndex(variableName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        }
+    }
+
+    private ByteCodes store_fast_if_not_root()
+    {
+        return IsRootProgram ? ByteCodes.STORE_NAME : ByteCodes.STORE_FAST;
+    }
+
+    private void AddStoreFastUnlessRoot(string name, ParserRuleContext context)
+    {
+        if (!IsRootProgram)
+        {
+            var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(name);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+        }
+        else
+        {
+            var fromNameStoreIdx = ActiveProgram.Names.AddGetIndex(name);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, fromNameStoreIdx, context);
         }
     }
 
@@ -316,8 +407,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             //   4. Get iterator using GET_ITER
             //   5. Call list comp function
 
-            // BOOKMARK
-            // Make code object here and load it with LOAD_CONST. Call it "listcomp"
             var newFunctionCode = new CodeObjectBuilder();
             newFunctionCode.Name = "listcomp";
 
@@ -588,10 +677,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             return null;
         }
-
-        // BOOKMARK: Try to take this for the INPLACE operations. However, you'll have to scrap passing down the testlist. See if you
-        // can use test() instead. Augassign -> testlist -> test. Then you can use that LValueTestList_star_expr, although you'll still
-        // have to figure out where to deal with the operators (probably implement VisitAugassign
 
         // RValue is testlist_star_expr[last_index]
         // LValue is testlist_star_expr[0...last_index-1]
@@ -1114,9 +1199,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
         // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
         //
+        // New notes 8/20/2021: I bet it has to do with root context! However, it's not *that* simple. Replacing this with
+        // StoreFastUnlessRoot didn't just work.
+        //
         // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
-        if (context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
+        //
+        //8/27/2021: Gotcha! I need to check if I'm declaring a function in the root context. If so, I need to use STORE_NAME too.
+        //           Otherwise, it gets stuffed in as a fast local and we'll never be able to use it in subsequent statements.
+        if ((context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
+            ||
+            IsRootProgram)
         {
             var nameIdx = ActiveProgram.Names.AddGetIndex(funcName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
@@ -1709,8 +1802,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses, context);
 
-        var idx = ActiveProgram.VarNames.AddGetIndex(className);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        var idx = ActiveProgram.Names.AddGetIndex(className);
+        if(idx >= 0)
+        {
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, idx, context);
+        }
+        else
+        {
+            idx = ActiveProgram.VarNames.AddGetIndex(className);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        }
+
         return null;
     }
 
@@ -1743,12 +1845,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // General imports not using import-from.
-        // One do STORE_FAST if this isn't an import-from
+        // Only do STORE_FAST if this isn't an import-from
         if (moduleFromList == null)
         {
             string aliasedName = moduleAs == null ? moduleName : moduleAs;
-            var moduleNameFastIndex = ActiveProgram.VarNames.AddGetIndex(aliasedName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+            AddStoreFastUnlessRoot(aliasedName, context);
         }
         // Import-from code generation.
         //if(moduleFromList != null && moduleFromList.Length > 0)
@@ -1767,8 +1868,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 {
                     fromName = moduleFromAliases[fromIdx];
                 }
-                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(fromName);
-                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+                AddStoreFastUnlessRoot(fromName, context);
             }
 
             // IMPORT_FROM Peeks the module without popping it so it can do multiple import-froms.

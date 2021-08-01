@@ -12,8 +12,14 @@ namespace LanguageImplementation
         public Stack<Block> BlockStack;
         public Stack<object> DataStack;
         public CodeObject Program;
-        public List<string> LocalNames;
-        public List<object> Locals;
+
+        public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
+        public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
+
+        // Technically, globals are owned by the module owning the context of everything we're running.
+        // I think in the long term that this will get assigned by those modules. You might see it getting.
+        // set elsewhere though.
+        public Dictionary<string, object> Globals;
 
         public Frame()
         {
@@ -21,21 +27,68 @@ namespace LanguageImplementation
             BlockStack = new Stack<Block>();
             DataStack = new Stack<object>();
             Program = null;
-            LocalNames = new List<string>();
-            Locals = new List<object>();
+            LocalFasts = new List<object>();
+            Locals = new Dictionary<string, object>();
+
+            // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
+            // setting it to an empty one.
+            Globals = null;
         }
 
-        public Frame(CodeObject program)
+        private void createFasts(CodeObject co)
         {
-            Cursor = 0;
-            BlockStack = new Stack<Block>();
-            DataStack = new Stack<object>();
-            LocalNames = new List<string>();
-            Program = program;
-            Locals = new List<object>();
+            // Arguments are the first fasts, given in order of their position in the arguments.
+            for (int i = 0; i < co.ArgVarNames.Count; ++i)
+            {
+                LocalFasts.Add(null);
+            }
+            for (int i = 0; i < co.VarNames.Count; ++i)
+            {
+                LocalFasts.Add(null);
+            }
         }
 
-        public List<string> Names
+        public Frame(CodeObject program) : this()
+        {
+            Program = program;
+            createFasts(program);
+        }
+
+        public Frame(Dictionary<string, object> globals) : this()
+        {
+            Globals = globals;
+        }
+
+        public Frame(CodeObject program, Dictionary<string, object> globals) : this(program)
+        {
+            Program = program;
+            Globals = globals;
+        }
+
+        public Frame(FrameContext parentContext) : this()
+        {
+            if(parentContext != null && parentContext.callStack.Count > 0)
+            {
+                Globals = parentContext.callStack.Peek().Globals;
+            }
+            else
+            {
+                Globals = new Dictionary<string, object>();
+            }
+        }
+        public Frame(CodeObject program, FrameContext parentContext) : this(program)
+        {
+            if (parentContext != null && parentContext.callStack.Count > 0)
+            {
+                Globals = parentContext.callStack.Peek().Globals;
+            }
+            else
+            {
+                Globals = new Dictionary<string, object>();
+            }
+        }
+
+        public List<string> LocalNames
         {
             get
             {
@@ -52,12 +105,17 @@ namespace LanguageImplementation
             if(nameIdx == -1)
             {
                 LocalNames.Add(name);
-                Locals.Add(value);
+                Locals.AddOrSet(name, value);
             }
             else
             {
-                Locals[nameIdx] = value;
+                Locals[name] = value;
             }    
+        }
+
+        public void SetFastLocal(int idx, object value)
+        {
+                LocalFasts[idx] = value;
         }
 
         /// <summary>
@@ -68,13 +126,75 @@ namespace LanguageImplementation
         /// helpers don't pad with null unnecessarily as a final resort.
         /// </summary>
         /// <param name="name">The name of the local to add</param>
-        /// <param name="value">The </param>
+        /// <param name="value">The value of the local to add.</param>
         public void AddOnlyNewLocal(string name, object value)
         {
             if(!LocalNames.Contains(name))
             {
                 AddLocal(name, value);
             }
+        }
+
+        /// <summary>
+        /// Get a local. Raises KeyNotFoundException if the named local could not be found. This is because
+        /// the local could actually be null, so we don't rely on null.
+        /// </summary>
+        /// <param name="name">The name of the local.</param>
+        /// <exception cref="KeyNotFoundException">A local with the given name is not registered with this context.</exception>
+        /// <returns>The value of the local, which might be null!</returns>
+        public object GetLocal(string name)
+        {
+            var nameIdx = LocalNames.IndexOf(name);
+            if (nameIdx == -1)
+            {
+                throw new KeyNotFoundException("'" + name + "' as not found amongst locals");
+            }
+            else
+            {
+                return Locals[name];
+            }
+        }
+
+        public void AddGlobal(string name, object value)
+        {
+            if(Globals.ContainsKey(name))
+            {
+                Globals[name] = value;
+            }
+            else
+            {
+                Globals.Add(name, value);
+            }
+        }
+
+        /// <summary>
+        /// This will only add the global if it hasn't already been added.
+        /// </summary>
+        /// <param name="name">The name of the global to add</param>
+        /// <param name="value">The global value to bind to the given name.</param>
+        public void AddOnlyNewGlobal(string name, object value)
+        {
+            if (!Globals.ContainsKey(name))
+            {
+                Globals.Add(name, value);
+            }
+        }
+
+        /// <summary>
+        /// Get a local. Raises KeyNotFoundException if the named local could not be found. This is because
+        /// the local could actually be null, so we don't rely on null.
+        /// </summary>
+        /// <param name="name">The name of the local.</param>
+        /// <exception cref="KeyNotFoundException">A local with the given name is not registered with this context.</exception>
+        /// <returns>The value of the local, which might be null!</returns>
+        public object GetGlobal(string name)
+        {
+            return Globals[name];
+        }
+
+        public bool HasGlobal(string name)
+        {
+            return Globals.ContainsKey(name);
         }
     }
 
@@ -299,7 +419,7 @@ namespace LanguageImplementation
         /// <param name="functionToRun">The code object to call into.</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
-        Task<object> CallInto(FrameContext context, CodeObject program, object[] args);
+        Task<object> CallInto(FrameContext context, CodeObject program, object[] args, string __name__="__main__");
 
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets
@@ -312,6 +432,13 @@ namespace LanguageImplementation
         /// <param name="context">The current state of the frame and stacks to run</param>
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
         Task Run(FrameContext context);
+
+        /// <summary>
+        /// Get mapping of built-in definitions that interpreter is using.
+        /// </summary>
+        /// <returns>Mapping of built-in definitions that interpreter is using.</returns>
+        Dictionary<string, object> GetBuiltins();
+
 
         /// <summary>
         /// Returns true if an exception was raised and the context would not be in a position to still try to

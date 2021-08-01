@@ -27,7 +27,7 @@ namespace CloacaTests
         {
             scheduler = new Scheduler();
             interpreter = new Interpreter(scheduler);
-            context = new FrameContext();
+            context = new FrameContext(new Dictionary<string, object>());
         }
 
         #region Reads

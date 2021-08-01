@@ -30,7 +30,7 @@ namespace CloacaTests
             var interpreter = new Interpreter(scheduler);
 
             var loader = new FileBasedModuleLoader();
-            var rootContext = new FrameContext();
+            var rootContext = new FrameContext(new Dictionary<string, object>());
             var repo = new FileBasedModuleFinder(repoRoots, loader);
 
             var spec = repo.find_spec(null, "test", null, null);
@@ -118,8 +118,9 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
-            var mockContext = new FrameContext(mockStack);
+            var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
             clrLoader.AddReference(mockContext, "System");
 
@@ -142,8 +143,9 @@ namespace CloacaTests
             finder.AddDefaultAssembly(Assembly.LoadWithPartialName("System"));
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
-            var mockContext = new FrameContext(mockStack);
+            var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
             var spec = finder.find_spec(mockContext, "System", null, null);
             Assert.NotNull(spec);
@@ -158,8 +160,9 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
-            var mockContext = new FrameContext(mockStack);
+            var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
             clrLoader.AddReference(mockContext, "System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
 
@@ -176,8 +179,9 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
-            var mockContext = new FrameContext(mockStack);
+            var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
             clrLoader.AddReference(mockContext, "mscorlib");
 
@@ -224,8 +228,9 @@ namespace CloacaTests
 
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
-            var mockContext = new FrameContext(mockStack);
+            var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
             var spec = finder.find_spec(mockContext, "NoNamespaceClass", null, null);
             Assert.NotNull(spec);
