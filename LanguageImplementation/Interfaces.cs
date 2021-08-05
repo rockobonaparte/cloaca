@@ -15,6 +15,11 @@ namespace LanguageImplementation
         public List<string> LocalNames;
         public List<object> Locals;
 
+        // Technically, globals are owned by the module owning the context of everything we're running.
+        // I think in the long term that this will get assigned by those modules. You might see it getting.
+        // set elsewhere though.
+        public Dictionary<object, object> Globals;
+
         public Frame()
         {
             Cursor = 0;
@@ -23,17 +28,51 @@ namespace LanguageImplementation
             Program = null;
             LocalNames = new List<string>();
             Locals = new List<object>();
+
+            // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
+            // setting it to an empty one.
+            Globals = null;
         }
 
-        public Frame(CodeObject program)
+        public Frame(CodeObject program) : this()
         {
-            Cursor = 0;
-            BlockStack = new Stack<Block>();
-            DataStack = new Stack<object>();
-            LocalNames = new List<string>();
             Program = program;
-            Locals = new List<object>();
         }
+
+        public Frame(Dictionary<object, object> globals) : this()
+        {
+            Globals = globals;
+        }
+        public Frame(CodeObject program, Dictionary<object, object> globals) : this()
+        {
+            Program = program;
+            Globals = globals;
+        }
+
+        public Frame(FrameContext parentContext) : this()
+        {
+            if(parentContext != null && parentContext.callStack.Count > 0)
+            {
+                Globals = parentContext.callStack.Peek().Globals;
+            }
+            else
+            {
+                Globals = new Dictionary<object, object>();
+            }
+        }
+        public Frame(CodeObject program, FrameContext parentContext) : this()
+        {
+            if (parentContext != null && parentContext.callStack.Count > 0)
+            {
+                Globals = parentContext.callStack.Peek().Globals;
+            }
+            else
+            {
+                Globals = new Dictionary<object, object>();
+            }
+            Program = program;
+        }
+
 
         public List<string> Names
         {
@@ -68,7 +107,7 @@ namespace LanguageImplementation
         /// helpers don't pad with null unnecessarily as a final resort.
         /// </summary>
         /// <param name="name">The name of the local to add</param>
-        /// <param name="value">The </param>
+        /// <param name="value">The value of the local to add.</param>
         public void AddOnlyNewLocal(string name, object value)
         {
             if(!LocalNames.Contains(name))
@@ -97,6 +136,47 @@ namespace LanguageImplementation
             }
         }
 
+        public void AddGlobal(string name, object value)
+        {
+            if(Globals.ContainsKey(name))
+            {
+                Globals[name] = value;
+            }
+            else
+            {
+                Globals.Add(name, value);
+            }
+        }
+
+        /// <summary>
+        /// This will only add the global if it hasn't already been added.
+        /// </summary>
+        /// <param name="name">The name of the global to add</param>
+        /// <param name="value">The global value to bind to the given name.</param>
+        public void AddOnlyNewGlobal(string name, object value)
+        {
+            if (!Globals.ContainsKey(name))
+            {
+                Globals.Add(name, value);
+            }
+        }
+
+        /// <summary>
+        /// Get a local. Raises KeyNotFoundException if the named local could not be found. This is because
+        /// the local could actually be null, so we don't rely on null.
+        /// </summary>
+        /// <param name="name">The name of the local.</param>
+        /// <exception cref="KeyNotFoundException">A local with the given name is not registered with this context.</exception>
+        /// <returns>The value of the local, which might be null!</returns>
+        public object GetGlobal(string name)
+        {
+            return Globals[name];
+        }
+
+        public bool HasGlobal(string name)
+        {
+            return Globals.ContainsKey(name);
+        }
     }
 
     // Traditional block in Python has: frame, opcode, handler (pointer to next instruction outside of the loop), value stack size

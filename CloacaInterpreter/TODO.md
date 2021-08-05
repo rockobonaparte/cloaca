@@ -383,3 +383,9 @@ True
 
 We'll have to worry about staticmethod at some point. Currently, we don't create a method if PyClass' __getattribute__ is trying
 to pull out __call__. We will probably have to expand from there when we try to support static methods.
+
+
+## Notes for supporting __main__
+What we need to actually schedule are not programs per se but modules containing programs. By default, we should
+create a module called "__main__" and that name should then become part of the module's underpinnings. Then the question
+is how to figure out how to get to __name__ from inside the module correctly.

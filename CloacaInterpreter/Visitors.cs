@@ -85,6 +85,25 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
     {
+        // If the variable starts with a dunder, use LOAD_NAME.
+        // Well, in the CPython source, it just checks if the first character is an underscore:
+        // 3.9 source
+        // compile.c: 3901
+        //
+        //     /* XXX Leave assert here, but handle __doc__ and the like better */
+        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
+        //
+        // ...and the mode previously fell through to OP_NAME, so we'll use LOADNAME
+        //
+        // It's kind of bizarre.
+        if(variableName.StartsWith("__"))
+        {
+            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
+            return;
+        }
+
+
         // If it's in VarNames, we use it from there. If not, 
         // we assume it's global and deal with it at run time if
         // we can't find it.

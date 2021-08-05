@@ -80,8 +80,6 @@ namespace CloacaTests
             compiledProgram = await compiledTask;
             Dis.dis(compiledProgram);
 
-            // BOOKMARK: schedule needs __name__. I think it should go into the compiled program somehow. Along with __file__ and __doc__
-            // What I need to do is pass along a module with the associated program in it. It's a module, not just a code object.
             receipt = scheduler.Schedule(compiledProgram);
             FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)

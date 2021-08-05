@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
@@ -148,6 +149,13 @@ namespace CloacaInterpreter
             this.Interpreter = interpreter;
         }
 
+        // BOOKMARK: Run this program under the context of the given module. Eventually then create a dummy __main__ module you
+        //           can use as a default
+        public TaskEventRecord Schedule(CodeObject program, PyModule module)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
         /// in order to do any other housekeeping like inject variables into it.
@@ -219,7 +227,11 @@ namespace CloacaInterpreter
         private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext)
         {
             var newFrameStack = new Stack<Frame>();
-            var rootFrame = new Frame(newProgram);
+            Frame rootFrame = new Frame(newProgram, superContext);
+
+
+            // Set module-level globals here if they haven't been established by the module.
+            rootFrame.AddOnlyNewGlobal("__name__", "__main__");
 
             foreach (string name in newProgram.VarNames)
             {

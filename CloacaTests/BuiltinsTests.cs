@@ -105,7 +105,7 @@ namespace CloacaTests
 
         // This is in builtins because __name__ is a "built-in variable"
         [Test]
-        [Ignore("__name__ not currently being set up properly and the work to enable it is a work-in-progress")]
+        //[Ignore("__name__ not currently being set up properly and the work to enable it is a work-in-progress")]
         public async Task __name__()
         {
             await runBasicTest(

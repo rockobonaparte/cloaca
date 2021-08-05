@@ -129,7 +129,7 @@ namespace CloacaInterpreter
         public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
-            Frame classFrame = new Frame(func);
+            Frame classFrame = new Frame(func, context);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
@@ -203,9 +203,7 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, string __name__)
         {
-            Frame nextFrame = new Frame();
-            nextFrame.Program = functionToRun;
-
+            Frame nextFrame = new Frame(functionToRun, context);
             return await CallInto(context, nextFrame, args, __name__);
         }
 
@@ -764,7 +762,7 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
+                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
                                 context.DataStack.Push(context.GetVariable(name));
                             }
                             context.Cursor += 2;
@@ -783,27 +781,9 @@ namespace CloacaInterpreter
                                     var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
                                     var globalName = context.Program.Names[globalIdx];
 
-                                    object foundVar = null;
-
-                                    foreach (var stackFrame in context.callStack)
+                                    if(context.callStack.Peek().HasGlobal(globalName))
                                     {
-                                        // Skip current stack
-                                        if (stackFrame == context.callStack.Peek())
-                                        {
-                                            continue;
-                                        }
-
-                                        var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
-                                        if (nameIdx >= 0)
-                                        {
-                                            foundVar = stackFrame.Locals[nameIdx];
-                                            break;
-                                        }
-                                    }
-
-                                    if (foundVar != null)
-                                    {
-                                        context.DataStack.Push(foundVar);
+                                        context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
                                     }
                                     else if (builtins.ContainsKey(globalName))
                                     {
@@ -813,6 +793,36 @@ namespace CloacaInterpreter
                                     {
                                         throw new Exception("Global '" + globalName + "' was not found!");
                                     }
+                                    //object foundVar = null;
+
+                                    //foreach (var stackFrame in context.callStack)
+                                    //{
+                                    //    // Skip current stack
+                                    //    if (stackFrame == context.callStack.Peek())
+                                    //    {
+                                    //        continue;
+                                    //    }
+
+                                    //    var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
+                                    //    if (nameIdx >= 0)
+                                    //    {
+                                    //        foundVar = stackFrame.Locals[nameIdx];
+                                    //        break;
+                                    //    }
+                                    //}
+
+                                    //if (foundVar != null)
+                                    //{
+                                    //    context.DataStack.Push(foundVar);
+                                    //}
+                                    //else if (builtins.ContainsKey(globalName))
+                                    //{
+                                    //    context.DataStack.Push(builtins[globalName]);
+                                    //}
+                                    //else
+                                    //{
+                                    //    throw new Exception("Global '" + globalName + "' was not found!");
+                                    //}
                                 }
                                 context.Cursor += 2;
                                 break;
