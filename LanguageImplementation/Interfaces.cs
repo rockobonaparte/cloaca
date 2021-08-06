@@ -13,7 +13,7 @@ namespace LanguageImplementation
         public Stack<object> DataStack;
         public CodeObject Program;
         public List<string> LocalNames;
-        public List<object> Locals;
+        public Dictionary<object, object> Locals;
 
         // Technically, globals are owned by the module owning the context of everything we're running.
         // I think in the long term that this will get assigned by those modules. You might see it getting.
@@ -27,7 +27,7 @@ namespace LanguageImplementation
             DataStack = new Stack<object>();
             Program = null;
             LocalNames = new List<string>();
-            Locals = new List<object>();
+            Locals = new Dictionary<object, object>();
 
             // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
             // setting it to an empty one.
@@ -91,7 +91,7 @@ namespace LanguageImplementation
             if(nameIdx == -1)
             {
                 LocalNames.Add(name);
-                Locals.Add(value);
+                Locals.AddOrSet(name, value);
             }
             else
             {

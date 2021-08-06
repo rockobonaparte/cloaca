@@ -1647,14 +1647,7 @@ namespace CloacaInterpreter
                                             varIndex = context.LocalNames.AddGetIndex(starImported.Key);
                                         }
 
-                                        if (varIndex >= context.Locals.Count)
-                                        {
-                                            context.Locals.Add(starImported.Value);
-                                        }
-                                        else
-                                        {
-                                            context.Locals[varIndex] = starImported.Value;
-                                        }
+                                        context.Locals.AddOrSet(context.LocalNames[varIndex], starImported.Value);
                                     }
                                 }
                                 break;

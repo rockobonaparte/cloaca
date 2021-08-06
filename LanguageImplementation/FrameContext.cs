@@ -117,7 +117,7 @@ namespace LanguageImplementation
             }
         }
 
-        public List<object> Locals
+        public Dictionary<object, object> Locals
         {
             get
             {
@@ -170,12 +170,8 @@ namespace LanguageImplementation
             if (nameIdx == -1)
             {
                 LocalNames.Add(name);
-                Locals.Add(value);
             }
-            else
-            {
-                Locals[nameIdx] = value;
-            }
+            Locals.AddOrSet(name, value);
         }
 
         public void SetVariable(string name, object value)

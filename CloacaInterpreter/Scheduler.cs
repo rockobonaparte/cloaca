@@ -229,14 +229,16 @@ namespace CloacaInterpreter
             var newFrameStack = new Stack<Frame>();
             Frame rootFrame = new Frame(newProgram, superContext);
 
-
+            // At the root level in CPython, locals() == globals(). They are the same object.
+            // They have the same id and everything!
+            //
             // Set module-level globals here if they haven't been established by the module.
             rootFrame.AddOnlyNewGlobal("__name__", "__main__");
-
             foreach (string name in newProgram.VarNames)
             {
-                rootFrame.AddLocal(name, null);
+                rootFrame.AddOnlyNewGlobal(name, null);
             }
+            rootFrame.Locals = rootFrame.Globals;
 
             newFrameStack.Push(rootFrame);
             FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack) : new FrameContext(newFrameStack);
