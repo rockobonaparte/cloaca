@@ -35,7 +35,7 @@ namespace CloacaTests
             for(int i = 0; i < context.LocalNames.Count; ++i)
             {
                 var name = context.LocalNames[i];
-                var variable = context.Locals[i];
+                var variable = context.Locals[name];
 
                 // TODO: Switch to handle null with NoneType
                 if (variable != null)

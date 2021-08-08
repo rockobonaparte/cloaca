@@ -168,6 +168,7 @@ namespace CloacaInterpreter
             }
             else
             {
+                throw new Exception("Locals resolution for __init__ no longer works since Locals was made a dictionary");
                 __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
@@ -178,7 +179,7 @@ namespace CloacaInterpreter
                 var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
                 if (nameIdx >= 0)
                 {
-                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[nameIdx]);
+                    pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[classMemberName]);
                 }
                 else
                 {
@@ -679,7 +680,7 @@ namespace CloacaInterpreter
                                     var nameIdx = stackFrame.LocalNames.IndexOf(name);
                                     if (nameIdx >= 0)
                                     {
-                                        stackFrame.Locals[nameIdx] = context.DataStack.Pop();
+                                        stackFrame.Locals[name] = context.DataStack.Pop();
                                         foundVar = true;
                                         break;
                                     }
@@ -697,7 +698,8 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var localIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                context.Locals[localIdx] = context.DataStack.Pop();
+                                var varName = context.LocalNames[localIdx];
+                                context.Locals[varName] = context.DataStack.Pop();
                             }
                             context.Cursor += 2;
                             break;
@@ -721,7 +723,8 @@ namespace CloacaInterpreter
                                         var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
                                         if (nameIdx >= 0)
                                         {
-                                            stackFrame.Locals[nameIdx] = context.DataStack.Pop();
+                                            throw new Exception("STORE_GLOBAL is touching locals when it should only touch globals");
+                                            stackFrame.Locals[globalName] = context.DataStack.Pop();
                                             foundVar = true;
                                         }
                                     }
@@ -770,7 +773,9 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_FAST:
                             {
                                 context.Cursor += 1;
-                                context.DataStack.Push(context.Locals[context.CodeBytes.GetUShort(context.Cursor)]);
+                                var fastIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var name = context.LocalNames[fastIdx];
+                                context.DataStack.Push(context.Locals[name]);
                             }
                             context.Cursor += 2;
                             break;

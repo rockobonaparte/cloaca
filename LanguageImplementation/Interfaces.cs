@@ -95,7 +95,7 @@ namespace LanguageImplementation
             }
             else
             {
-                Locals[nameIdx] = value;
+                Locals[name] = value;
             }    
         }
 
@@ -132,7 +132,7 @@ namespace LanguageImplementation
             }
             else
             {
-                return Locals[nameIdx];
+                return Locals[name];
             }
         }
 

@@ -141,6 +141,12 @@ namespace LanguageImplementation
             }
         }
 
+        public object GetLocal(int name_i)
+        {
+            var name = LocalNames[name_i];
+            return Locals[name];
+        }
+
         /// <summary>
         /// A representation of sys.modules. Each context gets its own since it's possibly
         /// importing different things.
@@ -157,7 +163,7 @@ namespace LanguageImplementation
                 var nameIdx = stackFrame.LocalNames.IndexOf(name);
                 if (nameIdx >= 0)
                 {
-                    return stackFrame.Locals[nameIdx];
+                    return stackFrame.Locals[name];
                 }
             }
 
@@ -181,7 +187,7 @@ namespace LanguageImplementation
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);
             }
-            Locals[varIdx] = value;
+            Locals.AddOrSet(name, value);
         }
 
         public bool HasVariable(string name)
@@ -203,7 +209,8 @@ namespace LanguageImplementation
             var variables = new Dictionary<string, object>();
             for (int i = 0; i < LocalNames.Count; ++i)
             {
-                variables.Add(LocalNames[i], Locals[i]);
+                var name = LocalNames[i];
+                variables.Add(name, Locals[name]);
             }
             return variables;
         }

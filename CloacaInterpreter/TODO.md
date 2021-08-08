@@ -399,5 +399,8 @@ Main comes into globals, which then becomes the first-level's locals. Then what 
 If I do in the REPL:
 a = \_\_name\_\_
 
-It will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST). It's an "implicit global" in CPython code generation.
+CPython will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST). It's an "implicit global" in CPython code generation.
 
+Cloaca also does LOAD_NAME now, so it's down to getting it to work!
+
+I think LOAD_FAST and STORE_FAST have been rendered moot in current implementation. Is this were localsplus would come in?_

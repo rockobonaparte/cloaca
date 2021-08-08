@@ -26,6 +26,7 @@ namespace CloacaInterpreter
                 throw new IndexOutOfRangeException("getSuperClass found no locals from which to steal the class' self pointer.");
             }
 
+            throw new Exception("Locals resolution for self in super() no longer works since Locals was made a dictionary");
             var self = context.Locals[0] as PyObject;
             if (self == null)
             {

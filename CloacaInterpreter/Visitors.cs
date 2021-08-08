@@ -141,7 +141,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
         }
         else
-        {
+       {
             var idx = ActiveProgram.VarNames.AddGetIndex(variableName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
         }
