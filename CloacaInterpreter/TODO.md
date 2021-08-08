@@ -389,3 +389,15 @@ to pull out __call__. We will probably have to expand from there when we try to 
 What we need to actually schedule are not programs per se but modules containing programs. By default, we should
 create a module called "__main__" and that name should then become part of the module's underpinnings. Then the question
 is how to figure out how to get to __name__ from inside the module correctly.
+
+Main comes into globals, which then becomes the first-level's locals. Then what happens when something lower down tries to references it?
+1. Figure out how __name__ is loaded in a root module by stepping through the interpreter after assigning something to __name__
+2. Contrast to how it's done in a function
+3. Compare to how you're currently doing it
+4. (work will naturally follow from the comparison)
+
+If I do in the REPL:
+a = \_\_name\_\_
+
+It will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST). It's an "implicit global" in CPython code generation.
+
