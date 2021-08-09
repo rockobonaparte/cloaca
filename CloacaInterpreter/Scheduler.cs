@@ -233,7 +233,7 @@ namespace CloacaInterpreter
             // They have the same id and everything!
             //
             // Set module-level globals here if they haven't been established by the module.
-            rootFrame.AddOnlyNewGlobal("__name__", "__main__");
+            rootFrame.AddOnlyNewGlobal("__name__", PyString.Create("__main__"));
             foreach (string name in newProgram.VarNames)
             {
                 rootFrame.LocalNames.Add(name);

@@ -108,6 +108,7 @@ Part 3: Hardening
   * Support grammar for UNPACK_EX (partial unpack).
   * [TUPLE DUNDERS] Supporting remaining tuple features by implementing the remaining dunders.
   * [TUPLE OBJECT] Support regular objects in tuples along with dunders like __eq__
+  * __init__ should recycle the object (since tuples can't be changed)
 * Sets
   * Create from literals
   * Main implementation

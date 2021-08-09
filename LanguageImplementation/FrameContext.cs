@@ -160,7 +160,7 @@ namespace LanguageImplementation
             foreach (var stackFrame in callStack)
             {
                 // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                var nameIdx = stackFrame.Names.IndexOf(name);
                 if (nameIdx >= 0)
                 {
                     return stackFrame.Locals[name];

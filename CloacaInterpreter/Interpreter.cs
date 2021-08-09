@@ -232,7 +232,7 @@ namespace CloacaInterpreter
             }
 
             // Add __name__
-            frame.AddLocal("__name__", __name__);
+            frame.AddLocal("__name__", PyString.Create(__name__));
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
@@ -765,7 +765,7 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
+                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
                                 context.DataStack.Push(context.GetVariable(name));
                             }
                             context.Cursor += 2;
