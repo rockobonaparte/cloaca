@@ -698,8 +698,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var localIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var varName = context.LocalNames[localIdx];
-                                context.Locals[varName] = context.DataStack.Pop();
+                                context.LocalFasts[localIdx] = context.DataStack.Pop();
                             }
                             context.Cursor += 2;
                             break;
@@ -774,8 +773,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var fastIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var name = context.LocalNames[fastIdx];
-                                context.DataStack.Push(context.Locals[name]);
+                                context.DataStack.Push(context.LocalFasts[fastIdx]);
                             }
                             context.Cursor += 2;
                             break;

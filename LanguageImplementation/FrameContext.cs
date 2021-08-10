@@ -117,6 +117,14 @@ namespace LanguageImplementation
             }
         }
 
+        public List<object> LocalFasts
+        {
+            get
+            {
+                return callStack.Peek().LocalFasts;
+            }
+        }
+
         public Dictionary<object, object> Locals
         {
             get

@@ -411,3 +411,63 @@ co_names, which I believe is used for LOAD/STORE_NAME
 co_varnames, which I believe is used for LOAD/STORE_FAST
 
 I am assuming localsplus manages the fast values, while locals manages the name values. I should be able to write a little dilly to see where it goes each time.
+
+At the root level, assigning values that have not been defined before should be names, not fasts. I figured this out by
+doing `a = 10` in the interpreter and seeing it generate a STORE_NAME, not a STORE_FAST. Actually, that could just be from the
+REPL. I should import that and see what happens.
+
+Values read before assigned are assumed to be global:
+```
+>>> b = 10
+>>> def who():
+...   a = b
+...
+>>> dis(who)
+  2           0 LOAD_GLOBAL              0 (b)
+              2 STORE_FAST               0 (a)
+              4 LOAD_CONST               0 (None)
+              6 RETURN_VALUE
+```
+
+The relevant bit in ceval.c:
+
+```
+
+    op = 0;
+    optype = OP_NAME;
+    scope = PyST_GetScope(c->u->u_ste, mangled);
+    switch (scope) {
+    case FREE:
+        dict = c->u->u_freevars;
+        optype = OP_DEREF;
+        break;
+    case CELL:
+        dict = c->u->u_cellvars;
+        optype = OP_DEREF;
+        break;
+    case LOCAL:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_FAST;
+        break;
+    case GLOBAL_IMPLICIT:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_GLOBAL;
+        break;
+    case GLOBAL_EXPLICIT:
+        optype = OP_GLOBAL;
+        break;
+    default:
+        /* scope can be 0 */
+        break;
+    }
+```
+So I think it can tell it's actually in function code, and only then does it generate FASTs.
+
+Yeah, if I run from the command-line, I can see root module code is NAME, not FAST:
+```
+C:\temp\20210810>python -m dis butt.py
+  1           0 LOAD_CONST               0 (10)
+              2 STORE_NAME               0 (a)
+              4 LOAD_CONST               1 (None)
+              6 RETURN_VALUE
+```
