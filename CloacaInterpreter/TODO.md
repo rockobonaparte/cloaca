@@ -405,3 +405,9 @@ CPython will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST).
 Cloaca also does LOAD_NAME now, so it's down to getting it to work!
 
 I think LOAD_FAST and STORE_FAST have been rendered moot in current implementation. Is this were localsplus would come in?_
+
+In CPython, a code object has
+co_names, which I believe is used for LOAD/STORE_NAME
+co_varnames, which I believe is used for LOAD/STORE_FAST
+
+I am assuming localsplus manages the fast values, while locals manages the name values. I should be able to write a little dilly to see where it goes each time.
