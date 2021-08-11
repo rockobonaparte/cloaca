@@ -47,6 +47,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<LoopBlockRecord> LoopBlocks;
     private List<Func<IScheduler, Task>> postProcessActions;
 
+    /// <summary>
+    /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
+    /// We don't use LOAD/STORE_FAST here.
+    /// </summary>
+    public bool IsRootProgram => ActiveProgram == RootProgram;
 
     public CloacaBytecodeVisitor()
     {
@@ -96,7 +101,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // ...and the mode previously fell through to OP_NAME, so we'll use LOADNAME
         //
         // It's kind of bizarre.
-        if(variableName.StartsWith("__"))
+        //
+        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
+        // particularly ensure that we don't try to use LOAD_FAST on it.
+        //
+        // This comes from compile.c:
+        //     case LOCAL:
+        //          if (c->u->u_ste->ste_type == FunctionBlock)
+        //          optype = OP_FAST;
+        //          break;
+        //
+        // We just flip it around and use _NAME if we're in the root.
+        if (variableName.StartsWith("__") || IsRootProgram)
         {
             var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
             ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
@@ -134,6 +150,36 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             throw new Exception(context.Start.Line + ":" + context.Start.Column + " SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
+
+        // If the variable starts with a dunder, use STORE_NAME.
+        // Well, in the CPython source, it just checks if the first character is an underscore:
+        // 3.9 source
+        // compile.c: 3901
+        //
+        //     /* XXX Leave assert here, but handle __doc__ and the like better */
+        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
+        //
+        // ...and the mode previously fell through to OP_NAME, so we'll use STORENAME
+        //
+        // It's kind of bizarre.
+        //
+        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
+        // particularly ensure that we don't try to use STORE_FAST on it.
+        //
+        // This comes from compile.c:
+        //     case LOCAL:
+        //          if (c->u->u_ste->ste_type == FunctionBlock)
+        //          optype = OP_FAST;
+        //          break;
+        //
+        // We just flip it around and use _NAME if we're in the root.
+        if (variableName.StartsWith("__") || IsRootProgram)
+        {
+            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
+            return;
+        }
+
 
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
