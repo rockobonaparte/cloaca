@@ -32,9 +32,9 @@ namespace CloacaTests
         {
             map = new Dictionary<string, Dictionary<Type, object>>();
 
-            for(int i = 0; i < context.LocalNames.Count; ++i)
+            for(int i = 0; i < context.Names.Count; ++i)
             {
-                var name = context.LocalNames[i];
+                var name = context.Names[i];
                 var variable = context.Locals[name];
 
                 // TODO: Switch to handle null with NoneType
