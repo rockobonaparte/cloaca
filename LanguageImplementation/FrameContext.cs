@@ -190,7 +190,7 @@ namespace LanguageImplementation
 
         public void SetVariable(string name, object value)
         {
-            int varIdx = LocalNames.IndexOf(name);
+            int varIdx = Names.IndexOf(name);
             if (varIdx < 0)
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);

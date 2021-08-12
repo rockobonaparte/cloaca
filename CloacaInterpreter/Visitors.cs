@@ -68,7 +68,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram = RootProgram;
         foreach (var name in existingVariables.Keys)
         {
-            ActiveProgram.VarNames.Add(name);
+            ActiveProgram.Names.Add(name);
         }
     }
 
