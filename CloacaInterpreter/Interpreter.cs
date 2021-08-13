@@ -134,16 +134,14 @@ namespace CloacaInterpreter
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            // BOOKMARK: Figure out how to transfer __name__ down to here from the parent context.
-            await CallInto(context, classFrame, new object[0], context.GetVariable("__name__") + "." + name);
+            await CallInto(context, classFrame, new object[0], name);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
             // 2. A parent constructor, if existing
             // 3. Failing all that, a default constructor
-            var initIdx = classFrame.LocalNames.IndexOf("__init__");
-            CodeObject __init__ = null;
-            if(initIdx < 0)
+            CodeObject __init__ = classFrame.Locals.ContainsKey("__init__") ? (CodeObject) classFrame.Locals["__init__"] : null;
+            if (__init__ == null)
             {
                 if (bases != null && bases.Length > 0)
                 {
@@ -165,11 +163,6 @@ namespace CloacaInterpreter
                     initBuilder.ArgVarNames.Add("self");
                     __init__ = initBuilder.Build();
                 }
-            }
-            else
-            {
-                throw new Exception("Locals resolution for __init__ no longer works since Locals was made a dictionary");
-                __init__ = (CodeObject)classFrame.Locals[initIdx];
             }
 
             var pyclass = new PyClass(name, __init__, bases);
@@ -224,8 +217,9 @@ namespace CloacaInterpreter
         {
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                frame.AddLocal(frame.Program.ArgVarNames[argIdx], args[argIdx]);
+                frame.SetFastLocal(argIdx, args[argIdx]);
             }
+
             for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
             {
                 frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);

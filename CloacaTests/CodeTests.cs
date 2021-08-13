@@ -816,7 +816,7 @@ namespace CloacaTests
             Assert.That(runContext.LocalNames.Contains("Foo"));
             Assert.That(runContext.LocalNames.Contains("foo"));
             Assert.That(runContext.LocalNames.Contains("a"));
-            Assert.That(runContext.Names.Count, Is.EqualTo(1));
+            Assert.That(runContext.Names.Count, Is.EqualTo(2));             // foo and a
             Assert.That(runContext.Names.Contains("a"));
         }
 

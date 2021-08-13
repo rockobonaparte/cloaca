@@ -111,6 +111,11 @@ namespace LanguageImplementation
             }    
         }
 
+        public void SetFastLocal(int idx, object value)
+        {
+                LocalFasts[idx] = value;
+        }
+
         /// <summary>
         /// Added as a helper when it was discovered that null versions of locals were getting thrown in.
         /// Why null versions of locals were also getting added unnecessarily is a different issue.
