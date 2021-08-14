@@ -39,7 +39,12 @@ namespace LanguageImplementation
 
         private void createFasts(CodeObject co)
         {
-            for(int i = 0; i < co.VarNames.Count; ++i)
+            // Arguments are the first fasts, given in order of their position in the arguments.
+            for (int i = 0; i < co.ArgVarNames.Count; ++i)
+            {
+                LocalFasts.Add(null);
+            }
+            for (int i = 0; i < co.VarNames.Count; ++i)
             {
                 LocalFasts.Add(null);
             }
