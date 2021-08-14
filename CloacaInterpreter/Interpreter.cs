@@ -698,35 +698,23 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.STORE_GLOBAL:
                             {
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Program.Names[globalIdx];
+                                var toAssign = context.DataStack.Pop();
+
+                                // Yeah, it can override built-ins and that takes precedence. So you can declare a global print
+                                // and then reassign it, ruining it for others. :p
+                                if(builtins.ContainsKey(globalName))
                                 {
-                                    context.Cursor += 1;
-                                    var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var globalName = context.Program.Names[globalIdx];
-
-                                    bool foundVar = false;
-
-                                    foreach (var stackFrame in context.callStack)
-                                    {
-                                        // Skip current stack
-                                        if (stackFrame == context.callStack.Peek())
-                                        {
-                                            continue;
-                                        }
-
-                                        var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
-                                        if (nameIdx >= 0)
-                                        {
-                                            throw new Exception("STORE_GLOBAL is touching locals when it should only touch globals");
-                                            stackFrame.Locals[globalName] = context.DataStack.Pop();
-                                            foundVar = true;
-                                        }
-                                    }
-
-                                    if (!foundVar)
-                                    {
-                                        throw new Exception("Global '" + globalName + "' was not found!");
-                                    }
+                                    builtins[globalName] = toAssign;
                                 }
+                                else
+                                {
+                                    // This always wins. We add a new global if it's not already defined. Make sure you spelled it right!
+                                    context.callStack.Peek().Globals.AddOrSet(globalName, toAssign);
+                                }
+
                                 context.Cursor += 2;
                                 break;
                             }
@@ -790,36 +778,6 @@ namespace CloacaInterpreter
                                     {
                                         throw new Exception("Global '" + globalName + "' was not found!");
                                     }
-                                    //object foundVar = null;
-
-                                    //foreach (var stackFrame in context.callStack)
-                                    //{
-                                    //    // Skip current stack
-                                    //    if (stackFrame == context.callStack.Peek())
-                                    //    {
-                                    //        continue;
-                                    //    }
-
-                                    //    var nameIdx = stackFrame.LocalNames.IndexOf(globalName);
-                                    //    if (nameIdx >= 0)
-                                    //    {
-                                    //        foundVar = stackFrame.Locals[nameIdx];
-                                    //        break;
-                                    //    }
-                                    //}
-
-                                    //if (foundVar != null)
-                                    //{
-                                    //    context.DataStack.Push(foundVar);
-                                    //}
-                                    //else if (builtins.ContainsKey(globalName))
-                                    //{
-                                    //    context.DataStack.Push(builtins[globalName]);
-                                    //}
-                                    //else
-                                    //{
-                                    //    throw new Exception("Global '" + globalName + "' was not found!");
-                                    //}
                                 }
                                 context.Cursor += 2;
                                 break;
