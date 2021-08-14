@@ -293,7 +293,7 @@ namespace LanguageImplementation
                 }
 
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
-                for (; args_i < args.Length || params_i < parameters.Length;)
+                while(args_i < args.Length || params_i < parameters.Length)
                 {
                     while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
                     {
