@@ -32,15 +32,22 @@ namespace CloacaTests
         {
             map = new Dictionary<string, Dictionary<Type, object>>();
 
-            for(int i = 0; i < context.Names.Count; ++i)
+            for (int i = 0; i < context.Names.Count; ++i)
             {
                 var name = context.Names[i];
-                var variable = context.Locals[name];
 
-                // TODO: Switch to handle null with NoneType
-                if (variable != null)
+                // Some of our names might be things like class attributes. These aren't mapped to locals.
+                // (I think. This seemed to appease many failures when I started to properly represent locals
+                // as a separate dictionary from the fast locals list).
+                if (context.Locals.ContainsKey(name))
                 {
-                    Add(name, variable);
+                    var variable = context.Locals[name];
+
+                    // TODO: Switch to handle null with NoneType
+                    if (variable != null)
+                    {
+                        Add(name, variable);
+                    }
                 }
             }
         }
