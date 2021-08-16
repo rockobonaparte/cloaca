@@ -471,3 +471,16 @@ C:\temp\20210810>python -m dis butt.py
               4 LOAD_CONST               1 (None)
               6 RETURN_VALUE
 ```
+
+
+
+I expect I'll have to implement something in the visitor to track if I'm parsing a function block so that I
+properly switch between LOAD/STORE_NAME and LOAD/STORE_FAST like CPython does.
+
+This comes from compile.c:
+```
+    case LOCAL:
+        if (c->u->u_ste->ste_type == FunctionBlock)
+            optype = OP_FAST;
+        break;
+```

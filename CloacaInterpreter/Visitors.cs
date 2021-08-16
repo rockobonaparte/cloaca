@@ -105,14 +105,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
         // particularly ensure that we don't try to use LOAD_FAST on it.
         //
+        // Ultimately, I think we'll need to track if we're in a function block or not, but I expect bugs bugs bugs
+        // (well, I have bugs bugs bugs right now without doing it like CPython).
+        //
         // This comes from compile.c:
         //     case LOCAL:
         //          if (c->u->u_ste->ste_type == FunctionBlock)
         //          optype = OP_FAST;
         //          break;
         //
-        // We just flip it around and use _NAME if we're in the root.
-        if (variableName.StartsWith("__") || IsRootProgram)
+        if (variableName.StartsWith("__"))
         {
             var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
             ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
@@ -127,6 +129,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (idx >= 0)
         {
             ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
+            return;
+        }
+        else if(IsRootProgram)
+        {
+            var rootNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
+            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
             return;
         }
 
@@ -1761,6 +1769,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             for (int i = 0; i < context.arglist().ChildCount; ++i)
             {
+                // BOOKMARK: Current problem is that this should generate a LOAD_FAST for subclass_basic but it generates LOAD_NAME
                 generateLoadForVariable(context.arglist().argument(i).GetText(), context);
             }
             subclasses = context.arglist().ChildCount;
