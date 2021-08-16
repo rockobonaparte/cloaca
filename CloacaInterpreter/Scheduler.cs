@@ -164,7 +164,7 @@ namespace CloacaInterpreter
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         public TaskEventRecord Schedule(CodeObject program)
         {
-            var scheduleState = PrepareFrameContext(program);
+            var scheduleState = PrepareFrameContext(program, Interpreter.GetBuiltins());
             unblocked.Add(scheduleState);
             OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
@@ -211,9 +211,10 @@ namespace CloacaInterpreter
         /// <param name="newProgram">The code to prepare to run.</param>
         /// <returns>Scheduling state containing the the context that the interpreter can use to run the program as
         /// well as the continuation to kick it off (and resume it later).</returns>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram)
+        /// <param name="builtins">Mapping of builtins the frame can reference for resolving builtin calls</param>
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, Dictionary<string, object> builtins)
         {
-            return PrepareFrameContext(newProgram, null);
+            return PrepareFrameContext(newProgram, builtins);
         }
 
         /// <summary>
@@ -242,7 +243,8 @@ namespace CloacaInterpreter
             rootFrame.Locals = rootFrame.Globals;
 
             newFrameStack.Push(rootFrame);
-            FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack) : new FrameContext(newFrameStack);
+            FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack, superContext.Builtins) 
+                : new FrameContext(newFrameStack, superContext.Builtins);
 
             var initialContinuation = new InitialScheduledContinuation(this.Interpreter, subContext);
             return new ScheduledTaskRecord(subContext, initialContinuation, new TaskEventRecord(subContext));

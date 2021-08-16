@@ -17,6 +17,10 @@ namespace CloacaInterpreter
     public class Interpreter: IInterpreter
     {
         private Dictionary<string, object> builtins;
+        public Dictionary<string, object> GetBuiltins()
+        {
+            return builtins;
+        }
         public IScheduler Scheduler
         {
             get; protected set;

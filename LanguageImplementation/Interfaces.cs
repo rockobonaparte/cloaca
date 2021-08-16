@@ -437,6 +437,13 @@ namespace LanguageImplementation
         Task Run(FrameContext context);
 
         /// <summary>
+        /// Get mapping of built-in definitions that interpreter is using.
+        /// </summary>
+        /// <returns>Mapping of built-in definitions that interpreter is using.</returns>
+        Dictionary<string, object> GetBuiltins();
+
+
+        /// <summary>
         /// Returns true if an exception was raised and the context would not be in a position to still try to
         /// handle it. This is used when stepping through frame context in debugging to allow the interpreter to
         /// keep trying to process the exception. If you just test the frame context for an exception while stepping,

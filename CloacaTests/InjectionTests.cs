@@ -51,7 +51,7 @@ namespace CloacaTests
         {
             var scheduler = new Scheduler();
             interpreter = new Interpreter(scheduler);
-            context = new FrameContext();
+            context = new FrameContext(new Dictionary<string, object>());
             injector = new Injector(interpreter, context, scheduler);
         }
 
