@@ -128,7 +128,7 @@ namespace LanguageImplementation
             }
         }
 
-        public Dictionary<object, object> Locals
+        public Dictionary<string, object> Locals
         {
             get
             {
@@ -222,13 +222,7 @@ namespace LanguageImplementation
 
         public Dictionary<string, object> DumpVariables()
         {
-            var variables = new Dictionary<string, object>();
-            for (int i = 0; i < LocalNames.Count; ++i)
-            {
-                var name = LocalNames[i];
-                variables.Add(name, Locals[name]);
-            }
-            return variables;
+            return Locals;
         }
     }
 }

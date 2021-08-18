@@ -15,12 +15,12 @@ namespace LanguageImplementation
         public List<string> LocalNames;             // Names used for LOAD/STORE_NAME
 
         public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
-        public Dictionary<object, object> Locals;   // Used be LOAD/STORE_NAME
+        public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
 
         // Technically, globals are owned by the module owning the context of everything we're running.
         // I think in the long term that this will get assigned by those modules. You might see it getting.
         // set elsewhere though.
-        public Dictionary<object, object> Globals;
+        public Dictionary<string, object> Globals;
 
         public Frame()
         {
@@ -30,7 +30,7 @@ namespace LanguageImplementation
             Program = null;
             LocalNames = new List<string>();
             LocalFasts = new List<object>();
-            Locals = new Dictionary<object, object>();
+            Locals = new Dictionary<string, object>();
 
             // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
             // setting it to an empty one.
@@ -56,12 +56,12 @@ namespace LanguageImplementation
             createFasts(program);
         }
 
-        public Frame(Dictionary<object, object> globals) : this()
+        public Frame(Dictionary<string, object> globals) : this()
         {
             Globals = globals;
         }
 
-        public Frame(CodeObject program, Dictionary<object, object> globals) : this(program)
+        public Frame(CodeObject program, Dictionary<string, object> globals) : this(program)
         {
             Program = program;
             Globals = globals;
@@ -75,7 +75,7 @@ namespace LanguageImplementation
             }
             else
             {
-                Globals = new Dictionary<object, object>();
+                Globals = new Dictionary<string, object>();
             }
         }
         public Frame(CodeObject program, FrameContext parentContext) : this(program)
@@ -86,7 +86,7 @@ namespace LanguageImplementation
             }
             else
             {
-                Globals = new Dictionary<object, object>();
+                Globals = new Dictionary<string, object>();
             }
         }
 

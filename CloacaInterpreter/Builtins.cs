@@ -29,7 +29,7 @@ namespace CloacaInterpreter
             var self = context.LocalFasts[0] as PyObject;
             if (self == null)
             {
-                throw new InvalidCastException("getSuperClass could not convert first local (assumed to be self) to PyObject. Element is: " + context.Locals[0]);
+                throw new InvalidCastException("getSuperClass could not convert first local (assumed to be self) to PyObject. Element is: " + self);
             }
 
             // TODO: Shouldn't I be able to use self.__bases__ directly? I suspect that needs to be plumbed.
