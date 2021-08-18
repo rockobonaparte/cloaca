@@ -214,6 +214,8 @@ namespace CloacaInterpreter
         /// <param name="builtins">Mapping of builtins the frame can reference for resolving builtin calls</param>
         private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, Dictionary<string, object> builtins)
         {
+            // We get an Exception here the first time we run anything in a net Visual Studio instance here, so keep
+            // a breakpoint on this, stop what you're doing, and figure out what its problem is.
             return PrepareFrameContext(newProgram, builtins);
         }
 
