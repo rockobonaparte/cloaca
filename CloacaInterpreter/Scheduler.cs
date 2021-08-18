@@ -216,18 +216,25 @@ namespace CloacaInterpreter
         {
             // We get an Exception here the first time we run anything in a net Visual Studio instance here, so keep
             // a breakpoint on this, stop what you're doing, and figure out what its problem is.
-            return PrepareFrameContext(newProgram, builtins);
+            return PrepareFrameContext(newProgram, null, builtins);
         }
 
         /// <summary>
         /// Creates a new frame context as a child of the super context. If the super context is null, then this
         /// context is considered a root context. If it is defined, this context is considered a subcontext.
         /// Subcontexts come up when defining functions in functions and then scheduling them out.
+        /// 
+        /// There's some miscellaneous management of builtins based on what is passed:
+        /// 1. superContext != null: new frame's built-ins assigned to superContext's builtins.
+        /// 2. superContext == null; seperateBuiltins != null: new frame's built-ins assigned to separateBuiltins.
+        /// 3. superContext == null; separateBuiltins == null: new frame's built-ins assigned to an empty dictionary.
         /// </summary>
         /// <param name="newProgram"></param>
-        /// <param name="superContext"></param>
+        /// <param name="superContext">The parent context under which this context would run. Will extract builtins from here and not
+        /// separateBuiltins if this is not null.</param>
+        /// <param name="separateBuiltins">Built-ins to use by this frame context if a superContext is not defined</param>
         /// <returns></returns>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext)
+        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext, Dictionary<string, object> separateBuiltins=null)
         {
             var newFrameStack = new Stack<Frame>();
             Frame rootFrame = new Frame(newProgram, superContext);
@@ -245,8 +252,20 @@ namespace CloacaInterpreter
             rootFrame.Locals = rootFrame.Globals;
 
             newFrameStack.Push(rootFrame);
-            FrameContext subContext = superContext != null ? superContext.CreateSubcontext(newFrameStack, superContext.Builtins) 
-                : new FrameContext(newFrameStack, superContext.Builtins);
+
+            FrameContext subContext;
+            if (superContext != null) 
+            {
+                subContext = superContext.CreateSubcontext(newFrameStack, superContext.Builtins);
+            } else if(separateBuiltins != null)
+            {
+                subContext = new FrameContext(newFrameStack, separateBuiltins);
+            }
+            else
+            {
+                subContext = new FrameContext(newFrameStack, new Dictionary<string, object>());
+            }
+                
 
             var initialContinuation = new InitialScheduledContinuation(this.Interpreter, subContext);
             return new ScheduledTaskRecord(subContext, initialContinuation, new TaskEventRecord(subContext));
