@@ -1777,8 +1777,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses, context);
 
-        var idx = ActiveProgram.VarNames.AddGetIndex(className);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        var idx = ActiveProgram.Names.AddGetIndex(className);
+        if(idx >= 0)
+        {
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, idx, context);
+        }
+        else
+        {
+            idx = ActiveProgram.VarNames.AddGetIndex(className);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        }
+
         return null;
     }
 
