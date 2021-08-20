@@ -323,7 +323,7 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "import foo\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            var foo = finishedFrame.GetVariable("foo");
+            var foo = finishedFrame.GetVariableAnywhere("foo");
             Assert.That(foo, Is.EqualTo(fooModule));
         }
 
@@ -333,7 +333,7 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "import foo.bar\n", new Dictionary<string, object>(), moduleFinders, 1);
             
-            var foobar = finishedFrame.GetVariable("foo.bar");
+            var foobar = finishedFrame.GetVariableAnywhere("foo.bar");
             Assert.That(foobar, Is.EqualTo(barModule));
         }
 
@@ -343,8 +343,8 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "import foo, foo2\n", new Dictionary<string, object>(), moduleFinders, 1);
             
-            var foo = finishedFrame.GetVariable("foo");
-            var foo2 = finishedFrame.GetVariable("foo2");
+            var foo = finishedFrame.GetVariableAnywhere("foo");
+            var foo2 = finishedFrame.GetVariableAnywhere("foo2");
             Assert.That(foo, Is.EqualTo(fooModule));
             Assert.That(foo2, Is.EqualTo(foo2Module));
         }
@@ -355,7 +355,7 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "import foo as fruit\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            var fooFruit = finishedFrame.GetVariable("fruit");
+            var fooFruit = finishedFrame.GetVariableAnywhere("fruit");
             Assert.That(fooFruit, Is.EqualTo(fooModule));
         }
 
@@ -365,7 +365,7 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "from foo import FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            var importedFooThing = finishedFrame.GetVariable("FooThing");
+            var importedFooThing = finishedFrame.GetVariableAnywhere("FooThing");
             Assert.That(importedFooThing, Is.EqualTo(fooThing));
         }
 
@@ -375,8 +375,8 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "from foo import FooThing, OtherThing\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            var importedFooThing = finishedFrame.GetVariable("FooThing");
-            var importedOtherThing = finishedFrame.GetVariable("OtherThing");
+            var importedFooThing = finishedFrame.GetVariableAnywhere("FooThing");
+            var importedOtherThing = finishedFrame.GetVariableAnywhere("OtherThing");
             Assert.That(importedFooThing, Is.EqualTo(fooThing));
             Assert.That(importedOtherThing, Is.EqualTo(otherThing));
         }
@@ -387,9 +387,9 @@ namespace CloacaTests
             var finishedFrame = await runProgram(
                 "from foo import *\n", new Dictionary<string, object>(), moduleFinders, 1);
 
-            var importedFooThing = finishedFrame.GetVariable("FooThing");
-            var importedOtherThing = finishedFrame.GetVariable("OtherThing");
-            var importedBar = finishedFrame.GetVariable("bar");
+            var importedFooThing = finishedFrame.GetVariableAnywhere("FooThing");
+            var importedOtherThing = finishedFrame.GetVariableAnywhere("OtherThing");
+            var importedBar = finishedFrame.GetVariableAnywhere("bar");
             Assert.That(importedFooThing, Is.EqualTo(fooThing));
             Assert.That(importedOtherThing, Is.EqualTo(otherThing));
             Assert.That(importedBar, Is.EqualTo(barModule));

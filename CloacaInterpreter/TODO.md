@@ -484,3 +484,22 @@ This comes from compile.c:
             optype = OP_FAST;
         break;
 ```
+
+
+I suspect this code would fail; I don't think the global would get generated. I think I need to be tracking this
+in code generation!
+```
+>>> def crap():
+...   a = 3
+...   b = sys.platform
+...
+>>> dis(crap)
+  2           0 LOAD_CONST               1 (3)
+              2 STORE_FAST               0 (a)
+
+  3           4 LOAD_GLOBAL              0 (sys)
+              6 LOAD_ATTR                1 (platform)
+              8 STORE_FAST               1 (b)
+             10 LOAD_CONST               0 (None)
+             12 RETURN_VALUE
+```

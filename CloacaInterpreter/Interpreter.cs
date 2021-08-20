@@ -675,7 +675,7 @@ namespace CloacaInterpreter
                                 foreach (var stackFrame in context.callStack)
                                 {
                                     // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                                    var nameIdx = stackFrame.LocalNames.IndexOf(name);
+                                    var nameIdx = stackFrame.Names.IndexOf(name);
                                     if (nameIdx >= 0)
                                     {
                                         stackFrame.Locals[name] = context.DataStack.Pop();
@@ -684,13 +684,32 @@ namespace CloacaInterpreter
                                     }
                                 }
 
-                                // If we don't find it, then we'll make it local!
-                                if (!foundVar)
+                                if(!foundVar)
                                 {
                                     context.callStack.Peek().AddLocal(name, context.DataStack.Pop());
                                 }
+
+                                // Incorrect attempt at a refactor. Don't look in LocalNames!
+                                //var stackFrame = context.callStack.Peek();
+                                //var localIdx = stackFrame.LocalNames.IndexOf(name);
+                                //if(localIdx >= 0)
+                                //{
+                                //    stackFrame.Locals.AddOrSet(name, context.DataStack.Pop());
+                                //}
+                                //else if(stackFrame.Globals.ContainsKey(name))
+                                //{
+                                //    stackFrame.Globals[name] = context.DataStack.Pop();
+                                //}
+                                //else if(builtins.ContainsKey(name))
+                                //{
+                                //    builtins[name] = context.DataStack.Pop();
+                                //}
+                                //else
+                                //{
+                                //    throw new Exception("'" + name + "' not found in local, global, nor built-in namespaces.");
+                                //}
                             }
-                            context.Cursor += 2;
+                                context.Cursor += 2;
                             break;
                         case ByteCodes.STORE_FAST:
                             {

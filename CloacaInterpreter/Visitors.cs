@@ -188,16 +188,34 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             return;
         }
 
-
         var nameIdx = ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
         {
             ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
         }
         else
-       {
+        {
             var idx = ActiveProgram.VarNames.AddGetIndex(variableName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+        }
+    }
+
+    private ByteCodes store_fast_if_not_root()
+    {
+        return IsRootProgram ? ByteCodes.STORE_NAME : ByteCodes.STORE_FAST;
+    }
+
+    private void AddStoreFastUnlessRoot(string name, ParserRuleContext context)
+    {
+        if (!IsRootProgram)
+        {
+            var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(name);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+        }
+        else
+        {
+            var fromNameStoreIdx = ActiveProgram.Names.AddGetIndex(name);
+            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, fromNameStoreIdx, context);
         }
     }
 
@@ -1181,6 +1199,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
         // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
         //
+        // New notes 8/20/2021: I bet it has to do with root context! However, it's not *that* simple. Replacing this with
+        // StoreFastUnlessRoot didn't just work.
+        //
         // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
         if (context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
@@ -1820,12 +1841,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // General imports not using import-from.
-        // One do STORE_FAST if this isn't an import-from
+        // Only do STORE_FAST if this isn't an import-from
         if (moduleFromList == null)
         {
             string aliasedName = moduleAs == null ? moduleName : moduleAs;
-            var moduleNameFastIndex = ActiveProgram.VarNames.AddGetIndex(aliasedName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, moduleNameFastIndex, context);
+            AddStoreFastUnlessRoot(aliasedName, context);
         }
         // Import-from code generation.
         //if(moduleFromList != null && moduleFromList.Length > 0)
@@ -1844,8 +1864,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 {
                     fromName = moduleFromAliases[fromIdx];
                 }
-                var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(fromName);
-                ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+                AddStoreFastUnlessRoot(fromName, context);
             }
 
             // IMPORT_FROM Peeks the module without popping it so it can do multiple import-froms.
