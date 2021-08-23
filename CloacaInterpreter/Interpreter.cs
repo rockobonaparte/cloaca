@@ -173,7 +173,7 @@ namespace CloacaInterpreter
 
             foreach(var classMemberName in classFrame.Names)
             {
-                var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
+                var nameIdx = classFrame.Names.IndexOf(classMemberName);
                 if (nameIdx >= 0)
                 {
                     pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[classMemberName]);
@@ -669,9 +669,8 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
 
-                                bool foundVar = false;
-
                                 // Try to resolve locally, then globally, and then in our built-in namespace
+                                bool foundVar = false;
                                 foreach (var stackFrame in context.callStack)
                                 {
                                     // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
