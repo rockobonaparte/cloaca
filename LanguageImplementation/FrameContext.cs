@@ -186,27 +186,6 @@ namespace LanguageImplementation
             throw new Exception("'" + name + "' not found in local, global, nor built-in namespaces.");
         }
 
-        /// <summary>
-        /// Variation on GetVariable but also looks in the local fast variable list first.
-        /// This is separated because GetVariable is equivalent to LOAD_NAME and many things
-        /// rely on that (least of which is the LOAD_NAME opcode!)
-        /// </summary>
-        /// <param name="name">The name of the variable to find.</param>
-        /// <returns></returns>
-        public object GetVariableAnywhere(string name)
-        {
-            var stackFrame = callStack.Peek();
-            var fastIdx = stackFrame.LocalNames.IndexOf(name);
-            if(fastIdx >= 0)
-            {
-                return stackFrame.LocalFasts[fastIdx];
-            }
-            else
-            {
-                return GetVariable(name);
-            }
-        }
-
         public void AddVariable(string name, object value)
         {
             var nameIdx = LocalNames.IndexOf(name);
