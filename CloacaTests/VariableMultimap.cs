@@ -32,9 +32,9 @@ namespace CloacaTests
         {
             map = new Dictionary<string, Dictionary<Type, object>>();
 
-            for (int i = 0; i < context.Names.Count; ++i)
+            for (int i = 0; i < context.LocalNames.Count; ++i)
             {
-                var name = context.Names[i];
+                var name = context.LocalNames[i];
 
                 // Some of our names might be things like class attributes. These aren't mapped to locals.
                 // (I think. This seemed to appease many failures when I started to properly represent locals

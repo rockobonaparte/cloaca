@@ -136,19 +136,11 @@ namespace LanguageImplementation
             }
         }
 
-        public List<string> Names
-        {
-            get
-            {
-                return callStack.Peek().Names;
-            }
-        }
-
         public List<string> LocalNames
         {
             get
             {
-                return callStack.Peek().LocalNames;
+                return callStack.Peek().Names;
             }
         }
 
@@ -198,7 +190,7 @@ namespace LanguageImplementation
 
         public void SetVariable(string name, object value)
         {
-            int varIdx = Names.IndexOf(name);
+            int varIdx = LocalNames.IndexOf(name);
             if (varIdx < 0)
             {
                 throw new KeyNotFoundException("Could not find variable in locals named " + name);

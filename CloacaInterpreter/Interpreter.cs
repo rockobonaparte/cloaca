@@ -667,7 +667,7 @@ namespace CloacaInterpreter
                         case ByteCodes.STORE_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
+                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
 
                                 // Try to resolve locally, then globally, and then in our built-in namespace
                                 bool foundVar = false;
@@ -768,7 +768,7 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_NAME:
                             {
                                 context.Cursor += 1;
-                                string name = context.Names[context.CodeBytes.GetUShort(context.Cursor)];
+                                string name = context.LocalNames[context.CodeBytes.GetUShort(context.Cursor)];
                                 context.DataStack.Push(context.GetVariable(name));
                             }
                             context.Cursor += 2;
@@ -1541,7 +1541,7 @@ namespace CloacaInterpreter
                                 var fromlist = context.DataStack.Pop();
                                 var import_level = context.DataStack.Pop();
                                 var import_name_i = context.Program.Code.GetUShort(context.Cursor);
-                                var module_name = context.Names[import_name_i];
+                                var module_name = context.LocalNames[import_name_i];
 
                                 PyModule foundModule = null;
                                 if (context.SysModules.ContainsKey(module_name))
