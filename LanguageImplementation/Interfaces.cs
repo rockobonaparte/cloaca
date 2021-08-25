@@ -12,7 +12,6 @@ namespace LanguageImplementation
         public Stack<Block> BlockStack;
         public Stack<object> DataStack;
         public CodeObject Program;
-        public List<string> LocalNames;             // Names used for LOAD/STORE_NAME
 
         public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
         public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
@@ -28,7 +27,6 @@ namespace LanguageImplementation
             BlockStack = new Stack<Block>();
             DataStack = new Stack<object>();
             Program = null;
-            LocalNames = new List<string>();
             LocalFasts = new List<object>();
             Locals = new Dictionary<string, object>();
 
@@ -90,8 +88,7 @@ namespace LanguageImplementation
             }
         }
 
-
-        public List<string> Names
+        public List<string> LocalNames
         {
             get
             {

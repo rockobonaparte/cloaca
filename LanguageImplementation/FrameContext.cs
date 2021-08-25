@@ -140,7 +140,7 @@ namespace LanguageImplementation
         {
             get
             {
-                return callStack.Peek().Names;
+                return callStack.Peek().LocalNames;
             }
         }
 

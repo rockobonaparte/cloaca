@@ -171,9 +171,9 @@ namespace CloacaInterpreter
 
             var pyclass = new PyClass(name, __init__, bases);
 
-            foreach(var classMemberName in classFrame.Names)
+            foreach(var classMemberName in classFrame.LocalNames)
             {
-                var nameIdx = classFrame.Names.IndexOf(classMemberName);
+                var nameIdx = classFrame.LocalNames.IndexOf(classMemberName);
                 if (nameIdx >= 0)
                 {
                     pyclass.__dict__.AddOrSet(classMemberName, classFrame.Locals[classMemberName]);
@@ -674,7 +674,7 @@ namespace CloacaInterpreter
                                 foreach (var stackFrame in context.callStack)
                                 {
                                     // Unlike LOAD_GLOBAL, the current frame is fair game. In fact, we search it first!
-                                    var nameIdx = stackFrame.Names.IndexOf(name);
+                                    var nameIdx = stackFrame.LocalNames.IndexOf(name);
                                     if (nameIdx >= 0)
                                     {
                                         stackFrame.Locals[name] = context.DataStack.Pop();

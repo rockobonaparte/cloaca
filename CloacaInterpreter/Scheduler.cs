@@ -246,7 +246,7 @@ namespace CloacaInterpreter
             rootFrame.AddOnlyNewGlobal("__name__", PyString.Create("__main__"));
             foreach (string name in newProgram.VarNames)
             {
-                rootFrame.Names.Add(name);
+                rootFrame.LocalNames.Add(name);
                 rootFrame.AddOnlyNewGlobal(name, null);
             }
             rootFrame.Locals = rootFrame.Globals;
