@@ -196,7 +196,7 @@ namespace CloacaInterpreter
 
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                scheduleState.Frame.SetVariable(program.ArgVarNames[argIdx], args[argIdx]);
+                scheduleState.Frame.LocalFasts[argIdx] = args[argIdx];
             }
 
             unblocked.Add(scheduleState);
@@ -244,11 +244,6 @@ namespace CloacaInterpreter
             //
             // Set module-level globals here if they haven't been established by the module.
             rootFrame.AddOnlyNewGlobal("__name__", PyString.Create("__main__"));
-            foreach (string name in newProgram.VarNames)
-            {
-                rootFrame.LocalNames.Add(name);
-                rootFrame.AddOnlyNewGlobal(name, null);
-            }
             rootFrame.Locals = rootFrame.Globals;
 
             newFrameStack.Push(rootFrame);

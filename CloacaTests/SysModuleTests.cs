@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -21,9 +22,9 @@ namespace CloacaTests
     public class SysModule : RunCodeTest
     {
         [Test]
-        public void SchedulerAnotherFunctionNoArgs()
+        public async Task SchedulerAnotherFunctionNoArgs()
         {
-            runBasicTest(
+            await runBasicTest(
                 "import sys\n" +
                 "\n" +
                 "a = 0\n" +
@@ -38,9 +39,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SchedulerAnotherFunctionReturnFromConditional()
+        public async Task SchedulerAnotherFunctionReturnFromConditional()
         {
-            runBasicTest(
+            await runBasicTest(
                 "import sys\n" +
                 "\n" +
                 "a = 0\n" +
@@ -58,7 +59,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SchedulerParentContextPreserved()
+        public async Task SchedulerParentContextPreserved()
         {
             // This test was added due to a lot of paranoia around how the subcontext call stack is created.
             // It's taking the existing call stack and just shoving on change_a. The interpreter then runs
@@ -70,7 +71,7 @@ namespace CloacaTests
             // We use an external entity to track this because its reference is independent of different
             // contexts.
             var intHaver = new GotAnInt();
-            runBasicTest(
+            await runBasicTest(
                 "import sys\n" +
                 "\n" +
                 "a = 0\n" +
@@ -92,10 +93,10 @@ namespace CloacaTests
         }
 
         [Test]
-        public void SchedulerPassOneArg()
+        public async Task SchedulerPassOneArg()
         {
             var intHaver = new GotAnInt();
-            runBasicTest(
+            await runBasicTest(
                 "import sys\n" +
                 "\n" +
                 "def change_a(got_an_int):\n" +
@@ -119,10 +120,10 @@ namespace CloacaTests
         /// module we already imported as the test collateral.
         /// </summary>
         [Test]
-        public void ReferenceImportInScheduled()
+        public async Task ReferenceImportInScheduled()
         {
             var sack = new Sack();
-            runBasicTest(
+            await runBasicTest(
                 "import sys\n" +
                 "\n" +
                 "def reference_sys(some_sack):\n" +
