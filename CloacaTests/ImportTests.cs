@@ -118,6 +118,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -142,6 +143,7 @@ namespace CloacaTests
             finder.AddDefaultAssembly(Assembly.LoadWithPartialName("System"));
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
@@ -158,6 +160,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -176,6 +179,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -224,6 +228,7 @@ namespace CloacaTests
 
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
+            mockFrame.Program = new CodeObject(new byte[0]);
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
