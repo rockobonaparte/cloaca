@@ -20,7 +20,7 @@ namespace CloacaTests
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.Empty);
             var variables = repl.ContextVariables;
-            Assert.That(variables.Count, Is.EqualTo(1));
+            Assert.That(variables.Count, Is.EqualTo(2));                // Also contains __name__
             Assert.That(variables["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
@@ -34,7 +34,7 @@ namespace CloacaTests
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("1"));
             var variables = repl.ContextVariables;
-            Assert.That(variables.Count, Is.EqualTo(1));
+            Assert.That(variables.Count, Is.EqualTo(2));                // Also contains __name__
             Assert.That(variables["a"], Is.EqualTo(PyInteger.Create(1)));
         }
 
