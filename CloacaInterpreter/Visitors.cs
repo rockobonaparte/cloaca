@@ -1203,8 +1203,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // StoreFastUnlessRoot didn't just work.
         //
         // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
-        if (context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
+        //
+        //8/27/2021: Gotcha! I need to check if I'm declaring a function in the root context. If so, I need to use STORE_NAME too.
+        //           Otherwise, it gets stuffed in as a fast local and we'll never be able to use it in subsequent statements.
+        if ((context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
+            ||
+            IsRootProgram)
         {
             var nameIdx = ActiveProgram.Names.AddGetIndex(funcName);
             ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
