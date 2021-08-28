@@ -22,7 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="importest.py" />
+    <Compile Include="importtest.py" />
     <Compile Include="heapq.py">
       <SubType>Code</SubType>
     </Compile>
