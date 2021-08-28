@@ -9,6 +9,7 @@ using LanguageImplementation;
 using Piksel.LibREPL;
 using Antlr4.Runtime;
 using System.Runtime.ExceptionServices;
+using CloacaInterpreter.ModuleImporting;
 
 namespace InterpreterDebugger
 {
@@ -50,6 +51,12 @@ namespace InterpreterDebugger
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
+
+            // We're setting up some module import paths so we can test the standard library.
+            var repoRoots = new List<string>();
+            repoRoots.Add(@"C:\coding\cloaca_git\StandardPythonLibrary");
+            interpreter.AddModuleFinder(new FileBasedModuleFinder(repoRoots, new FileBasedModuleLoader()));
+
             scheduler.SetInterpreter(interpreter);
 
             var context = scheduler.Schedule(compiledProgram).Frame;
@@ -89,6 +96,11 @@ namespace InterpreterDebugger
                                 // Given the nature of exception handling, we should normally only have one of these!
                                 ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
                             }
+
+                            if (scheduler.LastTasklet.EscapedDotNetException != null)
+                            {
+                                ExceptionDispatchInfo.Capture(scheduler.LastTasklet.EscapedDotNetException).Throw();
+                            }
                         }
                     }
                 },
@@ -114,6 +126,11 @@ namespace InterpreterDebugger
                         {
                             // Given the nature of exception handling, we should normally only have one of these!
                             ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
+                        }
+
+                        if(scheduler.LastTasklet.EscapedDotNetException != null)
+                        {
+                            ExceptionDispatchInfo.Capture(scheduler.LastTasklet.EscapedDotNetException).Throw();
                         }
 
                         if (traceMode)

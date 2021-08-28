@@ -1,2 +1,2 @@
-﻿a = 0
-a = a + 1
+﻿import heapq
+heapq.heapify([0, 9, 1, 8, 7, 3])
