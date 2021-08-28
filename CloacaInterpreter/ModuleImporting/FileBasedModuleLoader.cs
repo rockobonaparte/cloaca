@@ -98,8 +98,6 @@ namespace CloacaInterpreter.ModuleImporting
             var inFile = File.ReadAllText(foundPath);
             var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
 
-            // BOOKMARK: I think this is where I need to set __main__ to the module's import hierarchy here. CallInto probably has to be modified to take __name__
-            // externally or default to __main__ if I don't set it.
             string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
             await interpreter.CallInto(context, moduleCode, new object[0], modulename);
 

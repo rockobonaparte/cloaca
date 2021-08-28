@@ -149,8 +149,6 @@ namespace CloacaInterpreter
             this.Interpreter = interpreter;
         }
 
-        // BOOKMARK: Run this program under the context of the given module. Eventually then create a dummy __main__ module you
-        //           can use as a default
         public TaskEventRecord Schedule(CodeObject program, PyModule module)
         {
             throw new NotImplementedException();

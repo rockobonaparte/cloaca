@@ -1795,7 +1795,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             for (int i = 0; i < context.arglist().ChildCount; ++i)
             {
-                // BOOKMARK: Current problem is that this should generate a LOAD_FAST for subclass_basic but it generates LOAD_NAME
                 generateLoadForVariable(context.arglist().argument(i).GetText(), context);
             }
             subclasses = context.arglist().ChildCount;

@@ -56,7 +56,6 @@ namespace CloacaTests
             {
                 // This is awaitable now but relies on the scheduler. We'll tick the scheduler
                 // awhile until this resolves.
-                // BOOKMARK: We need to give the namespace to Compile as well! We can have a default be __name__
                 compiledTask = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
             }
             catch (CloacaParseException parseFailed)
