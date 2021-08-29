@@ -299,7 +299,6 @@ namespace CloacaTests
         private PyModule foo2Module;
         private PyModule barModule;
 
-
         [SetUp]
         public void setupFinders()
         {
@@ -307,8 +306,8 @@ namespace CloacaTests
             fooModule = PyModule.Create("foo");
 
             barModule = PyModule.Create("bar");
-            fooThing = PyString.Create("FooThing");
-            otherThing = PyString.Create("OtherThing");
+            fooThing = PyString.Create("this_is_a_foo_thing");
+            otherThing = PyString.Create("this_is_some_other_thing");
             fooModule.__dict__.Add("bar", barModule);
             fooModule.__dict__.Add("FooThing", fooThing);
             fooModule.__dict__.Add("OtherThing", otherThing);
@@ -398,6 +397,43 @@ namespace CloacaTests
             Assert.That(importedFooThing, Is.EqualTo(fooThing));
             Assert.That(importedOtherThing, Is.EqualTo(otherThing));
             Assert.That(importedBar, Is.EqualTo(barModule));
+        }
+
+        /// <summary>
+        /// Tests that after importing a module, we can properly reference it with the dot operator.
+        /// </summary>
+        [Test]
+        public async Task ReferenceModuleVariable()
+        {
+            var finishedFrame = await runProgram(
+                "import foo\n" +
+                "bar = foo.FooThing\n", new Dictionary<string, object>(), moduleFinders, 1);
+
+            var foobar = finishedFrame.GetVariable("bar");
+            Assert.That(foobar, Is.EqualTo(PyString.Create("this_is_a_foo_thing")));
+        }
+
+        /// <summary>
+        /// Tests that after importing a module, we can call functions under it without it thinking it's
+        /// an object that takes the module as a first, self argument!
+        /// </summary>
+        [Test]
+        [Ignore("Currently broken. The module is passed as the argument instead of the actual argument. It thinks it's an object.")]
+        public async Task CallModuleFunction()
+        {
+            string subProgramCode = "def subprogram(x):\n" +
+                                    "   return x\n";
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
+            var compiledSubProgram = await ByteCodeCompiler.Compile(subProgramCode, new Dictionary<string, object>(), scheduler);
+            fooModule.__dict__.Add("subprogram", compiledSubProgram.Constants[0]);
+
+            var finishedFrame = await runProgram(
+                "import foo\n" +
+                "bar = foo.subprogram(1)\n", new Dictionary<string, object>(), moduleFinders, 1);
+
+            var foobar = finishedFrame.GetVariable("bar");
+            Assert.That(foobar, Is.EqualTo(PyInteger.Create(1)));
         }
 
         [Test]
