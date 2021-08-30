@@ -391,115 +391,38 @@ What we need to actually schedule are not programs per se but modules containing
 create a module called "__main__" and that name should then become part of the module's underpinnings. Then the question
 is how to figure out how to get to __name__ from inside the module correctly.
 
-Main comes into globals, which then becomes the first-level's locals. Then what happens when something lower down tries to references it?
-1. Figure out how __name__ is loaded in a root module by stepping through the interpreter after assigning something to __name__
-2. Contrast to how it's done in a function
-3. Compare to how you're currently doing it
-4. (work will naturally follow from the comparison)
+## Notes on calling module functions
+CALL_FUNCTION (or CALL_METHOD for 3.9x) has some extra moon logic to check if a method might not actually be a method:
 
-If I do in the REPL:
-a = \_\_name\_\_
+ceval.c:
+```c
+        case TARGET(CALL_METHOD): {
+            /* Designed to work in tamdem with LOAD_METHOD. */
+            PyObject **sp, *res, *meth;
 
-CPython will do a LOAD_NAME, so that's what I should generate (not a LOAD_FAST). It's an "implicit global" in CPython code generation.
+            sp = stack_pointer;
 
-Cloaca also does LOAD_NAME now, so it's down to getting it to work!
+            meth = PEEK(oparg + 2);
+            if (meth == NULL) {
+                /* `meth` is NULL when LOAD_METHOD thinks that it's not
+                   a method call.
 
-I think LOAD_FAST and STORE_FAST have been rendered moot in current implementation. Is this were localsplus would come in?_
+                   Stack layout:
 
-In CPython, a code object has
-co_names, which I believe is used for LOAD/STORE_NAME
-co_varnames, which I believe is used for LOAD/STORE_FAST
+                       ... | NULL | callable | arg1 | ... | argN
+                                                            ^- TOP()
+                                               ^- (-oparg)
+                                    ^- (-oparg-1)
+                             ^- (-oparg-2)
 
-I am assuming localsplus manages the fast values, while locals manages the name values. I should be able to write a little dilly to see where it goes each time.
-
-At the root level, assigning values that have not been defined before should be names, not fasts. I figured this out by
-doing `a = 10` in the interpreter and seeing it generate a STORE_NAME, not a STORE_FAST. Actually, that could just be from the
-REPL. I should import that and see what happens.
-
-Values read before assigned are assumed to be global:
-```
->>> b = 10
->>> def who():
-...   a = b
-...
->>> dis(who)
-  2           0 LOAD_GLOBAL              0 (b)
-              2 STORE_FAST               0 (a)
-              4 LOAD_CONST               0 (None)
-              6 RETURN_VALUE
+                   `callable` will be POPed by call_function.
+                   NULL will will be POPed manually later.
+                */
+                res = call_function(tstate, &sp, oparg, NULL);
+                stack_pointer = sp;
+                (void)POP(); /* POP the NULL. */
+            }
 ```
 
-The relevant bit in ceval.c:
-
-```
-
-    op = 0;
-    optype = OP_NAME;
-    scope = PyST_GetScope(c->u->u_ste, mangled);
-    switch (scope) {
-    case FREE:
-        dict = c->u->u_freevars;
-        optype = OP_DEREF;
-        break;
-    case CELL:
-        dict = c->u->u_cellvars;
-        optype = OP_DEREF;
-        break;
-    case LOCAL:
-        if (c->u->u_ste->ste_type == FunctionBlock)
-            optype = OP_FAST;
-        break;
-    case GLOBAL_IMPLICIT:
-        if (c->u->u_ste->ste_type == FunctionBlock)
-            optype = OP_GLOBAL;
-        break;
-    case GLOBAL_EXPLICIT:
-        optype = OP_GLOBAL;
-        break;
-    default:
-        /* scope can be 0 */
-        break;
-    }
-```
-So I think it can tell it's actually in function code, and only then does it generate FASTs.
-
-Yeah, if I run from the command-line, I can see root module code is NAME, not FAST:
-```
-C:\temp\20210810>python -m dis butt.py
-  1           0 LOAD_CONST               0 (10)
-              2 STORE_NAME               0 (a)
-              4 LOAD_CONST               1 (None)
-              6 RETURN_VALUE
-```
-
-
-
-I expect I'll have to implement something in the visitor to track if I'm parsing a function block so that I
-properly switch between LOAD/STORE_NAME and LOAD/STORE_FAST like CPython does.
-
-This comes from compile.c:
-```
-    case LOCAL:
-        if (c->u->u_ste->ste_type == FunctionBlock)
-            optype = OP_FAST;
-        break;
-```
-
-
-I suspect this code would fail; I don't think the global would get generated. I think I need to be tracking this
-in code generation!
-```
->>> def crap():
-...   a = 3
-...   b = sys.platform
-...
->>> dis(crap)
-  2           0 LOAD_CONST               1 (3)
-              2 STORE_FAST               0 (a)
-
-  3           4 LOAD_GLOBAL              0 (sys)
-              6 LOAD_ATTR                1 (platform)
-              8 STORE_FAST               1 (b)
-             10 LOAD_CONST               0 (None)
-             12 RETURN_VALUE
-```
+So it looks at the stack and finds null (or no more stack). Based on that, it will decide it's not a method that passes
+an implict self in. So heapq.heapify should somehow be rectified as part of this logic.
