@@ -39,7 +39,7 @@ namespace CloacaInterpreter
         }
 
         // [TODO][SYS.SCHEDULE - RETURN TASK] sys.schedule should return the task record or a similar handle that the caller can manage
-        public void schedule(PyModule module, FrameContext context, IPyCallable call, params object[] args)
+        public void schedule(FrameContext context, IPyCallable call, params object[] args)
         {
             var callCodeObject = call as CodeObject;
             // [TODO][SYS.SCHEDULE - RETURN TASK - CODEOBJECT]

@@ -86,8 +86,15 @@ namespace LanguageImplementation.DataTypes
             // on a class. Otherwise, we end up infinitely recursing __call__ into __call__ inside
             // PyMethod. We __call__ the class when we want to create an instance of the class.
             // TODO: Probably have to expand logic here when we start dealing with static methods.
+            //
+            // 8/31/2021: Module references wind up in here and we have to make sure they don't get
+            // turned into PyMethods with the module as the self reference.
+            //
+            // Consider: heapq.heapify([1,2,3])
+            // If we don't check that we're looking at a module here, then this turns into:
+            // heapq.heapify(heapq)
             var asCallable = retval as IPyCallable;
-            if (asCallable != null && name != "__call__")
+            if (self as PyModule == null && asCallable != null && name != "__call__")
             {
                 return new PyMethod(self, asCallable);
             }

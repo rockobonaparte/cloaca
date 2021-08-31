@@ -84,7 +84,7 @@ namespace CloacaInterpreter
             context.AddVariable(ClrContext.FrameContextTokenName, clrContext);
         }
 
-        public void EmbeddedAddReference(FrameContext context, PyModule self, PyString name)
+        public void EmbeddedAddReference(FrameContext context, PyString name)
         {
             AddReference(context, name.InternalValue);
         }
