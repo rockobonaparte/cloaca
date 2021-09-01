@@ -397,4 +397,5 @@ or reversed at all).
 
 1. Check if there's a __reversed__ dunder. If so, call and return that.
 2. Failing that, construct a custom iterator if it has __len__ and __getitem__. Use that to iterate backwards.
-3. Failing that, panic. `TypeError: 'int' object is not reversible`
+3. Failing that, check it's a .NET type that can get a similar treatment. Can we use LINQ magic?
+4. Failing that, panic. `TypeError: 'int' object is not reversible`

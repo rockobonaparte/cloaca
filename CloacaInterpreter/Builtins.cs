@@ -232,5 +232,36 @@ namespace CloacaInterpreter
         {
             return PyRange.Create(min, max, step);
         }
+
+        public static async Task<PyListIterator> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
+        {
+            // 1. Check if there's a __reversed__ dunder. If so, call and return that.
+            // 2. Failing that, construct a custom iterator if it has __len__ and __getitem__. Use that to iterate backwards.
+            // 3. Failing that, check it's a .NET type that can get a similar treatment. Can we use LINQ magic?
+            // 4. Failing that, panic. `TypeError: 'int' object is not reversible`
+            var asPyObject = o as PyObject;
+            if(asPyObject != null)
+            {
+                if(asPyObject.__dict__.ContainsKey("__reversed__"))
+                {
+                    var reversed_dunder = (CodeObject)asPyObject.__dict__["__reversed__"];
+                    var result = await reversed_dunder.Call(interpreter, context, new object[] { asPyObject });
+                    return (PyListIterator)result;
+                }
+                else if (asPyObject.__dict__.ContainsKey("__len__") && asPyObject.__dict__.ContainsKey("__getitem__"))
+                {
+                    var len_dunder = (CodeObject)asPyObject.__dict__["__len__"];
+                    var getitem_dunder = (CodeObject)asPyObject.__dict__["__getitem__"];
+                    var length = (PyInteger) await len_dunder.Call(interpreter, context, new object[] { asPyObject });
+                    // BOOKMARK: Build an iterator based on these settings.
+                }
+                else
+                {
+                    throw new Exception("TypeError: '" + asPyObject.__class__.Name + "' object is not reversible");
+                }
+            }
+
+            return null;
+        }
     }
 }

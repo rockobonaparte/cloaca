@@ -91,6 +91,7 @@ namespace CloacaInterpreter
             var bool_wrapper = new WrappedCodeObject("bool", typeof(Builtins).GetMethod("bool_builtin"));
             var str_wrapper = new WrappedCodeObject("str", typeof(Builtins).GetMethod("str_builtin"));
             var range_wrapper = new WrappedCodeObject("range", typeof(Builtins).GetMethod("range_builtin"));
+            var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
 
             builtins = new Dictionary<string, object>
             {
@@ -105,6 +106,7 @@ namespace CloacaInterpreter
                 { "bool", bool_wrapper },
                 { "str", str_wrapper },
                 { "range", range_wrapper },
+                { "reversed", reversed_wrapper },
                 { "Exception", PyExceptionClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
                 { "ModuleNotFoundErrorClass", ModuleNotFoundErrorClass.Instance },
