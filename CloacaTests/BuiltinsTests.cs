@@ -131,5 +131,25 @@ namespace CloacaTests
             }), 2);
         }
 
+        [Test]
+        [Ignore("Requires a POP_TOP to unwind the data stack inside the for-loop since r.append puts None on the stack. This is a WIP")]
+        public async Task reversed_general()
+        {
+            List<object> referenceList = new List<object>();
+            referenceList.Add(PyInteger.Create(2));
+            referenceList.Add(PyInteger.Create(1));
+            var assertRPyList = PyList.Create(referenceList);
+
+            await runBasicTest(
+                "r = []\n" + 
+                "for rev in reversed([1,2]):\n" +
+                "  r.append(rev)\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "r", assertRPyList },
+            }), 1);
+
+        }
+
     }
 }
