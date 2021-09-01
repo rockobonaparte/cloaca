@@ -390,39 +390,3 @@ to pull out __call__. We will probably have to expand from there when we try to 
 What we need to actually schedule are not programs per se but modules containing programs. By default, we should
 create a module called "__main__" and that name should then become part of the module's underpinnings. Then the question
 is how to figure out how to get to __name__ from inside the module correctly.
-
-## Notes on calling module functions
-CALL_FUNCTION (or CALL_METHOD for 3.9x) has some extra moon logic to check if a method might not actually be a method:
-
-ceval.c:
-```c
-        case TARGET(CALL_METHOD): {
-            /* Designed to work in tamdem with LOAD_METHOD. */
-            PyObject **sp, *res, *meth;
-
-            sp = stack_pointer;
-
-            meth = PEEK(oparg + 2);
-            if (meth == NULL) {
-                /* `meth` is NULL when LOAD_METHOD thinks that it's not
-                   a method call.
-
-                   Stack layout:
-
-                       ... | NULL | callable | arg1 | ... | argN
-                                                            ^- TOP()
-                                               ^- (-oparg)
-                                    ^- (-oparg-1)
-                             ^- (-oparg-2)
-
-                   `callable` will be POPed by call_function.
-                   NULL will will be POPed manually later.
-                */
-                res = call_function(tstate, &sp, oparg, NULL);
-                stack_pointer = sp;
-                (void)POP(); /* POP the NULL. */
-            }
-```
-
-So it looks at the stack and finds null (or no more stack). Based on that, it will decide it's not a method that passes
-an implict self in. So heapq.heapify should somehow be rectified as part of this logic.
