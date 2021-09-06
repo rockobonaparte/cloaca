@@ -131,5 +131,23 @@ namespace CloacaTests
             }), 2);
         }
 
+        [Test]
+        public async Task reversed_general()
+        {
+            List<object> referenceList = new List<object>();
+            referenceList.Add(PyInteger.Create(2));
+            referenceList.Add(PyInteger.Create(1));
+
+            await runBasicTest(
+                "r = []\n" + 
+                "for rev in reversed([1,2]):\n" +
+                "  r.append(rev)\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "r", referenceList },
+            }), 2);
+
+        }
+
     }
 }

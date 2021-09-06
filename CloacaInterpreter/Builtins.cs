@@ -233,7 +233,7 @@ namespace CloacaInterpreter
             return PyRange.Create(min, max, step);
         }
 
-        public static async Task<PyListIterator> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
+        public static async Task<PyObject> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
         {
             // 1. Check if there's a __reversed__ dunder. If so, call and return that.
             // 2. Failing that, construct a custom iterator if it has __len__ and __getitem__. Use that to iterate backwards.
@@ -244,16 +244,15 @@ namespace CloacaInterpreter
             {
                 if(asPyObject.__dict__.ContainsKey("__reversed__"))
                 {
-                    var reversed_dunder = (CodeObject)asPyObject.__dict__["__reversed__"];
+                    var reversed_dunder = (IPyCallable)asPyObject.__dict__["__reversed__"];
                     var result = await reversed_dunder.Call(interpreter, context, new object[] { asPyObject });
-                    return (PyListIterator)result;
+                    return (PyObject)result;
                 }
                 else if (asPyObject.__dict__.ContainsKey("__len__") && asPyObject.__dict__.ContainsKey("__getitem__"))
                 {
-                    var len_dunder = (CodeObject)asPyObject.__dict__["__len__"];
-                    var getitem_dunder = (CodeObject)asPyObject.__dict__["__getitem__"];
-                    var length = (PyInteger) await len_dunder.Call(interpreter, context, new object[] { asPyObject });
-                    // BOOKMARK: Build an iterator based on these settings.
+                    var len_dunder = (IPyCallable)asPyObject.__dict__["__len__"];
+                    var getitem_dunder = (IPyCallable)asPyObject.__dict__["__getitem__"];
+                    return IteratorMaker.MakeIterator(new ReversedLenGetItemIterator(asPyObject, len_dunder, getitem_dunder));
                 }
                 else
                 {

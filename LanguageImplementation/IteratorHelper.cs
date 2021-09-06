@@ -35,12 +35,12 @@ namespace LanguageImplementation
     /// </summary>
     public class LenGetItemIterator : PyIterable
     {
-        private CodeObject len;
-        private CodeObject getitem;
-        private PyInteger i;
-        private PyObject container;
-        private PyInteger length;
-        public LenGetItemIterator(PyObject container, CodeObject len, CodeObject getitem)
+        protected IPyCallable len;
+        protected IPyCallable getitem;
+        protected PyInteger i;
+        protected PyObject container;
+        protected PyInteger length;
+        public LenGetItemIterator(PyObject container, IPyCallable len, IPyCallable getitem)
         {
             this.container = container;
             this.len = len;
@@ -49,9 +49,9 @@ namespace LanguageImplementation
             length = -1;
         }
 
-        public async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        public async virtual Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
         {
-            if(length.InternalValue == 0)
+            if(length.InternalValue == -1)
             {
                 var lengthPyInt = (PyInteger)await len.Call(interpreter, context, new object[] { container });
                 length = (int) lengthPyInt.InternalValue;
@@ -62,10 +62,55 @@ namespace LanguageImplementation
             }
             else
             {
-                var toReturn = await len.Call(interpreter, context, new object[] { container, i });
+                var toReturn = await getitem.Call(interpreter, context, new object[] { container, i });
                 i.InternalValue += 1;
                 return toReturn;
             }
+        }
+    }
+
+    public class ReversedLenGetItemIterator : LenGetItemIterator
+    {
+        public ReversedLenGetItemIterator(PyObject container, IPyCallable len, IPyCallable getitem) : base(container, len, getitem) { }
+
+        public override async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            if (length.InternalValue == -1)
+            {
+                var lengthPyInt = (PyInteger)await len.Call(interpreter, context, new object[] { container });
+                length = (int)lengthPyInt.InternalValue;
+                i = PyInteger.Create(length.InternalValue-1);
+            }
+
+            if (i.InternalValue < 0)
+            {
+                throw new StopIterationException();
+            }
+            else
+            {
+                var toReturn = await getitem.Call(interpreter, context, new object[] { container, i });
+                i.InternalValue -= 1;
+                return toReturn;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper for creating __iter__ in IteratorMaker. This will give us a function that returns the
+    /// existing self iterator.
+    /// </summary>
+    public class ReturnsSelfObject : IPyCallable
+    {
+        private object self;
+
+        public ReturnsSelfObject(object self)
+        {
+            this.self = self;
+        }
+
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        {
+            return Task.FromResult(self);
         }
     }
 
@@ -74,7 +119,12 @@ namespace LanguageImplementation
         public static PyObject MakeIterator(PyIterable iterable)
         {
             var iterator = new PyObject();
-            iterator.__dict__["__next__"] = new WrappedCodeObject(iterable.GetType().GetMethod("Next"));
+            iterator.__dict__["__next__"] = new WrappedCodeObject(iterable.GetType().GetMethod("Next"), iterable);
+
+            // Return ourselves for __iter__. This sounds stupid but comes up in CPython! The result is
+            // the same object. Fun!
+            iterator.__dict__["__iter__"] = new ReturnsSelfObject(iterator);
+
             return iterator;
         }
     }
