@@ -142,7 +142,7 @@ namespace CloacaTests
             await runBasicTest(
                 "r = []\n" + 
                 "for rev in reversed([1,2]):\n" +
-                "  a = r.append(rev)\n",                // BOOKMARK: Remove the a = assignment here figure out how to pop r.append
+                "  a = r.append(rev)\n",
                 new VariableMultimap(new TupleList<string, object>
             {
                 { "r", assertRPyList },
