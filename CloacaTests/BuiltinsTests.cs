@@ -137,15 +137,16 @@ namespace CloacaTests
             List<object> referenceList = new List<object>();
             referenceList.Add(PyInteger.Create(2));
             referenceList.Add(PyInteger.Create(1));
+            var assertRPyList = PyList.Create(referenceList);
 
             await runBasicTest(
                 "r = []\n" + 
                 "for rev in reversed([1,2]):\n" +
-                "  r.append(rev)\n",
+                "  a = r.append(rev)\n",                // BOOKMARK: Remove the a = assignment here figure out how to pop r.append
                 new VariableMultimap(new TupleList<string, object>
             {
-                { "r", referenceList },
-            }), 2);
+                { "r", assertRPyList },
+            }), 1);
 
         }
 

@@ -58,7 +58,8 @@ namespace LanguageImplementation
             }
             if(i.InternalValue == length.InternalValue)
             {
-                throw new StopIterationException();
+                context.CurrentException = new StopIteration();
+                return NoneType.Instance;
             }
             else
             {
@@ -84,7 +85,8 @@ namespace LanguageImplementation
 
             if (i.InternalValue < 0)
             {
-                throw new StopIterationException();
+                context.CurrentException = new StopIteration();
+                return NoneType.Instance;
             }
             else
             {
