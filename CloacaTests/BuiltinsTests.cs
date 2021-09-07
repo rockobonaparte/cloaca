@@ -132,6 +132,7 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Requires a POP_TOP to unwind the data stack inside the for-loop since r.append puts None on the stack. This is a WIP")]
         public async Task reversed_general()
         {
             List<object> referenceList = new List<object>();
@@ -142,7 +143,7 @@ namespace CloacaTests
             await runBasicTest(
                 "r = []\n" + 
                 "for rev in reversed([1,2]):\n" +
-                "  a = r.append(rev)\n",
+                "  r.append(rev)\n",
                 new VariableMultimap(new TupleList<string, object>
             {
                 { "r", assertRPyList },
