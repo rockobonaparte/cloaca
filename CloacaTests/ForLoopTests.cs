@@ -52,9 +52,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopRange()
+        public async Task ForLoopRange()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in range(0, 10, 1):\n" +
                 "   a += i\n", new VariableMultimap(new TupleList<string, object>
@@ -64,9 +64,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopRangeElse()
+        public async Task ForLoopRangeElse()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in range(0, 3, 1):\n" +
                 "   a += i\n" +
@@ -78,9 +78,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopRangeBreak()
+        public async Task ForLoopRangeBreak()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in range(0, 3, 1):\n" +
                 "   if i == 2:\n" +
@@ -94,9 +94,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopRangeContinue()
+        public async Task ForLoopRangeContinue()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in range(0, 3, 1):\n" +
                 "   if i == 2:\n" +
@@ -110,9 +110,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForInList()
+        public async Task ForInList()
         {
-            runBasicTest(
+            await runBasicTest(
                 "testlist = [0, 1, 2]\n" +
                 "a = 0\n" +
                 "for i in testlist:\n\n" +
@@ -123,9 +123,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForInDictKeys()
+        public async Task ForInDictKeys()
         {
-            runBasicTest(
+            await runBasicTest(
                 "testdict = {100: 'foo', 200: 'bar'}\n" +
                 "a = 0\n" +
                 "for key in testdict:\n\n" +
@@ -136,9 +136,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForInDictItems()
+        public async Task ForInDictItems()
         {
-            runBasicTest(
+            await runBasicTest(
                 "testdict = {100: 1000, 200: 2000}\n" +
                 "a = 0\n" +
                 "b = 0\n" +
@@ -152,9 +152,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForInDictItemsDetupled()
+        public async Task ForInDictItemsDetupled()
         {
-            runBasicTest(
+            await runBasicTest(
                 "testdict = {100: 1000, 200: 2000}\n" +
                 "a = 0\n" +
                 "b = 0\n" +
@@ -168,9 +168,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopDotNetArray()
+        public async Task ForLoopDotNetArray()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in containers.IntArray:\n\n" +
                 "   a += i\n", new Dictionary<string, object>()
@@ -183,9 +183,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopDotNetList()
+        public async Task ForLoopDotNetList()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in containers.IntList:\n\n" +
                 "   a += i\n", new Dictionary<string, object>()
@@ -198,9 +198,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopDotNetDict()
+        public async Task ForLoopDotNetDict()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for i in containers.IntDict.Keys:\n\n" +
                 "   a += i\n", new Dictionary<string, object>()
@@ -213,9 +213,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ForLoopDotNetDictItems()
+        public async Task ForLoopDotNetDictItems()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 0\n" +
                 "for kv in containers.IntDict:\n\n" +
                 "   a += kv.Key + kv.Value\n", new Dictionary<string, object>()
