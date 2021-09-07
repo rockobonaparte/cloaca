@@ -226,5 +226,21 @@ namespace CloacaTests
                 { "a", new BigInteger(1 + 2 + 3 + 1000 + 2000 + 3000) }
             }), 1);
         }
+
+        /// <summary>
+        /// Runs append() inside the loop, which pushes None onto the stack. This will trip up
+        /// the for-loop opcodes unless this result is popped. This test checks that things don't
+        /// get gummed up.
+        /// </summary>
+        /// <returns></returns>
+        [Test]
+        public async Task ExprStmtPopsOffDatastack()
+        {
+            await runBasicTest(
+                "l = [1,2]\n" +
+                "r = []\n" +
+                "for n in l:\n" +
+                "   r.append(n)\n", new VariableMultimap(new TupleList<string, object>()), 1);
+        }
     }
 }

@@ -412,6 +412,10 @@ namespace LanguageImplementation
                             disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "IMPORT_STAR", null, null);
                             break;
                         }
+                    case ByteCodes.PRINT_EXPR:
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "PRINT_EXPR", null, null);
+                        cursor += 1;
+                        break;
                     default:
                         throw new Exception("Unexpected opcode to disassemble: " + code[cursor] + " (0x" + Convert.ToString(code[cursor], 16) + ")");
                 }

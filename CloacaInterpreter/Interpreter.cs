@@ -1633,6 +1633,17 @@ namespace CloacaInterpreter
                                 }
                                 break;
                             }
+                        case ByteCodes.PRINT_EXPR:
+                            {
+                                context.Cursor += 1;
+                                var toPrint = context.DataStack.Pop();
+                                if(builtins.ContainsKey("print"))
+                                {
+                                    var printFunc = (IPyCallable) builtins["print"];
+                                    await printFunc.Call(this, context, new object[] { toPrint });
+                                }
+                            }
+                            break;
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }

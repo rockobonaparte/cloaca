@@ -399,3 +399,45 @@ or reversed at all).
 2. Failing that, construct a custom iterator if it has __len__ and __getitem__. Use that to iterate backwards.
 3. Failing that, check it's a .NET type that can get a similar treatment. Can we use LINQ magic?
 4. Failing that, panic. `TypeError: 'int' object is not reversible`
+
+## Fun and games with unwinding
+Looks like when evaluating an expr_stmt, I need to issue POP_TOP to consume the result off the
+stack... except if it's in the REPL. I guess I should be using PRINT_EXPR. Huh. This seems consistent with
+what I saw in debugging and what I see in the REPL:_
+
+CPython source 
+```
+static int
+compiler_visit_stmt_expr(struct compiler *c, expr_ty value)
+{
+    if (c->c_interactive && c->c_nestlevel <= 1) {
+        VISIT(c, expr, value);
+        ADDOP(c, PRINT_EXPR);
+        return 1;
+    }
+
+    if (value->kind == Constant_kind) {
+        /* ignore constant statement */
+        return 1;
+    }
+
+    VISIT(c, expr, value);
+    ADDOP(c, POP_TOP);
+    return 1;
+}
+```
+
+
+
+```
+>>> l = [1,2]
+>>> for n in l:
+...   n in l
+...
+True
+True
+>>>
+```
+
+I have an expr_stmt visitor so I think I need to insert POP_TOP there. Depending on how far I want to go, I may then
+implement PRINT_EXPR and stop using the print I have in the REPL._

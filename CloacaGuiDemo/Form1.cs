@@ -235,17 +235,27 @@ namespace CloacaGuiDemo
             dialogOkButton.Enabled = false;
         }
 
-        public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
+        public async void print_func(IInterpreter interpreter, FrameContext context, object to_print)
         {
-            var str_func = (IPyCallable) to_print.__getattribute__(PyClass.__STR__);
-
-            var returned = await str_func.Call(interpreter, context, new object[] { to_print });
-            if (returned != null)
+            if (to_print is PyObject)
             {
-                var asPyString = (PyString)returned;
-                richTextBox1.AppendText(asPyString.InternalValue);
-                SetCursorToEnd();
+                var str_func = (IPyCallable) ((PyObject) to_print).__getattribute__(PyClass.__STR__);
+
+                var returned = await str_func.Call(interpreter, context, new object[0]);
+                if (returned != null)
+                {
+                    var asPyString = (PyString)returned;
+                    richTextBox1.AppendText(asPyString);
+
+                    richTextBox1.AppendText(asPyString.InternalValue);
+                    SetCursorToEnd();
+                }
             }
+            else
+            {
+                richTextBox1.AppendText(to_print.ToString());
+            }
+            SetCursorToEnd();
         }
 
         public async void quit_func(IInterpreter interpreter, FrameContext context)
@@ -271,7 +281,7 @@ namespace CloacaGuiDemo
             lastAnchorPosition = richTextBox1.Text.Length;
         }
 
-        private void WhenReplDone(Repl repl, string output)
+        private void WhenReplDone(Repl repl, string errorText)
         {
             if (repl.NeedsMoreInput)
             {
@@ -282,12 +292,8 @@ namespace CloacaGuiDemo
                 if (repl.CaughtError)
                 {
                     richTextBox1.SelectionColor = Color.Red;
-                    richTextBox1.AppendText(output);
+                    richTextBox1.AppendText(errorText);
                     richTextBox1.SelectionColor = richTextBox1.ForeColor;
-                }
-                else
-                {
-                    richTextBox1.AppendText(output);
                 }
                 ongoingUserProgram.Clear();
                 richTextBox1.AppendText(Environment.NewLine + ">>> ");

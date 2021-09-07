@@ -46,6 +46,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private CodeObjectBuilder ActiveProgram;
     private Stack<LoopBlockRecord> LoopBlocks;
     private List<Func<IScheduler, Task>> postProcessActions;
+    private bool replMode;
 
     /// <summary>
     /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
@@ -53,16 +54,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     /// </summary>
     public bool IsRootProgram => ActiveProgram == RootProgram;
 
-    public CloacaBytecodeVisitor()
+    public CloacaBytecodeVisitor(bool replMode=false)
     {
         RootProgram = new CodeObjectBuilder();
         ActiveProgram = RootProgram;
         ProgramStack = new Stack<CodeObjectBuilder>();
         LoopBlocks = new Stack<LoopBlockRecord>();
         postProcessActions = new List<Func<IScheduler, Task>>();
+        this.replMode = replMode;
     }
 
-    public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables) : this()
+    public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables, bool replMode=false) : this(replMode)
     {
         RootProgram = new CodeObjectBuilder();
         ActiveProgram = RootProgram;
@@ -673,7 +675,26 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
             else
             {
+                // A statement that will produce a result on the stack that we are not consuming.
+                // If we are running this code in REPL mode, then print it instead. This is exactly
+                // how CPython does it!
+                //
+                //
+                // >>> l = [1, 2]
+                // >>> for n in l:
+                // ...   n in l...
+                // True
+                // True
+                // >>>
                 Visit(context.testlist_star_expr(0));
+                if (!replMode)
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+                }
+                else
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.PRINT_EXPR, context);
+                }
             }
             return null;
         }

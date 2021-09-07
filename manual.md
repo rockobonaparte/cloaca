@@ -22,21 +22,36 @@ Attaching to WhenTaskExceptionEscaped is particularly useful to log scripting er
 
 ## Adding Functions
 If you wish to embed a .NET function into the runtime that's directly interacting with it, you will need to create a WrappedCodeObject for it.
-Here's an example from the REPL demo. We wanted to embed print() as a function that prints to a text box:
+Here's an example from the REPL demo. We wanted to embed print() as a function that prints to a text box.
+Note that the interpreter will look for this function for the PRINT_EXPR opcode, which is generated if you use
+the CloacaByteCodeVisitor with replMode set to true. This seems goofy but is very close to how CPython does it.
+
+The function takes a regular object as an argument because you could be mixing .NET types into everything._
 
 ```
-        public async void print_func(IInterpreter interpreter, FrameContext context, PyObject to_print)
+    public async void print_func(IInterpreter interpreter, FrameContext context, object to_print)
+    {
+        if (to_print is PyObject)
         {
-            var str_func = (IPyCallable) to_print.__getattribute__(PyClass.__STR__);
+            var str_func = (IPyCallable) ((PyObject) to_print).__getattribute__(PyClass.__STR__);
 
-            var returned = await str_func.Call(interpreter, context, new object[] { to_print });
+            var returned = await str_func.Call(interpreter, context, new object[0]);
             if (returned != null)
             {
                 var asPyString = (PyString)returned;
-                richTextBox1.AppendText(asPyString.str);
+                richTextBox1.AppendText(asPyString);
+
+                richTextBox1.AppendText(asPyString.InternalValue);
                 SetCursorToEnd();
             }
         }
+        else
+        {
+            richTextBox1.AppendText(to_print.ToString());
+        }
+        SetCursorToEnd();
+    }
+
 ```
 
 Here's what we gave the interpreter:

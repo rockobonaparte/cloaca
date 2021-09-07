@@ -254,7 +254,8 @@ namespace CloacaInterpreter
                 ContextVariables = new Dictionary<string, object>();
             }
 
-            var visitor = new CloacaBytecodeVisitor(ContextVariables);
+            // Make sure to set REPL mode so the top of the stack gets printed instead of thrown away.
+            var visitor = new CloacaBytecodeVisitor(ContextVariables, true);
             visitor.Visit(antlrVisitorContext);
             await visitor.PostProcess(Scheduler);
 
