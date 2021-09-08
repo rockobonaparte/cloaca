@@ -150,5 +150,26 @@ namespace CloacaTests
 
         }
 
+        [Test]
+        public async Task zip_general()
+        {
+            List<object> referenceList = new List<object>();
+            referenceList.Add(PyInteger.Create(4));
+            referenceList.Add(PyInteger.Create(1));
+            referenceList.Add(PyInteger.Create(5));
+            referenceList.Add(PyInteger.Create(2));
+            var assertResultPyList = PyList.Create(referenceList);
+
+            await runBasicTest(
+                "result = []\n" +
+                "for a, b in zip([1,2,3],[4,5]):\n" +
+                "  result.append(b)\n" +
+                "  result.append(a)\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "result", assertResultPyList },
+            }), 1);
+
+        }
     }
 }

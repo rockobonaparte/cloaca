@@ -97,6 +97,55 @@ namespace LanguageImplementation
         }
     }
 
+    public class ZippedItemIterator : PyIterable
+    {
+        private PyObject[] iterators;
+        private bool stopped;               // Used to keep raise StopIteration after the first one.
+
+        public ZippedItemIterator(PyObject[] iterators)
+        {
+            this.iterators = iterators;
+            stopped = false;
+        }
+
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            // Technicality: No items to iterate? We're done.
+            if(this.iterators.Length == 0 || stopped)
+            {
+                stopped = true;
+                context.CurrentException = new StopIteration();
+                return null;
+            }
+
+            var values = new object[this.iterators.Length];
+            PyTuple tuple = PyTuple.Create(values);
+            for(int i = 0; i < iterators.Length; ++i)
+            {
+                try
+                {
+                    var nextFunc = (IPyCallable) iterators[i].__dict__["__next__"];
+                    values[i] = await nextFunc.Call(interpreter, context, new object[] { iterators[i] });
+                    if(context.CurrentException != null)
+                    {
+                        if(context.CurrentException is StopIteration)
+                        {
+                            stopped = true;
+                        }
+                        return null;
+                    }
+                } 
+                catch(StopIterationException stopping_time)
+                {
+                    context.CurrentException = new StopIteration();
+                    stopped = true;
+                    return null;
+                }
+            }
+            return tuple;
+        }
+    }
+
     /// <summary>
     /// Helper for creating __iter__ in IteratorMaker. This will give us a function that returns the
     /// existing self iterator.

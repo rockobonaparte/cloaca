@@ -100,7 +100,7 @@ When it comes to the built-in functions, support is much lower:
 | property     | 0      | Will probably require a lot of scrutiny to ensure it works in the typical cases                       |
 | range        | 3
 | repr         | 2      | The \_\_repr__ dunde is supported but we haven't actually implemented this function.                  |
-| reversed     | 1      | We have iterators but no reverse iterator nor this function. Possible to implement.                   |  
+| reversed     | 2      | It works for Python types but has not been enabled for most .NET types                                |  
 | round        | 0
 | set          | 0
 | setattr      | 2      | The \_\_setattr__ dunder is supported but we haven't implemented this actual function.                |
@@ -113,4 +113,4 @@ When it comes to the built-in functions, support is much lower:
 | tuple        | 2      | You can do it but it will probably fail on technicalities. Tuples generally are supported             |
 | type         | 2      | Exists but unconfident in fullness of implementation. This gets ugly.                                 |
 | vars         | 0
-| zip          | 0
+| zip          | 2      | Needs to iterate .NET types too

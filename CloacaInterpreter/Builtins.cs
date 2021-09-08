@@ -259,8 +259,44 @@ namespace CloacaInterpreter
                     throw new Exception("TypeError: '" + asPyObject.__class__.Name + "' object is not reversible");
                 }
             }
+            else
+            {
+                throw new NotImplementedException("reversed() cannot yet work with non-PyObject types (like .NET types)");
+            }
+        }
 
-            return null;
+        public static async Task<PyObject> zip_builtin(IInterpreter interpreter, FrameContext context, params object[] iterables)
+        {
+            var converted_iters = new PyObject[iterables.Length];
+            for(int i = 0; i < iterables.Length; ++i)
+            {
+                var iterable = iterables[i];
+                var asPyObject = iterable as PyObject;
+                if (asPyObject != null)
+                {
+                    if (asPyObject.__dict__.ContainsKey("__iter__"))
+                    {
+                        var iter_dunder = (IPyCallable)asPyObject.__dict__["__iter__"];
+                        var result = await iter_dunder.Call(interpreter, context, new object[] { asPyObject });
+                        converted_iters[i] = (PyObject) result;
+                    }
+                    else if (asPyObject.__dict__.ContainsKey("__len__") && asPyObject.__dict__.ContainsKey("__getitem__"))
+                    {
+                        var len_dunder = (IPyCallable)asPyObject.__dict__["__len__"];
+                        var getitem_dunder = (IPyCallable)asPyObject.__dict__["__getitem__"];
+                        converted_iters[i] = IteratorMaker.MakeIterator(new LenGetItemIterator(asPyObject, len_dunder, getitem_dunder));
+                    }
+                    else
+                    {
+                        throw new Exception("TypeError: '" + asPyObject.__class__.Name + "' object is not iterable");
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException("zip() cannot yet work with non-PyObject types (like .NET types)");
+                }
+            }
+            return IteratorMaker.MakeIterator(new ZippedItemIterator(converted_iters));
         }
     }
 }
