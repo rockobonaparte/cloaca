@@ -132,7 +132,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Requires a POP_TOP to unwind the data stack inside the for-loop since r.append puts None on the stack. This is a WIP")]
         public async Task reversed_general()
         {
             List<object> referenceList = new List<object>();
