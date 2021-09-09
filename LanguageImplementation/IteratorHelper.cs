@@ -100,17 +100,20 @@ namespace LanguageImplementation
     public class ZippedItemIterator : PyIterable
     {
         private PyObject[] iterators;
+        private bool stopped;               // Used to keep raise StopIteration after the first one.
 
         public ZippedItemIterator(PyObject[] iterators)
         {
             this.iterators = iterators;
+            stopped = false;
         }
 
         public async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             // Technicality: No items to iterate? We're done.
-            if(this.iterators.Length == 0)
+            if(this.iterators.Length == 0 || stopped)
             {
+                stopped = true;
                 context.CurrentException = new StopIteration();
                 return null;
             }
@@ -122,15 +125,20 @@ namespace LanguageImplementation
                 try
                 {
                     var nextFunc = (IPyCallable) iterators[i].__dict__["__next__"];
-                    values[i] = await nextFunc.Call(interpreter, context, new object[0]);
+                    values[i] = await nextFunc.Call(interpreter, context, new object[] { iterators[i] });
                     if(context.CurrentException != null)
                     {
-                        return null;            // Let the exception propagate (probably is StopIteration anyways)
+                        if(context.CurrentException is StopIteration)
+                        {
+                            stopped = true;
+                        }
+                        return null;
                     }
                 } 
                 catch(StopIterationException stopping_time)
                 {
                     context.CurrentException = new StopIteration();
+                    stopped = true;
                     return null;
                 }
             }
