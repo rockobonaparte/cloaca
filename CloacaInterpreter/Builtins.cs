@@ -233,6 +233,16 @@ namespace CloacaInterpreter
             return PyRange.Create(min, max, step);
         }
 
+        public static PyRange range_builtin(int min, int max)
+        {
+            return PyRange.Create(min, max, 1);
+        }
+
+        public static PyRange range_builtin(int max)
+        {
+            return PyRange.Create(0, max, 1);
+        }
+
         public static async Task<PyObject> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
         {
             // 1. Check if there's a __reversed__ dunder. If so, call and return that.

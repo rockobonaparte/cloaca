@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace CloacaInterpreter
 {
@@ -14,6 +16,21 @@ namespace CloacaInterpreter
             {
                 dict.Add(key, value);
             }
+        }
+
+        public static MethodInfo[] GetNamedMethods(this Type t, string name)
+        {
+            var allMethods = t.GetMethods();
+            var matched = new List<MethodInfo>();
+            foreach(var methodInfo in allMethods)
+            {
+                if(methodInfo.Name == name)
+                {
+                    matched.Add(methodInfo);
+                }
+            }
+
+            return matched.ToArray();
         }
     }
 }

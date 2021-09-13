@@ -60,7 +60,6 @@ Part 3: Hardening
 * Extended argument types
   * `*args`
     * [DONE] Implement
-    * Add to range() so you can do range(10) or range(0, 10, 1), or range(0, 10)...
   * keyword arguments and `**kwargs`
     * defaults based on code: `def foo(default=3+some_other_call())`
       * [MUTABLE DEFAULTS] Parse and then evaluate the defaults as the function is defined and then fill the defaults in. This is how Python does it.
