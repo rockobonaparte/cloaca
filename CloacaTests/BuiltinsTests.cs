@@ -64,7 +64,6 @@ namespace CloacaTests
             }), 1);
         }
 
-
         [Test]
         public async Task LenFunction()
         {

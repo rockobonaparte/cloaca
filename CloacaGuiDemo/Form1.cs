@@ -246,8 +246,6 @@ namespace CloacaGuiDemo
                 {
                     var asPyString = (PyString)returned;
                     richTextBox1.AppendText(asPyString);
-
-                    richTextBox1.AppendText(asPyString.InternalValue);
                     SetCursorToEnd();
                 }
             }
