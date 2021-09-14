@@ -179,5 +179,86 @@ namespace CloacaTests
             var element = (PyString)variables["c"];
             Assert.That(element, Is.EqualTo(PyString.Create("foo")));
         }
+
+        [Test]
+        [Ignore("List constructor not yet implemented (oops)")]
+        public async Task ListConstructor()
+        {
+            await runBasicTest("a = list([1, 2])\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2) }) },
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("List constructor not yet implemented (oops)")]
+        public async Task ListConstructorEmpty()
+        {
+            await runBasicTest("a = list()\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyList.Create() },
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Dictionary constructor not yet implemented (oops)")]
+        public async Task DictConstructorKwargs()
+        {
+            var referenceDict = PyDict.Create();
+            referenceDict.InternalDict.Add(PyString.Create("Hello"), PyString.Create("World"));
+            await runBasicTest("a = dict([hello='world'])\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", referenceDict }
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Dictionary constructor not yet implemented (oops)")]
+        public async Task DictConstructorIterableKwargs()
+        {
+            var referenceDict = PyDict.Create();
+            referenceDict.InternalDict.Add(PyString.Create("Hello"), PyString.Create("World"));
+            referenceDict.InternalDict.Add(PyString.Create("Foo"), PyString.Create("Bar"));
+            await runBasicTest("a = dict([('hello', 'world')], Foo=Bar)\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", referenceDict }
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Dictionary constructor not yet implemented (oops)")]
+        public async Task DictConstructorMappingKwargs()
+        {
+            var referenceDict = PyDict.Create();
+            referenceDict.InternalDict.Add(PyString.Create("Hello"), PyString.Create("World"));
+            referenceDict.InternalDict.Add(PyString.Create("Foo"), PyString.Create("Bar"));
+            await runBasicTest("a = dict({'hello': 'world'}, Foo=Bar)\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", referenceDict }
+                }), 1);
+        }
+
+        [Test]
+        [Ignore("Dictionary constructor not yet implemented (oops)")]
+        public async Task DictConstructorEmpty()
+        {
+            var referenceDict = PyDict.Create();
+            await runBasicTest("a = dict()\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", referenceDict }
+                }), 1);
+        }
     }
 }
