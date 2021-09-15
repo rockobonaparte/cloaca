@@ -178,5 +178,43 @@ namespace LanguageImplementation
 
             return iterator;
         }
+
+        public static async Task<PyObject> GetOrMakeIterator(IInterpreter interpreter, FrameContext context, object o)
+        {
+            var asPyIterable = o as PyIterable;
+            if(asPyIterable != null)
+            {
+                return MakeIterator(asPyIterable);
+            }
+
+            var asPyObject = o as PyObject;
+            if (asPyObject != null)
+            {
+                if (asPyObject.__dict__.ContainsKey("__iter__"))
+                {
+                    var iter_call = (IPyCallable)asPyObject.__dict__["__iter__"];
+                    var result = await iter_call.Call(interpreter, context, new object[] { asPyObject });
+                    return (PyObject) result;
+                }
+                else if (asPyObject.__dict__.ContainsKey("__len__") && asPyObject.__dict__.ContainsKey("__getitem__"))
+                {
+                    var len_dunder = (IPyCallable)asPyObject.__dict__["__len__"];
+                    var getitem_dunder = (IPyCallable)asPyObject.__dict__["__getitem__"];
+                    return MakeIterator(new LenGetItemIterator(asPyObject, len_dunder, getitem_dunder));
+                }
+                else
+                {
+                    var typeClass = (PyObject)asPyObject.__dict__["__class__"];
+                    var typeName = typeClass.__dict__["__name__"].ToString();
+                    context.CurrentException = new TypeError("TypeError: '" + typeName + "' is not iterable");
+                    return null;
+                }
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: '" + o.GetType().Name + "' is not iterable");
+                return null;
+            }
+        }
     }
 }
