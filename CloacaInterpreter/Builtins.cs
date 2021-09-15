@@ -265,7 +265,7 @@ namespace CloacaInterpreter
             {
                 while(context.CurrentException == null)
                 {
-                    var result = next_func.Call(interpreter, context, next_args);
+                    var result = await next_func.Call(interpreter, context, next_args);
                     if (context.CurrentException == null)
                     {
                         built_list.Add(result);
@@ -276,15 +276,20 @@ namespace CloacaInterpreter
                     }
                 }
             }
-            catch(StopIterationException)
+            catch(StopIterationException e)
             {
                 // Suppress
             }
-            catch(Exception e)
+            catch(System.Reflection.TargetInvocationException task_e)
             {
-                // BOOKMARK: We're getting StopIterationException in a goofy way from the list.
-                //           we should probably work on this.
-                throw e;
+                if(task_e.InnerException is StopIterationException)
+                {
+                    // Also suppress
+                }
+                else
+                {
+                    throw task_e;
+                }
             }
 
             // StopIteration is expected
