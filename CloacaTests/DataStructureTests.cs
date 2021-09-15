@@ -181,7 +181,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List constructor not yet implemented (oops)")]
         public async Task ListConstructor()
         {
             await runBasicTest("a = list([1, 2])\n",
@@ -193,7 +192,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List constructor not yet implemented (oops)")]
         public async Task ListConstructorEmpty()
         {
             await runBasicTest("a = list()\n",

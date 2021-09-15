@@ -90,6 +90,7 @@ namespace CloacaInterpreter
             var float_wrapper = new WrappedCodeObject("float", typeof(Builtins).GetMethod("float_builtin"));
             var bool_wrapper = new WrappedCodeObject("bool", typeof(Builtins).GetMethod("bool_builtin"));
             var str_wrapper = new WrappedCodeObject("str", typeof(Builtins).GetMethod("str_builtin"));
+            var list_wrapper = new WrappedCodeObject("list", typeof(Builtins).GetMethod("list_builtin"));
             var range_wrapper = new WrappedCodeObject("range", typeof(Builtins).GetNamedMethods("range_builtin"));
             var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
             var zip_wrapper = new WrappedCodeObject("zip", typeof(Builtins).GetMethod("zip_builtin"));
@@ -106,6 +107,7 @@ namespace CloacaInterpreter
                 { "float", float_wrapper },
                 { "bool", bool_wrapper },
                 { "str", str_wrapper },
+                { "list", list_wrapper },
                 { "range", range_wrapper },
                 { "reversed", reversed_wrapper },
                 { "zip", zip_wrapper },

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
 
 namespace CloacaInterpreter
 {
@@ -241,6 +242,86 @@ namespace CloacaInterpreter
         public static PyRange range_builtin(int max)
         {
             return PyRange.Create(0, max, 1);
+        }
+
+
+        public static async Task<PyList> list_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            // Our method resolution is not particularly good if we tried to overload this and I didn't want to deal with
+            // the syntactic overhead, so I just the no-arg and one-arg versions in the same function.
+            if(args == null || args.Length == 0)
+            {
+                return PyList.Create();
+            }
+            else if(args.Length > 1)
+            {
+                context.CurrentException = new TypeError("TypeError: list expected at most 1 argument, got " + args.Length);
+                return null;
+            }
+
+            // Everything else is dedicated to the case where one argument was actually given.
+            var o = args[0];
+
+            var itr = await IteratorMaker.GetOrMakeIterator(interpreter, context, o);
+            if(itr == null)
+            {
+                // There should be an exception but we'll see if we need to throw one ourselves.
+                if(context.CurrentException == null)
+                {
+                    context.CurrentException = new TypeError("TypeError: '" + o.GetType().Name + "' is not iterable");
+                }
+                return null;
+            }
+
+            var built_list = new List<object>();
+            var next_func = (IPyCallable)itr.__dict__["__next__"];
+            var next_args = new object[] { itr };        // Let's not repeatedly make this list.
+
+            try
+            {
+                while(context.CurrentException == null)
+                {
+                    var result = await next_func.Call(interpreter, context, next_args);
+                    if (context.CurrentException == null)
+                    {
+                        built_list.Add(result);
+                    }
+                    else if (context.CurrentException is StopIteration)
+                    {
+                        break;
+                    }
+                }
+            }
+            catch(StopIterationException e)
+            {
+                // Suppress
+            }
+            catch(System.Reflection.TargetInvocationException task_e)
+            {
+                if(task_e.InnerException is StopIterationException)
+                {
+                    // Also suppress
+                }
+                else
+                {
+                    throw task_e;
+                }
+            }
+
+            // StopIteration is expected
+            if (context.CurrentException != null)
+            {
+                if (context.CurrentException is StopIteration)
+                {
+                    context.CurrentException = null;
+                }
+                else
+                {
+                    return null;            // Something failed.
+                }
+            }
+
+            return PyList.Create(built_list);
         }
 
         public static async Task<PyObject> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
