@@ -123,6 +123,12 @@ namespace LanguageImplementation.DataTypes
                 return toReturn;
             }
         }
+
+        [ClassMember]
+        public static object __iter__(PyObject self)
+        {
+            return self;
+        }
     }
 
     public class PyRangeIterator : PyObject
