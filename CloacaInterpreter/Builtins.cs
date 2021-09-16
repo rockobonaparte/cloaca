@@ -244,8 +244,24 @@ namespace CloacaInterpreter
             return PyRange.Create(0, max, 1);
         }
 
-        public static async Task<PyList> list_builtin(IInterpreter interpreter, FrameContext context, object o)
+
+        public static async Task<PyList> list_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
         {
+            // Our method resolution is not particularly good if we tried to overload this and I didn't want to deal with
+            // the syntactic overhead, so I just the no-arg and one-arg versions in the same function.
+            if(args == null || args.Length == 0)
+            {
+                return PyList.Create();
+            }
+            else if(args.Length > 1)
+            {
+                context.CurrentException = new TypeError("TypeError: list expected at most 1 argument, got " + args.Length);
+                return null;
+            }
+
+            // Everything else is dedicated to the case where one argument was actually given.
+            var o = args[0];
+
             var itr = await IteratorMaker.GetOrMakeIterator(interpreter, context, o);
             if(itr == null)
             {
