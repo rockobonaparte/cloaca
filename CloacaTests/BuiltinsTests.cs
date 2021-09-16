@@ -204,8 +204,8 @@ namespace CloacaTests
 
             var variables = new VariableMultimap(runContext);
             var itr = (PyRangeIterator)variables.Get("itr");
-            Assert.That(itr.Min, Is.EqualTo(1));
-            Assert.That(itr.Max, Is.EqualTo(100));
+            Assert.That(itr.Start, Is.EqualTo(1));
+            Assert.That(itr.Stop, Is.EqualTo(100));
             Assert.That(itr.Step, Is.EqualTo(1));
         }
 
@@ -219,8 +219,8 @@ namespace CloacaTests
 
             var variables = new VariableMultimap(runContext);
             var itr = (PyRangeIterator)variables.Get("itr");
-            Assert.That(itr.Min, Is.EqualTo(0));
-            Assert.That(itr.Max, Is.EqualTo(100));
+            Assert.That(itr.Start, Is.EqualTo(0));
+            Assert.That(itr.Stop, Is.EqualTo(100));
             Assert.That(itr.Step, Is.EqualTo(1));
         }
     }

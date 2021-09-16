@@ -44,6 +44,13 @@ namespace LanguageImplementation.DataTypes
             var asPyRange = (PyRange)self;
             return PyInteger.Create(Math.Abs((asPyRange.Max - asPyRange.Min)/asPyRange.Step));
         }
+
+        [ClassMember]
+        public static PyObject __reversed__(PyObject self)
+        {
+            var asPyRange = self as PyRange;
+            return PyRangeIterator.Create(asPyRange.Max, asPyRange.Min, -1 * asPyRange.Step);
+        }
     }
 
     public class PyRange : PyObject
@@ -96,12 +103,18 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static object __next__(PyObject self)
+        public static object __next__(FrameContext context, PyObject self)
         {
             var asIterator = self as PyRangeIterator;
-            if(asIterator.Current >= asIterator.Max)
+            if(asIterator.Step > 0 && asIterator.Current >= asIterator.Stop)
             {
-                throw new StopIterationException();
+                context.CurrentException = new StopIteration();
+                return null;
+            }
+            else if (asIterator.Step < 0 && asIterator.Current <= asIterator.Stop)
+            {
+                context.CurrentException = new StopIteration();
+                return null;
             }
             else
             {
@@ -114,8 +127,8 @@ namespace LanguageImplementation.DataTypes
 
     public class PyRangeIterator : PyObject
     {
-        public int Min;
-        public int Max;
+        public int Start;
+        public int Stop;
         public int Step;
         public int Current;
 
@@ -127,10 +140,21 @@ namespace LanguageImplementation.DataTypes
         public static PyRangeIterator Create(PyRange range)
         {
             var iterator = PyTypeObject.DefaultNew<PyRangeIterator>(PyRangeIteratorClass.Instance);
-            iterator.Min = range.Min;
-            iterator.Max = range.Max;
+            iterator.Start = range.Min;
+            iterator.Stop = range.Max;
             iterator.Step = range.Step;
-            iterator.Current = iterator.Min;
+            iterator.Current = iterator.Start;
+
+            return iterator;
+        }
+
+        public static PyRangeIterator Create(int start, int stop, int step)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyRangeIterator>(PyRangeIteratorClass.Instance);
+            iterator.Start = start;
+            iterator.Stop = stop;
+            iterator.Step = step;
+            iterator.Current = start;
 
             return iterator;
         }

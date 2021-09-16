@@ -229,8 +229,12 @@ namespace CloacaInterpreter
             }
         }
 
-        public static PyRange range_builtin(int min, int max, int step)
+        public static PyRange range_builtin(FrameContext context, int min, int max, int step)
         {
+            if(step == 0)
+            {
+                context.CurrentException = new ValueError("range() arg 3 must not be zero");
+            }
             return PyRange.Create(min, max, step);
         }
 
