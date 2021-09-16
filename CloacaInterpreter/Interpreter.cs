@@ -1202,23 +1202,20 @@ namespace CloacaInterpreter
                                                     returned = ((IGetsFutureAwaiterResult)returned).GetGenericResult();
                                                 }
 
-                                                // Might have gotten StopIteration either from a .NET call or from internal interpreter context.
-                                                if (context.CurrentException != null && context.CurrentException.GetType() == typeof(StopIteration))
-                                                {
-                                                    context.Cursor += jumpOffset + 2;
-                                                    context.CurrentException = null;
-                                                }
-                                                else
-                                                {
-                                                    // Looks like we didn't get a StopIteration so we set up our stack to iterate again later. We'll just move
-                                                    // on to the next immediate instruction.
-                                                    context.DataStack.Push(iterator);   // Make sure that iterator gets put back on top!
-                                                    context.DataStack.Push(returned);
-                                                    context.Cursor += 2;
-                                                }
+                                                // Looks like we didn't get a StopIteration so we set up our stack to iterate again later. We'll just move
+                                                // on to the next immediate instruction.
+                                                context.DataStack.Push(iterator);   // Make sure that iterator gets put back on top!
+                                                context.DataStack.Push(returned);
+                                                context.Cursor += 2;
+                                            }
+                                            // Might have gotten StopIteration either from a .NET call or from internal interpreter context.
+                                            else if (context.CurrentException != null && context.CurrentException.GetType() == typeof(StopIteration))
+                                            {
+                                                context.Cursor += jumpOffset + 2;
+                                                context.CurrentException = null;
                                             }
                                         }
-                                        catch(StopIterationException stop_e)
+                                        catch (StopIterationException stop_e)
                                         {
                                             context.Cursor += jumpOffset + 2;
                                         }
