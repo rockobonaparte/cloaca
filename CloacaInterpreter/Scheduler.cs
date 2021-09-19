@@ -149,28 +149,23 @@ namespace CloacaInterpreter
             this.Interpreter = interpreter;
         }
 
-        public TaskEventRecord Schedule(CodeObject program, PyModule module)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
         /// in order to do any other housekeeping like inject variables into it.
         /// </summary>
         /// <param name="program">The code to schedule.</param>
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
-        public TaskEventRecord Schedule(CodeObject program)
+        public TaskEventRecord Schedule(PyFunction function)
         {
-            var scheduleState = PrepareFrameContext(program, Interpreter.GetBuiltins());
+            var scheduleState = PrepareFrameContext(function, Interpreter.GetBuiltins());
             unblocked.Add(scheduleState);
             OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
         }
 
-        public TaskEventRecord Schedule(CodeObject program, FrameContext context)
+        public TaskEventRecord Schedule(PyFunction function, FrameContext context)
         {
-            var scheduleState = PrepareFrameContext(program, context);
+            var scheduleState = PrepareFrameContext(function, context);
             unblocked.Add(scheduleState);
             OnTaskScheduled(scheduleState);
             return scheduleState.SubmitterReceipt;
@@ -180,17 +175,17 @@ namespace CloacaInterpreter
         /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
         /// in function calls that need to be spun up as independent coroutines.
         /// </summary>
-        /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
+        /// <param name="function">The code to schedule. The is treated like a function call with zero or more arguments.</param>
         /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
         /// <returns></returns>
-        public TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args)
+        public TaskEventRecord Schedule(PyFunction function, FrameContext context, params object[] args)
         {
-            if(args.Length != program.ArgVarNames.Count)
+            if(args.Length != function.Code.ArgVarNames.Count)
             {
-                throw new Exception("The given code object requires " + program.ArgCount + " arguments but " + args.Length + " arguments were given");
+                throw new Exception("The given code object requires " + function.Code.ArgCount + " arguments but " + args.Length + " arguments were given");
             }
 
-            var scheduleState = PrepareFrameContext(program, context);
+            var scheduleState = PrepareFrameContext(function, context);
 
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
@@ -206,15 +201,15 @@ namespace CloacaInterpreter
         /// Prepare a fresh frame context and continuation for the code object. This will set it up to be run from
         /// scratch.
         /// </summary>
-        /// <param name="newProgram">The code to prepare to run.</param>
+        /// <param name="newFunction">The code to prepare to run.</param>
         /// <returns>Scheduling state containing the the context that the interpreter can use to run the program as
         /// well as the continuation to kick it off (and resume it later).</returns>
         /// <param name="builtins">Mapping of builtins the frame can reference for resolving builtin calls</param>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, Dictionary<string, object> builtins)
+        private ScheduledTaskRecord PrepareFrameContext(PyFunction newFunction, Dictionary<string, object> builtins)
         {
             // We get an Exception here the first time we run anything in a net Visual Studio instance here, so keep
             // a breakpoint on this, stop what you're doing, and figure out what its problem is.
-            return PrepareFrameContext(newProgram, null, builtins);
+            return PrepareFrameContext(newFunction, null, builtins);
         }
 
         /// <summary>
@@ -227,15 +222,15 @@ namespace CloacaInterpreter
         /// 2. superContext == null; seperateBuiltins != null: new frame's built-ins assigned to separateBuiltins.
         /// 3. superContext == null; separateBuiltins == null: new frame's built-ins assigned to an empty dictionary.
         /// </summary>
-        /// <param name="newProgram"></param>
+        /// <param name="newFunction">Function to prepare a frame for running</param>
         /// <param name="superContext">The parent context under which this context would run. Will extract builtins from here and not
         /// separateBuiltins if this is not null.</param>
         /// <param name="separateBuiltins">Built-ins to use by this frame context if a superContext is not defined</param>
         /// <returns></returns>
-        private ScheduledTaskRecord PrepareFrameContext(CodeObject newProgram, FrameContext superContext, Dictionary<string, object> separateBuiltins=null)
+        private ScheduledTaskRecord PrepareFrameContext(PyFunction newFunction, FrameContext superContext, Dictionary<string, object> separateBuiltins=null)
         {
             var newFrameStack = new Stack<Frame>();
-            Frame rootFrame = new Frame(newProgram, superContext);
+            Frame rootFrame = new Frame(newFunction, superContext);
 
             // At the root level in CPython, locals() == globals(). They are the same object.
             // They have the same id and everything!

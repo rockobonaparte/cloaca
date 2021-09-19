@@ -9,7 +9,7 @@ namespace CloacaTests
 
     class TestPythonClass : PyClass
     {
-        public TestPythonClass(CodeObject __init__) :
+        public TestPythonClass(PyFunction __init__) :
             base("test_python_class", __init__, new PyClass[0])
         {
         }

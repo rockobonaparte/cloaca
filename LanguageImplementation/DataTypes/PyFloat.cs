@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyFloatClass : PyClass
     {
-        public PyFloatClass(CodeObject __init__) :
+        public PyFloatClass(PyFunction __init__) :
             base("float", __init__, new PyClass[0])
         {
             __instance = this;

@@ -55,7 +55,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
         }
 
-        public ImportErrorClass(string classname, CodeObject __init__, PyClass[] bases) : base(classname, __init__, bases)
+        public ImportErrorClass(string classname, PyFunction __init__, PyClass[] bases) : base(classname, __init__, bases)
         {
 
         }

@@ -8,7 +8,7 @@ namespace LanguageImplementation.DataTypes
     {
         public PyClass[] __bases__;
 
-        public PyClass(string name, CodeObject __init__, PyClass[] bases) :
+        public PyClass(string name, PyFunction __init__, PyClass[] bases) :
             base(name, __init__)
         {
             __bases__ = bases;

@@ -51,11 +51,18 @@ namespace CloacaTests
     [TestFixture]
     public class ReplTests : RunCodeTest
     {
+        private async Task<string> tickAwait(Task<String> scheduled, Repl repl)
+        {
+            repl.Scheduler.Tick();
+            return await scheduled;
+        }
+
         [Test]
         public async Task BasicRepl()
         {
             var repl = new Repl();
-            string consoleOut = await repl.InterpretAsync("a = 1\n");
+            var replAwaiter = repl.InterpretAsync("a = 1\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.Empty);
@@ -70,8 +77,12 @@ namespace CloacaTests
             var repl = new Repl();
             var consoleContainer = new PrintContainer();
             consoleContainer.AddAsBuiltin(repl);
-            string consoleOut = await repl.InterpretAsync("a = 1\n");
-            consoleOut = await repl.InterpretAsync("a\n");
+
+            var replAwaiter = repl.InterpretAsync("a = 1\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
+            replAwaiter = repl.InterpretAsync("a\n");
+            consoleOut = await tickAwait(replAwaiter, repl);
+
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleContainer.GetOutput(), Is.EqualTo("1"));
@@ -86,8 +97,12 @@ namespace CloacaTests
             var repl = new Repl();
             var consoleContainer = new PrintContainer();
             consoleContainer.AddAsBuiltin(repl);
-            string consoleOut = await repl.InterpretAsync("a = 1\n");
-            consoleOut = await repl.InterpretAsync("dir(a)\n");
+
+            var replAwaiter = repl.InterpretAsync("a = 1\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
+            replAwaiter = repl.InterpretAsync("dir(a)\n");
+            consoleOut = await tickAwait(replAwaiter, repl);
+
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             // Ultimately I'm not sure how correct this is since I think it's showing more than it needs, but this is what
@@ -105,13 +120,17 @@ namespace CloacaTests
             var repl = new Repl();
             var consoleContainer = new PrintContainer();
             consoleContainer.AddAsBuiltin(repl);
-            string consoleOut = await repl.InterpretAsync("a = [\n" +
-                                                          "1,\n" +
-                                                          "\n" +
-                                                          "2,\n" +
-                                                          "3\n" +
-                                                          "]\n");
-            consoleOut = await repl.InterpretAsync("a\n");
+
+            var replAwaiter = repl.InterpretAsync("a = [\n" +
+                                                  "1,\n" +
+                                                  "\n" +
+                                                  "2,\n" +
+                                                  "3\n" +
+                                                  "]\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
+            replAwaiter = repl.InterpretAsync("a\n");
+            consoleOut = await tickAwait(replAwaiter, repl);
+
             Assert.That(repl.CaughtError, Is.False);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleContainer.GetOutput(), Is.EqualTo("[1, 2, 3]"));
@@ -123,10 +142,12 @@ namespace CloacaTests
             var repl = new Repl();
             var consoleContainer = new PrintContainer();
             consoleContainer.AddAsBuiltin(repl);
-            string consoleOut = await repl.InterpretAsync("def does_nothing():\n" +
-                                                          "  pass\n" +
-                                                          "\n");
-            consoleOut = await repl.InterpretAsync("does_nothing()\n");
+            var replAwaiter = repl.InterpretAsync("def does_nothing():\n" +
+                                                  "  pass\n" +
+                                                  "\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
+            replAwaiter = repl.InterpretAsync("does_nothing()\n");
+            consoleOut = await tickAwait(replAwaiter, repl);
             Assert.That(consoleContainer.GetOutput(), Is.Empty);
         }
 
@@ -151,7 +172,8 @@ namespace CloacaTests
             var repl = new Repl();
             var consoleContainer = new PrintContainer();
             consoleContainer.AddAsBuiltin(repl);
-            string consoleOut = await repl.InterpretAsync("raise Exception(\"Hi!\")\n");
+            var replAwaiter = repl.InterpretAsync("raise Exception(\"Hi!\")\n");
+            string consoleOut = await tickAwait(replAwaiter, repl);
             Assert.That(repl.CaughtError, Is.True);
             Assert.That(repl.NeedsMoreInput, Is.False);
             Assert.That(consoleOut, Is.EqualTo("Traceback (most recent call list):" + Environment.NewLine +

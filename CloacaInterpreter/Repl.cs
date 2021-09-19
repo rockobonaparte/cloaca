@@ -255,13 +255,13 @@ namespace CloacaInterpreter
             }
 
             // Make sure to set REPL mode so the top of the stack gets printed instead of thrown away.
-            var visitor = new CloacaBytecodeVisitor(ContextVariables, true);
+            var visitor = new CloacaBytecodeVisitor(ContextVariables, ContextVariables, true);
             visitor.Visit(antlrVisitorContext);
             await visitor.PostProcess(Scheduler);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            PyFunction compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
+            var scheduledTaskRecord = Scheduler.Schedule(compiledFunction);
             activeContext = scheduledTaskRecord.Frame;
             scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
             scheduledTaskRecord.WhenTaskExceptionEscaped += WhenReplTaskExceptionEscaped;
@@ -369,12 +369,12 @@ namespace CloacaInterpreter
             var antlrVisitorContext = parser.file_input();
 
             var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            var visitor = new CloacaBytecodeVisitor(variablesIn, ContextVariables);
             visitor.Visit(antlrVisitorContext);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            var compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var context = Scheduler.Schedule(compiledProgram);
+            var context = Scheduler.Schedule(compiledFunction);
             Scheduler.Tick();
         }
     }

@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.IO;
+
+using Antlr4.Runtime;
+using Piksel.LibREPL;
 
 using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
-
-using Piksel.LibREPL;
-using Antlr4.Runtime;
-using System.Runtime.ExceptionServices;
 using CloacaInterpreter.ModuleImporting;
+using LanguageImplementation.DataTypes;
 
 namespace InterpreterDebugger
 {
@@ -43,10 +44,10 @@ namespace InterpreterDebugger
             var antlrVisitorContext = parser.file_input();
 
             var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
             visitor.Visit(antlrVisitorContext);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            PyFunction compiledFunction = visitor.RootProgram.Build(variablesIn);
 
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
@@ -59,11 +60,12 @@ namespace InterpreterDebugger
 
             scheduler.SetInterpreter(interpreter);
 
-            var context = scheduler.Schedule(compiledProgram).Frame;
-            foreach (string varName in variablesIn.Keys)
-            {
-                context.SetVariable(varName, variablesIn[varName]);
-            }
+            var context = scheduler.Schedule(compiledFunction).Frame;
+
+            //foreach (string varName in new List<string>(variablesIn.Keys))
+            //{
+            //    context.AddVariable(varName, variablesIn[varName]);
+            //}
 
             interpreter.StepMode = true;
             bool traceMode = false;
@@ -210,12 +212,12 @@ namespace InterpreterDebugger
                         {
                             if (args.Length == 0)
                             {
-                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor, 1));
+                                repl.Write(Dis.dis(currentTasklet.Function.Code, currentTasklet.Cursor, 1));
                             }
                             else if (args.Length == 1)
                             {
                                 int count = Int32.Parse(args[0]);
-                                repl.Write(Dis.dis(currentTasklet.Program, currentTasklet.Cursor, count));
+                                repl.Write(Dis.dis(currentTasklet.Function.Code, currentTasklet.Cursor, count));
                             }
                         }
                     }
@@ -255,8 +257,8 @@ namespace InterpreterDebugger
 
         static void DumpCode(FrameContext tasklet)
         {
-            Console.WriteLine("Code dump for " + tasklet.Program.Name ?? "<null>");
-            Console.WriteLine(Dis.dis(tasklet.Program));
+            Console.WriteLine("Code dump for " + tasklet.Function.Code.Name ?? "<null>");
+            Console.WriteLine(Dis.dis(tasklet.Function.Code));
         }
 
         static void DumpDatastack(FrameContext tasklet)
@@ -280,7 +282,7 @@ namespace InterpreterDebugger
         static void DumpState(FrameContext tasklet)
         {
             DumpCode(tasklet);
-            var currentLine = Dis.dis(tasklet.Program, tasklet.Cursor, 1);
+            var currentLine = Dis.dis(tasklet.Function.Code, tasklet.Cursor, 1);
             currentLine = ">>>" + currentLine.Substring(3, currentLine.Length - 3);
             Console.WriteLine(currentLine);
             DumpDatastack(tasklet);

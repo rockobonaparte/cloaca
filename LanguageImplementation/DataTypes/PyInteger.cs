@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyIntegerClass : PyClass
     {
-        public PyIntegerClass(CodeObject __init__) :
+        public PyIntegerClass(PyFunction __init__) :
             base("int", __init__, new PyClass[0])
         {
             __instance = this;

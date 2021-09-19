@@ -61,8 +61,8 @@
                   File "<stdin>", line 2, in raise_stuff
                 Exception: Derp
             */
-            string currentTrace = "\tline " + Frame.Program.GetCodeLine(Frame.Cursor) + ", in ";
-            currentTrace += Frame.Program.Name;
+            string currentTrace = "\tline " + Frame.Function.Code.GetCodeLine(Frame.Cursor) + ", in ";
+            currentTrace += Frame.Function.Code.Name;
             if(Next != null)
             {
                 return Next.DumpStack() + "\n" + currentTrace;

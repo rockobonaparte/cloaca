@@ -39,25 +39,16 @@ namespace CloacaInterpreter
         }
 
         // [TODO][SYS.SCHEDULE - RETURN TASK] sys.schedule should return the task record or a similar handle that the caller can manage
-        public void schedule(FrameContext context, IPyCallable call, params object[] args)
+        public void schedule(FrameContext context, PyFunction function, params object[] args)
         {
-            var callCodeObject = call as CodeObject;
             // [TODO][SYS.SCHEDULE - RETURN TASK - CODEOBJECT]
-            if (callCodeObject != null)
+            if (args == null)
             {
-                if (args == null)
-                {
-                    scheduler.Schedule(callCodeObject, context);
-                }
-                else
-                {
-                    scheduler.Schedule(callCodeObject, context, args);
-                }
+                scheduler.Schedule(function, context);
             }
-            // [TODO][SYS.SCHEDULE - RETURN TASK - PYCALLABLE]
             else
             {
-                call.Call(scheduler.Interpreter, context, args);
+                scheduler.Schedule(function, context, args);
             }
         }
 

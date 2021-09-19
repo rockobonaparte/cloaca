@@ -44,7 +44,7 @@ namespace LanguageImplementation.DataTypes
 
     public class PyModuleSpecClass : PyClass
     {
-        public PyModuleSpecClass(CodeObject __init__) :
+        public PyModuleSpecClass(PyFunction __init__) :
             base("ModuleSpec", __init__, new PyClass[0])
         {
             __instance = this;

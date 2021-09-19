@@ -130,34 +130,34 @@ namespace CloacaInterpreter
         /// Implementation of builtins.__build_class__. This create a class as a PyClass.
         /// </summary>
         /// <param name="context">The context of script code that wants to make a class.</param>
-        /// <param name="func">The class body as interpretable code.</param>
+        /// <param name="func">The class body as a PyFunction.</param>
         /// <param name="name">The name of the class.</param>
         /// <param name="bases">Base classes parenting this class.</param>
         /// <returns>Returns a task that will provide the finished PyClass. This calls the class body, which could wait for something,
         /// but will normally be finished immediately. However, since the class body is theoretically asynchronous, it still has to be
         /// provided as a Task return PyClass.</returns>
-        public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
+        public async Task<object> builtins__build_class(FrameContext context, PyFunction func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
-            Frame classFrame = new Frame(func, context);
+            Frame classFrame = new Frame(func, context, context.callStack.Peek().Globals);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            await CallInto(context, classFrame, new object[0], name);
+            await CallInto(context, classFrame, new object[0]);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
             // 2. A parent constructor, if existing
             // 3. Failing all that, a default constructor
-            CodeObject __init__ = classFrame.Locals.ContainsKey("__init__") ? (CodeObject) classFrame.Locals["__init__"] : null;
+            PyFunction __init__ = classFrame.Locals.ContainsKey("__init__") ? (PyFunction) classFrame.Locals["__init__"] : null;
             if (__init__ == null)
             {
                 if (bases != null && bases.Length > 0)
                 {
                     // Default to parent constructor. We hard-cast to a CodeObject
                     // TODO: Test subclassing a .NET object in Python. This will probably fail there and we'll need a more abstract handler for __init__
-                    __init__ = (CodeObject)bases[0].__init__;
+                    __init__ = (PyFunction)bases[0].__init__;
                 }
                 else
                 {
@@ -171,8 +171,13 @@ namespace CloacaInterpreter
                     initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
                     initBuilder.Name = "__init__";
                     initBuilder.ArgVarNames.Add("self");
-                    __init__ = initBuilder.Build();
+                    __init__ = initBuilder.Build(classFrame.Globals);
                 }
+            }
+
+            if(__init__.Globals.Count == 0)
+            {
+                throw new Exception("The class constructors globals are still empty for whatever reason.");
             }
 
             var pyclass = new PyClass(name, __init__, bases);
@@ -205,10 +210,10 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, string __name__)
+        public async Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals=null)
         {
-            Frame nextFrame = new Frame(functionToRun, context);
-            return await CallInto(context, nextFrame, args, __name__);
+            Frame nextFrame = new Frame(functionToRun, context, newGlobals);
+            return await CallInto(context, nextFrame, args);
         }
 
         /// <summary>
@@ -223,20 +228,17 @@ namespace CloacaInterpreter
         /// <param name="__name__">The value of the __name__ built-in to pass down to the new frame</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args, string __name__)
+        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
                 frame.SetFastLocal(argIdx, args[argIdx]);
             }
 
-            for (int varIndex = 0; varIndex < frame.Program.VarNames.Count; ++varIndex)
+            for (int varIndex = 0; varIndex < frame.Function.Code.VarNames.Count; ++varIndex)
             {
-                frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
+                frame.AddOnlyNewLocal(frame.Function.Code.VarNames[varIndex], null);
             }
-
-            // Add __name__
-            frame.AddLocal("__name__", PyString.Create(__name__));
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
@@ -361,7 +363,14 @@ namespace CloacaInterpreter
             var asPyObject = abstractFunctionToRun as PyObject;
 
             var asCodeObject = abstractFunctionToRun as CodeObject;
+            var asPyFunction = abstractFunctionToRun as PyFunction;
             object[] outArgs = null;
+
+            if(asPyFunction != null)
+            {
+                asCodeObject = asPyFunction.Code;
+            }
+
             if (asCodeObject != null)
             {
                 outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
@@ -666,7 +675,7 @@ namespace CloacaInterpreter
                         case ByteCodes.LOAD_CONST:
                             {
                                 context.Cursor += 1;
-                                context.DataStack.Push(context.Program.Constants[context.CodeBytes.GetUShort(context.Cursor)]);
+                                context.DataStack.Push(context.Function.Code.Constants[context.CodeBytes.GetUShort(context.Cursor)]);
                             }
                             context.Cursor += 2;
                             break;
@@ -728,7 +737,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var globalName = context.Program.Names[globalIdx];
+                                var globalName = context.Function.Code.Names[globalIdx];
                                 var toAssign = context.DataStack.Pop();
 
                                 // Yeah, it can override built-ins and that takes precedence. So you can declare a global print
@@ -751,7 +760,7 @@ namespace CloacaInterpreter
                                 {
                                     context.Cursor += 1;
                                     var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var attrName = context.Program.Names[nameIdx];
+                                    var attrName = context.Function.Code.Names[nameIdx];
                                     var rawObj = context.DataStack.Pop();
                                     var val = context.DataStack.Pop();
 
@@ -792,7 +801,7 @@ namespace CloacaInterpreter
                                 {
                                     context.Cursor += 1;
                                     var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var globalName = context.Program.Names[globalIdx];
+                                    var globalName = context.Function.Code.Names[globalIdx];
 
                                     if(context.callStack.Peek().HasGlobal(globalName))
                                     {
@@ -814,7 +823,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var attrName = context.Program.Names[nameIdx];
+                                var attrName = context.Function.Code.Names[nameIdx];
                                 var rawObj = context.DataStack.Pop();
                                 context.DataStack.Push(ObjectResolver.GetValue(attrName, rawObj));
                             }
@@ -829,7 +838,7 @@ namespace CloacaInterpreter
                         case ByteCodes.COMPARE_OP:
                             {
                                 context.Cursor += 1;
-                                var compare_op = (CompareOps)context.Program.Code.GetUShort(context.Cursor);
+                                var compare_op = (CompareOps)context.Function.Code.Code.GetUShort(context.Cursor);
                                 dynamic right = context.DataStack.Pop();
                                 dynamic left = context.DataStack.Pop();
 
@@ -1271,8 +1280,8 @@ namespace CloacaInterpreter
                                     qualifiedName = (string)nameString;
                                 }
 
-                                CodeObject functionCode = (CodeObject)context.DataStack.Pop();
-                                context.DataStack.Push(functionCode);
+                                PyFunction function = (PyFunction)context.DataStack.Pop();
+                                context.DataStack.Push(function);
                             }
                             context.Cursor += 2;
                             break;
@@ -1498,14 +1507,14 @@ namespace CloacaInterpreter
                                     theException.__dict__[PyException.TracebackName] =
                                         new PyTraceback((PyTraceback)theException.__dict__[PyException.TracebackName],
                                         offendingFrame,
-                                        offendingFrame.Program.GetCodeLine(context.Cursor));
+                                        offendingFrame.Function.Code.GetCodeLine(context.Cursor));
                                 }
                                 else
                                 {
                                     theException.__dict__.Add(PyException.TracebackName,
                                         new PyTraceback(null,
                                         offendingFrame,
-                                        offendingFrame.Program.GetCodeLine(context.Cursor)));
+                                        offendingFrame.Function.Code.GetCodeLine(context.Cursor)));
                                 }
 
                                 context.Cursor += 2;
@@ -1545,7 +1554,7 @@ namespace CloacaInterpreter
 
                                 var fromlist = context.DataStack.Pop();
                                 var import_level = context.DataStack.Pop();
-                                var import_name_i = context.Program.Code.GetUShort(context.Cursor);
+                                var import_name_i = context.Function.Code.Code.GetUShort(context.Cursor);
                                 var module_name = context.LocalNames[import_name_i];
 
                                 PyModule foundModule = null;
@@ -1571,7 +1580,7 @@ namespace CloacaInterpreter
                                         context.CurrentException = ModuleNotFoundErrorClass.Create("ModuleNotFoundError: no module named '" + module_name + "'");
                                     }
                                     else
-                                    {                                       
+                                    {
                                         var toImport = await spec.Loader.Load(this, context, spec);
                                         context.DataStack.Push(toImport);
                                         if(toImport is PyModule)
@@ -1591,8 +1600,8 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
                                 var fromModule = context.DataStack.Peek();      // Module is kept on the stack for subsequent IMPORT_FROM. Removed with a POP_TOP.
 
-                                var importName_i = context.Program.Code.GetUShort(context.Cursor);
-                                var fromName = (PyString) context.Program.Constants[importName_i];
+                                var importName_i = context.Function.Code.Code.GetUShort(context.Cursor);
+                                var fromName = (PyString) context.Function.Code.Constants[importName_i];
 
                                 // TODO: Import from .NET modules
                                 var asPyObject = fromModule as PyObject;

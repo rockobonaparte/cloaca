@@ -6,7 +6,7 @@ using LanguageImplementation.DataTypes;
 
 namespace LanguageImplementation
 {
-    public class CodeObject : IPyCallable
+    public class CodeObject
     {
         //'co_argcount', 'co_cellvars', 'co_code', 'co_consts', 'co_filename',
         // 'co_firstlineno', 'co_flags', 'co_freevars', 'co_lnotab', 'co_name',
@@ -127,11 +127,6 @@ namespace LanguageImplementation
 
             // Fallback, last byte code of program. Return current line now.
             return currentLine;
-        }
-
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
-        {
-            return interpreter.CallInto(context, this, args);
         }
     }
 
@@ -275,8 +270,13 @@ namespace LanguageImplementation
 
         // Converts into a regular code object using byte arrays.
         // Functions in constants will also get converted to regular CodeObjects            
-        public CodeObject Build()
+        public PyFunction Build(Dictionary<string, object> globals=null)
         {
+            if(globals == null)
+            {
+                globals = new Dictionary<string, object>();
+            }
+
             var newCodeObj = new CodeObject(Code.ToArray());
             newCodeObj.ArgCount = ArgCount;
             newCodeObj.Filename = Filename;
@@ -295,14 +295,16 @@ namespace LanguageImplementation
                 if(newCodeObj.Constants[i] is CodeObjectBuilder)
                 {
                     var asBuilder = newCodeObj.Constants[i] as CodeObjectBuilder;
-                    newCodeObj.Constants[i] = asBuilder.Build();
+
+                    PyFunction func = asBuilder.Build(globals);
+                    newCodeObj.Constants[i] = func;
                 }
             }
 
             newCodeObj.firstlineno = firstLine;
             newCodeObj.lnotab = lnotab_builder.ToArray();
 
-            return newCodeObj;
+            return PyFunction.Create(newCodeObj, globals);
         }
     }
 }

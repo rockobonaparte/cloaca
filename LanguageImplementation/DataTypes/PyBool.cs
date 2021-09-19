@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyBoolClass : PyClass
     {
-        public PyBoolClass(CodeObject __init__) :
+        public PyBoolClass(PyFunction __init__) :
             base("bool", __init__, new PyClass[0])
         {
             __instance = this;

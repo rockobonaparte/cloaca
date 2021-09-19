@@ -50,13 +50,17 @@ namespace CloacaTests
             scheduler.OnTaskScheduled += whenTaskScheduled;
 
             escapedExceptions = new List<ExceptionDispatchInfo>();
-            CodeObject compiledProgram = null;
-            Task<CodeObject> compiledTask = null;
+            PyFunction compiledFunction = null;
+            Task<PyFunction> compiledTask = null;
             try
             {
+                // Creating the globals in a helper here since I like to come along here and shove stuff
+                // in for debug from time to time.
+                var globalsDict = new Dictionary<string, object>();
+
                 // This is awaitable now but relies on the scheduler. We'll tick the scheduler
                 // awhile until this resolves.
-                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, scheduler);
+                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, globalsDict, scheduler);
             }
             catch (CloacaParseException parseFailed)
             {
@@ -76,10 +80,10 @@ namespace CloacaTests
             {
                 escapedExceptions[0].Throw();
             }
-            compiledProgram = await compiledTask;
-            Dis.dis(compiledProgram);
+            compiledFunction = await compiledTask;
+            Dis.dis(compiledFunction.Code);
 
-            receipt = scheduler.Schedule(compiledProgram);
+            receipt = scheduler.Schedule(compiledFunction);
             FrameContext context = receipt.Frame;
             foreach (string varName in variablesIn.Keys)
             {

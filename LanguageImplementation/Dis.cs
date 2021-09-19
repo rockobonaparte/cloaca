@@ -1,5 +1,7 @@
 ﻿using System;
 
+using LanguageImplementation.DataTypes;
+
 namespace LanguageImplementation
 {
     public class Dis
@@ -13,6 +15,11 @@ namespace LanguageImplementation
             disassembly += hint != null ? " " + hint : "";
             disassembly += "\n";
             return disassembly;
+        }
+
+        public static string dis(PyFunction function, int startIdx=0, int count=-1)
+        {
+            return dis(function.Code, startIdx, count);
         }
 
         public static string dis(CodeObject codeObject, int startIdx=0, int count=-1)

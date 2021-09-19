@@ -58,20 +58,31 @@ namespace CloacaInterpreter.ModuleImporting
         public async Task<object> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var code = lookup[(string)spec.LoaderState];
-            var moduleCode = await ByteCodeCompiler.Compile(code, new Dictionary<string, object>(), interpreter.Scheduler);
+            var moduleGlobals = new Dictionary<string, object>();
+            moduleGlobals.Add("__name__", spec.Name);
+            var moduleCode = await ByteCodeCompiler.Compile(code, new Dictionary<string, object>(), moduleGlobals, interpreter.Scheduler);
 
-            string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
-            await interpreter.CallInto(context, moduleCode, new object[0], modulename);
+            // Time to make the frame ourselves so we can tie locals to globals! At the root of a module, locals==globals.
+            var nextFrame = Frame.PrepareModuleFrame(moduleCode, context, moduleGlobals);
+            await interpreter.CallInto(context, nextFrame, new object[0]);
 
-            if(context.EscapedDotNetException != null)
+
+            if (context.EscapedDotNetException != null)
             {
                 throw context.EscapedDotNetException;
             }
 
+            // Notes:
+            // This sets __name__ to __main__ which is false. It should be the module's name.
+            // This should take globals out of the module instead of taking them from the parent.
+            // I think we need to create this frame and use it to call into the module code instead
+            // of using the parent frame. We'll have to generalize this for all the loaders.
+
+            ////////////
             var moduleFrame = context.callStack.Pop();
             var module = PyModule.Create(spec.Name);
-            
-            for(int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
+
+            for (int local_i = 0; local_i < moduleFrame.LocalNames.Count; ++local_i)
             {
                 var name = moduleFrame.LocalNames[local_i];
                 if (moduleFrame.Locals.ContainsKey(name))
@@ -79,7 +90,7 @@ namespace CloacaInterpreter.ModuleImporting
                     module.__setattr__(name, moduleFrame.Locals[name]);
                 }
             }
-
+            /////////////
             return module;
         }
     }

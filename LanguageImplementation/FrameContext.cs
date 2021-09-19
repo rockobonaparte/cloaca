@@ -96,11 +96,11 @@ namespace LanguageImplementation
             }
         }
 
-        public CodeObject Program
+        public PyFunction Function
         {
             get
             {
-                return callStack.Peek().Program;
+                return callStack.Peek().Function;
             }
         }
 
@@ -108,7 +108,7 @@ namespace LanguageImplementation
         {
             get
             {
-                return callStack.Peek().Program.Code.Bytes;
+                return callStack.Peek().Function.Code.Code.Bytes;
             }
         }
 
@@ -116,7 +116,7 @@ namespace LanguageImplementation
         {
             get
             {
-                return callStack.Peek().Program.Code;
+                return callStack.Peek().Function.Code.Code;
             }
         }
 
@@ -133,6 +133,14 @@ namespace LanguageImplementation
             get
             {
                 return callStack.Peek().Locals;
+            }
+        }
+
+        public Dictionary<string, object> Globals
+        {
+            get
+            {
+                return callStack.Peek().Globals;
             }
         }
 
