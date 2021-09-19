@@ -1195,7 +1195,7 @@ namespace CloacaInterpreter
                                         try
                                         {
                                             var returned = await functionToRun.Call(this, context, new object[0]);
-                                            if (returned != null && !(returned is FutureVoidAwaiter))
+                                            if (returned != null && returned != NoneType.Instance && !(returned is FutureVoidAwaiter))
                                             {
                                                 if (returned is IGetsFutureAwaiterResult)
                                                 {
