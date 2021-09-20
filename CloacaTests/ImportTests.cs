@@ -43,6 +43,28 @@ namespace CloacaTests
     }
 
     [TestFixture]
+    public class StringCodeImporterTests
+    {
+        [Test]
+        public async Task BasicImport()
+        {
+            var scheduler = new Scheduler();                // Might not need the actual scheduler...
+            var interpreter = new Interpreter(scheduler);
+
+            var rootContext = new FrameContext(new Dictionary<string, object>());
+            var repo = new StringCodeModuleFinder();
+            repo.CodeLookup.Add("foo", "bar = 'Hello, World!'\n");
+
+            var spec = repo.find_spec(null, "foo", null, null);
+            Assert.NotNull(spec);
+
+            var loadedModule = await spec.Loader.Load(interpreter, rootContext, spec) as PyModule;
+            Assert.That(loadedModule.__dict__, Contains.Key("bar"));
+            Assert.That(loadedModule.__dict__["bar"], Is.EqualTo(PyString.Create("Hello, World!")));
+        }
+    }
+
+    [TestFixture]
     public class InjectedImporterTests
     {
         [Test]
