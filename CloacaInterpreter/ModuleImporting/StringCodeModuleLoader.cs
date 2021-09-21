@@ -58,7 +58,7 @@ namespace CloacaInterpreter.ModuleImporting
         public async Task<object> Load(IInterpreter interpreter, FrameContext context, PyModuleSpec spec)
         {
             var code = lookup[(string)spec.LoaderState];
-            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
+            var moduleCode = await ByteCodeCompiler.Compile(code, new Dictionary<string, object>(), interpreter.Scheduler);
 
             string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
             await interpreter.CallInto(context, moduleCode, new object[0], modulename);
