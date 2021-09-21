@@ -24,7 +24,7 @@ namespace CloacaInterpreter.ModuleImporting
         public StringCodeModuleFinder()
         {
             this.CodeLookup = new Dictionary<string, string>();
-            this.loader = new StringCodeModuleLoader();
+            this.loader = new StringCodeModuleLoader(this.CodeLookup);
         }
 
         public PyModuleSpec find_spec(FrameContext context, string name, string import_path, PyModule target)
