@@ -2,6 +2,8 @@
 
 using LanguageImplementation.DataTypes;
 using System.Threading.Tasks;
+using CloacaInterpreter.ModuleImporting;
+using System.Collections.Generic;
 
 namespace CloacaTests
 {
@@ -137,6 +139,37 @@ namespace CloacaTests
                 { "a", PyInteger.Create(11) },
                 { "b", PyInteger.Create(111) },
             }), 1);
+        }
+
+        /// <summary>
+        /// We found out that globals were not being bound to their modules correctly. If you called a function
+        /// in a module that called another function inside that module, we couldn't resolve it because the
+        /// interpreter didn't recognize that the module should have its globals active (as opposed to the parent's
+        /// globals). This test checks against that.
+        /// </summary>
+        [Test]
+        [Ignore("Exposes issue with global scope that we are currently trying to solve.")]
+        public async Task ModulesCallsIntoItself()
+        {
+            var repo = new StringCodeModuleFinder();
+            repo.CodeLookup.Add("foo", 
+                "def terminal_call():\n" +
+                "   return 1\n" +
+                "\n" +
+                "def outer_call():\n" +
+                "   return terminal_call()\n" +
+                "\n");
+
+            var context = await runProgram(
+                "import foo\n" +
+                "bar = foo.outer_call()\n",
+                new Dictionary<string, object>(),
+                new List<ISpecFinder>() { repo },
+                0);
+
+            Assert.That(context.HasVariable("bar"), Is.EqualTo(true));
+            var bar = context.GetVariable("bar");
+            Assert.That(bar, Is.EqualTo(PyInteger.Create(1)));
         }
     }
 }
