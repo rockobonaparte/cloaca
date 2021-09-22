@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
+using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -8,7 +9,7 @@ namespace CloacaTests
     public class ScopeTests : RunCodeTest
     {
         [Test]
-        public void InnerAndOuterScopesLocal()
+        public async Task InnerAndOuterScopesLocal()
         {
             string program =
                 "a = 1\n" +
@@ -16,7 +17,7 @@ namespace CloacaTests
                 "   a = 2\n" +
                 "foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(1) }
@@ -24,7 +25,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void InnerGlobal()
+        public async Task InnerGlobal()
         {
             string program =
                 "a = 1\n" +
@@ -33,7 +34,7 @@ namespace CloacaTests
                 "   a = 2\n" +
                 "foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(2) }
@@ -47,7 +48,7 @@ namespace CloacaTests
         /// LOL it turned out I hadn't implemented the return statement =D
         /// </summary>
         [Test]
-        public void ConditionalReturn()
+        public async Task ConditionalReturn()
         {
             string program =
                 "a = 1\n" +
@@ -60,7 +61,7 @@ namespace CloacaTests
                 "\n" +
                 "foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(2) }
@@ -68,7 +69,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ReturnsNoneProperly()
+        public async Task ReturnsNoneProperly()
         {
             string program =
                 "def inner():\n" +
@@ -79,7 +80,7 @@ namespace CloacaTests
                 "\n" +
                 "a = outer()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", NoneType.Instance }
@@ -87,7 +88,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public void ImplicitlyUsesGlobal()
+        public async Task ImplicitlyUsesGlobal()
         {
             string program =
                 "a = 1\n" +
@@ -96,7 +97,7 @@ namespace CloacaTests
                 "   return b\n" +
                 "a = foo()\n";
 
-            runBasicTest(program,
+            await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyInteger.Create(2) }
@@ -104,9 +105,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void GlobalSingle()
+        public async Task GlobalSingle()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "def inner():\n" +
                 "  global a\n" +
@@ -120,9 +121,9 @@ namespace CloacaTests
         }
 
         [Test]
-        public void GlobalMulti()
+        public async Task GlobalMulti()
         {
-            runBasicTest(
+            await runBasicTest(
                 "a = 10\n" +
                 "b = 100\n" +
                 "def inner():\n" +
