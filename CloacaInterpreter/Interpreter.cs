@@ -144,7 +144,7 @@ namespace CloacaInterpreter
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
 
-            await CallInto(context, classFrame, new object[0], name);
+            await CallInto(context, classFrame, new object[0]);
 
             // Figure out what kind of constructor we're using:
             // 1. One that was actually defined in code for this specific class
@@ -205,10 +205,10 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, string __name__)
+        public async Task<object> CallInto(FrameContext context, CodeObject functionToRun, object[] args, Dictionary<string, object> newGlobals=null)
         {
-            Frame nextFrame = new Frame(functionToRun, context);
-            return await CallInto(context, nextFrame, args, __name__);
+            Frame nextFrame = new Frame(functionToRun, context, newGlobals);
+            return await CallInto(context, nextFrame, args);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace CloacaInterpreter
         /// <param name="__name__">The value of the __name__ built-in to pass down to the new frame</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args, string __name__)
+        public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
@@ -234,9 +234,6 @@ namespace CloacaInterpreter
             {
                 frame.AddOnlyNewLocal(frame.Program.VarNames[varIndex], null);
             }
-
-            // Add __name__
-            frame.AddLocal("__name__", PyString.Create(__name__));
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);

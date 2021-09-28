@@ -99,7 +99,11 @@ namespace CloacaInterpreter.ModuleImporting
             var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), interpreter.Scheduler);
 
             string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
-            await interpreter.CallInto(context, moduleCode, new object[0], modulename);
+
+            var moduleGlobals = new Dictionary<string, object>();
+            moduleGlobals.Add("__name__", spec.Name);
+                
+            await interpreter.CallInto(context, moduleCode, new object[0]);
 
             if(context.EscapedDotNetException != null)
             {

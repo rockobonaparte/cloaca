@@ -148,7 +148,6 @@ namespace CloacaTests
         /// globals). This test checks against that.
         /// </summary>
         [Test]
-        [Ignore("Exposes issue with global scope that we are currently trying to solve.")]
         public async Task ModulesCallsIntoItself()
         {
             var repo = new StringCodeModuleFinder();
@@ -165,7 +164,7 @@ namespace CloacaTests
                 "bar = foo.outer_call()\n",
                 new Dictionary<string, object>(),
                 new List<ISpecFinder>() { repo },
-                0);
+                1);
 
             Assert.That(context.HasVariable("bar"), Is.EqualTo(true));
             var bar = context.GetVariable("bar");

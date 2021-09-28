@@ -76,9 +76,13 @@ namespace LanguageImplementation
                 Globals = new Dictionary<string, object>();
             }
         }
-        public Frame(CodeObject program, FrameContext parentContext) : this(program)
+        public Frame(CodeObject program, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(program)
         {
-            if (parentContext != null && parentContext.callStack.Count > 0)
+            if(newGlobals != null)
+            {
+                Globals = newGlobals;
+            }
+            else if (parentContext != null && parentContext.callStack.Count > 0)
             {
                 Globals = parentContext.callStack.Peek().Globals;
             }
@@ -418,8 +422,9 @@ namespace LanguageImplementation
         /// <param name="context">Context of code currently being run through the interpreter by the scheduler.</param>
         /// <param name="functionToRun">The code object to call into.</param>
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
+        /// <param name="newGlobals">Globals to use in this context. Globals can be switched out when calling into a module.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
-        Task<object> CallInto(FrameContext context, CodeObject program, object[] args, string __name__="__main__");
+        Task<object> CallInto(FrameContext context, CodeObject program, object[] args, Dictionary<string, object> newGlobals=null);
 
         /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets
