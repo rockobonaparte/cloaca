@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -9,7 +7,6 @@ namespace LanguageImplementation.DataTypes
         // needs a reference to:
         // 1. CodeObject
         // 2. Globals           (and how does it get this? When would it be created?)
-
         private IPyCallable callable;
 
         public PyFunction(IPyCallable callable)
