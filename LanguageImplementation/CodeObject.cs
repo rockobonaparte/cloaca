@@ -273,6 +273,13 @@ namespace LanguageImplementation
             return Code.Count;
         }
 
+        public PyFunction BuildFunction(Dictionary<string, object> globals)
+        {
+            CodeObject co = Build();
+            PyFunction func = PyFunction.Create(co);
+            return func;
+        }
+
         // Converts into a regular code object using byte arrays.
         // Functions in constants will also get converted to regular CodeObjects            
         public CodeObject Build()
