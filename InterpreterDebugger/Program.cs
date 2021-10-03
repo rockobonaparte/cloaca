@@ -43,7 +43,7 @@ namespace InterpreterDebugger
             var antlrVisitorContext = parser.file_input();
 
             var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
             visitor.Visit(antlrVisitorContext);
 
             CodeObject compiledProgram = visitor.RootProgram.Build();

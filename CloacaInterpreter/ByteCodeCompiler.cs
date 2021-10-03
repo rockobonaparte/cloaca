@@ -39,7 +39,7 @@ namespace CloacaInterpreter
 
             errorListener.AssertNoErrors();
 
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            var visitor = new CloacaBytecodeVisitor(variablesIn, globals);
             visitor.Visit(antlrVisitorContext);
 
             await visitor.PostProcess(scheduler);

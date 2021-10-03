@@ -47,6 +47,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private Stack<LoopBlockRecord> LoopBlocks;
     private List<Func<IScheduler, Task>> postProcessActions;
     private bool replMode;
+    private Dictionary<string, object> namespaceGlobals;
 
     /// <summary>
     /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
@@ -64,8 +65,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.replMode = replMode;
     }
 
-    public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables, bool replMode=false) : this(replMode)
+    public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
     {
+        this.namespaceGlobals = globals;
         RootProgram = new CodeObjectBuilder();
         ActiveProgram = RootProgram;
         foreach (var name in existingVariables.Keys)

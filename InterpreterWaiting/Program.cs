@@ -22,7 +22,7 @@ namespace InterpreterWaiting
 
             var context = parser.file_input();
 
-            var visitor = new CloacaBytecodeVisitor(variablesIn);
+            var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
             visitor.Visit(context);
             visitor.PostProcess(scheduler);
 
