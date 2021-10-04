@@ -9,17 +9,38 @@ namespace LanguageImplementation.DataTypes
         // needs a reference to:
         // 1. CodeObject
         // 2. Globals           (and how does it get this? When would it be created?)
-        public IPyCallable Callable;
+        private CodeObject _code;
+
+        public IPyCallable Callable
+        {
+            get
+            {
+                return _code;
+            }
+        }
+
+        public CodeObject Code
+        {
+            get
+            {
+                return _code;
+            }
+            set
+            {
+                _code = value;
+            }
+        }
 
         public PyFunction()
         {
             // Default constructor so DefaultNew will work.
         }
 
-        public PyFunction(IPyCallable callable)
+        public PyFunction(CodeObject callable)
         {
-            this.Callable = callable;
+            Code = callable;
             __setattr__("__call__", this);
+            __setattr__("__code__", this);
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -30,7 +51,7 @@ namespace LanguageImplementation.DataTypes
         public static PyFunction Create(CodeObject co)
         {
             var function = PyTypeObject.DefaultNew<PyFunction>(PyFloatClass.Instance);
-            function.Callable = co;
+            function.Code = co;
             return function;
         }
     }

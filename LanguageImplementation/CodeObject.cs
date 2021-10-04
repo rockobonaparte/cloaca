@@ -273,17 +273,15 @@ namespace LanguageImplementation
             return Code.Count;
         }
 
-        public PyFunction BuildFunction(Dictionary<string, object> globals)
-        {
-            CodeObject co = Build();
-            PyFunction func = PyFunction.Create(co);
-            return func;
-        }
-
         // Converts into a regular code object using byte arrays.
         // Functions in constants will also get converted to regular CodeObjects            
-        public CodeObject Build()
+        public CodeObject Build(Dictionary<string, object> globals=null)
         {
+            if(globals == null)
+            {
+                globals = new Dictionary<string, object>();
+            }
+
             var newCodeObj = new CodeObject(Code.ToArray());
             newCodeObj.ArgCount = ArgCount;
             newCodeObj.Filename = Filename;
@@ -302,7 +300,9 @@ namespace LanguageImplementation
                 if(newCodeObj.Constants[i] is CodeObjectBuilder)
                 {
                     var asBuilder = newCodeObj.Constants[i] as CodeObjectBuilder;
-                    newCodeObj.Constants[i] = asBuilder.Build();
+
+                    PyFunction func = PyFunction.Create(asBuilder.Build(globals));
+                    newCodeObj.Constants[i] = func;
                 }
             }
 

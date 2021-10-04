@@ -136,10 +136,10 @@ namespace CloacaInterpreter
         /// <returns>Returns a task that will provide the finished PyClass. This calls the class body, which could wait for something,
         /// but will normally be finished immediately. However, since the class body is theoretically asynchronous, it still has to be
         /// provided as a Task return PyClass.</returns>
-        public async Task<object> builtins__build_class(FrameContext context, CodeObject func, string name, params PyClass[] bases)
+        public async Task<object> builtins__build_class(FrameContext context, CodeObject code, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
-            Frame classFrame = new Frame(func, context);
+            Frame classFrame = new Frame(code, context);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
@@ -1268,8 +1268,8 @@ namespace CloacaInterpreter
                                     qualifiedName = (string)nameString;
                                 }
 
-                                CodeObject functionCode = (CodeObject)context.DataStack.Pop();
-                                context.DataStack.Push(functionCode);
+                                PyFunction functionCode = (PyFunction)context.DataStack.Pop();
+                                context.DataStack.Push(functionCode.Code);
                             }
                             context.Cursor += 2;
                             break;
