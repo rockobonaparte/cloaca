@@ -27,7 +27,7 @@ namespace InterpreterWaiting
             visitor.PostProcess(scheduler);
 
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = visitor.RootProgram.Build(variablesIn);
 
             return compiledProgram;
         }

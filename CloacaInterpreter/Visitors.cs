@@ -1473,7 +1473,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     ProgramStack.Pop();
 
                     var currentTask = scheduler.GetCurrentTask();
-                    var defaultPrecalcCode = defaultBuilder.Build();
+                    var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
                     var task = scheduler.Schedule(defaultPrecalcCode);
 
                     // There isn't anything to actual unblock us when the code finished and the result is ready, so we need

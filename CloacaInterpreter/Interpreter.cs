@@ -171,7 +171,7 @@ namespace CloacaInterpreter
                     initBuilder.AddInstruction(ByteCodes.RETURN_VALUE);
                     initBuilder.Name = "__init__";
                     initBuilder.ArgVarNames.Add("self");
-                    __init__ = initBuilder.Build();
+                    __init__ = initBuilder.Build(classFrame.Globals);
                 }
             }
 

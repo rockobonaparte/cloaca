@@ -259,7 +259,7 @@ namespace CloacaInterpreter
             visitor.Visit(antlrVisitorContext);
             await visitor.PostProcess(Scheduler);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = visitor.RootProgram.Build(ContextVariables);
 
             var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
             activeContext = scheduledTaskRecord.Frame;
@@ -372,7 +372,7 @@ namespace CloacaInterpreter
             var visitor = new CloacaBytecodeVisitor(variablesIn, ContextVariables);
             visitor.Visit(antlrVisitorContext);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = visitor.RootProgram.Build(ContextVariables);
 
             var context = Scheduler.Schedule(compiledProgram);
             Scheduler.Tick();

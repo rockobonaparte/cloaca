@@ -46,7 +46,7 @@ namespace InterpreterDebugger
             var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
             visitor.Visit(antlrVisitorContext);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = visitor.RootProgram.Build(variablesIn);
 
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);

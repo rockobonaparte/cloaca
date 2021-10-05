@@ -44,7 +44,7 @@ namespace CloacaInterpreter
 
             await visitor.PostProcess(scheduler);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build();
+            CodeObject compiledProgram = visitor.RootProgram.Build(globals);
             return compiledProgram;
         }
     }
