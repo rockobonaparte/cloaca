@@ -301,7 +301,7 @@ namespace LanguageImplementation
                 {
                     var asBuilder = newCodeObj.Constants[i] as CodeObjectBuilder;
 
-                    PyFunction func = PyFunction.Create(asBuilder.Build(globals));
+                    PyFunction func = PyFunction.Create(asBuilder.Build(globals), globals);
                     newCodeObj.Constants[i] = func;
                 }
             }

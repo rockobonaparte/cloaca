@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace LanguageImplementation.DataTypes
         // 1. CodeObject
         // 2. Globals           (and how does it get this? When would it be created?)
         private CodeObject _code;
+        public Dictionary<string, object> Globals;
 
         public IPyCallable Callable
         {
@@ -36,11 +38,13 @@ namespace LanguageImplementation.DataTypes
             // Default constructor so DefaultNew will work.
         }
 
-        public PyFunction(CodeObject callable)
+        public PyFunction(CodeObject callable, Dictionary<string, object> globals)
         {
             Code = callable;
+            Globals = globals;
             __setattr__("__call__", this);
             __setattr__("__code__", this);
+            __setattr__("__globals__", Globals);
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -48,10 +52,11 @@ namespace LanguageImplementation.DataTypes
             return Callable.Call(interpreter, context, args);
         }
 
-        public static PyFunction Create(CodeObject co)
+        public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)
         {
             var function = PyTypeObject.DefaultNew<PyFunction>(PyFloatClass.Instance);
             function.Code = co;
+            function.Globals = globals;
             return function;
         }
     }
