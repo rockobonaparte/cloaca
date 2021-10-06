@@ -358,7 +358,14 @@ namespace CloacaInterpreter
             var asPyObject = abstractFunctionToRun as PyObject;
 
             var asCodeObject = abstractFunctionToRun as CodeObject;
+            var asPyFunction = abstractFunctionToRun as PyFunction;
             object[] outArgs = null;
+
+            if(asPyFunction != null)
+            {
+                asCodeObject = asPyFunction.Code;
+            }
+
             if (asCodeObject != null)
             {
                 outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
@@ -1269,7 +1276,7 @@ namespace CloacaInterpreter
                                 }
 
                                 PyFunction functionCode = (PyFunction)context.DataStack.Pop();
-                                context.DataStack.Push(functionCode.Code);
+                                context.DataStack.Push(functionCode);
                             }
                             context.Cursor += 2;
                             break;

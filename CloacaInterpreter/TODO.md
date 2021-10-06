@@ -454,3 +454,6 @@ that around in the code objects (I don't think I am).
 It looks like PyFunction is a thing in CPython and the globals are stored there. This is separate from
 PyCodeObject. So I guess the PyFunction is like the final instantiation of the code object? I haven't
 delved completely.
+
+The current challenge now is actually switching out globals as we descend the call stack. We'll probably have to do
+some bespoke coding to get ModulesCallsIntoItself to work and then translate it everywhere else.
