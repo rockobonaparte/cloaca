@@ -54,7 +54,7 @@ namespace LanguageImplementation.DataTypes
 
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)
         {
-            var function = PyTypeObject.DefaultNew<PyFunction>(PyFloatClass.Instance);
+            var function = PyTypeObject.DefaultNew<PyFunction>(PyFunctionClass.Instance);
             function.Code = co;
             function.Globals = globals;
             return function;
