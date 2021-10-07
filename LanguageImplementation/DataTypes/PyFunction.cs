@@ -40,6 +40,11 @@ namespace LanguageImplementation.DataTypes
 
         public PyFunction(CodeObject callable, Dictionary<string, object> globals)
         {
+            Initialize(callable, globals);
+        }
+
+        public void Initialize(CodeObject callable, Dictionary<string, object> globals)
+        {
             Code = callable;
             Globals = globals;
             __setattr__("__call__", this);
@@ -55,8 +60,7 @@ namespace LanguageImplementation.DataTypes
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)
         {
             var function = PyTypeObject.DefaultNew<PyFunction>(PyFunctionClass.Instance);
-            function.Code = co;
-            function.Globals = globals;
+            function.Initialize(co, globals);
             return function;
         }
     }

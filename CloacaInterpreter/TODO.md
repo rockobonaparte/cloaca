@@ -457,3 +457,6 @@ delved completely.
 
 The current challenge now is actually switching out globals as we descend the call stack. We'll probably have to do
 some bespoke coding to get ModulesCallsIntoItself to work and then translate it everywhere else.
+Current progress:
+I see the function being created but I never seem to see it getting called. So I have to keep walking past the
+CALL_FUNCTION and figure out where it's winding up.
