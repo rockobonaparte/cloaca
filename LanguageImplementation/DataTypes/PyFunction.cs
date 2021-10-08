@@ -54,7 +54,7 @@ namespace LanguageImplementation.DataTypes
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            return Callable.Call(interpreter, context, args);
+            return interpreter.CallInto(context, Code, args, Globals);
         }
 
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)

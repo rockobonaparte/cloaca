@@ -64,6 +64,13 @@ namespace CloacaInterpreter.ModuleImporting
 
             string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;
 
+            // BOOKMARK: Problem is here with when we do stuff.
+            // At the module level, globals==locals. However, we don't make that connection here. This will run and put all
+            // the global context in the locals. We could copy it over afterwards, but we might have a bug that happens
+            // while running all this. What if we refer to something we defined as a global that is a name elsewhere?
+            // 
+            // I'm not sure if this is a thing, but I'd rather avoid. Can I create a frame here and assign locals=globals
+            // up-front? I could skip a lot of trouble!
             await interpreter.CallInto(context, moduleCode, new object[0], moduleGlobals);
 
 
