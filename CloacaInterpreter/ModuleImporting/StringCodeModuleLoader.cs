@@ -71,7 +71,11 @@ namespace CloacaInterpreter.ModuleImporting
             // 
             // I'm not sure if this is a thing, but I'd rather avoid. Can I create a frame here and assign locals=globals
             // up-front? I could skip a lot of trouble!
-            await interpreter.CallInto(context, moduleCode, new object[0], moduleGlobals);
+
+            // Time to make the frame ourselves so we can tie locals to globals! At the root of a module, locals==globals.
+            Frame nextFrame = new Frame(moduleCode, context, moduleGlobals);
+            nextFrame.Locals = moduleGlobals;
+            await interpreter.CallInto(context, nextFrame, new object[0]);
 
 
             if (context.EscapedDotNetException != null)

@@ -427,6 +427,16 @@ namespace LanguageImplementation
         Task<object> CallInto(FrameContext context, CodeObject program, object[] args, Dictionary<string, object> newGlobals=null);
 
         /// <summary>
+        /// Alternate form of CallInto that assumes that the frame to use has been prepared already. This is
+        /// particularly useful when creating modules because you have to tie locals to globals.
+        /// </summary>
+        /// <param name="context">Context of code currently being run through the interpreter by the scheduler.</param>
+        /// <param name="frame">The frame to use for running code</param>
+        /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
+        /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
+        Task<object> CallInto(FrameContext context, Frame frame, object[] args);
+
+        /// <summary>
         /// Runs the given frame context until it either finishes normally or yields. This actually interprets
         /// our Python(ish) code!
         /// 
