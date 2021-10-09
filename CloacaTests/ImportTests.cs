@@ -140,7 +140,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
-            mockFrame.Program = new CodeObject(new byte[0]);
+            mockFrame.Function = PyFunction.Create(new CodeObject(new byte[0]), new Dictionary<string, object>());
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -165,7 +165,7 @@ namespace CloacaTests
             finder.AddDefaultAssembly(Assembly.LoadWithPartialName("System"));
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
-            mockFrame.Program = new CodeObject(new byte[0]);
+            mockFrame.Function = PyFunction.Create(new CodeObject(new byte[0]), new Dictionary<string, object>());
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
@@ -182,7 +182,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
-            mockFrame.Program = new CodeObject(new byte[0]);
+            mockFrame.Function = PyFunction.Create(new CodeObject(new byte[0]), new Dictionary<string, object>());
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -201,7 +201,7 @@ namespace CloacaTests
             var finder = new ClrModuleFinder();
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
-            mockFrame.Program = new CodeObject(new byte[0]);
+            mockFrame.Function = PyFunction.Create(new CodeObject(new byte[0]), new Dictionary<string, object>());
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
             var clrLoader = new ClrModuleInternals();
@@ -250,7 +250,7 @@ namespace CloacaTests
 
             var mockStack = new Stack<Frame>();
             var mockFrame = new Frame();
-            mockFrame.Program = new CodeObject(new byte[0]);
+            mockFrame.Function = PyFunction.Create(new CodeObject(new byte[0]), new Dictionary<string, object>());
             mockStack.Push(mockFrame);
             var mockContext = new FrameContext(mockStack, new Dictionary<string, object>());
 
@@ -448,7 +448,7 @@ namespace CloacaTests
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             var compiledSubProgram = await ByteCodeCompiler.Compile(subProgramCode, new Dictionary<string, object>(), new Dictionary<string, object>(), scheduler);
-            fooModule.__dict__.Add("subprogram", compiledSubProgram.Constants[0]);
+            fooModule.__dict__.Add("subprogram", compiledSubProgram.Code.Constants[0]);
 
             var finishedFrame = await runProgram(
                 "import foo\n" +

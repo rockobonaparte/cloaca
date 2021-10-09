@@ -180,7 +180,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
             this.__init__ = new WrappedCodeObject("__init__", __init__methodInfo, this);
         }
 
-        public PyExceptionClass(string classname, CodeObject __init__, PyClass[] bases) : base(classname, __init__, bases)
+        public PyExceptionClass(string classname, PyFunction __init__, PyClass[] bases) : base(classname, __init__, bases)
         {
             Expression<Action<PyTypeObject>> __new__expr = instance => DefaultNew<PyException>(null);
             var __new__methodInfo = ((MethodCallExpression)__new__expr.Body).Method;

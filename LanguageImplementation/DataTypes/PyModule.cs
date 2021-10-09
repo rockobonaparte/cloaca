@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyModuleClass : PyClass
     {
-        public PyModuleClass(CodeObject __init__) :
+        public PyModuleClass(PyFunction __init__) :
             base("module", __init__, new PyClass[0])
         {
             __instance = this;

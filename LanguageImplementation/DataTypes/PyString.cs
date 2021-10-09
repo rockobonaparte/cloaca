@@ -6,7 +6,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyStringClass : PyClass
     {
-        public PyStringClass(CodeObject __init__) :
+        public PyStringClass(PyFunction __init__) :
             base("str", __init__, new PyClass[0])
         {
             __instance = this;

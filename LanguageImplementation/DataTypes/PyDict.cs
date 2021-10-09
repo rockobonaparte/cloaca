@@ -9,7 +9,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyDictClass : PyClass
     {
-        public PyDictClass(CodeObject __init__) :
+        public PyDictClass(PyFunction __init__) :
             base("dict", __init__, new PyClass[0])
         {
             __instance = this;
@@ -416,7 +416,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyKeyIteratorClass(CodeObject __init__) :
+        public PyKeyIteratorClass(PyFunction __init__) :
             base("key_iterator", __init__, new PyClass[0])
         {
             __instance = this;
@@ -476,7 +476,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyDict_ItemsClass(CodeObject __init__) :
+        public PyDict_ItemsClass(PyFunction __init__) :
             base("dict_items", __init__, new PyClass[0])
         {
             __instance = this;
@@ -528,7 +528,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyDictItemsIteratorClass(CodeObject __init__) :
+        public PyDictItemsIteratorClass(PyFunction __init__) :
             base("dict_itemiterator", __init__, new PyClass[0])
         {
             __instance = this;

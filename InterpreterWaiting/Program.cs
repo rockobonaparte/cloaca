@@ -6,12 +6,13 @@ using Antlr4.Runtime;
 using CloacaInterpreter;
 using Language;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 namespace InterpreterWaiting
 {
     class Program
     {
-        static CodeObject compileCode(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
+        static PyFunction compileCode(string program, Dictionary<string, object> variablesIn, Scheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -27,9 +28,9 @@ namespace InterpreterWaiting
             visitor.PostProcess(scheduler);
 
             // We'll do a disassembly here but won't assert against it. We just want to make sure it doesn't crash.
-            CodeObject compiledProgram = visitor.RootProgram.Build(variablesIn);
+            PyFunction compiledFunction = visitor.RootProgram.Build(variablesIn);
 
-            return compiledProgram;
+            return compiledFunction;
         }
 
         static void Main(string[] args)

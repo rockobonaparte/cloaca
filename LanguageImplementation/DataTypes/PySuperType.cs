@@ -9,7 +9,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PySuperType : PyClass
     {
-        public PySuperType(CodeObject __init__) :
+        public PySuperType(PyFunction __init__) :
             base("super", __init__, new PyClass[0])
         {
             __instance = this;

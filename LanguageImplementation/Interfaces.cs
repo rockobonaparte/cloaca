@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 
+using LanguageImplementation.DataTypes;
+
 namespace LanguageImplementation
 {
     public class Frame
@@ -11,7 +13,7 @@ namespace LanguageImplementation
         public int Cursor;
         public Stack<Block> BlockStack;
         public Stack<object> DataStack;
-        public CodeObject Program;
+        public PyFunction Function;
 
         public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
         public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
@@ -26,7 +28,7 @@ namespace LanguageImplementation
             Cursor = 0;
             BlockStack = new Stack<Block>();
             DataStack = new Stack<object>();
-            Program = null;
+            Function = null;
             LocalFasts = new List<object>();
             Locals = new Dictionary<string, object>();
 
@@ -48,10 +50,10 @@ namespace LanguageImplementation
             }
         }
 
-        public Frame(CodeObject program) : this()
+        public Frame(PyFunction function) : this()
         {
-            Program = program;
-            createFasts(program);
+            Function = function;
+            createFasts(function.Code);
         }
 
         public Frame(Dictionary<string, object> globals) : this()
@@ -59,9 +61,9 @@ namespace LanguageImplementation
             Globals = globals;
         }
 
-        public Frame(CodeObject program, Dictionary<string, object> globals) : this(program)
+        public Frame(PyFunction function, Dictionary<string, object> globals) : this(function)
         {
-            Program = program;
+            Function = function;
             Globals = globals;
         }
 
@@ -76,7 +78,7 @@ namespace LanguageImplementation
                 Globals = new Dictionary<string, object>();
             }
         }
-        public Frame(CodeObject program, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(program)
+        public Frame(PyFunction function, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(function)
         {
             if(newGlobals != null)
             {
@@ -96,7 +98,7 @@ namespace LanguageImplementation
         {
             get
             {
-                return Program.Names;
+                return Function.Code.Names;
             }
         }
 
@@ -359,18 +361,18 @@ namespace LanguageImplementation
         /// </summary>
         /// <param name="program">The code to schedule.</param>
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
-        TaskEventRecord Schedule(CodeObject program);
+        TaskEventRecord Schedule(PyFunction function);
 
-        TaskEventRecord Schedule(CodeObject program, FrameContext context);
+        TaskEventRecord Schedule(PyFunction function, FrameContext context);
 
         /// <summary>
         /// Schedule a new program to run that requires certain arguments. This is exposed for other scripts to pass
         /// in function calls that need to be spun up as independent coroutines.
         /// </summary>
-        /// <param name="program">The code to schedule. The is treated like a function call with zero or more arguments.</param>
+        /// <param name="function">The code to schedule. The is treated like a function call with zero or more arguments.</param>
         /// <param name="args">The arguments that need to be seeded to the the code to run.</param>
         /// <returns></returns>
-        TaskEventRecord Schedule(CodeObject program, FrameContext context, params object[] args);
+        TaskEventRecord Schedule(PyFunction function, FrameContext context, params object[] args);
 
         /// <summary>
         /// Returns a copy of a list of all active tasks currently in the scheduler.
@@ -424,7 +426,7 @@ namespace LanguageImplementation
         /// <param name="args">The arguments for the program. These are put on the existing data stack.</param>
         /// <param name="newGlobals">Globals to use in this context. Globals can be switched out when calling into a module.</param>
         /// <returns>Whatever was provided by the RETURN_VALUE on top-of-stack at the end of the program.</returns>
-        Task<object> CallInto(FrameContext context, CodeObject program, object[] args, Dictionary<string, object> newGlobals=null);
+        Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals=null);
 
         /// <summary>
         /// Alternate form of CallInto that assumes that the frame to use has been prepared already. This is

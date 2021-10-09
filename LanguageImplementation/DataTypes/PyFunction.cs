@@ -13,14 +13,6 @@ namespace LanguageImplementation.DataTypes
         private CodeObject _code;
         public Dictionary<string, object> Globals;
 
-        public IPyCallable Callable
-        {
-            get
-            {
-                return _code;
-            }
-        }
-
         public CodeObject Code
         {
             get
@@ -54,7 +46,7 @@ namespace LanguageImplementation.DataTypes
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            return interpreter.CallInto(context, Code, args, Globals);
+            return interpreter.CallInto(context, this, args, Globals);
         }
 
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)
@@ -67,7 +59,7 @@ namespace LanguageImplementation.DataTypes
 
     public class PyFunctionClass : PyClass
     {
-        public PyFunctionClass(CodeObject __init__) :
+        public PyFunctionClass(PyFunction __init__) :
             base("function", __init__, new PyClass[0])
         {
             __instance = this;

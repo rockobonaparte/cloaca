@@ -259,9 +259,9 @@ namespace CloacaInterpreter
             visitor.Visit(antlrVisitorContext);
             await visitor.PostProcess(Scheduler);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build(ContextVariables);
+            PyFunction compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var scheduledTaskRecord = Scheduler.Schedule(compiledProgram);
+            var scheduledTaskRecord = Scheduler.Schedule(compiledFunction);
             activeContext = scheduledTaskRecord.Frame;
             scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
             scheduledTaskRecord.WhenTaskExceptionEscaped += WhenReplTaskExceptionEscaped;
@@ -372,9 +372,9 @@ namespace CloacaInterpreter
             var visitor = new CloacaBytecodeVisitor(variablesIn, ContextVariables);
             visitor.Visit(antlrVisitorContext);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build(ContextVariables);
+            var compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var context = Scheduler.Schedule(compiledProgram);
+            var context = Scheduler.Schedule(compiledFunction);
             Scheduler.Tick();
         }
     }

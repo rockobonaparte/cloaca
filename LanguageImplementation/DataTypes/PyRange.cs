@@ -19,7 +19,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyRangeClass(CodeObject __init__) :
+        public PyRangeClass(PyFunction __init__) :
             base("range", __init__, new PyClass[0])
         {
             __instance = this;
@@ -90,7 +90,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyRangeIteratorClass(CodeObject __init__) :
+        public PyRangeIteratorClass(PyFunction __init__) :
             base("range_iterator", __init__, new PyClass[0])
         {
             __instance = this;

@@ -10,7 +10,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyTupleClass : PyClass
     {
-        public PyTupleClass(CodeObject __init__) :
+        public PyTupleClass(PyFunction __init__) :
             base("tuple", __init__, new PyClass[0])
         {
             __instance = this;
@@ -243,7 +243,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyTupleIteratorClass(CodeObject __init__) :
+        public PyTupleIteratorClass(PyFunction __init__) :
             base("tuple_iterator", __init__, new PyClass[0])
         {
             __instance = this;

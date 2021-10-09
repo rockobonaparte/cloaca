@@ -9,7 +9,7 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyListClass : PyClass
     {
-        public PyListClass(CodeObject __init__) :
+        public PyListClass(PyFunction __init__) :
             base("list", __init__, new PyClass[0])
         {
             __instance = this;
@@ -295,7 +295,7 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        public PyListIteratorClass(CodeObject __init__) :
+        public PyListIteratorClass(PyFunction __init__) :
             base("list_iterator", __init__, new PyClass[0])
         {
             __instance = this;

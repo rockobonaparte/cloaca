@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+
 using Antlr4.Runtime;
+
 using Language;
 using LanguageImplementation;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaInterpreter
 {
@@ -25,7 +28,7 @@ namespace CloacaInterpreter
         /// that then gets assigned as defaults.</param>
         /// <returns>The compiled code.</returns>
         /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
-        public static async Task<CodeObject> Compile(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> globals, 
+        public static async Task<PyFunction> Compile(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> globals, 
             IScheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
@@ -44,8 +47,8 @@ namespace CloacaInterpreter
 
             await visitor.PostProcess(scheduler);
 
-            CodeObject compiledProgram = visitor.RootProgram.Build(globals);
-            return compiledProgram;
+            PyFunction compiledFunction = visitor.RootProgram.Build(globals);
+            return compiledFunction;
         }
     }
 }
