@@ -440,25 +440,3 @@ True
 
 I have an expr_stmt visitor so I think I need to insert POP_TOP there. Depending on how far I want to go, I may then
 implement PRINT_EXPR and stop using the print I have in the REPL._
-
-# Module Globals
-We have to figure out when to switch globals out. This happens when we enter a different module.
-However, when exactly do we make this switch?
-
-An alternate way of asking this is who should known references to the module? This assumes the module
-itself would then have the dictionary. Is it the code object?
-
-The code object has a __globals__ that contains the module globals. I should see if I'm already bandying 
-that around in the code objects (I don't think I am).
-
-It looks like PyFunction is a thing in CPython and the globals are stored there. This is separate from
-PyCodeObject. So I guess the PyFunction is like the final instantiation of the code object? I haven't
-delved completely.
-
-The current challenge now is actually switching out globals as we descend the call stack. We'll probably have to do
-some bespoke coding to get ModulesCallsIntoItself to work and then translate it everywhere else.
-Current progress:
-I see the function being created but I never seem to see it getting called. So I have to keep walking past the
-CALL_FUNCTION and figure out where it's winding up.
-
-Current issue is class constructor doesn't get the globals
