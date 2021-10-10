@@ -136,6 +136,14 @@ namespace LanguageImplementation
             }
         }
 
+        public Dictionary<string, object> Globals
+        {
+            get
+            {
+                return callStack.Peek().Globals;
+            }
+        }
+
         public List<string> LocalNames
         {
             get
