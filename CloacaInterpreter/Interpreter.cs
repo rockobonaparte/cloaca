@@ -139,7 +139,7 @@ namespace CloacaInterpreter
         public async Task<object> builtins__build_class(FrameContext context, PyFunction func, string name, params PyClass[] bases)
         {
             // TODO: Add params type to handle one or more base classes (inheritance test)
-            Frame classFrame = new Frame(func, context);
+            Frame classFrame = new Frame(func, context, context.callStack.Peek().Globals);
             classFrame.AddLocal("__name__", name);
             classFrame.AddLocal("__module__", null);
             classFrame.AddLocal("__qualname__", null);
@@ -173,6 +173,11 @@ namespace CloacaInterpreter
                     initBuilder.ArgVarNames.Add("self");
                     __init__ = initBuilder.Build(classFrame.Globals);
                 }
+            }
+
+            if(__init__.Globals.Count == 0)
+            {
+                throw new Exception("The class constructors globals are still empty for whatever reason.");
             }
 
             var pyclass = new PyClass(name, __init__, bases);

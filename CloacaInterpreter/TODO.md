@@ -460,3 +460,5 @@ some bespoke coding to get ModulesCallsIntoItself to work and then translate it 
 Current progress:
 I see the function being created but I never seem to see it getting called. So I have to keep walking past the
 CALL_FUNCTION and figure out where it's winding up.
+
+Current issue is class constructor doesn't get the globals
