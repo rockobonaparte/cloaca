@@ -1280,8 +1280,8 @@ namespace CloacaInterpreter
                                     qualifiedName = (string)nameString;
                                 }
 
-                                PyFunction functionCode = (PyFunction)context.DataStack.Pop();
-                                context.DataStack.Push(functionCode);
+                                PyFunction function = (PyFunction)context.DataStack.Pop();
+                                context.DataStack.Push(function);
                             }
                             context.Cursor += 2;
                             break;
