@@ -80,18 +80,7 @@ namespace LanguageImplementation
         }
         public Frame(PyFunction function, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(function)
         {
-            if(newGlobals != null)
-            {
-                Globals = newGlobals;
-            }
-            else if (parentContext != null && parentContext.callStack.Count > 0)
-            {
-                Globals = parentContext.callStack.Peek().Globals;
-            }
-            else
-            {
-                Globals = new Dictionary<string, object>();
-            }
+            Globals = function.Globals;
         }
 
         public List<string> LocalNames

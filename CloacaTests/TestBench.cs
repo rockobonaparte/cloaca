@@ -54,9 +54,13 @@ namespace CloacaTests
             Task<PyFunction> compiledTask = null;
             try
             {
+                // Creating the globals in a helper here since I like to come along here and shove stuff
+                // in for debug from time to time.
+                var globalsDict = new Dictionary<string, object>();
+
                 // This is awaitable now but relies on the scheduler. We'll tick the scheduler
                 // awhile until this resolves.
-                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, new Dictionary<string, object>(), scheduler);
+                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, globalsDict, scheduler);
             }
             catch (CloacaParseException parseFailed)
             {
