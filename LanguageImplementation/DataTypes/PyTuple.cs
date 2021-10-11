@@ -99,7 +99,7 @@ namespace LanguageImplementation.DataTypes
             {
                 return self.Values[(int)i.InternalValue];
             }
-            catch (IndexOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("IndexError: tuple index out of range");

@@ -61,7 +61,7 @@ namespace LanguageImplementation.DataTypes
             {
                 self.list.RemoveAt((int) i.InternalValue);
             }
-            catch (IndexOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("IndexError: list assignment index out of range");
@@ -75,7 +75,7 @@ namespace LanguageImplementation.DataTypes
             {
                 return self.list[(int) i.InternalValue];
             }
-            catch(IndexOutOfRangeException)
+            catch(ArgumentOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("IndexError: list index out of range");
@@ -96,7 +96,7 @@ namespace LanguageImplementation.DataTypes
             {
                 self.list[i] = value;
             }
-            catch (IndexOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
                 throw new Exception("IndexError: list assignment index out of range");
