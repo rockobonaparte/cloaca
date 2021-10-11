@@ -1580,7 +1580,7 @@ namespace CloacaInterpreter
                                         context.CurrentException = ModuleNotFoundErrorClass.Create("ModuleNotFoundError: no module named '" + module_name + "'");
                                     }
                                     else
-                                    {                                       
+                                    {
                                         var toImport = await spec.Loader.Load(this, context, spec);
                                         context.DataStack.Push(toImport);
                                         if(toImport is PyModule)
