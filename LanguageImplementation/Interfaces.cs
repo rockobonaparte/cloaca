@@ -83,6 +83,20 @@ namespace LanguageImplementation
             Globals = function.Globals;
         }
 
+        /// <summary>
+        /// Helper to prepare a frame for the root of a module. This makes sure that locals==globals.
+        /// </summary>
+        /// <param name="moduleCode">The module's code</param>
+        /// <param name="context">The context that got us to the point of running the module code</param>
+        /// <param name="moduleGlobals">The module's globals (which are also its locals)</param>
+        /// <returns></returns>
+        public static Frame PrepareModuleFrame(PyFunction moduleCode, FrameContext context, Dictionary<string, object> moduleGlobals)
+        {
+            Frame nextFrame = new Frame(moduleCode, context, moduleGlobals);
+            nextFrame.Locals = moduleGlobals;
+            return nextFrame;
+        }
+
         public List<string> LocalNames
         {
             get
