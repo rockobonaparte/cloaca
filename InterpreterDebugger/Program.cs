@@ -61,10 +61,11 @@ namespace InterpreterDebugger
             scheduler.SetInterpreter(interpreter);
 
             var context = scheduler.Schedule(compiledFunction).Frame;
-            foreach (string varName in variablesIn.Keys)
-            {
-                context.SetVariable(varName, variablesIn[varName]);
-            }
+
+            //foreach (string varName in new List<string>(variablesIn.Keys))
+            //{
+            //    context.AddVariable(varName, variablesIn[varName]);
+            //}
 
             interpreter.StepMode = true;
             bool traceMode = false;
