@@ -669,6 +669,32 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Short circuit logic operations not yet implemented")]
+        public async Task ShortCircuitAnd()
+        {
+            await runBasicTest(
+                        "a = None\n" +
+                        "b = a is not None and a()\n",       // a() should never happen.
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyBool.False }
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("Short circuit logic operations not yet implemented")]
+        public async Task ShortCircuitOr()
+        {
+            await runBasicTest(
+                        "a = None\n" +
+                        "b = a is None or a()\n",           // a() should never happen.
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyBool.False }
+            }), 1);
+        }
+
+        [Test]
         public async Task LogicIsNot()
         {
             // When first implemented, this was generated a bunch of loads
