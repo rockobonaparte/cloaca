@@ -992,6 +992,23 @@ namespace CloacaInterpreter
                             }
                             context.Cursor += 2;
                             break;
+                        case ByteCodes.JUMP_IF_FALSE_OR_POP:
+                            {
+                                context.Cursor += 1;
+                                var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                                var conditional = (PyBool)context.DataStack.Peek();
+                                if (!conditional)
+                                {
+                                    context.Cursor = jumpPosition;
+                                    continue;
+                                }
+                                else
+                                {
+                                    context.DataStack.Pop();
+                                }
+                            }
+                            context.Cursor += 2;
+                            break;
                         case ByteCodes.POP_JUMP_IF_TRUE:
                             {
                                 context.Cursor += 1;
@@ -1001,6 +1018,23 @@ namespace CloacaInterpreter
                                 {
                                     context.Cursor = jumpPosition;
                                     continue;
+                                }
+                            }
+                            context.Cursor += 2;
+                            break;
+                        case ByteCodes.JUMP_IF_TRUE_OR_POP:
+                            {
+                                context.Cursor += 1;
+                                var jumpPosition = context.CodeBytes.GetUShort(context.Cursor);
+                                var conditional = (PyBool)context.DataStack.Peek();
+                                if (conditional)
+                                {
+                                    context.Cursor = jumpPosition;
+                                    continue;
+                                }
+                                else
+                                {
+                                    context.DataStack.Pop();
                                 }
                             }
                             context.Cursor += 2;

@@ -229,6 +229,16 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "POP_JUMP_IF_TRUE", code.GetUShort(cursor), null);
                         cursor += 2;
                         break;
+                    case ByteCodes.JUMP_IF_FALSE_OR_POP:
+                        cursor += 1;
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "JUMP_IF_FALSE_OR_POP", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
+                    case ByteCodes.JUMP_IF_TRUE_OR_POP:
+                        cursor += 1;
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "JUMP_IF_TRUE_OR_POP", code.GetUShort(cursor), null);
+                        cursor += 2;
+                        break;
                     case ByteCodes.UNPACK_SEQUENCE:
                         cursor += 1;
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "UNPACK_SEQUENCE", code.GetUShort(cursor), null);
