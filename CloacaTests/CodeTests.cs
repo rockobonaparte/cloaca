@@ -669,7 +669,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Short circuit logic operations not yet implemented")]
         public async Task ShortCircuitAnd()
         {
             await runBasicTest(

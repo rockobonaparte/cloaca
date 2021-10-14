@@ -1262,17 +1262,31 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    // TODO: This should not be BINARY_ADD, which should be x & y
-    // This appears to be implemented using some jump opcodes
     public override object VisitAnd_test([NotNull] CloacaParser.And_testContext context)
     {
         // not_test: 'not' not_test | comparison;
         var inner_not_tests = context.not_test();
         if (inner_not_tests.Length == 2)
         {
-            base.Visit(inner_not_tests[0]);
-            base.Visit(inner_not_tests[1]);
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+            var shortcircuit_fixups = new List<JumpOpcodeFixer>();
+            
+            for(int i = 0; i < inner_not_tests.Length; ++i)
+            {
+                var inner_not = inner_not_tests[i];
+                base.Visit(inner_not);
+
+                // We don't put a jump on the last index.
+                if (i < inner_not_tests.Length - 1)
+                {
+                    var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_FALSE_OR_POP, -1, context));
+                    shortcircuit_fixups.Add(jumpFalseSkip);
+                }
+            }
+
+            foreach (var fixup in shortcircuit_fixups)
+            {
+                fixup.FixupAbsolute(ActiveProgram.Code.Count);
+            }
             return null;
         }
         else
