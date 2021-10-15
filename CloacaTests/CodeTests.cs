@@ -681,12 +681,27 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Short circuit logic operations not yet implemented")]
         public async Task ShortCircuitOr()
         {
             await runBasicTest(
                         "a = None\n" +
                         "b = a is None or a()\n",           // a() should never happen.
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyBool.True }
+            }), 1);
+        }
+
+        /// <summary>
+        /// The original implementation for logic was only generating code for two AND statements,
+        /// but there could be more! So here's one with three.
+        /// </summary>
+        [Test]
+        public async Task BigShortCircuitAnd()
+        {
+            await runBasicTest(
+                        "a = []\n" +
+                        "b = a is not None and len(a) > 0 and a[1]==2\n",
             new VariableMultimap(new TupleList<string, object>
             {
                 { "b", PyBool.False }

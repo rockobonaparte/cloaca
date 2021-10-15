@@ -1266,7 +1266,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // not_test: 'not' not_test | comparison;
         var inner_not_tests = context.not_test();
-        if (inner_not_tests.Length == 2)
+        if (inner_not_tests.Length > 1)
         {
             var shortcircuit_fixups = new List<JumpOpcodeFixer>();
             
@@ -1301,11 +1301,27 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // not_test: 'not' not_test | comparison;
         var inner_and_tests = context.and_test();
-        if (inner_and_tests.Length == 2)
+        if (inner_and_tests.Length > 1)
         {
-            base.Visit(inner_and_tests[0]);
-            base.Visit(inner_and_tests[1]);
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+            var shortcircuit_fixups = new List<JumpOpcodeFixer>();
+
+            for (int i = 0; i < inner_and_tests.Length; ++i)
+            {
+                var inner_and = inner_and_tests[i];
+                base.Visit(inner_and);
+
+                // We don't put a jump on the last index.
+                if (i < inner_and_tests.Length - 1)
+                {
+                    var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_TRUE_OR_POP, -1, context));
+                    shortcircuit_fixups.Add(jumpFalseSkip);
+                }
+            }
+
+            foreach (var fixup in shortcircuit_fixups)
+            {
+                fixup.FixupAbsolute(ActiveProgram.Code.Count);
+            }
             return null;
         }
         else
