@@ -249,7 +249,7 @@ namespace CloacaGuiDemo
                     SetCursorToEnd();
                 }
             }
-            else
+            else if(to_print != null)
             {
                 richTextBox1.AppendText(to_print.ToString());
             }

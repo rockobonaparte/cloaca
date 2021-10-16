@@ -434,7 +434,7 @@ namespace CloacaInterpreter
                     }
                     context.DataStack.Push(returned);
                 }
-                else if (returned == null)
+                else if (returned == null || returned is FutureVoidAwaiter)
                 {
                     context.DataStack.Push(NoneType.Instance);
                 }
