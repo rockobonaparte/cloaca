@@ -122,7 +122,7 @@ namespace LanguageImplementation.DataTypes
                 var pyObj = asTuple.Values[i] as PyObject;
                 if (pyObj == null)
                 {
-                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(asTuple.Values[i].ToString()));
+                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(asTuple.Values[i].ToString()));
                 }
                 else
                 {
@@ -134,17 +134,17 @@ namespace LanguageImplementation.DataTypes
                     if (returned != null)
                     {
                         var asPyString = (PyString)returned;
-                        retStr = (PyString)PyStringClass.__add__(retStr, asPyString);
+                        retStr = (PyString)PyStringClass.__add__(context, retStr, asPyString);
                     }
                 }
 
                 // Appending commas except on last index
                 if (i < asTuple.Values.Length - 1)
                 {
-                    retStr = (PyString)PyStringClass.__add__(retStr, PyString.Create(", "));
+                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(", "));
                 }
             }
-            return (PyString)PyStringClass.__add__(retStr, PyString.Create(")"));
+            return (PyString)PyStringClass.__add__(context, retStr, PyString.Create(")"));
         }
 
         [ClassMember]

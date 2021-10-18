@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes.Exceptions;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -41,15 +42,23 @@ namespace LanguageImplementation.DataTypes
             }
             if (otherOut == null)
             {
-                throw new Exception("Tried to use a non-PyString for rvalue of: " + operation);
+                throw new Exception("TypeError: can only concatenate str (not \"" + other.__class__.Name + "\") to str");
             }
         }
 
         [ClassMember]
-        public static PyObject __add__(PyObject self, PyObject other)
+        public static PyObject __add__(FrameContext context, PyObject self, PyObject other)
         {
             PyString a, b;
-            castOperands(self, other, out a, out b, "concatenation");
+            try
+            {
+                castOperands(self, other, out a, out b, "concatenation");
+            }
+            catch(Exception e)
+            {
+                context.CurrentException = new TypeError(e.Message);
+                return null;
+            }
             var newPyString = PyString.Create(a.InternalValue + b.InternalValue);
             return newPyString;
         }
