@@ -217,15 +217,32 @@ namespace CloacaInterpreter
             }
         }
 
-        public static PyString str_builtin(object o)
+        public static async Task<PyString> str_builtin(IInterpreter interpreter, FrameContext context, object o)
         {
-            if (PyNetConverter.CanConvert(o.GetType(), typeof(PyString)))
+            if(o == null)
             {
-                return (PyString)PyNetConverter.Convert(o, typeof(PyString));
+                return PyString.Create("null");
+            }
+
+            var asPyObject = o as PyObject;
+            if (asPyObject != null)
+            {
+                var str_func = (IPyCallable)((PyObject)asPyObject).__getattribute__(PyClass.__STR__);
+
+                var returned = await str_func.Call(interpreter, context, new object[0]);
+                if (returned != null)
+                {
+                    var asPyString = (PyString)returned;
+                    return asPyString;
+                }
+                else
+                {
+                    return PyString.Create("null");
+                }
             }
             else
             {
-                throw new InvalidCastException("Cannot convert " + o.GetType() + " to a string.");
+                return PyString.Create(o.ToString());
             }
         }
 
