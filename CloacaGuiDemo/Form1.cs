@@ -246,12 +246,14 @@ namespace CloacaGuiDemo
                 {
                     var asPyString = (PyString)returned;
                     richTextBox1.AppendText(asPyString);
+                    richTextBox1.AppendText("\n");
                     SetCursorToEnd();
                 }
             }
             else if(to_print != null)
             {
                 richTextBox1.AppendText(to_print.ToString());
+                richTextBox1.AppendText("\n");
             }
             SetCursorToEnd();
         }
