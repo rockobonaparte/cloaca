@@ -49,7 +49,7 @@ namespace LanguageImplementation.DataTypes
         public static PyObject __reversed__(PyObject self)
         {
             var asPyRange = self as PyRange;
-            return PyRangeIterator.Create(asPyRange.Max, asPyRange.Min, -1 * asPyRange.Step);
+            return PyRangeIterator.Create(asPyRange.Max - 1, asPyRange.Min - 1, -1 * asPyRange.Step);
         }
     }
 

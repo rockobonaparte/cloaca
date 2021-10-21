@@ -193,29 +193,6 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task ReversedRange()
-        {
-            var runContext = await runProgram(
-                "test_range = reversed(range(3))\n" +
-                "itr = test_range.__iter__()\n" +
-                "i0 = itr.__next__()\n" +
-                "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
-                "i2 = itr.__next__()\n" +
-                "i3 = itr.__next__()\n", new Dictionary<string, object>(), 1, false);
-
-            Assert.NotNull(runContext.CurrentException);
-            Assert.That(runContext.CurrentException.GetType(), Is.EqualTo(typeof(StopIteration)));
-
-            var variables = new VariableMultimap(runContext);
-            var i0 = (PyInteger)variables.Get("i0");
-            var i1 = (PyInteger)variables.Get("i1");
-            var i2 = (PyInteger)variables.Get("i2");
-            Assert.That(i0, Is.EqualTo(PyInteger.Create(3)));
-            Assert.That(i1, Is.EqualTo(PyInteger.Create(2)));
-            Assert.That(i2, Is.EqualTo(PyInteger.Create(1)));
-        }
-
-        [Test]
         public async Task Range2()
         {
             var runContext = await runProgram(
@@ -243,6 +220,42 @@ namespace CloacaTests
             Assert.That(itr.Start, Is.EqualTo(0));
             Assert.That(itr.Stop, Is.EqualTo(100));
             Assert.That(itr.Step, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task Range1List()
+        {
+            var runContext = await runProgram(
+                "l = list(range(1))\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var l = (PyList)variables.Get("l");
+
+            Assert.That(l.list[0], Is.EqualTo(PyInteger.Create(0)));
+        }
+
+        [Test]
+        public async Task ReversedRange()
+        {
+            var runContext = await runProgram(
+                "test_range = reversed(range(3))\n" +
+                "itr = test_range.__iter__()\n" +
+                "i0 = itr.__next__()\n" +
+                "i1 = itr.__next__()\n" +       // Should raise StopIterationException on following __next__()
+                "i2 = itr.__next__()\n" +
+                "i3 = itr.__next__()\n", new Dictionary<string, object>(), 1, false);
+
+            Assert.NotNull(runContext.CurrentException);
+            Assert.That(runContext.CurrentException.GetType(), Is.EqualTo(typeof(StopIteration)));
+
+            var variables = new VariableMultimap(runContext);
+            var i0 = (PyInteger)variables.Get("i0");
+            var i1 = (PyInteger)variables.Get("i1");
+            var i2 = (PyInteger)variables.Get("i2");
+            Assert.That(i0, Is.EqualTo(PyInteger.Create(2)));
+            Assert.That(i1, Is.EqualTo(PyInteger.Create(1)));
+            Assert.That(i2, Is.EqualTo(PyInteger.Create(0)));
         }
     }
 }
