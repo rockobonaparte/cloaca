@@ -2,6 +2,19 @@
 
 namespace LanguageImplementation.DataTypes.Exceptions
 {
+    public class AssertionError : PyException
+    {
+        public AssertionError(string msg) : base(msg)
+        {
+
+        }
+
+        public AssertionError() : base()
+        {
+
+        }
+    }
+
     public class AttributeError : PyException
     {
         public AttributeError(string msg) : base(msg)
