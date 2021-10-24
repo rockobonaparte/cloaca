@@ -1688,6 +1688,8 @@ namespace CloacaInterpreter
                                 }
                             }
                             break;
+                        case ByteCodes.LOAD_ASSERTION_ERROR:
+                            throw new NotImplementedException("LOAD_ASSERTION_ERROR is not yet implemented");
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }
