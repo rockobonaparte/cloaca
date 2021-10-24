@@ -123,6 +123,8 @@
 		JUMP_IF_FALSE_OR_POP       = 0x92, // Decimal 111 (0x6F) in Python 3.9. Jump if TOS is false. Otherwise, pop stack (continue). Useful for short-circuit AND
 		JUMP_IF_TRUE_OR_POP        = 0x93, // Decimal 112 (0x70) in Python 3.9. Jump if TOS is true. Otherwise, pop stack (continue). Useful for short-circuit OR
 
+		LOAD_ASSERTION_ERROR       = 0x94, // Adding in 3.9. This puts AssertionError on the stack.
+
 		// TODO: Figure out the actual opcode byte for this.
 		BUILD_CONST_KEY_MAP = 0x9C, // (2) The version of BUILD_MAP specialized for constant keys. count values are consumed from the stack. The top element on the stack contains a tuple of keys.
 		WAIT = 0xA0, // (0) Custom Cloaca green thread yield

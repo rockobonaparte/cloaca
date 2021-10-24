@@ -2012,4 +2012,24 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             context);
         return null;
     }
+
+    public override object VisitAssert_stmt([NotNull] CloacaParser.Assert_stmtContext context)
+    {
+        // assert_stmt: 'assert' test (',' test)?;
+        Visit(context.test(0));
+
+        var jumpTrueFixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_TRUE, -1, context));
+
+        ActiveProgram.AddInstruction(ByteCodes.LOAD_ASSERTION_ERROR, context);
+        if(context.test().Length > 1)
+        {
+            Visit(context.test(1));
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
+        }
+        ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
+
+        jumpTrueFixup.FixupAbsolute(ActiveProgram.Code.Count);
+
+        return null;
+    }
 }

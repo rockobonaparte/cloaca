@@ -1520,13 +1520,33 @@ namespace CloacaInterpreter
                                 context.Cursor += 1;
 
                                 // Assuming that the parameter is always one for now.
+                                //
+                                // What do all the values actually mean:
+                                //https://docs.python.org/3/library/dis.html#opcode-RAISE_VARARGS
+                                // 0: raise (re-raise previous exception)
+                                // 1: raise TOS(raise exception instance or type at TOS)
+                                // 2: raise TOS1 from TOS (raise exception instance or type at TOS1 with __cause__ set to TOS)
                                 var argCountIgnored = context.CodeBytes.GetUShort(context.Cursor);
                                 if (argCountIgnored != 1)
                                 {
                                     throw new NotImplementedException("RAISE_VARARGS with none-one fields not yet implemented.");
                                 }
 
-                                var theException = (PyObject)context.DataStack.Pop();
+                                var exceptionOrExcType = context.DataStack.Pop();
+                                PyObject theException = null;
+                                if(exceptionOrExcType is PyExceptionClass)
+                                {
+                                    var asClass = exceptionOrExcType as PyExceptionClass;
+                                    theException = (PyObject) await asClass.Call(this, context, new object[] { });
+                                }
+                                else if(exceptionOrExcType is PyObject)
+                                {
+                                    theException = exceptionOrExcType as PyObject;
+                                }
+                                else
+                                {
+                                    theException = new PyException("exceptions must derive from BaseException");
+                                }
 
                                 // Make sure it's an exception!
                                 // Replace the exception with "exceptions must derive from BaseException"
@@ -1686,6 +1706,12 @@ namespace CloacaInterpreter
                                     var printFunc = (IPyCallable) builtins["print"];
                                     await printFunc.Call(this, context, new object[] { toPrint });
                                 }
+                            }
+                            break;
+                        case ByteCodes.LOAD_ASSERTION_ERROR:
+                            {
+                                context.Cursor += 1;
+                                context.DataStack.Push(AssertionErrorClass.Instance);
                             }
                             break;
                         default:
