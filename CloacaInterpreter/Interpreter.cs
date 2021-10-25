@@ -1689,7 +1689,11 @@ namespace CloacaInterpreter
                             }
                             break;
                         case ByteCodes.LOAD_ASSERTION_ERROR:
-                            throw new NotImplementedException("LOAD_ASSERTION_ERROR is not yet implemented");
+                            {
+                                context.Cursor += 1;
+                                context.DataStack.Push(new AssertionError());
+                            }
+                            break;
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }
