@@ -14,6 +14,41 @@ namespace CloacaTests
     public class ExceptionTests : RunCodeTest
     {
         [Test]
+        [Ignore("Assertions are not yet implemented.")]
+        public async Task BasicAssertionFailNoMessage()
+        {
+            var context = await runProgram("assert 1 == 0\n", new Dictionary<string, object>(), 1, false);
+            Assert.NotNull(context.CurrentException);
+            Assert.That(context.CurrentException is AssertionError);
+        }
+
+        [Test]
+        [Ignore("Assertions are not yet implemented.")]
+        public async Task BasicAssertionFailWithMessage()
+        {
+            var context = await runProgram("assert 1 == 0, 'Hello, World!'\n", new Dictionary<string, object>(), 1, false);
+            Assert.NotNull(context.CurrentException);
+            Assert.That(context.CurrentException is AssertionError);
+            Assert.That(context.CurrentException.__dict__["message"], Is.EqualTo("Hello, World!"));
+        }
+
+        [Test]
+        [Ignore("Assertions are not yet implemented.")]
+        public async Task BasicAssertionPassNoMessage()
+        {
+            var context = await runProgram("assert 1 == 1\n", new Dictionary<string, object>(), 1, false);
+            Assert.IsNull(context.CurrentException);
+        }
+
+        [Test]
+        [Ignore("Assertions are not yet implemented.")]
+        public async Task BasicAssertionPassWithMessage()
+        {
+            var context = await runProgram("assert 1 == 1, 'Hello, Ignored!'\n", new Dictionary<string, object>(), 1, false);
+            Assert.IsNull(context.CurrentException);
+        }
+
+        [Test]
         public async Task RaiseException()
         {
             var context = await runProgram("raise Exception('Hello, World!')\n", new Dictionary<string, object>(), 1, false);
