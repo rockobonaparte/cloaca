@@ -14,7 +14,6 @@ namespace CloacaTests
     public class ExceptionTests : RunCodeTest
     {
         [Test]
-        [Ignore("Assertions are not yet implemented.")]
         public async Task BasicAssertionFailNoMessage()
         {
             var context = await runProgram("assert 1 == 0\n", new Dictionary<string, object>(), 1, false);
@@ -23,7 +22,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Assertions are not yet implemented.")]
         public async Task BasicAssertionFailWithMessage()
         {
             var context = await runProgram("assert 1 == 0, 'Hello, World!'\n", new Dictionary<string, object>(), 1, false);
@@ -33,7 +31,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Assertions are not yet implemented.")]
         public async Task BasicAssertionPassNoMessage()
         {
             var context = await runProgram("assert 1 == 1\n", new Dictionary<string, object>(), 1, false);
@@ -41,7 +38,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Assertions are not yet implemented.")]
         public async Task BasicAssertionPassWithMessage()
         {
             var context = await runProgram("assert 1 == 1, 'Hello, Ignored!'\n", new Dictionary<string, object>(), 1, false);
