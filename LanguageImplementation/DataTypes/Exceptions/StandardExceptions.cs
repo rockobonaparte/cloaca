@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes.Exceptions
 {
@@ -12,6 +14,62 @@ namespace LanguageImplementation.DataTypes.Exceptions
         public AssertionError() : base()
         {
 
+        }
+    }
+
+    public class AssertionErrorClass : PyExceptionClass
+    {
+        public AssertionErrorClass() :
+            base("AssertionError", null, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        private static AssertionErrorClass __instance;
+        public static new AssertionErrorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new AssertionErrorClass();
+                }
+                return __instance;
+            }
+        }
+
+        public static AssertionError Create(string message)
+        {
+            var exc = PyTypeObject.DefaultNew<AssertionError>(AssertionErrorClass.Instance);
+            exc.Message = message;
+            return exc;
+        }
+
+        public override async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        {
+            if(args.Length == 0)
+            {
+                return AssertionErrorClass.Create("");
+            }
+            else if(args.Length == 1)
+            {
+                return AssertionErrorClass.Create(args[0].ToString());
+            }
+            else
+            {
+                StringBuilder msg = new StringBuilder();
+                msg.Append("(");
+                for(int arg_i = 0; arg_i < args.Length; ++arg_i)
+                {
+                    msg.Append(args[arg_i].ToString());
+                    if(arg_i < args.Length-1)
+                    {
+                        msg.Append(", ");
+                    }
+                }
+                msg.Append(")");
+                return AssertionErrorClass.Create(msg.ToString());
+            }
         }
     }
 

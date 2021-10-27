@@ -2024,6 +2024,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if(context.test().Length > 1)
         {
             Visit(context.test(1));
+            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
         }
         ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
 
