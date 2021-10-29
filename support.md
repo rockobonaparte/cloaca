@@ -12,7 +12,7 @@
 | Keyword      | Rating | Notes                                                                                                 |
 | -----        | ------ | ---------------                                                                                       |
 | async/await  | 1      | Keywords are not supported, but the whole goal of the project should make this "reasonably possible." |
-| assert       | 1      | Straightforward to add an has TODO items for it.                                                      |
+| assert       | 3      |                                                                                                       |
 | and          | 3      |
 | as           | 3      | Particularly tested for exceptions                                                                    |
 | break        | 3      |
