@@ -36,12 +36,13 @@ namespace ConsoleApplication
             Console.WriteLine(finalStr);
         }
 
-        static void Main(string[] cmdline_args)
+        static int Main(string[] cmdline_args)
         {
             if (cmdline_args.Length != 1)
             {
                 Console.WriteLine("One argument required: path to script to compile and run.");
-                return;
+                Console.WriteLine("The Cloaca console application doesn't support a REPL yet.");
+                return 1;
             }
             string program = null;
             using (var inFile = new StreamReader(cmdline_args[0]))
@@ -58,7 +59,7 @@ namespace ConsoleApplication
             if (errorListener.Errors.Count > 0)
             {
                 Console.WriteLine("There were errors trying to compile the script. We cannot run it.");
-                return;
+                return 1;
             }
 
             var antlrVisitorContext = parser.file_input();
@@ -101,6 +102,8 @@ namespace ConsoleApplication
                     ExceptionDispatchInfo.Capture(scheduler.LastTasklet.EscapedDotNetException).Throw();
                 }
             }
+
+            return 0;
         }
     }
 }
