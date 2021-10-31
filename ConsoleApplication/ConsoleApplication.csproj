@@ -7,7 +7,7 @@
     <ProjectGuid>{062FBC62-D21E-4863-9D36-2CCB2B6638E7}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>ConsoleApplication</RootNamespace>
-    <AssemblyName>ConsoleApplication</AssemblyName>
+    <AssemblyName>cloaca</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
