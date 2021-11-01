@@ -9,3 +9,8 @@ Some priorities:
 5. Enable sherlock2 
 6. Need to actually implement NotImplementedError, which is ironic!
 7. Revisit from there
+
+Also need to implemented:
+* sorted
+* min
+* max
