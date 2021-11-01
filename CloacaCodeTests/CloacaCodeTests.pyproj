@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>f11639d9-4d28-4c5a-87b3-89d09816374d</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>CloacaCodeTests.py</StartupFile>
+    <StartupFile>amazon-subscribers.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,48 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CloacaCodeTests.py" />
+    <Compile Include="add_two_numbers.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="amazon-orders.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="amazon-subscribers.py" />
+    <Compile Include="assembly_line.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="facebook-yearbook_signing.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="google-longest_word.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="merge_sort.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="minheap.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="quicksort.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="sherlock2.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="smallest_change.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="stockmax.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="stock_span.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="fixing.md">
+      <SubType>Code</SubType>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
