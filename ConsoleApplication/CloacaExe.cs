@@ -93,13 +93,16 @@ namespace ConsoleApplication
                 }
                 catch (AggregateException wrappedEscapedException)
                 {
-                    // Given the nature of exception handling, we should normally only have one of these!
-                    ExceptionDispatchInfo.Capture(wrappedEscapedException.InnerExceptions[0]).Throw();
+                    Console.WriteLine("Cloaca exception thrown while running " + cmdline_args[0]);
+                    Console.WriteLine(wrappedEscapedException.InnerExceptions[0]);
+                    return 1;
                 }
 
                 if (scheduler.LastTasklet.EscapedDotNetException != null)
                 {
-                    ExceptionDispatchInfo.Capture(scheduler.LastTasklet.EscapedDotNetException).Throw();
+                    Console.WriteLine(".NET exception thrown while running " + cmdline_args[0]);
+                    Console.WriteLine(scheduler.LastTasklet.EscapedDotNetException);
+                    return 1;
                 }
             }
 
