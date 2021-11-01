@@ -5,4 +5,5 @@ Some priorities:
    1. Basic recursion
    2. Defining a recursing function inside another function
 3. Enable sherlock2
-4. Revisit from there
+4. Need to actually implement NotImplementedError, which is ironic!
+5. Revisit from there
