@@ -99,8 +99,6 @@ Part 3: Hardening
      * Exponential
   * Imaginary
   * Longs
-* Lists
-  * Slices
 * Tuples
   * Incorporate UNPACK_SEQUENCE into general lvalue expressions and not just for-loops. In fact, try to use a general lvalue assigner that
     can handle UNPACK_SEQUENCE take care of it in general.
@@ -256,6 +254,7 @@ Tech debt:
 * Reconcile CodeObject and WrappedCodeObject
   * Create a default __init__ once (and only once) to use in the class builder instead of stubbing a default constructor
 * Argumentlist Call() should not require passing in new object[0]
+* [NoneType PyObject] Make NoneType a PyObject
 
 
 Getting line numbers

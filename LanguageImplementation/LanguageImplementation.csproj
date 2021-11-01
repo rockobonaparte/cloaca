@@ -81,6 +81,7 @@
     <Compile Include="DataTypes\PyFunction.cs" />
     <Compile Include="DataTypes\PyModuleSpec.cs" />
     <Compile Include="DataTypes\PyModule.cs" />
+    <Compile Include="DataTypes\PySlice.cs" />
     <Compile Include="DataTypes\PyString.cs" />
     <Compile Include="DataTypes\PyInteger.cs" />
     <Compile Include="DataTypes\PyClass.cs" />

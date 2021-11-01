@@ -2032,4 +2032,58 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         return null;
     }
+
+    public override object VisitSubscript([NotNull] CloacaParser.SubscriptContext context)
+    {
+        var rawText = context.GetText();
+
+        // At the worst, there will be two colons in the slice, but at least one.
+        int[] colons = new int[] { -1, -1 };
+        colons[0] = rawText.IndexOf(':');
+        colons[1] = rawText.LastIndexOf(':');
+
+        // If there are no colons, this is not a slice!
+        if(colons[0] == -1)
+        {
+            return base.VisitSubscript(context);
+        }
+
+        // We're kind of miniparsing here haha.
+        // We have to put out some None loads when there's blanks in the slicing syntax.
+        // We have to do that when we haven't generated a real thing (since "last time") and ran into either:
+        // 1. A colon
+        // 2. The closing bracket
+        //
+        // To make it trickier, we have to look at this in terms of the tokens we did parse, and colons aren't part of that, so this
+        // gets pretty distorted. We have to figure out where the colons fit into everything else.
+
+        int textIdx = 0;
+        int test_context_i = 0;
+        int generated_entries = 0;
+        bool generatedRealSlice = false;
+        while(textIdx <= rawText.Length)
+        {
+            if(textIdx == colons[0] || textIdx == colons[1] || textIdx >= rawText.Length)
+            {
+                if (!generatedRealSlice)
+                {
+                    ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.AddGetIndex(NoneType.Instance), context);
+                    generated_entries += 1;
+                }
+                textIdx += 1;
+                generatedRealSlice = false;
+            }
+            else
+            {
+                Visit(context.test(test_context_i));
+                textIdx += context.test(test_context_i).GetText().Length;
+                generatedRealSlice = true;
+                generated_entries += 1;
+                test_context_i += 1;
+            }
+        }
+
+        ActiveProgram.AddInstruction(ByteCodes.BUILD_SLICE, generated_entries, context);
+        return null;
+    }
 }

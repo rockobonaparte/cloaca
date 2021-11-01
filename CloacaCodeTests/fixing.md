@@ -5,7 +5,7 @@ Some priorities:
    1. Basic recursion
    2. Defining a recursing function inside another function
 3. Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
-4. Implement array subscripting. I don't support array subscripting yet! Whoops!
+4. [DONE] Implement array slicing. I don't support array slicing yet! Whoops!
 5. Enable sherlock2 
 6. Need to actually implement NotImplementedError, which is ironic!
 7. Revisit from there
@@ -14,3 +14,4 @@ Also need to implemented:
 * sorted
 * min
 * max
+

@@ -94,6 +94,7 @@ namespace CloacaInterpreter
             var range_wrapper = new WrappedCodeObject("range", typeof(Builtins).GetNamedMethods("range_builtin"));
             var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
             var zip_wrapper = new WrappedCodeObject("zip", typeof(Builtins).GetMethod("zip_builtin"));
+            var slice_wrapper = new WrappedCodeObject("slice", typeof(Builtins).GetMethod("slice_builtin"));
 
             builtins = new Dictionary<string, object>
             {
@@ -110,6 +111,7 @@ namespace CloacaInterpreter
                 { "list", list_wrapper },
                 { "range", range_wrapper },
                 { "reversed", reversed_wrapper },
+                { "slice", slice_wrapper },
                 { "zip", zip_wrapper },
                 { "Exception", PyExceptionClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
@@ -1712,6 +1714,40 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 context.DataStack.Push(AssertionErrorClass.Instance);
+                            }
+                            break;
+                        case ByteCodes.BUILD_SLICE:
+                            {
+                                context.Cursor += 1;
+                                var arg_count = context.Function.Code.Code.GetUShort(context.Cursor);
+                                context.Cursor += 2;
+
+                                if(arg_count > 3)
+                                {
+                                    throw new Exception("BUILD_SLICE can only support at most 3 arguments");
+                                }
+                                if (arg_count <= 0)
+                                {
+                                    throw new Exception("BUILD_SLICE requires an argument ranging from 1 to 3");
+                                }
+
+                                // TODO: [NoneType PyObject] Make NoneType a PyObject
+                                object stepFromStack = NoneType.Instance;
+                                object stopFromStack = NoneType.Instance;
+                                object startFromStack = NoneType.Instance;
+
+                                if (arg_count == 1)
+                                {
+                                    stopFromStack = (PyInteger)context.DataStack.Pop();
+                                }
+                                else
+                                {
+                                    stepFromStack = arg_count == 3 ? context.DataStack.Pop() : NoneType.Instance;
+                                    stopFromStack = context.DataStack.Pop();
+                                    startFromStack = context.DataStack.Pop();
+                                }
+
+                                context.DataStack.Push(PySlice.Create(startFromStack, stopFromStack, stepFromStack));
                             }
                             break;
                         default:
