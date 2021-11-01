@@ -40,8 +40,8 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list subscripting not yet implemented")]
-        public async Task Subscripting()
+        [Ignore("Advanced list slicing not yet implemented")]
+        public async Task Slicing()
         {
             await runBasicTest("a = [0, 1, 2][0:]\n" +
                                "b = [0, 1, 2][1:]\n" +
@@ -73,8 +73,8 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list subscripting not yet implemented")]
-        public async Task SubscriptingNegative()
+        [Ignore("Advanced list slicing not yet implemented")]
+        public async Task SlicingNegative()
         {
             await runBasicTest("a = [0, 1, 2][-0:]\n" +             // Negative zero just to be a prick
                                "b = [0, 1, 2][-1:]\n" +
