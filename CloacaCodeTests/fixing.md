@@ -4,6 +4,8 @@ Some priorities:
 2. Double check recursion
    1. Basic recursion
    2. Defining a recursing function inside another function
-3. Enable sherlock2
-4. Need to actually implement NotImplementedError, which is ironic!
-5. Revisit from there
+3. Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
+4. Implement array subscripting. I don't support array subscripting yet! Whoops!
+5. Enable sherlock2 
+6. Need to actually implement NotImplementedError, which is ironic!
+7. Revisit from there
