@@ -40,6 +40,42 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("list slicing not yet implemented")]
+        public async Task BasicSliceOneArg()
+        {
+            await runBasicTest("s = slice(2)\n" +
+                               "b = [0, 1, 2][s]",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1)}) },
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("list slicing not yet implemented")]
+        public async Task BasicSliceTwoArgs()
+        {
+            await runBasicTest("s = slice(1, 2)\n" +
+                               "b = [0, 1, 2][s]",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyList.Create(new List<object>() { PyInteger.Create(1)}) },
+            }), 1);
+        }
+
+        [Test]
+        [Ignore("list slicing not yet implemented")]
+        public async Task BasicSliceThreeArgs()
+        {
+            await runBasicTest("s = slice(0, 3, 2)\n" +
+                               "b = [0, 1, 2][s]",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(2)}) },
+            }), 1);
+        }
+
+        [Test]
         [Ignore("Advanced list slicing not yet implemented")]
         public async Task SlicingObject()
         {
@@ -71,7 +107,6 @@ namespace CloacaTests
                 { "l", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1), PyInteger.Create(2)}) },
             }), 1);
         }
-
 
         [Test]
         [Ignore("Advanced list slicing not yet implemented")]
