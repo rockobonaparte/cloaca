@@ -437,6 +437,13 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor, "LOAD_ASSERTION_ERROR", null, null);
                         cursor += 1;
                         break;
+                    case ByteCodes.BUILD_SLICE:
+                        {
+                            cursor += 1;
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "BUILD_SLICE", code.GetUShort(cursor), string.Format("({0})", codeObject.Constants[code.GetUShort(cursor)]));
+                            cursor += 2;
+                            break;
+                        }
                     default:
                         throw new Exception("Unexpected opcode to disassemble: " + code[cursor] + " (0x" + Convert.ToString(code[cursor], 16) + ")");
                 }

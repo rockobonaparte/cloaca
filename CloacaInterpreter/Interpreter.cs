@@ -1714,6 +1714,23 @@ namespace CloacaInterpreter
                                 context.DataStack.Push(AssertionErrorClass.Instance);
                             }
                             break;
+                        case ByteCodes.BUILD_SLICE:
+                            {
+                                context.Cursor += 1;
+                                var arg_count = context.Function.Code.Code.GetUShort(context.Cursor);
+                                context.Cursor += 2;
+
+                                if(arg_count != 2)
+                                {
+                                    throw new Exception("We only support a BUILD_SLICE that's given two arguments");
+                                }
+
+                                var end = (PyInteger) context.DataStack.Pop();
+                                var start = (PyInteger)context.DataStack.Pop();
+
+                                throw new NotImplementedException("BUILD_SLICE is not yet implemented.");
+                            }
+
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }
