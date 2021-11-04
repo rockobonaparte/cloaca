@@ -410,5 +410,31 @@ namespace CloacaInterpreter
             }
             return IteratorMaker.MakeIterator(new ZippedItemIterator(converted_iters));
         }
+
+        public static PySlice slice_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            if(args.Length == 0)
+            {
+                context.CurrentException = new TypeError("slice expected at least 1 argument, got 0");
+                return null;
+            }
+            else if(args.Length == 1)
+            {
+                return PySlice.Create(args[0]);
+            }
+            else if(args.Length == 2)
+            {
+                return PySlice.Create(args[0], args[1]);
+            }
+            else if(args.Length == 3)
+            {
+                return PySlice.Create(args[0], args[1], args[2]);
+            }
+            else
+            {
+                context.CurrentException = new TypeError("slice expected at most 3 arguments, got " + args.Length);
+                return null;
+            }
+        }
     }
 }

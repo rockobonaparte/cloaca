@@ -40,6 +40,20 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task CreateSlice()
+        {
+            await runBasicTest("s1 = slice(0)\n" +
+                               "s2 = slice(0, 1.0)\n" +
+                               "s3 = slice(0, 1.0, 'what')\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "s1", PySlice.Create(PyInteger.Create(0)) },
+                { "s2", PySlice.Create(PyInteger.Create(0), PyFloat.Create(1.0)) },
+                { "s3", PySlice.Create(PyInteger.Create(0), PyFloat.Create(1.0), PyString.Create("what")) },
+            }), 1);
+        }
+
+        [Test]
         [Ignore("list slicing not yet implemented")]
         public async Task BasicSliceOneArg()
         {
