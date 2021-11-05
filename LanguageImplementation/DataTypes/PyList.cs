@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Numerics;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
@@ -68,17 +69,99 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        [ClassMember]
-        public static object __getitem__(PyList self, PyInteger i)
+        private static async Task<int> castSliceIndex(IInterpreter interpreter, FrameContext context, object sliceIdx)
         {
-            try
+            var asPyObject = sliceIdx as PyObject;
+            if(asPyObject != null)
             {
-                return self.list[(int) i.InternalValue];
+                // Slight optimization: PyInteger has __index__ but we already know to get its index.
+                var asPyInt = asPyObject as PyInteger;
+                if(asPyInt != null)
+                {
+                    return (int)asPyInt.InternalValue;
+                }
+                else if(asPyObject.__dict__.ContainsKey("__index__"))
+                {
+                    var index_dunder = (IPyCallable)asPyObject.__dict__["__index__"];
+                    var index = await index_dunder.Call(interpreter, context, new object[0]);
+                    var asPyIndex = index as PyInteger;
+                    if(asPyIndex == null)
+                    {
+                        context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                        return 0;
+                    }
+                    else
+                    {
+                        return (int) asPyIndex.InternalValue;
+                    }
+                }
+                else
+                {
+                    context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                    return 0;
+                }
             }
-            catch(ArgumentOutOfRangeException)
+            else if(sliceIdx is BigInteger || sliceIdx is int)
             {
-                // TODO: Represent as a more natural Python exception;
-                throw new Exception("IndexError: list index out of range");
+                return (int)sliceIdx;
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                return 0;
+            }
+        }
+
+        [ClassMember]
+        public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyList self, PyObject index_or_slice)
+        {
+            var asPyInt = index_or_slice as PyInteger;
+            if(asPyInt != null)
+            {
+                try
+                {
+                    return self.list[(int)asPyInt.InternalValue];
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // TODO: Represent as a more natural Python exception;
+                    throw new Exception("IndexError: list index out of range");
+                }
+            }
+
+            var asPySlice = index_or_slice as PySlice;
+            if(asPySlice != null)
+            {
+                var sliceList = new List<object>();
+                int step = await castSliceIndex(interpreter, context, asPySlice.Step);
+                int stop = await castSliceIndex(interpreter, context, asPySlice.Stop);
+                int start = await castSliceIndex(interpreter, context, asPySlice.Start);
+                if(context.CurrentException != null)
+                {
+                    return null;                // castSliceIndex failed somewhere along the line.
+                }
+
+                var newList = new List<object>();
+                if (start <= stop)
+                {
+                    for (int i = start; i < stop && i < self.list.Count; i += step)
+                    {
+                        newList.Add(self.list[i]);
+                    }
+                }
+                else
+                {
+                    for (int i = start; i > stop && i >= 0; i += step)
+                    {
+                        newList.Add(self.list[i]);
+                    }
+                }
+                return PyList.Create(newList);
+            }
+            else
+            {
+                context.CurrentException = new PyException("__getitem__ requires an integer index or slice, received " + index_or_slice.GetType().Name);
+                return null;
             }
         }
 
@@ -308,7 +391,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static object __next__(PyObject self)
+        public static object __next__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asIterator = self as PyListIterator;
             if (asIterator.CurrentIdx >= asIterator.IteratedList.list.Count)
@@ -318,7 +401,7 @@ namespace LanguageImplementation.DataTypes
             else
             {
                 asIterator.CurrentIdx += 1;
-                return PyListClass.__getitem__(asIterator.IteratedList, asIterator.CurrentIdx - 1);
+                return PyListClass.__getitem__(interpreter, context, asIterator.IteratedList, PyInteger.Create(asIterator.CurrentIdx - 1));
             }
         }
     }

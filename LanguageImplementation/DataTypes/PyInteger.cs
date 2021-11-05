@@ -132,6 +132,13 @@ namespace LanguageImplementation.DataTypes
             return PyInteger.Create(orded);
         }
 
+        // Get a version of this value that can be used to index into indexables.
+        [ClassMember]
+        public static PyInteger __index__(PyObject self)
+        {
+            return (PyInteger) self;
+        }
+
         // TODO: Might need to come up with a larger numeric type to handle shifting larger numbers.
         [ClassMember]
         public static PyObject __rshift__(PyObject self, PyObject other)

@@ -63,12 +63,12 @@ namespace LanguageImplementation.DataTypes
 
         public static PySlice Create(object start, object stop)
         {
-            return Create(start, stop, 1);
+            return Create(start, stop, PyInteger.Create(1));
         }
 
         public static PySlice Create(object stop)
         {
-            return Create(0, stop, 1);
+            return Create(PyInteger.Create(0), stop, PyInteger.Create(1));
         }
 
         public override bool Equals(object obj)
