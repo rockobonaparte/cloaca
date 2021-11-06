@@ -391,7 +391,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static object __next__(IInterpreter interpreter, FrameContext context, PyObject self)
+        public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asIterator = self as PyListIterator;
             if (asIterator.CurrentIdx >= asIterator.IteratedList.list.Count)
@@ -401,7 +401,7 @@ namespace LanguageImplementation.DataTypes
             else
             {
                 asIterator.CurrentIdx += 1;
-                return PyListClass.__getitem__(interpreter, context, asIterator.IteratedList, PyInteger.Create(asIterator.CurrentIdx - 1));
+                return await PyListClass.__getitem__(interpreter, context, asIterator.IteratedList, PyInteger.Create(asIterator.CurrentIdx - 1));
             }
         }
     }
