@@ -143,7 +143,7 @@ namespace CloacaInterpreter
                 }
                 else
                 {
-                    return await LoadSubscriptPyObject(interpreter, context, containerPyObject, GetIntIndex(index));
+                    return await LoadSubscriptPyObject(interpreter, context, containerPyObject, PyInteger.Create(GetIntIndex(index)));
                 }
 
 
