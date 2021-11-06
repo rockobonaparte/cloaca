@@ -87,7 +87,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list slicing not yet implemented")]
         public async Task SlicingObject()
         {
             await runBasicTest("a = [0, 1, 2][slice(0, 3)]\n" +
