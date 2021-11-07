@@ -1722,17 +1722,41 @@ namespace CloacaInterpreter
                                 var arg_count = context.Function.Code.Code.GetUShort(context.Cursor);
                                 context.Cursor += 2;
 
-                                if(arg_count != 2)
+                                if(arg_count > 3)
                                 {
-                                    throw new Exception("We only support a BUILD_SLICE that's given two arguments");
+                                    throw new Exception("BUILD_SLICE can only support at most 3 arguments");
+                                }
+                                if (arg_count <= 0)
+                                {
+                                    throw new Exception("BUILD_SLICE requires an argument ranging from 1 to 3");
                                 }
 
-                                var end = (PyInteger) context.DataStack.Pop();
-                                var start = (PyInteger)context.DataStack.Pop();
+                                // TODO: [NoneType PyObject] Make NoneType a PyObject
+                                                               
+                                PyInteger start;
+                                PyInteger stop;
+                                PyInteger step;
 
-                                throw new NotImplementedException("BUILD_SLICE is not yet implemented.");
+                                if(arg_count == 1)
+                                {
+                                    start = PyInteger.Create(0);
+                                    stop = (PyInteger)context.DataStack.Pop();
+                                    step = PyInteger.Create(1);
+                                }
+                                else
+                                {
+                                    object stepFromStack = arg_count == 3 ? context.DataStack.Pop() : NoneType.Instance;
+                                    object stopFromStack = context.DataStack.Pop();
+                                    object startFromStack = context.DataStack.Pop();
+
+                                    start = startFromStack == NoneType.Instance ? 0 : (PyInteger)startFromStack;
+                                    stop = stopFromStack == NoneType.Instance ? -1 : (PyInteger)stopFromStack;
+                                    step = stepFromStack == NoneType.Instance ? 1 : (PyInteger)stepFromStack;
+                                }
+
+                                context.DataStack.Push(PySlice.Create(start, stop, step));
                             }
-
+                            break;
                         default:
                             throw new Exception("Unexpected opcode: " + opcode);
                     }

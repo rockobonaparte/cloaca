@@ -2042,6 +2042,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         colons[0] = rawText.IndexOf(':');
         colons[1] = rawText.LastIndexOf(':');
 
+        // If there are no colons, this is not a slice!
+        if(colons[0] == -1)
+        {
+            return base.VisitSubscript(context);
+        }
+
         // We're kind of miniparsing here haha.
         // We have to put out some None loads when there's blanks in the slicing syntax.
         // We have to do that when we haven't generated a real thing (since "last time") and ran into either:
