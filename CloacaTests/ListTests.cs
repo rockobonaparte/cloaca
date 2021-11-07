@@ -18,6 +18,28 @@ namespace CloacaTests
     public class ListTests : RunCodeTest
     {
         [Test]
+        public async Task Declare2dList()
+        {
+            await runBasicTest("l = [[1,2],[3,4]]\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "l", PyList.Create(
+                            new List<object>()
+                            {
+                                PyList.Create(new List<object>()
+                                {
+                                    PyInteger.Create(1), PyInteger.Create(2)
+                                }),
+                                PyList.Create(new List<object>()
+                                {
+                                    PyInteger.Create(3), PyInteger.Create(4)
+                                })
+                            })
+                }
+            }), 1);
+        }
+
+        [Test]
         [Ignore("List multiplication doesn't work yet")]
         public async Task MultiplyList1()
         {
