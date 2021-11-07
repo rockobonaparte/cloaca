@@ -172,35 +172,34 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list slicing not yet implemented")]
         public async Task Slicing()
         {
-            await runBasicTest("a = [0, 1, 2][0:]\n" +
-                               "b = [0, 1, 2][1:]\n" +
-                               "c = [0, 1, 2][2:]\n" +
-                               "d = [0, 1, 2][3:]\n" +
-                               "e = [0, 1, 2][0:1]\n" +
-                               "f = [0, 1, 2][1:1]\n" +
-                               "g = [0, 1, 2][0:2]\n" +
-                               "h = [0, 1, 2][1:2]\n" +
-                               "i = [0, 1, 2][:0]\n" +
-                               "j = [0, 1, 2][:1]\n" +
-                               "k = [0, 1, 2][:2]\n" +
-                               "l = [0, 1, 2][:3]\n",
+            await runBasicTest("a = [0, 1, 2][0:]\n", 
+                               //"b = [0, 1, 2][1:]\n" +
+                               //"c = [0, 1, 2][2:]\n" +
+                               //"d = [0, 1, 2][3:]\n" +
+                               //"e = [0, 1, 2][0:1]\n" +
+                               //"f = [0, 1, 2][1:1]\n" +
+                               //"g = [0, 1, 2][0:2]\n" +
+                               //"h = [0, 1, 2][1:2]\n" +
+                               //"i = [0, 1, 2][:0]\n" +
+                               //"j = [0, 1, 2][:1]\n" +
+                               //"k = [0, 1, 2][:2]\n" +
+                               //"l = [0, 1, 2][:3]\n",
             new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1), PyInteger.Create(2)}) },
-                { "b", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2)}) },
-                { "c", PyList.Create(new List<object>() { PyInteger.Create(2)}) },
-                { "d", PyList.Create(new List<object>()) },
-                { "e", PyList.Create(new List<object>() { PyInteger.Create(0) }) },
-                { "f", PyList.Create(new List<object>()) },
-                { "g", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1) }) },
-                { "h", PyList.Create(new List<object>() { PyInteger.Create(1) }) },
-                { "i", PyList.Create(new List<object>()) },
-                { "j", PyList.Create(new List<object>() { PyInteger.Create(0)}) },
-                { "k", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1)}) },
-                { "l", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1), PyInteger.Create(2)}) },
+                //{ "b", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2)}) },
+                //{ "c", PyList.Create(new List<object>() { PyInteger.Create(2)}) },
+                //{ "d", PyList.Create(new List<object>()) },
+                //{ "e", PyList.Create(new List<object>() { PyInteger.Create(0) }) },
+                //{ "f", PyList.Create(new List<object>()) },
+                //{ "g", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1) }) },
+                //{ "h", PyList.Create(new List<object>() { PyInteger.Create(1) }) },
+                //{ "i", PyList.Create(new List<object>()) },
+                //{ "j", PyList.Create(new List<object>() { PyInteger.Create(0)}) },
+                //{ "k", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1)}) },
+                //{ "l", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1), PyInteger.Create(2)}) },
             }), 1);
         }
 
