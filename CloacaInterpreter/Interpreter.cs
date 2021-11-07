@@ -1732,29 +1732,22 @@ namespace CloacaInterpreter
                                 }
 
                                 // TODO: [NoneType PyObject] Make NoneType a PyObject
-                                                               
-                                PyInteger start;
-                                PyInteger stop;
-                                PyInteger step;
+                                object stepFromStack = NoneType.Instance;
+                                object stopFromStack = NoneType.Instance;
+                                object startFromStack = NoneType.Instance;
 
-                                if(arg_count == 1)
+                                if (arg_count == 1)
                                 {
-                                    start = PyInteger.Create(0);
-                                    stop = (PyInteger)context.DataStack.Pop();
-                                    step = PyInteger.Create(1);
+                                    stopFromStack = (PyInteger)context.DataStack.Pop();
                                 }
                                 else
                                 {
-                                    object stepFromStack = arg_count == 3 ? context.DataStack.Pop() : NoneType.Instance;
-                                    object stopFromStack = context.DataStack.Pop();
-                                    object startFromStack = context.DataStack.Pop();
-
-                                    start = startFromStack == NoneType.Instance ? 0 : (PyInteger)startFromStack;
-                                    stop = stopFromStack == NoneType.Instance ? -1 : (PyInteger)stopFromStack;
-                                    step = stepFromStack == NoneType.Instance ? 1 : (PyInteger)stepFromStack;
+                                    stepFromStack = arg_count == 3 ? context.DataStack.Pop() : NoneType.Instance;
+                                    stopFromStack = context.DataStack.Pop();
+                                    startFromStack = context.DataStack.Pop();
                                 }
 
-                                context.DataStack.Push(PySlice.Create(start, stop, step));
+                                context.DataStack.Push(PySlice.Create(startFromStack, stopFromStack, stepFromStack));
                             }
                             break;
                         default:

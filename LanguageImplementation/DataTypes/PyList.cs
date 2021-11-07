@@ -112,18 +112,6 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        private static int rollAroundSliceIdx(int sliceIdx, int listLen)
-        {
-            if(sliceIdx >= 0)
-            {
-                return sliceIdx;
-            }
-            else
-            {
-                return listLen + sliceIdx + 1;
-            }
-        }
-
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyList self, PyObject index_or_slice)
         {
@@ -144,20 +132,33 @@ namespace LanguageImplementation.DataTypes
             var asPySlice = index_or_slice as PySlice;
             if(asPySlice != null)
             {
-                int start = await castSliceIndex(interpreter, context, asPySlice.Start);
-                int stop = await castSliceIndex(interpreter, context, asPySlice.Stop);
-                int step = await castSliceIndex(interpreter, context, asPySlice.Step);
+                int listLen = self.list.Count;
+                int start = 0;
+                int stop = listLen;
+                int step = 1;
+                if(asPySlice.Start != null && asPySlice.Start != NoneType.Instance)
+                {
+                    start = await castSliceIndex(interpreter, context, asPySlice.Start);
+                }
+                if (asPySlice.Stop != null && asPySlice.Stop != NoneType.Instance)
+                {
+                    stop = await castSliceIndex(interpreter, context, asPySlice.Stop);
+                }
+                if (asPySlice.Step != null && asPySlice.Step != NoneType.Instance)
+                {
+                    step = await castSliceIndex(interpreter, context, asPySlice.Step);
+                }
                 if (context.CurrentException != null)
                 {
                     return null;                // castSliceIndex failed somewhere along the line.
                 }
 
                 // Adjust negative starts and stops based on array length.
-                start = rollAroundSliceIdx(start, self.list.Count);
-                stop = rollAroundSliceIdx(stop, self.list.Count);
+                start = start >= 0 ? start : listLen + start;
+                stop = stop >= 0 ? stop : listLen + stop;
 
                 // Adjust really negative starts to just be at the beginning of the list. We don't do modulus or rollover or whatever.
-                if(start < 0)
+                if (start < 0)
                 {
                     start = 0;
                 }

@@ -141,7 +141,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list slicing not yet implemented")]
         public async Task SlicingNegativeObject()
         {
             await runBasicTest("a = [0, 1, 2][slice(-0, 3)]\n" +
@@ -204,17 +203,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Advanced list slicing not yet implemented")]
         public async Task SlicingNegative()
         {
-            await runBasicTest("a = [0, 1, 2][-0:]\n" +             // Negative zero just to be a prick
+            await runBasicTest(
+                               "a = [0, 1, 2][-0:]\n" +             // Negative zero just to be a prick
                                "b = [0, 1, 2][-1:]\n" +
                                "c = [0, 1, 2][-2:]\n" +
                                "d = [0, 1, 2][-3:]\n" +
                                "e = [0, 1, 2][-1:0]\n" +
                                "f = [0, 1, 2][-1:-1]\n" +
                                "g = [0, 1, 2][0:-2]\n" +
-                               "h = [0, 1, 2][-2:-1]\n"+
+                               "h = [0, 1, 2][-2:-1]\n" +
                                "i = [0, 1, 2][:-1]\n" +
                                "j = [0, 1, 2][:-2]\n" +
                                "k = [0, 1, 2][:-3]\n",
