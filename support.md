@@ -104,7 +104,7 @@ When it comes to the built-in functions, support is much lower:
 | round        | 0
 | set          | 0
 | setattr      | 2      | The \_\_setattr__ dunder is supported but we haven't implemented this actual function.                |
-| slice        | 0
+| slice        | 2      | We have slice objects and list slicing, but I haven't explored if slicing is used elsewhere, and I haven't tested crazy corner cases. |
 | sorted       | ?      | There's some decisionmaking that has to happen first. Do we defer to .NET sorting? Mimic TimSort?     |
 | staticmethod | 0      | We don't support static methods yet and this could ruin things if we did. Class methods are supported. |
 | str          | 2      | You have to throw five million asterisks on this for Unicode alone. Strings generally work though.    |

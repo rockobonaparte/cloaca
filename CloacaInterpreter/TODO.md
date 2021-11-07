@@ -99,8 +99,6 @@ Part 3: Hardening
      * Exponential
   * Imaginary
   * Longs
-* Lists
-  * Slices
 * Tuples
   * Incorporate UNPACK_SEQUENCE into general lvalue expressions and not just for-loops. In fact, try to use a general lvalue assigner that
     can handle UNPACK_SEQUENCE take care of it in general.
