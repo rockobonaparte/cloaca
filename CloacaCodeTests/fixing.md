@@ -4,14 +4,12 @@ Some priorities:
 2. [DONE] Double check recursion
    1. [DONE] Basic recursion
    2. [DONE] Defining a recursing function inside another function
-3. Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
+3. [DONE] Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
 4. [DONE] Implement array slicing. I don't support array slicing yet! Whoops!
 5. Enable sherlock2 
 6. Need to actually implement NotImplementedError, which is ironic!
-7. Revisit from there
-
-Also need to implemented:
-* sorted
-* min
-* max
-
+7. Implement list add
+8. Implement min
+9. Implement max
+10. Implement sorted
+11. Rerun tests and refile this list

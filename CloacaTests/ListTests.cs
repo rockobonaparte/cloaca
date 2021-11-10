@@ -40,7 +40,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List multiplication doesn't work yet")]
+        [Ignore("Adding lists with '+' not yet supported")]
+        public async Task AddLists()
+        {
+            await runBasicTest("a = [0] + [1]\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(0), PyInteger.Create(1) }) }
+            }), 1);
+        }
+
+        [Test]
         public async Task MultiplyList1()
         {
             await runBasicTest("a = [0] * 2\n",
@@ -51,7 +61,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("List multiplication doesn't work yet")]
         public async Task MultiplyList2()
         {
             await runBasicTest("a = [0, 1] * 2\n",

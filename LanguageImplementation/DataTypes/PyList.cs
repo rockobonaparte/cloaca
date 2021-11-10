@@ -267,6 +267,37 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static PyList __mul__(IInterpreter interpreter, FrameContext context, PyList self, object other)
+        {
+            if(!(other is PyInteger) && !(other is int))
+            {
+                context.CurrentException = new TypeError("TypeError: can't multiply sequence by non-int of type " + other.GetType().Name);
+                return null;
+            }
+
+            int len;
+            if(other is int)
+            {
+                len = (int)other;
+            }
+            else
+            {
+                var asPyInt = other as PyInteger;
+                len = (int) asPyInt.InternalValue;
+            }
+
+            var newList = new List<object>(self.list.Count * len);
+            for(int repeat_i = 0; repeat_i < len; ++repeat_i)
+            {
+                foreach(var item in self.list)
+                {
+                    newList.Add(item);
+                }
+            }
+            return PyList.Create(newList);
+        }
+
+        [ClassMember]
         public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asList = (PyList)self;
