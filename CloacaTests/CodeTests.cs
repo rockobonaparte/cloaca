@@ -929,6 +929,41 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task RecursionBasic()
+        {
+            string program =
+                "def foo(x):\n" +
+                "   if x > 1:\n" +
+                "      return x\n" +
+                "   else:\n" +
+                "      return foo(x+1)\n" +
+                "a = foo(0)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(2) }
+                }), 1, new string[] { "foo" });
+        }
+
+        [Test]
+        public async Task InnerFunction()
+        {
+            string program =
+                "def foo(x):\n" +
+                "   def bar(y):\n" +
+                "      return y+1\n" +
+                "   return bar(x)\n" +
+                "a = foo(0)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(1) }
+                }), 1, new string[] { "foo" });
+        }
+
+        [Test]
         public async Task Vargs()
         {
             string program =
