@@ -298,6 +298,31 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static PyList __add__(IInterpreter interpreter, FrameContext context, PyList self, object other)
+        {
+            var otherPyList = other as PyList;
+            if(otherPyList == null)
+            {
+                context.CurrentException = new TypeError("TypeError: can only concatenate list (not \"" + other.GetType().Name + "\") to list ");
+                return null;
+            }
+
+            var newList = new List<object>(self.list.Count + otherPyList.list.Count);
+            
+            for(int i = 0; i < self.list.Count; ++i)
+            {
+                newList.Add(self.list[i]);
+            }
+
+            for (int i = 0; i < otherPyList.list.Count; ++i)
+            {
+                newList.Add(otherPyList.list[i]);
+            }
+
+            return PyList.Create(newList);
+        }
+
+        [ClassMember]
         public static async Task<PyString> __repr__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asList = (PyList)self;

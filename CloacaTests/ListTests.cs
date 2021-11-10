@@ -40,7 +40,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Adding lists with '+' not yet supported")]
         public async Task AddLists()
         {
             await runBasicTest("a = [0] + [1]\n",
