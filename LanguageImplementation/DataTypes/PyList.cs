@@ -260,6 +260,52 @@ namespace LanguageImplementation.DataTypes
             self.list.Insert(0, toAdd);
         }
 
+        private static object popInternal(FrameContext context, PyList self, object index)
+        {
+            var popIdx = 0;
+            if(index is int)
+            {
+                popIdx = (int)index;
+            }
+            else if(index is PyInteger)
+            {
+                popIdx = (int) ((PyInteger) index).InternalValue;
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: '" + index.GetType().Name + "' object cannot be interpreted as an integer");
+                return null;
+            }
+
+            if(popIdx < 0)
+            {
+                popIdx += self.list.Count;
+            }
+
+            if (popIdx < 0 || popIdx >= self.list.Count)
+            {
+                context.CurrentException = new PyException("IndexError: pop index out of range");
+                return null;
+            }
+
+            object itemAt = self.list[popIdx];
+            self.list.RemoveAt(popIdx);
+            return itemAt;
+        }
+
+        [ClassMember]
+        public static object pop(FrameContext context, PyList self, object index=null)
+        {
+            if(index == null)
+            {
+                return PyListClass.popInternal(context, self, -1);
+            }
+            else
+            {
+                return PyListClass.popInternal(context, self, index);
+            }
+        }
+
         [ClassMember]
         public static Task<PyString> __str__(IInterpreter interpreter, FrameContext context, PyObject self)
         {

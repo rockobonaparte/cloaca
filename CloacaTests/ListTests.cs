@@ -70,6 +70,30 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task ListPop()
+        {
+            await runBasicTest("a = [0, 1]\n" +
+                               "b = a.pop()\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(0) }) },
+                { "b", PyInteger.Create(1) }
+            }), 1);
+        }
+
+        [Test]
+        public async Task ListPopArg()
+        {
+            await runBasicTest("a = [0, 1]\n" +
+                               "b = a.pop(0)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(1) }) },
+                { "b", PyInteger.Create(0) }
+            }), 1);
+        }
+
+        [Test]
         public async Task CreateSlice()
         {
             await runBasicTest("s1 = slice(0)\n" +

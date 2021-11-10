@@ -8,7 +8,7 @@ Some priorities:
 4. [DONE] Implement array slicing. I don't support array slicing yet! Whoops!
 5. Enable sherlock2 
 6. Need to actually implement NotImplementedError, which is ironic!
-7. Implement list add
+7. [DONE] Implement list add
 8. Implement min
 9. Implement max
 10. Implement sorted
