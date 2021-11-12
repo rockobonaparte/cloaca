@@ -239,6 +239,11 @@ Part 3: Hardening
   * Nonlocal keyword.
 * Stackless Python channels for cross-coroutine communication.
 * Ordinal type: ord(). PyOrdinal?
+* min()/max() hardening
+  * Support default kwarg
+  * Support func kwarg
+  * Support alternate *args form
+  * This will probably require various overloaded arguments or a master function that switches off based on arguments
 
 
 Tech debt:

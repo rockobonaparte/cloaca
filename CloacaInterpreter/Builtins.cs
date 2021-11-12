@@ -377,6 +377,16 @@ namespace CloacaInterpreter
             }
         }
 
+        public static async Task<PyObject> min_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            throw new NotImplementedException("min() is not yet implemented");
+        }
+
+        public static async Task<PyObject> max_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            throw new NotImplementedException("max() is not yet implemented");
+        }
+
         public static async Task<PyObject> zip_builtin(IInterpreter interpreter, FrameContext context, params object[] iterables)
         {
             var converted_iters = new PyObject[iterables.Length];
