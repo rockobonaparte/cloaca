@@ -88,8 +88,8 @@ When it comes to the built-in functions, support is much lower:
 | list         | 3      | Seems to behave at least in typical usage.
 | map          | 0
 | memoryview   | ?      | Given the focus on C with memoryview, I am not sure what we'd actually do to support this.            |
-| max          | 0
-| min          | 0
+| max          | 1      | min and max are surprisingly detailed functions! I support just basic iterators for now.              |
+| min          | 1      | min and max are surprisingly detailed functions! I support just basic iterators for now.              |
 | next         | 2      | The function isn't implemented itself, but all of the generator mechanisms for it are there           |
 | object       | 1      | The function itself isn't implemented at all and I don't know about the technicalities of using it directly |
 | oct          | 0      | I don't know if we're even parsing octal numbers yet.                                                 |

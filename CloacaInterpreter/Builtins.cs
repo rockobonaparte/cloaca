@@ -377,12 +377,44 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task<PyObject> min_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        public static async Task<object> min_builtin(IInterpreter interpreter, FrameContext context, PyObject obj)
         {
-            throw new NotImplementedException("min() is not yet implemented");
+            // Try to get an iterator off of this thing.
+            if(!obj.__dict__.ContainsKey("__iter__"))
+            {
+                context.CurrentException = new TypeError("TypeError: '" + obj.__class__.Name + "' object is not iterable");
+                return null;
+            }
+
+            var iterator_func = (IPyCallable) obj.__dict__["__iter__"];
+            var iterator = (await iterator_func.Call(interpreter, context, new object[] { obj })) as PyIterable;
+            if(iterator == null)
+            {
+                context.CurrentException = new ValueError("ValueError: min() arg does not implement a PyIterable for __iter__");
+                return null;
+            }
+
+            object lowest = await iterator.Next(interpreter, context);
+            if(context.CurrentException is StopIteration)
+            {
+                context.CurrentException = new ValueError("ValueError: min() arg is an empty sequence");
+                return null;
+            }
+            do
+            {
+                object next = await iterator.Next(interpreter, context);
+
+            } while (context.CurrentException == null);
+
+            if(context.CurrentException is StopIteration)
+            {
+                context.CurrentException = null;
+            }
+
+            return lowest;
         }
 
-        public static async Task<PyObject> max_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        public static async Task<object> max_builtin(IInterpreter interpreter, FrameContext context, PyIterable iter)
         {
             throw new NotImplementedException("max() is not yet implemented");
         }
