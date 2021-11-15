@@ -508,7 +508,7 @@ namespace LanguageImplementation.DataTypes
         public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asIterator = self as PyListIterator;
-            return asIterator.Next(interpreter, context);
+            return await asIterator.Next(interpreter, context);
         }
     }
 
