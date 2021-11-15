@@ -18,7 +18,7 @@ namespace LanguageImplementation
         /// <returns>The next object</returns>
         /// <exception cref="StopIterationException">The last element was already
         /// iterated.</exception>
-        Task<object> Next(IInterpreter interpreter, FrameContext context);
+        Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle);
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ namespace LanguageImplementation
             length = -1;
         }
 
-        public async virtual Task<object> Next(IInterpreter interpreter, FrameContext context)
+        public async virtual Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             if(length.InternalValue == -1)
             {
@@ -66,7 +66,7 @@ namespace LanguageImplementation
     {
         public ReversedLenGetItemIterator(PyObject container, IPyCallable len, IPyCallable getitem) : base(container, len, getitem) { }
 
-        public override async Task<object> Next(IInterpreter interpreter, FrameContext context)
+        public override async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             if (length.InternalValue == -1)
             {
@@ -100,7 +100,7 @@ namespace LanguageImplementation
             stopped = false;
         }
 
-        public async Task<object> Next(IInterpreter interpreter, FrameContext context)
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             // Technicality: No items to iterate? We're done.
             if(this.iterators.Length == 0 || stopped)

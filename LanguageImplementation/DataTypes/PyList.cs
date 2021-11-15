@@ -508,7 +508,7 @@ namespace LanguageImplementation.DataTypes
         public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asIterator = self as PyListIterator;
-            return await asIterator.Next(interpreter, context);
+            return await asIterator.Next(interpreter, context, self);
         }
     }
 
@@ -531,7 +531,7 @@ namespace LanguageImplementation.DataTypes
             return iterator;
         }
 
-        public async Task<object> Next(IInterpreter interpreter, FrameContext context)
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             if (CurrentIdx >= IteratedList.list.Count)
             {

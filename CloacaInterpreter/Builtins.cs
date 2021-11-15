@@ -394,7 +394,7 @@ namespace CloacaInterpreter
                 return null;
             }
 
-            object lowest = await iterator.Next(interpreter, context);
+            object lowest = await iterator.Next(interpreter, context, obj);
             if(context.CurrentException is StopIteration)
             {
                 context.CurrentException = new ValueError("ValueError: min() arg is an empty sequence");
@@ -402,7 +402,7 @@ namespace CloacaInterpreter
             }
             do
             {
-                object next = await iterator.Next(interpreter, context);
+                object next = await iterator.Next(interpreter, context, obj);
 
             } while (context.CurrentException == null);
 
