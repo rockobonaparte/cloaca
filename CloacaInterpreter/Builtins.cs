@@ -400,12 +400,41 @@ namespace CloacaInterpreter
                 context.CurrentException = new ValueError("ValueError: min() arg is an empty sequence");
                 return null;
             }
-            do
+            else if(!(lowest is PyObject))
             {
-                object next = await iterator.Next(interpreter, context, obj);
+                context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in min() yet: " + lowest.ToString());
+                return null;
+            }
 
-            } while (context.CurrentException == null);
+            object next = await iterator.Next(interpreter, context, obj);
+            while (context.CurrentException == null)
+            {
+                if (!(next is PyObject))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in min() yet: " + next.ToString());
+                    return null;
+                }
 
+                var nextPyObj = next as PyObject;
+                var lowestPyObj = lowest as PyObject;
+                if (!lowestPyObj.__dict__.ContainsKey("__lt__"))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare PyObjects that do not implement lt(): " + lowest.ToString());
+                    return null;
+                }
+                else
+                {
+                    var ltFunc = (IPyCallable)lowestPyObj.__dict__["__lt__"];
+                    var isLower = (PyBool)await ltFunc.Call(interpreter, context, new object[] { lowestPyObj, nextPyObj });
+                    if (isLower.InternalValue == false)
+                    {
+                        lowest = nextPyObj;
+                    }
+                }
+
+                next = await iterator.Next(interpreter, context, obj);
+            }
+            
             if(context.CurrentException is StopIteration)
             {
                 context.CurrentException = null;
