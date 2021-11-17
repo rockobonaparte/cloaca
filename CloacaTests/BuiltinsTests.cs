@@ -287,5 +287,33 @@ namespace CloacaTests
             Assert.That(b, Is.EqualTo(PyInteger.Create(1)));
         }
 
+        [Test]
+        public async Task MaxSingleElement()
+        {
+            var runContext = await runProgram(
+                "m = max([100])\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var m = (PyInteger)variables.Get("m");
+
+            Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
+        }
+
+        [Test]
+        public async Task MaxMultipleElements()
+        {
+            var runContext = await runProgram(
+                "a = max([1, 2, 3])\n" +
+                "b = max([3, 2, 1])\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var a = (PyInteger)variables.Get("a");
+            var b = (PyInteger)variables.Get("b");
+
+            Assert.That(a, Is.EqualTo(PyInteger.Create(3)));
+            Assert.That(b, Is.EqualTo(PyInteger.Create(3)));
+        }
     }
 }
