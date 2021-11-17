@@ -271,5 +271,21 @@ namespace CloacaTests
             Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
         }
 
+        [Test]
+        public async Task MinMultipleElements()
+        {
+            var runContext = await runProgram(
+                "a = min([1, 2, 3])\n" +
+                "b = min([3, 2, 1])\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var a = (PyInteger)variables.Get("a");
+            var b = (PyInteger)variables.Get("b");
+
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
+            Assert.That(b, Is.EqualTo(PyInteger.Create(1)));
+        }
+
     }
 }
