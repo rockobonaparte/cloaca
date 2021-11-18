@@ -1,4 +1,4 @@
-raise NotImplementedError("Max not yet implemented")
+raise NotImplementedError("2-argument max not yet implemented")
 
 """
 https://www.hackerrank.com/challenges/stockmax/problem

@@ -15,14 +15,10 @@ namespace LanguageImplementation
         /// Use this to call any helpers you may have.</param>
         /// <param name="context">FrameContext containing current run state. Pass
         /// along to any helpers (functions) that you also need to call.</param>
-        /// <param name="self">A reference to this object that is being invoked.
-        /// This keeps it consistent with the other iterators. Also, who knows?
-        /// Maybe you want to play with the object IteratorMaker created for you!
-        /// </param>
         /// <returns>The next object</returns>
         /// <exception cref="StopIterationException">The last element was already
         /// iterated.</exception>
-        Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self);
+        Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle);
     }
 
     /// <summary>
@@ -45,7 +41,7 @@ namespace LanguageImplementation
             length = -1;
         }
 
-        public async virtual Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        public async virtual Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             if(length.InternalValue == -1)
             {
@@ -70,7 +66,7 @@ namespace LanguageImplementation
     {
         public ReversedLenGetItemIterator(PyObject container, IPyCallable len, IPyCallable getitem) : base(container, len, getitem) { }
 
-        public override async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        public override async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             if (length.InternalValue == -1)
             {
@@ -104,7 +100,7 @@ namespace LanguageImplementation
             stopped = false;
         }
 
-        public async Task<object> Next(IInterpreter interpreter, FrameContext context, PyObject self)
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
         {
             // Technicality: No items to iterate? We're done.
             if(this.iterators.Length == 0 || stopped)

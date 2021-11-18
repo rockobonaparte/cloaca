@@ -377,6 +377,82 @@ namespace CloacaInterpreter
             }
         }
 
+        private static async Task<object> __helper_find_best(IInterpreter interpreter, FrameContext context, PyObject obj, string func_name, string func_dunder)
+        {
+            // Try to get an iterator off of this thing.
+            if (!obj.__dict__.ContainsKey("__iter__"))
+            {
+                context.CurrentException = new TypeError("TypeError: '" + obj.__class__.Name + "' object is not iterable");
+                return null;
+            }
+
+            var iterator_func = (IPyCallable)obj.__dict__["__iter__"];
+            var iterator = (await iterator_func.Call(interpreter, context, new object[] { obj })) as PyIterable;
+            if (iterator == null)
+            {
+                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg does not implement a PyIterable for __iter__");
+                return null;
+            }
+
+            object best = await iterator.Next(interpreter, context, obj);
+            if (context.CurrentException is StopIteration)
+            {
+                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg is an empty sequence");
+                return null;
+            }
+            else if (!(best is PyObject))
+            {
+                context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
+                return null;
+            }
+
+            object next = await iterator.Next(interpreter, context, obj);
+            while (context.CurrentException == null)
+            {
+                if (!(next is PyObject))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
+                    return null;
+                }
+
+                var nextPyObj = next as PyObject;
+                var lowestPyObj = best as PyObject;
+                if (!lowestPyObj.__dict__.ContainsKey(func_dunder))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
+                    return null;
+                }
+                else
+                {
+                    var ltFunc = (IPyCallable)lowestPyObj.__dict__[func_dunder];
+                    var isLower = (PyBool)await ltFunc.Call(interpreter, context, new object[] { lowestPyObj, nextPyObj });
+                    if (isLower.InternalValue == false)
+                    {
+                        best = nextPyObj;
+                    }
+                }
+
+                next = await iterator.Next(interpreter, context, obj);
+            }
+
+            if (context.CurrentException is StopIteration)
+            {
+                context.CurrentException = null;
+            }
+
+            return best;
+        }
+
+        public static async Task<object> min_builtin(IInterpreter interpreter, FrameContext context, PyObject obj)
+        {
+            return await __helper_find_best(interpreter, context, obj, "min", "__lt__");
+        }
+
+        public static async Task<object> max_builtin(IInterpreter interpreter, FrameContext context, PyObject obj)
+        {
+            return await __helper_find_best(interpreter, context, obj, "max", "__gt__");
+        }
+
         public static async Task<PyObject> zip_builtin(IInterpreter interpreter, FrameContext context, params object[] iterables)
         {
             var converted_iters = new PyObject[iterables.Length];

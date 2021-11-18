@@ -508,19 +508,11 @@ namespace LanguageImplementation.DataTypes
         public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             var asIterator = self as PyListIterator;
-            if (asIterator.CurrentIdx >= asIterator.IteratedList.list.Count)
-            {
-                throw new StopIterationException();
-            }
-            else
-            {
-                asIterator.CurrentIdx += 1;
-                return await PyListClass.__getitem__(interpreter, context, asIterator.IteratedList, PyInteger.Create(asIterator.CurrentIdx - 1));
-            }
+            return await asIterator.Next(interpreter, context, self);
         }
     }
 
-    public class PyListIterator : PyObject
+    public class PyListIterator : PyObject, PyIterable
     {
         public int CurrentIdx;
         public PyList IteratedList;
@@ -537,6 +529,21 @@ namespace LanguageImplementation.DataTypes
             iterator.IteratedList = list;
 
             return iterator;
+        }
+
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
+        {
+            if (CurrentIdx >= IteratedList.list.Count)
+            {
+                context.CurrentException = new StopIteration();
+                return null;
+            }
+            else
+            {
+                CurrentIdx += 1;
+                return await PyListClass.__getitem__(interpreter, context, IteratedList, PyInteger.Create(CurrentIdx - 1));
+            }
+
         }
     }
 }
