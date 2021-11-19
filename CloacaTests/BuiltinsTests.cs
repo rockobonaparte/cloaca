@@ -259,7 +259,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task MinSingleElement()
+        public async Task MinSingleElementList()
         {
             var runContext = await runProgram(
                 "m = min([100])\n",
@@ -272,7 +272,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task MinMultipleElements()
+        public async Task MinMultipleElementsList()
         {
             var runContext = await runProgram(
                 "a = min([1, 2, 3])\n" +
@@ -288,7 +288,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task MaxSingleElement()
+        public async Task MaxSingleElementList()
         {
             var runContext = await runProgram(
                 "m = max([100])\n",
@@ -301,7 +301,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task MaxMultipleElements()
+        public async Task MaxMultipleElementsList()
         {
             var runContext = await runProgram(
                 "a = max([1, 2, 3])\n" +
@@ -315,5 +315,68 @@ namespace CloacaTests
             Assert.That(a, Is.EqualTo(PyInteger.Create(3)));
             Assert.That(b, Is.EqualTo(PyInteger.Create(3)));
         }
+
+        [Test]
+        [Ignore("min() using multiple args not yet supported")]
+        public async Task MinSingleElementArgs()
+        {
+            var runContext = await runProgram(
+                "m = min(100)\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var m = (PyInteger)variables.Get("m");
+
+            Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
+        }
+
+        [Test]
+        [Ignore("min() using multiple args not yet supported")]
+        public async Task MinMultipleElementsArgs()
+        {
+            var runContext = await runProgram(
+                "a = min(1, 2, 3)\n" +
+                "b = min(3, 2, 1)\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var a = (PyInteger)variables.Get("a");
+            var b = (PyInteger)variables.Get("b");
+
+            Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
+            Assert.That(b, Is.EqualTo(PyInteger.Create(1)));
+        }
+
+        [Test]
+        [Ignore("max() using multiple args not yet supported")]
+        public async Task MaxSingleElementArgs()
+        {
+            var runContext = await runProgram(
+                "m = max(100)\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var m = (PyInteger)variables.Get("m");
+
+            Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
+        }
+
+        [Test]
+        [Ignore("max() using multiple args not yet supported")]
+        public async Task MaxMultipleElementsArgs()
+        {
+            var runContext = await runProgram(
+                "a = max(1, 2, 3)\n" +
+                "b = max(3, 2, 1)\n",
+                new Dictionary<string, object>(), 1, false);
+
+            var variables = new VariableMultimap(runContext);
+            var a = (PyInteger)variables.Get("a");
+            var b = (PyInteger)variables.Get("b");
+
+            Assert.That(a, Is.EqualTo(PyInteger.Create(3)));
+            Assert.That(b, Is.EqualTo(PyInteger.Create(3)));
+        }
+
     }
 }
