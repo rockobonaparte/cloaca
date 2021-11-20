@@ -1,5 +1,3 @@
-raise NotImplementedError("2-argument max not yet implemented")
-
 """
 https://www.hackerrank.com/challenges/stockmax/problem
 
@@ -24,5 +22,6 @@ def stockmax(prices):
     return profit
 
 
-print(stockmax([5, 4, 3, 2, 1]))
-
+assert stockmax([5, 4, 3, 2, 1]) == 0
+assert stockmax([1, 2, 3, 4, 5]) == 10
+print("Success!")

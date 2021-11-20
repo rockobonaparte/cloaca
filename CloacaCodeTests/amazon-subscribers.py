@@ -1,3 +1,6 @@
+raise NotImplementedError("Another empty stack")
+
+
 def countGroups(related):
     groups = 0
 
@@ -38,5 +41,4 @@ def countGroups(related):
     return groups
 
 
-raise NotImplementedError("We can't print the result of the call yet. We get an empty stack")
 print(countGroups(["1100", "1110", "0110", "0001"]))
