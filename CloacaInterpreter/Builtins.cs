@@ -377,6 +377,51 @@ namespace CloacaInterpreter
             }
         }
 
+        private static async Task<object> __helper_find_best(IInterpreter interpreter, FrameContext context, object[] inlineArgs, string func_name, string func_dunder)
+        {
+            if(inlineArgs.Length == 0)
+            {
+                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg is an empty sequence");
+                return null;
+            }
+
+            object best = inlineArgs[0];
+            if (!(best is PyObject))
+            {
+                context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
+                return null;
+            }
+
+            for(int i = 0; i < inlineArgs.Length && context.CurrentException == null; ++i)
+            {
+                object next = inlineArgs[i];
+                if (!(next is PyObject))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
+                    return null;
+                }
+
+                var nextPyObj = next as PyObject;
+                var lowestPyObj = best as PyObject;
+                if (!lowestPyObj.__dict__.ContainsKey(func_dunder))
+                {
+                    context.CurrentException = new NotImplemented("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
+                    return null;
+                }
+                else
+                {
+                    var ltFunc = (IPyCallable)lowestPyObj.__dict__[func_dunder];
+                    var isLower = (PyBool)await ltFunc.Call(interpreter, context, new object[] { lowestPyObj, nextPyObj });
+                    if (isLower.InternalValue == false)
+                    {
+                        best = nextPyObj;
+                    }
+                }
+            }
+
+            return best;
+        }
+
         private static async Task<object> __helper_find_best(IInterpreter interpreter, FrameContext context, PyObject obj, string func_name, string func_dunder)
         {
             // Try to get an iterator off of this thing.
@@ -443,14 +488,40 @@ namespace CloacaInterpreter
             return best;
         }
 
-        public static async Task<object> min_builtin(IInterpreter interpreter, FrameContext context, PyObject obj)
+        // Help pick which max/max to actually use based on the arguments we get.
+        private static async Task<object> minmax_dispatch(IInterpreter interpreter, FrameContext context, string func_name, string func_dunder, params object[] args)
         {
-            return await __helper_find_best(interpreter, context, obj, "min", "__lt__");
+            if (args.Length == 1)
+            {
+                var asPyObject = args[0] as PyObject;
+                if (asPyObject == null)
+                {
+                    context.CurrentException = new ValueError
+                        ("Attempted to call " +
+                            func_name +
+                            " with a single non-PyObject. We do not support these yet (like .NET lists/arrays). Received " +
+                            args[0].GetType().Name);
+                    return null;
+                }
+                else
+                {
+                    return await __helper_find_best(interpreter, context, asPyObject, func_name, func_dunder);
+                }
+            }
+            else
+            {
+                return await __helper_find_best(interpreter, context, args, func_name, func_dunder);
+            }
         }
 
-        public static async Task<object> max_builtin(IInterpreter interpreter, FrameContext context, PyObject obj)
+        public static async Task<object> min_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
         {
-            return await __helper_find_best(interpreter, context, obj, "max", "__gt__");
+            return await minmax_dispatch(interpreter, context, "min", "__lt__", args);
+        }
+
+        public static async Task<object> max_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            return await minmax_dispatch(interpreter, context, "max", "__gt__", args);
         }
 
         public static async Task<PyObject> zip_builtin(IInterpreter interpreter, FrameContext context, params object[] iterables)

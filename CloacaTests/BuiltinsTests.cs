@@ -317,21 +317,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("min() using multiple args not yet supported")]
-        public async Task MinSingleElementArgs()
-        {
-            var runContext = await runProgram(
-                "m = min(100)\n",
-                new Dictionary<string, object>(), 1, false);
-
-            var variables = new VariableMultimap(runContext);
-            var m = (PyInteger)variables.Get("m");
-
-            Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
-        }
-
-        [Test]
-        [Ignore("min() using multiple args not yet supported")]
         public async Task MinMultipleElementsArgs()
         {
             var runContext = await runProgram(
@@ -348,21 +333,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("max() using multiple args not yet supported")]
-        public async Task MaxSingleElementArgs()
-        {
-            var runContext = await runProgram(
-                "m = max(100)\n",
-                new Dictionary<string, object>(), 1, false);
-
-            var variables = new VariableMultimap(runContext);
-            var m = (PyInteger)variables.Get("m");
-
-            Assert.That(m, Is.EqualTo(PyInteger.Create(100)));
-        }
-
-        [Test]
-        [Ignore("max() using multiple args not yet supported")]
         public async Task MaxMultipleElementsArgs()
         {
             var runContext = await runProgram(
