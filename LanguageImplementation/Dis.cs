@@ -179,6 +179,11 @@ namespace LanguageImplementation
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "LOAD_GLOBAL", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));
                         cursor += 2;
                         break;
+                    case ByteCodes.LOAD_DEREF:
+                        cursor += 1;
+                        disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "LOAD_DEREF", code.GetUShort(cursor), string.Format("({0})", codeObject.FreeNames[code.GetUShort(cursor)]));
+                        cursor += 2;
+                        break;
                     case ByteCodes.LOAD_ATTR:
                         cursor += 1;
                         disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "LOAD_ATTR", code.GetUShort(cursor), string.Format("({0})", codeObject.Names[code.GetUShort(cursor)]));

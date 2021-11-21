@@ -244,7 +244,8 @@ Part 3: Hardening
   * Support func kwarg
   * Support alternate *args form
   * This will probably require various overloaded arguments or a master function that switches off based on arguments
-
+* Cell variables (oh God)
+  * [CELL VARIABLES]: Wrap variables in cells.
 
 Tech debt:
 * [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL

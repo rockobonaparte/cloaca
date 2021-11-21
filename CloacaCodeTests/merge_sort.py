@@ -1,5 +1,3 @@
-raise NotImplementedError("This test cannot find the internal recurse function")
-
 def merge(left, right):
     left_len = len(left)
     right_len = len(right)
@@ -42,4 +40,4 @@ def merge_sort(the_list):
 
 
 print(merge_sort([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]))
-
+print("Success!")

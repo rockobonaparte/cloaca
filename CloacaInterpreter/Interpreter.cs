@@ -236,6 +236,7 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
+            // BOOKMARK: See if you can figure out how to add the current function to locals if it isn't already in globals.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
                 frame.SetFastLocal(argIdx, args[argIdx]);
@@ -243,7 +244,8 @@ namespace CloacaInterpreter
 
             for (int varIndex = 0; varIndex < frame.Function.Code.VarNames.Count; ++varIndex)
             {
-                frame.AddOnlyNewLocal(frame.Function.Code.VarNames[varIndex], null);
+                var varName = frame.Function.Code.VarNames[varIndex];
+                frame.AddOnlyNewLocal(varName, null);                
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
@@ -804,24 +806,55 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.LOAD_GLOBAL:
                             {
-                                {
-                                    context.Cursor += 1;
-                                    var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var globalName = context.Function.Code.Names[globalIdx];
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Function.Code.Names[globalIdx];
 
-                                    if(context.callStack.Peek().HasGlobal(globalName))
+                                if(context.callStack.Peek().HasGlobal(globalName))
+                                {
+                                    context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
+                                }
+                                else if (builtins.ContainsKey(globalName))
+                                {
+                                    context.DataStack.Push(builtins[globalName]);
+                                }
+                                else
+                                {
+                                    throw new Exception("Global '" + globalName + "' was not found!");
+                                }
+                                context.Cursor += 2;
+                                break;
+                            }
+                        case ByteCodes.LOAD_DEREF:
+                            {
+                                context.Cursor += 1;
+                                var freeVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var freeVarName = context.Function.Code.FreeNames[freeVarIdx];
+
+                                bool found = false;
+                                for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
+                                {
+                                    var frame = context.callStack.ElementAt(callStackIdx);
+                                    if (frame.Function.Code.CellNames.Contains(freeVarName))
                                     {
-                                        context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
-                                    }
-                                    else if (builtins.ContainsKey(globalName))
-                                    {
-                                        context.DataStack.Push(builtins[globalName]);
-                                    }
-                                    else
-                                    {
-                                        throw new Exception("Global '" + globalName + "' was not found!");
+                                        if (frame.Locals.ContainsKey(freeVarName))
+                                        {
+                                            context.DataStack.Push(frame.Locals[freeVarName]);
+                                            found = true;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
+                                        }
                                     }
                                 }
+
+                                if(!found)
+                                {
+                                    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
+                                }
+
                                 context.Cursor += 2;
                                 break;
                             }
@@ -1322,6 +1355,7 @@ namespace CloacaInterpreter
 
                                 PyFunction function = (PyFunction)context.DataStack.Pop();
                                 context.DataStack.Push(function);
+                                context.Locals.AddOrSet(qualifiedName, function);                                // Sneaky: The function is added to locals after it is made! CPython does this!
                             }
                             context.Cursor += 2;
                             break;

@@ -964,7 +964,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exposed problem with recursive calls of inner functions")]
         public async Task InnerFunctionRecurse()
         {
             string program =
@@ -980,7 +979,7 @@ namespace CloacaTests
             await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", PyInteger.Create(20) }
+                    { "a", PyInteger.Create(12) }
                 }), 1, new string[] { "foo" });
         }
 
