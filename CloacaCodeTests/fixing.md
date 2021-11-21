@@ -21,3 +21,20 @@ def foo(...):
   def bar(...):
     bar(<-- this bar won't be resolved)
 ```
+
+```
+def outer():
+  def inner(x):
+    if x <= 1:
+       print(globals())
+       print(locals())
+    else:
+       inner(x-1)
+  inner(2)
+```
+
+```
+{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <class '_frozen_importlib.BuiltinImporter'>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, 'outer': <function outer at 0x0000022FBC03D790>}
+{'x': 1, 'inner': <function outer.<locals>.inner at 0x0000022FBC03D700>}
+```
+So inner is a local wrt itself.
