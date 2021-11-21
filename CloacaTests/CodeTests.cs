@@ -964,6 +964,27 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Exposed problem with recursive calls of inner functions")]
+        public async Task InnerFunctionRecurse()
+        {
+            string program =
+                "def foo(x):\n" +
+                "   def bar(a, y):\n" +
+                "      if a == 0:\n" +
+                "         return y\n" +
+                "      else:\n" +
+                "         return bar(a-1, y+1)\n" +
+                "   return bar(10, 2)\n" +
+                "a = foo(2)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(20) }
+                }), 1, new string[] { "foo" });
+        }
+
+        [Test]
         public async Task Vargs()
         {
             string program =
