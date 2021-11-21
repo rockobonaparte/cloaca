@@ -1,5 +1,3 @@
-raise NotImplementedError("This test cannot find the internal recurse function")
-
 def merge(left, right):
     left_len = len(left)
     right_len = len(right)

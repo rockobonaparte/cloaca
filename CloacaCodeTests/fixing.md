@@ -6,10 +6,18 @@ Some priorities:
    2. [DONE] Defining a recursing function inside another function
 3. [DONE] Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
 4. [DONE] Implement array slicing. I don't support array slicing yet! Whoops!
-5. Enable sherlock2 
+5. [DONE] Enable sherlock2 
 6. Need to actually implement NotImplementedError, which is ironic!
 7. [DONE] Implement list add
-8. Implement min
-9. Implement max
+8. [DONE enough] Implement min
+9. [DONE enough] Implement max
 10. Implement sorted
 11. Rerun tests and refile this list
+
+
+Currently taking a diversion to fix inner recursive calls. Inner functions can't see, well, themselves.
+```
+def foo(...):
+  def bar(...):
+    bar(<-- this bar won't be resolved)
+```

@@ -964,7 +964,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Exposed problem with recursive calls of inner functions")]
         public async Task InnerFunctionRecurse()
         {
             string program =
