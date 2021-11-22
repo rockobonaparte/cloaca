@@ -236,6 +236,7 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
+            // BOOKMARK: See if you can figure out how to add the current function to locals if it isn't already in globals.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
                 frame.SetFastLocal(argIdx, args[argIdx]);

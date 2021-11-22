@@ -38,3 +38,6 @@ def outer():
 {'x': 1, 'inner': <function outer.<locals>.inner at 0x0000022FBC03D700>}
 ```
 So inner is a local wrt itself.
+
+The trick is that all your functions so far have been at the module level so they'll be global. Anything beyond that needs to know that it's locally scoped. I am not sure how to detect that yet. I
+am thinking that when I prepare the frame, I see if the function I am calling is in globals. If it isn't, I add it to locals. This check cannot be a basic name check because of name shadowing.
