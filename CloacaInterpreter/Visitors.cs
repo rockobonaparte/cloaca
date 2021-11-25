@@ -150,8 +150,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            ActiveProgram.Names.Add(variableName);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
+            if (variableName == "bar")
+            {
+                // DEBUG BREAKPOINT
+                // BOOKMARK: Start generate freevars here for recursive calls of inner functions.
+                ActiveProgram.Names.Add(variableName);
+                ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
+            }
+            else
+            {
+                ActiveProgram.Names.Add(variableName);
+                ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
+            }
             return;
         }
     }
