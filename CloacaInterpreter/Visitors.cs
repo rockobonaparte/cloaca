@@ -39,6 +39,63 @@ public class LoopBlockRecord
     }
 }
 
+public class CodeObjectBuilderStack : List<CodeObjectBuilder>
+{
+    public CodeObjectBuilder RootProgram
+    {
+        get
+        {
+            if (Count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return this[0];
+            }
+        }
+    }
+
+    public CodeObjectBuilder ActiveProgram
+    {
+        get
+        {
+            if (Count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return this[Count - 1];
+            }
+        }
+    }
+
+    public bool IsRootProgram
+    {
+        get
+        {
+            return Count == 1;
+        }
+    }
+
+    public void Push(CodeObjectBuilder newProgram)
+    {
+        this.Add(newProgram);
+    }
+
+    public CodeObjectBuilder Pop()
+    {
+        if(Count == 0)
+        {
+            throw new IndexOutOfRangeException("program stack is empty");
+        }
+        CodeObjectBuilder tos = ActiveProgram;
+        RemoveAt(Count - 1);
+        return tos;
+    }
+}
+
 public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 {
     public CodeObjectBuilder RootProgram;
@@ -154,6 +211,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 // DEBUG BREAKPOINT
                 // BOOKMARK: Start generate freevars here for recursive calls of inner functions.
+                //           You need to keep track of your "stack" to be able to tell what outer variables are floating around.
+                //           This is a big change to the code generation.
+                //           Actually, you just get this from ProgramStack, but it can't be a regular stack anymore since you want to peek up it.
                 ActiveProgram.Names.Add(variableName);
                 ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
             }
