@@ -106,6 +106,30 @@ public class CodeObjectBuilderStack : List<CodeObjectBuilder>
         RemoveAt(Count - 1);
         return tos;
     }
+
+    public NameInStack FindNameInStack(string name)
+    {
+        int stackIdx;
+        for(stackIdx = Count - 1; stackIdx >= 0; --stackIdx)
+        {
+            if(this[stackIdx].VarNames.Contains(name))
+            {
+                break;
+            }
+        }
+        if(stackIdx < 0)
+        {
+            return NameInStack.NotFound;
+        }
+        else if(stackIdx == Count - 1)
+        {
+            return NameInStack.InActiveProgram;
+        }
+        else
+        {
+            return NameInStack.LowerInStack;
+        }
+    }
 }
 
 public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
