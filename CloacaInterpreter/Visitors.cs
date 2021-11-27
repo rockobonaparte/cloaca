@@ -39,8 +39,20 @@ public class LoopBlockRecord
     }
 }
 
+public enum NameInStack
+{
+    NotFound,
+    InActiveProgram,
+    LowerInStack,
+}
+
 public class CodeObjectBuilderStack : List<CodeObjectBuilder>
 {
+    public CodeObjectBuilderStack()
+    {
+        Push(new CodeObjectBuilder());
+    }
+
     public CodeObjectBuilder RootProgram
     {
         get
@@ -98,9 +110,7 @@ public class CodeObjectBuilderStack : List<CodeObjectBuilder>
 
 public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 {
-    public CodeObjectBuilder RootProgram;
-    private Stack<CodeObjectBuilder> ProgramStack;
-    private CodeObjectBuilder ActiveProgram;
+    private CodeObjectBuilderStack codeStack;
     private Stack<LoopBlockRecord> LoopBlocks;
     private List<Func<IScheduler, Task>> postProcessActions;
     private bool replMode;
@@ -110,13 +120,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
     /// We don't use LOAD/STORE_FAST here.
     /// </summary>
-    public bool IsRootProgram => ActiveProgram == RootProgram;
+    public bool IsRootProgram => codeStack.IsRootProgram;
+    public CodeObjectBuilder RootProgram => codeStack.RootProgram;
 
     public CloacaBytecodeVisitor(bool replMode=false)
     {
-        RootProgram = new CodeObjectBuilder();
-        ActiveProgram = RootProgram;
-        ProgramStack = new Stack<CodeObjectBuilder>();
+        codeStack = new CodeObjectBuilderStack();
         LoopBlocks = new Stack<LoopBlockRecord>();
         postProcessActions = new List<Func<IScheduler, Task>>();
         this.replMode = replMode;
@@ -125,11 +134,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
     {
         this.namespaceGlobals = globals;
-        RootProgram = new CodeObjectBuilder();
-        ActiveProgram = RootProgram;
         foreach (var name in existingVariables.Keys)
         {
-            ActiveProgram.Names.Add(name);
+            codeStack.ActiveProgram.Names.Add(name);
         }
     }
 
@@ -177,8 +184,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //
         if (variableName.StartsWith("__"))
         {
-            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
+            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
             return;
         }
 
@@ -186,23 +193,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // If it's in VarNames, we use it from there. If not, 
         // we assume it's global and deal with it at run time if
         // we can't find it.
-        var idx = ActiveProgram.VarNames.IndexOf(variableName);
+        var idx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
         if (idx >= 0)
         {
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
             return;
         }
         else if(IsRootProgram)
         {
-            var rootNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
+            var rootNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
             return;
         }
 
-        var nameIdx = ActiveProgram.Names.IndexOf(variableName);
+        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
         {
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx, context);
             return;
         }
         else
@@ -214,13 +221,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 //           You need to keep track of your "stack" to be able to tell what outer variables are floating around.
                 //           This is a big change to the code generation.
                 //           Actually, you just get this from ProgramStack, but it can't be a regular stack anymore since you want to peek up it.
-                ActiveProgram.Names.Add(variableName);
-                ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
+                codeStack.ActiveProgram.Names.Add(variableName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, codeStack.ActiveProgram.Names.Count - 1, context);
             }
             else
             {
-                ActiveProgram.Names.Add(variableName);
-                ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, ActiveProgram.Names.Count - 1, context);
+                codeStack.ActiveProgram.Names.Add(variableName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, codeStack.ActiveProgram.Names.Count - 1, context);
             }
             return;
         }
@@ -257,20 +264,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // We just flip it around and use _NAME if we're in the root.
         if (variableName.StartsWith("__") || IsRootProgram)
         {
-            var dunderNameIdx = ActiveProgram.Names.AddGetIndex(variableName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
+            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
             return;
         }
 
-        var nameIdx = ActiveProgram.Names.IndexOf(variableName);
+        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
         if (nameIdx >= 0)
         {
-            ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
         }
         else
         {
-            var idx = ActiveProgram.VarNames.AddGetIndex(variableName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+            var idx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
         }
     }
 
@@ -283,13 +290,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         if (!IsRootProgram)
         {
-            var fromNameFastStoreIdx = ActiveProgram.VarNames.AddGetIndex(name);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
+            var fromNameFastStoreIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(name);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fromNameFastStoreIdx, context);
         }
         else
         {
-            var fromNameStoreIdx = ActiveProgram.Names.AddGetIndex(name);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, fromNameStoreIdx, context);
+            var fromNameStoreIdx = codeStack.ActiveProgram.Names.AddGetIndex(name);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, fromNameStoreIdx, context);
         }
     }
 
@@ -308,11 +315,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             string operatorTxt = context.children[child_i - 1].GetText();
             if (operatorTxt == "+")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_ADD, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_ADD, context);
             }
             else if (operatorTxt == "-")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_SUBTRACT, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_SUBTRACT, context);
             }
             else
             {
@@ -340,19 +347,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // Soooo I have no idea what that @ operator is all about.
             if (operatorTxt == "*")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_MULTIPLY, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_MULTIPLY, context);
             }
             else if (operatorTxt == "/")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_TRUE_DIVIDE, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_TRUE_DIVIDE, context);
             }
             else if (operatorTxt == "%")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_MODULO, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_MODULO, context);
             }
             else if (operatorTxt == "//")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_FLOOR_DIVIDE, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_FLOOR_DIVIDE, context);
             }
             else
             {
@@ -366,22 +373,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         try
         {
-            ActiveProgram.Constants.Add(ConstantsFactory.CreateNumber(context));
+            codeStack.ActiveProgram.Constants.Add(ConstantsFactory.CreateNumber(context));
         }
         catch(Exception e)
         {
             throw new Exception("Error while trying to parse a constant number '" + context.GetText() + "' at " + context.Start.Line + ":" + context.Start.Column + " " + e.Message, e);
         }
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.Count - 1, context);
     }
 
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         // It might be a function name. Look for it in names.
-        int nameIdx = ActiveProgram.VarNames.IndexOf(context.GetText());
+        int nameIdx = codeStack.ActiveProgram.VarNames.IndexOf(context.GetText());
         if (nameIdx >= 0)
         {
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, nameIdx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, nameIdx, context);
         }
         else
         {
@@ -392,22 +399,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomString([NotNull] CloacaParser.AtomStringContext context)
     {
-        ActiveProgram.Constants.Add(ConstantsFactory.CreateString(context));
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1, context);
+        codeStack.ActiveProgram.Constants.Add(ConstantsFactory.CreateString(context));
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.Count - 1, context);
         return null;
     }
 
     public override object VisitAtomBool([NotNull] CloacaParser.AtomBoolContext context)
     {
-        ActiveProgram.Constants.Add(ConstantsFactory.CreateBool(context));
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1, context);
+        codeStack.ActiveProgram.Constants.Add(ConstantsFactory.CreateBool(context));
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.Count - 1, context);
         return null;
     }
 
     public override object VisitAtomNoneType([NotNull] CloacaParser.AtomNoneTypeContext context)
     {
-        ActiveProgram.Constants.Add(NoneType.Instance);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count - 1, context);
+        codeStack.ActiveProgram.Constants.Add(NoneType.Instance);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.Count - 1, context);
         return null;
     }
 
@@ -423,7 +430,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             else
             {
                 base.VisitFactor(context);
-                ActiveProgram.AddInstruction(ByteCodes.UNARY_NEGATIVE, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.UNARY_NEGATIVE, context);
             }
             return null;
         }
@@ -441,7 +448,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomWait([NotNull] CloacaParser.AtomWaitContext context)
     {
-        ActiveProgram.AddInstruction(ByteCodes.WAIT, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.WAIT, context);
         return null;
     }
 
@@ -455,7 +462,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // That includes single-element tuples: ("foo",)
         if (context.testlist_comp().children.Count > 1 && context.testlist_comp().children[1].GetText() == ",")
         {
-            ActiveProgram.AddInstruction(ByteCodes.BUILD_TUPLE, context.testlist_comp().test().Length, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_TUPLE, context.testlist_comp().test().Length, context);
         }
         return null;
     }
@@ -484,16 +491,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             var newFunctionCode = new CodeObjectBuilder();
             newFunctionCode.Name = "listcomp";
 
-            ActiveProgram.Constants.Add(newFunctionCode);
-            var compCodeIndex = ActiveProgram.Constants.Count - 1;
+            codeStack.ActiveProgram.Constants.Add(newFunctionCode);
+            var compCodeIndex = codeStack.ActiveProgram.Constants.Count - 1;
 
-            var callingProgram = ActiveProgram;
-            ProgramStack.Push(ActiveProgram);
+            var callingProgram = codeStack.ActiveProgram;
 
-            ActiveProgram = newFunctionCode;
-            ActiveProgram.ArgCount = 1;
-            var listNameIdx = ActiveProgram.ArgVarNames.AddGetIndex(".0");
-            ActiveProgram.VarNames.Add(".0");
+            codeStack.Push(newFunctionCode);
+            codeStack.ActiveProgram.ArgCount = 1;
+            var listNameIdx = codeStack.ActiveProgram.ArgVarNames.AddGetIndex(".0");
+            codeStack.ActiveProgram.VarNames.Add(".0");
 
             // We can't really use the for stmt logic here and it's annoying. We just come in with different-enough
             // semantics.
@@ -501,8 +507,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // BUILD_LIST
             // LOAD_FAST  .0
             // FOR_ITER   (past the loop)
-            ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, listNameIdx, context);
 
             // We may have one or more for statements in the list comprehension. We will recursively
             // parse them and dump the list comprehension payload at the end. Treat it like each for
@@ -513,21 +519,20 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // List comprehension footer:
             // JUMP_ABSOLUTE (back to the FOR_ITER)
             // RETURN_VALUE
-            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
 
             // Back to the originator of the list comprehension...
-            ProgramStack.Pop();
-            ActiveProgram = callingProgram;
+            codeStack.Pop();
 
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
-            ActiveProgram.Constants.Add(PyString.Create(ActiveProgram.Name + ".<locals>.<listcomp>"));
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.Count-1, context);
-            ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
+            codeStack.ActiveProgram.Constants.Add(PyString.Create(codeStack.ActiveProgram.Name + ".<locals>.<listcomp>"));
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.Count-1, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
             // Loading the list we'll be using.
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
-            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
         }
         else
         {
@@ -537,11 +542,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // List might be empty; declared as just []
             if(context.testlist_comp() == null)
             {
-                ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, 0, context);
             }
             else
             {
-                ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_LIST, context.testlist_comp().test().Length, context);
             }
         }
         return null;
@@ -550,18 +555,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public void VisitComp_for([NotNull] CloacaParser.Comp_forContext context, CloacaParser.TestContext innerPayloadContext, int listDepth)
     {
-        var forIterIdx = ActiveProgram.Code.Count;
-        var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+        var forIterIdx = codeStack.ActiveProgram.Code.Count;
+        var postForIterIdx = codeStack.ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
         //LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.        
-        var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+        var forIterFixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, postForIterIdx);
 
         // List comprehension payload:
         //
         // STORE_FAST    iteration variable name, which should be context.testlist_comp().comp_for().exprlist().GetText()
         // (stuff)       is context.testlist_comp().test(0).GetText() turned into code
         // LIST_APPEND   2 <- I don't know what this two is about. Is it saying it would work with two items off of the stack?
-        var iterVarIdx = ActiveProgram.VarNames.AddGetIndex(context.exprlist().GetText());
-        ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
+        var iterVarIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(context.exprlist().GetText());
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, iterVarIdx, context);
 
         if(context.comp_iter() != null)
         {
@@ -575,10 +580,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             Visit(innerPayloadContext);
             // LIST_APPEND takes the offset on the stack where the list is. It should be 2 and hopefully this never
             // comes out differently with wacky, wild list comprehensions.
-            ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2 + listDepth, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LIST_APPEND, 2 + listDepth, context);
         }
 
-        var loopEnd = ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+        var loopEnd = codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
         forIterFixup.Fixup(loopEnd);
     }
 
@@ -587,7 +592,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (context.comp_for() != null)
         {
             Visit(context.comp_for().or_test());
-            ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
             VisitComp_for(context.comp_for(), innerPayloadContext, listDepth);
         }
         else if (context.comp_if() != null)
@@ -621,18 +626,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             throw new NotImplementedException(context.Start.Line + ":" + context.Start.Column + " lambdef_nocond branch of test_nocond syntax not yet implemented. You crazy lambda monster.");
         }
         Visit(context.or_test());
-        ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, prevForIterStart, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, prevForIterStart, context);
     }
 
     public override object VisitBreak_stmt([NotNull] CloacaParser.Break_stmtContext context)
     {
-        ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.BREAK_LOOP, context);
         return null;
     }
 
     public override object VisitContinue_stmt([NotNull] CloacaParser.Continue_stmtContext context)
     {
-        ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, LoopBlocks.Peek().LoopOrigin, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, LoopBlocks.Peek().LoopOrigin, context);
         return null;
     }
 
@@ -640,14 +645,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         if (context.testlist() == null)
         {
-            var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
+            var noneConstIdx = codeStack.ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
         }
         else
         {
             Visit(context.testlist());
         }
-        ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
         return null;
     }
 
@@ -659,7 +664,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // For now, we only support one argument for exceptions, which will be the exception
         // created from visit the parent context.
-        ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
 
         return null;
     }
@@ -669,7 +674,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         for (int name_i = 0; name_i < context.NAME().Length; ++name_i)
         {
             var name = context.NAME(name_i).GetText();
-            ActiveProgram.Names.AddGetIndex(name);
+            codeStack.ActiveProgram.Names.AddGetIndex(name);
         }
         return null;
     }
@@ -691,51 +696,51 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 string augassign = context.augassign().GetText();
                 if (augassign == "+=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_ADD, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_ADD, context);
                 }
                 else if (augassign == "-=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_SUBTRACT, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_SUBTRACT, context);
                 }
                 else if (augassign == "*=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_MULTIPLY, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_MULTIPLY, context);
                 }
                 else if (augassign == "/=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_TRUE_DIVIDE, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_TRUE_DIVIDE, context);
                 }
                 else if (augassign == "%=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_MODULO, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_MODULO, context);
                 }
                 else if (augassign == "//=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_FLOOR_DIVIDE, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_FLOOR_DIVIDE, context);
                 }
                 else if (augassign == "**=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_POWER, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_POWER, context);
                 }
                 else if (augassign == "&=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_AND, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_AND, context);
                 }
                 else if (augassign == "|=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_OR, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_OR, context);
                 }
                 else if (augassign == "^=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_XOR, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_XOR, context);
                 }
                 else if (augassign == ">>=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_RSHIFT, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_RSHIFT, context);
                 }
                 else if (augassign == "<<=")
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.INPLACE_LSHIFT, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.INPLACE_LSHIFT, context);
                 }
                 else
                 {
@@ -761,11 +766,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 Visit(context.testlist_star_expr(0));
                 if (!replMode)
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
                 }
                 else
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.PRINT_EXPR, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.PRINT_EXPR, context);
                 }
             }
             return null;
@@ -783,13 +788,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // A single assignment should not trigger this at all and will immediately consume the rvalue.
             if(lvalue_i > 0)
             {
-                ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
             }
 
             // Multiple test statements means we are working with unpacked values ("a, b = [1, 2]").
             if (context.testlist_star_expr(lvalue_i).test().Length > 1)
             {
-                ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.testlist_star_expr(lvalue_i).test().Length, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.testlist_star_expr(lvalue_i).test().Length, context);
             }
 
             for (int test_i = 0; test_i < context.testlist_star_expr(lvalue_i).test().Length; ++test_i)
@@ -821,7 +826,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 variableName = maybeAtom.atom().GetText();
                 generateLoadForVariable(variableName, context);
                 base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
-                ActiveProgram.AddInstruction(ByteCodes.STORE_SUBSCR, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_SUBSCR, context);
             }
             // Object subscript (self.x)
             // 04/05/2020: This was updated to reference multiple attributes at once (mesh_renderer.material.color = abc)
@@ -834,13 +839,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 for (int trailer_idx = 0; trailer_idx < last_trailer_idx; ++trailer_idx)
                 {
                     var loadAttrName = maybeAtom.trailer()[trailer_idx].NAME().GetText();
-                    var loadAttrIdx = ActiveProgram.Names.AddGetIndex(loadAttrName);
-                    ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, loadAttrIdx, context);
+                    var loadAttrIdx = codeStack.ActiveProgram.Names.AddGetIndex(loadAttrName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, loadAttrIdx, context);
                 }
 
                 var attrName = maybeAtom.trailer()[last_trailer_idx].NAME().GetText();
-                var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
-                ActiveProgram.AddInstruction(ByteCodes.STORE_ATTR, attrIdx, context);
+                var attrIdx = codeStack.ActiveProgram.Names.AddGetIndex(attrName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_ATTR, attrIdx, context);
                 return null;
             }
             else
@@ -854,7 +859,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // Reserved word: wait
             if (variableName == "wait")
             {
-                ActiveProgram.AddInstruction(ByteCodes.WAIT, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.WAIT, context);
                 return null;
             }
 
@@ -881,16 +886,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             var comparison = context.test(if_cond_i);
             Visit(comparison);
-            var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
+            var jumpFalseSkip = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
             Visit(context.suite(if_cond_i));
 
             // We'll need this to skip other conditional blocks, but we only need this if we actually
             // have other ones:
             if (context.suite().Length > 1)
             {
-                conditional_block_fixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
+                conditional_block_fixups.Add(new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
             }
-            jumpFalseSkip.FixupAbsolute(ActiveProgram.Code.Count);
+            jumpFalseSkip.FixupAbsolute(codeStack.ActiveProgram.Code.Count);
         }
 
         // Handles the 'else' clause if we have one. The else is a suite without a comparison.
@@ -902,7 +907,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // Fixup any forward jumps we might have. They should all come to our current program position.
         foreach (var fixup in conditional_block_fixups)
         {
-            fixup.Fixup(ActiveProgram.Code.Count);
+            fixup.Fixup(codeStack.ActiveProgram.Code.Count);
         }
         return null;
     }
@@ -941,18 +946,18 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         */
         // We'll have to fix this up after generating the loop
         // SETUP_LOOP takes a delta from the next instruction address
-        var setupLoopIdx = ActiveProgram.AddInstruction(ByteCodes.SETUP_LOOP, -1, context);
-        var setupLoopFixup = new JumpOpcodeFixer(ActiveProgram.Code, setupLoopIdx);
+        var setupLoopIdx = codeStack.ActiveProgram.AddInstruction(ByteCodes.SETUP_LOOP, -1, context);
+        var setupLoopFixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, setupLoopIdx);
 
         Visit(context.test());
-        var pop_jump_fixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
+        var pop_jump_fixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
         LoopBlocks.Push(new LoopBlockRecord(setupLoopIdx));       // Remember we're getting the location after adding an instruction, not before.
         try
         {
             Visit(context.suite(0));
 
-            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, setupLoopIdx, context);
-            int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, setupLoopIdx, context);
+            int pop_block_i = codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
             pop_jump_fixup.FixupAbsolute(pop_block_i);
 
             // Else clause? We will have two suites.
@@ -961,7 +966,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 Visit(context.suite(1));
             }
 
-            setupLoopFixup.Fixup(ActiveProgram.Code.Count);
+            setupLoopFixup.Fixup(codeStack.ActiveProgram.Code.Count);
 
             return null;
         }
@@ -1007,23 +1012,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         */
         // for_stmt: 'for' exprlist 'in' testlist ':' suite ('else' ':' suite)?;
         // exprlist: (expr|star_expr) (',' (expr|star_expr))* (',')?;
-        var setupLoopIdx = ActiveProgram.AddInstruction(ByteCodes.SETUP_LOOP, -1, context);
-        var setupLoopFixup = new JumpOpcodeFixer(ActiveProgram.Code, setupLoopIdx);
+        var setupLoopIdx = codeStack.ActiveProgram.AddInstruction(ByteCodes.SETUP_LOOP, -1, context);
+        var setupLoopFixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, setupLoopIdx);
 
         Visit(context.testlist());
 
-        var forIterIdx = ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
-        var postForIterIdx = ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
+        var forIterIdx = codeStack.ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
+        var postForIterIdx = codeStack.ActiveProgram.AddInstruction(ByteCodes.FOR_ITER, -1, context);
         LoopBlocks.Push(new LoopBlockRecord(forIterIdx));       // Remember we're getting the location after adding an instruction, not before.
         try
         {
-            var forIterFixup = new JumpOpcodeFixer(ActiveProgram.Code, postForIterIdx);
+            var forIterFixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, postForIterIdx);
 
             // If there's actually more than one expression here then we're dealing with a tuple and we need to have
             // it unpacked.
             if (context.exprlist().expr().Length > 1)
             {
-                ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.exprlist().expr().Length, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.UNPACK_SEQUENCE, context.exprlist().expr().Length, context);
             }
 
             foreach (var expr in context.exprlist().expr())
@@ -1036,8 +1041,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             Visit(context.suite(0));
 
-            ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
-            int pop_block_i = ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_ABSOLUTE, forIterIdx, context);
+            int pop_block_i = codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context) - 1;
             forIterFixup.Fixup(pop_block_i);
 
             // else-clause. If there's no else then we're done with the loop.
@@ -1045,7 +1050,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 Visit(context.suite(1));
             }
-            setupLoopFixup.Fixup(ActiveProgram.Code.Count);
+            setupLoopFixup.Fixup(codeStack.ActiveProgram.Code.Count);
 
             return null;
         }
@@ -1095,29 +1100,29 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         bool hasFinally = false;
         bool hasElse = false;
         bool hasExcept = false;
-        var finallyTarget = new JumpOpcodeFixer(ActiveProgram.Code);
+        var finallyTarget = new JumpOpcodeFixer(codeStack.ActiveProgram.Code);
 
         if (hasText(context.children, "finally"))
         {
             hasFinally = true;
-            finallyTarget.Add(ActiveProgram.AddInstruction(ByteCodes.SETUP_FINALLY, -1, context));
+            finallyTarget.Add(codeStack.ActiveProgram.AddInstruction(ByteCodes.SETUP_FINALLY, -1, context));
         }
 
         hasElse = hasText(context.children, "else");
         hasExcept = context.except_clause().Length > 0;
 
         // Try block preamble. If there are exceptions, then we need a SETUP_EXCEPT position.
-        var setupExceptTarget = new JumpOpcodeFixer(ActiveProgram.Code);
+        var setupExceptTarget = new JumpOpcodeFixer(codeStack.ActiveProgram.Code);
         if (hasExcept)
         {
-            setupExceptTarget.Add(ActiveProgram.AddInstruction(ByteCodes.SETUP_EXCEPT, -1, context));
+            setupExceptTarget.Add(codeStack.ActiveProgram.AddInstruction(ByteCodes.SETUP_EXCEPT, -1, context));
         }
 
         int suiteIdx = 0;
         Visit(context.suite(suiteIdx));
         ++suiteIdx;
-        ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context);
-        var endOfTryJumpTarget = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context));
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_BLOCK, context);
+        var endOfTryJumpTarget = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context));
 
         // Start of except statements
         var endOfExceptBlockJumpFixups = new List<JumpOpcodeFixer>();
@@ -1129,7 +1134,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // Making a closure to represent visiting the Except_Clause. It's not a dedicated override of the default in the rule
             // because we need so much context from the entire try block
             {
-                startOfExcepts.Add(ActiveProgram.Code.Count);
+                startOfExcepts.Add(codeStack.ActiveProgram.Code.Count);
                 if (exceptClause.test() != null && exceptClause.test().ChildCount > 0)
                 {
                     // If the exception is aliased, we need to make sure we still have a copy
@@ -1137,14 +1142,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // enter its except clause. So we'll duplicate it here, then test, then store it.
                     if (exceptClause.NAME() != null)
                     {
-                        ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
+                        codeStack.ActiveProgram.AddInstruction(ByteCodes.DUP_TOP, context);
                     }
 
                     generateLoadForVariable(exceptClause.test().GetText(), context);
-                    ActiveProgram.AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch, context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.COMPARE_OP, (ushort)CompareOps.ExceptionMatch, context);
 
                     // Point to next except clause to test for a match to this exception
-                    exceptionMatchTestFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context)));
+                    exceptionMatchTestFixups.Add(new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context)));
 
                     if (exceptClause.NAME() != null)
                     {
@@ -1160,11 +1165,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             // TODO: Look into deleting aliased exceptions.
             // A DELETE_FAST was done for an aliased exception in an auto-generated END_FINALLY clause
             // Look at Python generation for TryExceptAliasBasic
-            endOfExceptBlockJumpFixups.Add(new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
+            endOfExceptBlockJumpFixups.Add(new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
         }
 
         // else block
-        int startOfElseBlock = ActiveProgram.Code.Count;
+        int startOfElseBlock = codeStack.ActiveProgram.Code.Count;
         if (hasElse)
         {
             Visit(context.suite(suiteIdx));
@@ -1172,16 +1177,16 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         // finally block
-        int startOfFinallyBlock = ActiveProgram.Code.Count;
+        int startOfFinallyBlock = codeStack.ActiveProgram.Code.Count;
         if (hasFinally)
         {
             Visit(context.suite(suiteIdx));
             ++suiteIdx;
             finallyTarget.Fixup(startOfFinallyBlock);
-            ActiveProgram.AddInstruction(ByteCodes.END_FINALLY, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.END_FINALLY, context);
         }
 
-        int endOfBlockPosition = hasFinally ? startOfFinallyBlock : ActiveProgram.Code.Count;
+        int endOfBlockPosition = hasFinally ? startOfFinallyBlock : codeStack.ActiveProgram.Code.Count;
         endOfBlockPosition = hasElse ? startOfElseBlock : endOfBlockPosition;
 
         // Try block fixups
@@ -1216,7 +1221,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //// about try-else. Is that even legal?
         //if (!hasFinally)
         //{
-        //    ActiveProgram.AddInstruction(ByteCodes.END_FINALLY);
+        //    codeStack.ActiveProgram.AddInstruction(ByteCodes.END_FINALLY);
         //}
 
         return null;
@@ -1243,24 +1248,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         int funcIndex = findFunctionIndex(funcName);
         if (funcIndex < 0)
         {
-            ActiveProgram.Constants.Add(newFunctionCode);
-            funcIndex = ActiveProgram.Constants.Count - 1;
+            codeStack.ActiveProgram.Constants.Add(newFunctionCode);
+            funcIndex = codeStack.ActiveProgram.Constants.Count - 1;
         }
         else
         {
-            ActiveProgram.Constants[funcIndex] = newFunctionCode;
+            codeStack.ActiveProgram.Constants[funcIndex] = newFunctionCode;
         }
 
         int nameIndex = findConstantIndex<string>(funcName);
         if (nameIndex < 0)
         {
-            ActiveProgram.Constants.Add(funcName);
-            nameIndex = ActiveProgram.Constants.Count - 1;
+            codeStack.ActiveProgram.Constants.Add(funcName);
+            nameIndex = codeStack.ActiveProgram.Constants.Count - 1;
         }
 
-        ProgramStack.Push(ActiveProgram);
         // This should fill into newFunctionCode.
-        ActiveProgram = newFunctionCode;
+        codeStack.Push(newFunctionCode);
 
         // Let's have our parameters set first. This should go to VisitTfpdef in particular.
         base.Visit(context.parameters());
@@ -1269,22 +1273,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
         // Did we end with a RETURN_VALUE? If not, return None. Kind of hacky but the alternative is tracking the
         // state for this, and it gets ugly if there are multiple blocks with returns in them.
-        if (ActiveProgram.Code.Count < 1 || ActiveProgram.Code[ActiveProgram.Code.Count - 2] != (byte)ByteCodes.RETURN_VALUE)
+        if (codeStack.ActiveProgram.Code.Count < 1 || codeStack.ActiveProgram.Code[codeStack.ActiveProgram.Code.Count - 2] != (byte)ByteCodes.RETURN_VALUE)
         {
-            var noneConstIdx = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
-            ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
-            ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
+            var noneConstIdx = codeStack.ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, noneConstIdx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
         }
 
-        ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
 
         // This should restore us back to the original function with which we started.
-        ActiveProgram = ProgramStack.Pop();
+        codeStack.Pop();
 
         // We don't support any additional flags yet.       
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
-        ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
         // TODO: Apparently sometimes (class methods) we need to store this using STORE_NAME. Why?
         // Class declarations need all their functions declared using STORE_NAME. I'm not sure why yet. I am speculating that it's 
@@ -1304,13 +1308,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             ||
             IsRootProgram)
         {
-            var nameIdx = ActiveProgram.Names.AddGetIndex(funcName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
+            var nameIdx = codeStack.ActiveProgram.Names.AddGetIndex(funcName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
         }
         else
         {
-            var nameIdx = ActiveProgram.VarNames.AddGetIndex(funcName);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, nameIdx, context);
+            var nameIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(funcName);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, nameIdx, context);
         }
 
         return null;
@@ -1323,7 +1327,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if (inner_not_test != null)
         {
             base.Visit(inner_not_test);
-            ActiveProgram.AddInstruction(ByteCodes.UNARY_NOT, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.UNARY_NOT, context);
             return null;
         }
         else
@@ -1348,14 +1352,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 // We don't put a jump on the last index.
                 if (i < inner_not_tests.Length - 1)
                 {
-                    var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_FALSE_OR_POP, -1, context));
+                    var jumpFalseSkip = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_FALSE_OR_POP, -1, context));
                     shortcircuit_fixups.Add(jumpFalseSkip);
                 }
             }
 
             foreach (var fixup in shortcircuit_fixups)
             {
-                fixup.FixupAbsolute(ActiveProgram.Code.Count);
+                fixup.FixupAbsolute(codeStack.ActiveProgram.Code.Count);
             }
             return null;
         }
@@ -1383,14 +1387,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 // We don't put a jump on the last index.
                 if (i < inner_and_tests.Length - 1)
                 {
-                    var jumpFalseSkip = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_TRUE_OR_POP, -1, context));
+                    var jumpFalseSkip = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_IF_TRUE_OR_POP, -1, context));
                     shortcircuit_fixups.Add(jumpFalseSkip);
                 }
             }
 
             foreach (var fixup in shortcircuit_fixups)
             {
-                fixup.FixupAbsolute(ActiveProgram.Code.Count);
+                fixup.FixupAbsolute(codeStack.ActiveProgram.Code.Count);
             }
             return null;
         }
@@ -1410,7 +1414,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 Visit(context.children[child_i]);
                 Visit(context.children[child_i - 1]);
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_OR, context);
             }
             return null;
         }
@@ -1431,7 +1435,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 Visit(context.children[child_i]);
                 Visit(context.children[child_i - 1]);
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_XOR, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_XOR, context);
             }
             return null;
         }
@@ -1451,7 +1455,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 Visit(context.children[child_i]);
                 Visit(context.children[child_i - 1]);
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_AND, context);
             }
             return null;
         }
@@ -1467,7 +1471,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             base.Visit(context.atom_expr());
             base.Visit(context.factor());
-            ActiveProgram.AddInstruction(ByteCodes.BINARY_POWER, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_POWER, context);
         }
         else
         {
@@ -1485,11 +1489,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             string operatorTxt = context.children[child_i - 1].GetText();
             if (operatorTxt == "<<")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_LSHIFT, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_LSHIFT, context);
             }
             else if (operatorTxt == ">>")
             {
-                ActiveProgram.AddInstruction(ByteCodes.BINARY_RSHIFT, context);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_RSHIFT, context);
             }
             else
             {
@@ -1502,19 +1506,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public override object VisitSubscriptlist([NotNull] CloacaParser.SubscriptlistContext context)
     {
         base.VisitSubscriptlist(context);
-        ActiveProgram.AddInstruction(ByteCodes.BINARY_SUBSCR, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.BINARY_SUBSCR, context);
         return null;
     }
 
     public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
     {
-        if (ActiveProgram.Defaults == null)
+        if (codeStack.ActiveProgram.Defaults == null)
         {
-            ActiveProgram.Defaults = new List<object>();
+            codeStack.ActiveProgram.Defaults = new List<object>();
         }
-        if (ActiveProgram.KWDefaults == null)
+        if (codeStack.ActiveProgram.KWDefaults == null)
         {
-            ActiveProgram.KWDefaults = new List<object>();
+            codeStack.ActiveProgram.KWDefaults = new List<object>();
         }
 
         // TODO [KEYWORD-POSITIONAL-ONLY] Implement positional-only (/) and keyword-only (*) arguments
@@ -1523,12 +1527,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             if (context.children[child_i].GetText() == "*")
             {
-                ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
+                codeStack.ActiveProgram.Flags |= CodeObject.CO_FLAGS_VARGS;
                 Visit(context.children[child_i]);
             }
             else if (context.children[child_i].GetText() == "**")
             {
-                ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
+                codeStack.ActiveProgram.Flags |= CodeObject.CO_FLAGS_KWARGS;
                 Visit(context.children[child_i]);
                 // TODO: [**kwargs] Support kwargs
                 throw new NotImplementedException(context.Start.Line + ":" + context.Start.Column + " Keyword args using **kwargs format are not yet supported.");
@@ -1539,15 +1543,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
                 // We need to freeze some state for our lambdas or else the meaning of these will change as we parse other stuff.
                 int visit_child_i_copy = child_i + 1;
-                string visit_builder_name = ActiveProgram.Name + "_$Default_" + context.children[visit_child_i_copy].GetText();
+                string visit_builder_name = codeStack.ActiveProgram.Name + "_$Default_" + context.children[visit_child_i_copy].GetText();
 
                 // Use defaults normally but hw kwdefaults if vargs was defined. We set this up in advance for the lambda so it uses
                 // the proper list when it finally runs.
-                List<object> defaultsList = ActiveProgram.Defaults;
-                if(ActiveProgram.HasVargs)
+                List<object> defaultsList = codeStack.ActiveProgram.Defaults;
+                if(codeStack.ActiveProgram.HasVargs)
                 {
-                    defaultsList = ActiveProgram.KWDefaults;
-                    ActiveProgram.KWOnlyArgCount += 1;
+                    defaultsList = codeStack.ActiveProgram.KWDefaults;
+                    codeStack.ActiveProgram.KWOnlyArgCount += 1;
                 }
                 
                 postProcessActions.Add(async (scheduler) =>
@@ -1566,11 +1570,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
                     // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
                     // do them too.
-                    ProgramStack.Push(ActiveProgram);
-                    ActiveProgram = defaultBuilder;
+                    codeStack.Push(defaultBuilder);
                     Visit(context.children[visit_child_i_copy]);
-
-                    ProgramStack.Pop();
+                    codeStack.Pop();
 
                     var currentTask = scheduler.GetCurrentTask();
                     var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
@@ -1594,9 +1596,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 // Count this as a positional argument if we haven't encountered *args or **kwargs yet
                 if (context.children[child_i].GetText() != "," &&
-                    (ActiveProgram.Flags & (CodeObject.CO_FLAGS_VARGS | CodeObject.CO_FLAGS_KWARGS)) == 0)
+                    (codeStack.ActiveProgram.Flags & (CodeObject.CO_FLAGS_VARGS | CodeObject.CO_FLAGS_KWARGS)) == 0)
                 {
-                    ActiveProgram.ArgCount += 1;
+                    codeStack.ActiveProgram.ArgCount += 1;
                 }
                 Visit(context.children[child_i]);
             }
@@ -1613,19 +1615,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         var variableName = context.NAME().GetText();
 
-        ActiveProgram.ArgVarNames.Add(variableName);
-        ActiveProgram.VarNames.Add(variableName);
+        codeStack.ActiveProgram.ArgVarNames.Add(variableName);
+        codeStack.ActiveProgram.VarNames.Add(variableName);
 
         return null;
     }
 
     private int findConstantIndex<T>(T constant) where T : class
     {
-        for (int i = 0; i < ActiveProgram.Constants.Count; ++i)
+        for (int i = 0; i < codeStack.ActiveProgram.Constants.Count; ++i)
         {
-            if (ActiveProgram.Constants[i] is T)
+            if (codeStack.ActiveProgram.Constants[i] is T)
             {
-                var asT = ActiveProgram.Constants[i] as T;
+                var asT = codeStack.ActiveProgram.Constants[i] as T;
                 if (constant == asT)
                 {
                     return i;
@@ -1638,11 +1640,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private int findFunctionIndex(string funcName)
     {
         int existingFuncIndex = 0;
-        for (existingFuncIndex = 0; existingFuncIndex < ActiveProgram.Constants.Count; ++existingFuncIndex)
+        for (existingFuncIndex = 0; existingFuncIndex < codeStack.ActiveProgram.Constants.Count; ++existingFuncIndex)
         {
-            if (ActiveProgram.Constants[existingFuncIndex] is CodeObject)
+            if (codeStack.ActiveProgram.Constants[existingFuncIndex] is CodeObject)
             {
-                var asCodeObject = ActiveProgram.Constants[existingFuncIndex] as CodeObject;
+                var asCodeObject = codeStack.ActiveProgram.Constants[existingFuncIndex] as CodeObject;
                 if (asCodeObject.Name == funcName)
                 {
                     return existingFuncIndex;
@@ -1679,8 +1681,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
-                    var attrIdx = ActiveProgram.Names.AddGetIndex(attrName);
-                    ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, attrIdx, context);
+                    var attrIdx = codeStack.ActiveProgram.Names.AddGetIndex(attrName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, attrIdx, context);
 
                 }
 
@@ -1715,13 +1717,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     if (specifiedKeywords != null)
                     {
                         var keywordTuple = PyTuple.Create(specifiedKeywords);
-                        var keywordTupleIdx = ActiveProgram.Constants.AddGetIndex(keywordTuple);
-                        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, keywordTupleIdx, context);
-                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, argIdx, context);
+                        var keywordTupleIdx = codeStack.ActiveProgram.Constants.AddGetIndex(keywordTuple);
+                        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, keywordTupleIdx, context);
+                        codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION_KW, argIdx, context);
                     }
                     else
                     {
-                        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
+                        codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, argIdx, context);
                     }
                 }
                 else
@@ -1742,7 +1744,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             Visit(test);
         }
-        ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, context.test().Length / 2, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, context.test().Length / 2, context);
         return null;
     }
 
@@ -1767,48 +1769,48 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         switch (context.op.Type)
         {
             case CloacaParser.COMP_OP_LT:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Lt);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Lt);
                 break;
             case CloacaParser.COMP_OP_GT:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Gt);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Gt);
                 break;
             case CloacaParser.COMP_OP_EQ:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Eq);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Eq);
                 break;
             case CloacaParser.COMP_OP_GTE:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Ge);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Ge);
                 break;
             case CloacaParser.COMP_OP_LTE:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Le);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Le);
                 break;
             case CloacaParser.COMP_OP_LTGT:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.LtGt);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.LtGt);
                 break;
             case CloacaParser.COMP_OP_NE:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Ne);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Ne);
                 break;
             case CloacaParser.COMP_OP_IN:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.In);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.In);
                 break;
             case CloacaParser.COMP_OP_NOT_IN:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.NotIn);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.NotIn);
                 break;
             case CloacaParser.COMP_OP_IS:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.Is);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.Is);
                 break;
             case CloacaParser.COMP_OP_IS_NOT:
-                ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
-                ActiveProgram.Code.AddUShort((ushort)CompareOps.IsNot);
+                codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.COMPARE_OP);
+                codeStack.ActiveProgram.Code.AddUShort((ushort)CompareOps.IsNot);
                 break;
             default:
                 throw new Exception(context.Start.Line + ":" + context.Start.Column + " Unexpected comparison operator: " + context.op);
@@ -1826,8 +1828,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         newFunctionCode.Name = className;
 
         // Descend into the constructor's body as its own program
-        ProgramStack.Push(ActiveProgram);
-        ActiveProgram = newFunctionCode;
+        codeStack.Push(newFunctionCode);
 
         // This is what happens in a class code object that just passes __init__
         //
@@ -1848,40 +1849,40 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //                 18 RETURN_VALUE
         //
         // We'll do some of this on our own for now until we figure out another convention.
-        var __name__idx = ActiveProgram.Names.AddGetIndex("__name__");
-        var __module__idx = ActiveProgram.Names.AddGetIndex("__module__");
-        var __qualname__idx = ActiveProgram.Names.AddGetIndex("__qualname__");
-        var qual_const_idx = ActiveProgram.Constants.AddGetIndex(className);
+        var __name__idx = codeStack.ActiveProgram.Names.AddGetIndex("__name__");
+        var __module__idx = codeStack.ActiveProgram.Names.AddGetIndex("__module__");
+        var __qualname__idx = codeStack.ActiveProgram.Names.AddGetIndex("__qualname__");
+        var qual_const_idx = codeStack.ActiveProgram.Constants.AddGetIndex(className);
 
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, __name__idx, context);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, __module__idx, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, qual_const_idx, context);
-        ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, __qualname__idx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, __name__idx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, __module__idx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, qual_const_idx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, __qualname__idx, context);
 
         // Okay, now set ourselves loose on the user-specified class body!
         base.VisitSuite(context.suite());
 
         // Self-insert returning None to be consistent with Python
-        var return_none_idx = ActiveProgram.Constants.AddGetIndex(null);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, return_none_idx, context);
-        ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
-        ActiveProgram = ProgramStack.Pop();
+        var return_none_idx = codeStack.ActiveProgram.Constants.AddGetIndex(null);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, return_none_idx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
+        codeStack.Pop();
 
         // We'll replace an existing name if we have one because assholes may overwrite a function.
         int funcIndex = findFunctionIndex(className);
         if (funcIndex < 0)
         {
-            funcIndex = ActiveProgram.Constants.AddGetIndex(newFunctionCode);
+            funcIndex = codeStack.ActiveProgram.Constants.AddGetIndex(newFunctionCode);
         }
         else
         {
-            ActiveProgram.Constants[funcIndex] = newFunctionCode;
+            codeStack.ActiveProgram.Constants[funcIndex] = newFunctionCode;
         }
 
         int nameIndex = findConstantIndex<string>(className);
         if (nameIndex < 0)
         {
-            nameIndex = ActiveProgram.Constants.AddGetIndex(className);
+            nameIndex = codeStack.ActiveProgram.Constants.AddGetIndex(className);
         }
 
         //      >>> def def_constructor():
@@ -1902,11 +1903,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //      12 STORE_FAST               0 (Foo)
         //      14 LOAD_CONST               0 (None)
         //      16 RETURN_VALUE
-        ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
-        ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
+        codeStack.ActiveProgram.Code.AddByte((byte)ByteCodes.BUILD_CLASS);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
 
         int subclasses = 0;
         if (context.arglist() != null)
@@ -1923,17 +1924,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             subclasses = context.arglist().ChildCount;
         }
 
-        ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 2 + subclasses, context);
 
-        var idx = ActiveProgram.Names.AddGetIndex(className);
+        var idx = codeStack.ActiveProgram.Names.AddGetIndex(className);
         if(idx >= 0)
         {
-            ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, idx, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, idx, context);
         }
         else
         {
-            idx = ActiveProgram.VarNames.AddGetIndex(className);
-            ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
+            idx = codeStack.ActiveProgram.VarNames.AddGetIndex(className);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
         }
 
         return null;
@@ -1943,14 +1944,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // Munge on the name to determine import level. Eat up all leading dots as levels from which to import.
         string moduleName = originalModuleName.TrimStart('.');
-        var moduleNameIndex = ActiveProgram.Names.AddGetIndex(moduleName);
+        var moduleNameIndex = codeStack.ActiveProgram.Names.AddGetIndex(moduleName);
         int importLevelInt = originalModuleName.Length - moduleName.Length;
-        var importLevelConstIdx = ActiveProgram.Constants.AddGetIndex(PyInteger.Create(importLevelInt));
+        var importLevelConstIdx = codeStack.ActiveProgram.Constants.AddGetIndex(PyInteger.Create(importLevelInt));
 
         int fromListIndex = -1;
         if (moduleFromList == null || moduleFromList.Length == 0)
         {
-            fromListIndex = ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
+            fromListIndex = codeStack.ActiveProgram.Constants.AddGetIndex(NoneType.Instance);
         }
         else
         {
@@ -1960,12 +1961,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 moduleListPyStrings[i] = PyString.Create(moduleFromList[i]);
             }
             var fromListTuple = PyTuple.Create(moduleListPyStrings);
-            fromListIndex = ActiveProgram.Constants.AddGetIndex(fromListTuple);
+            fromListIndex = codeStack.ActiveProgram.Constants.AddGetIndex(fromListTuple);
         }
 
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevelConstIdx, context);
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
-        ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, importLevelConstIdx, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, fromListIndex, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.IMPORT_NAME, moduleNameIndex, context);
 
         // General imports not using import-from.
         // Only do STORE_FAST if this isn't an import-from
@@ -1978,14 +1979,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //if(moduleFromList != null && moduleFromList.Length > 0)
         else if (moduleFromList[0] == "*")
         {
-            ActiveProgram.AddInstruction(ByteCodes.IMPORT_STAR, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.IMPORT_STAR, context);
         }
         else
         {
             for (int fromIdx = 0; fromIdx < moduleFromList.Length; ++fromIdx)
             {
-                var fromNameConstIdx = ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
-                ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
+                var fromNameConstIdx = codeStack.ActiveProgram.Constants.AddGetIndex(PyString.Create(moduleFromList[fromIdx]));
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.IMPORT_FROM, fromNameConstIdx, context);
                 var fromName = moduleFromList[fromIdx];
                 if (moduleFromAliases != null && moduleFromAliases[fromIdx] != null)
                 {
@@ -1996,7 +1997,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             // IMPORT_FROM Peeks the module without popping it so it can do multiple import-froms.
             // We nuke it off the stack here because we're done with it.
-            ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_TOP, context);
         }
     }
 
@@ -2088,17 +2089,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // assert_stmt: 'assert' test (',' test)?;
         Visit(context.test(0));
 
-        var jumpTrueFixup = new JumpOpcodeFixer(ActiveProgram.Code, ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_TRUE, -1, context));
+        var jumpTrueFixup = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_TRUE, -1, context));
 
-        ActiveProgram.AddInstruction(ByteCodes.LOAD_ASSERTION_ERROR, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_ASSERTION_ERROR, context);
         if(context.test().Length > 1)
         {
             Visit(context.test(1));
-            ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
         }
-        ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.RAISE_VARARGS, 1, context);
 
-        jumpTrueFixup.FixupAbsolute(ActiveProgram.Code.Count);
+        jumpTrueFixup.FixupAbsolute(codeStack.ActiveProgram.Code.Count);
 
         return null;
     }
@@ -2137,7 +2138,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 if (!generatedRealSlice)
                 {
-                    ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, ActiveProgram.Constants.AddGetIndex(NoneType.Instance), context);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, codeStack.ActiveProgram.Constants.AddGetIndex(NoneType.Instance), context);
                     generated_entries += 1;
                 }
                 textIdx += 1;
@@ -2153,7 +2154,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
         }
 
-        ActiveProgram.AddInstruction(ByteCodes.BUILD_SLICE, generated_entries, context);
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_SLICE, generated_entries, context);
         return null;
     }
 }
