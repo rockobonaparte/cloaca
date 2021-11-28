@@ -42,7 +42,8 @@ public class LoopBlockRecord
 public enum NameInStack
 {
     NotFound,
-    InActiveProgram,
+    ActiveName,
+    ActiveConstant,
     LowerInStack,
 }
 
@@ -110,20 +111,29 @@ public class CodeObjectBuilderStack : List<CodeObjectBuilder>
     public NameInStack FindNameInStack(string name)
     {
         int stackIdx;
+        bool foundAsName = false;
+        bool foundAsConstant = false;
         for(stackIdx = Count - 1; stackIdx >= 0; --stackIdx)
         {
             if(this[stackIdx].VarNames.Contains(name))
             {
+                foundAsName = true;
+                break;
+            }
+            else if(this[stackIdx].Constants.Contains(name))
+            {
+                foundAsConstant = true;
                 break;
             }
         }
+
         if(stackIdx < 0)
         {
             return NameInStack.NotFound;
         }
         else if(stackIdx == Count - 1)
         {
-            return NameInStack.InActiveProgram;
+            return foundAsName ? NameInStack.ActiveName : NameInStack.ActiveConstant;
         }
         else
         {
@@ -245,8 +255,28 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 //           You need to keep track of your "stack" to be able to tell what outer variables are floating around.
                 //           This is a big change to the code generation.
                 //           Actually, you just get this from ProgramStack, but it can't be a regular stack anymore since you want to peek up it.
-                codeStack.ActiveProgram.Names.Add(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, codeStack.ActiveProgram.Names.Count - 1, context);
+                var whereInStack = codeStack.FindNameInStack(variableName);
+                switch (whereInStack)
+                {
+                    case NameInStack.LowerInStack:
+                        {
+                            var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
+                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
+                        }
+                        break;
+                    case NameInStack.ActiveName:
+                        {
+                            var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
+                        }
+                        break;
+                    default:
+                        {
+                            var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+                        }
+                        break;
+                }
             }
             else
             {
