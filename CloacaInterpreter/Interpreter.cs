@@ -805,24 +805,48 @@ namespace CloacaInterpreter
                             break;
                         case ByteCodes.LOAD_GLOBAL:
                             {
-                                {
-                                    context.Cursor += 1;
-                                    var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                    var globalName = context.Function.Code.Names[globalIdx];
+                                context.Cursor += 1;
+                                var globalIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var globalName = context.Function.Code.Names[globalIdx];
 
-                                    if(context.callStack.Peek().HasGlobal(globalName))
+                                if(context.callStack.Peek().HasGlobal(globalName))
+                                {
+                                    context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
+                                }
+                                else if (builtins.ContainsKey(globalName))
+                                {
+                                    context.DataStack.Push(builtins[globalName]);
+                                }
+                                else
+                                {
+                                    throw new Exception("Global '" + globalName + "' was not found!");
+                                }
+                                context.Cursor += 2;
+                                break;
+                            }
+                        case ByteCodes.LOAD_DEREF:
+                            {
+                                context.Cursor += 1;
+                                var freeVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var freeVarName = context.Function.Code.FreeNames[freeVarIdx];
+
+                                bool found = false;
+                                for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
+                                {
+                                    var frame = context.callStack.ElementAt(callStackIdx);
+                                    if(frame.Locals.ContainsKey(freeVarName))
                                     {
-                                        context.DataStack.Push(context.callStack.Peek().GetGlobal(globalName));
-                                    }
-                                    else if (builtins.ContainsKey(globalName))
-                                    {
-                                        context.DataStack.Push(builtins[globalName]);
-                                    }
-                                    else
-                                    {
-                                        throw new Exception("Global '" + globalName + "' was not found!");
+                                        context.DataStack.Push(frame.Locals[freeVarName]);
+                                        found = true;
+                                        break;
                                     }
                                 }
+
+                                if(!found)
+                                {
+                                    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
+                                }
+
                                 context.Cursor += 2;
                                 break;
                             }
