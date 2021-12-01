@@ -48,6 +48,7 @@ namespace LanguageImplementation
         public List<string> ArgVarNames;// This will collapse into co_varnames when we start using LOAD_FAST/STORE_FAST
         public List<string> Names;      // co_names. Referenced by LOAD/STORE_NAME, LOAD/STORE_ATTR and globals.
         public List<string> FreeNames;  // co_freevars
+        public List<string> CellNames;  // co_cellvars: names of variables referenced from this object in lower levels.
 
         public CodeByteArray Code;      // co_code
         public string Filename;         // co_filename
@@ -84,6 +85,7 @@ namespace LanguageImplementation
             ArgVarNames = new List<string>();
             Names = new List<string>();
             FreeNames = new List<string>();
+            CellNames = new List<string>();
             Flags = 0;
         }
 
@@ -288,6 +290,7 @@ namespace LanguageImplementation
             newCodeObj.ArgVarNames = ArgVarNames;
             newCodeObj.Names = Names;
             newCodeObj.FreeNames = FreeNames;
+            newCodeObj.CellNames = CellNames;
             newCodeObj.Flags = Flags;
             newCodeObj.Defaults = Defaults != null ? Defaults : new List<object>();
             newCodeObj.KWDefaults = KWDefaults != null ? KWDefaults : new List<object>();

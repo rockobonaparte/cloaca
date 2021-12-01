@@ -979,7 +979,7 @@ namespace CloacaTests
             await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", PyInteger.Create(20) }
+                    { "a", PyInteger.Create(12) }
                 }), 1, new string[] { "foo" });
         }
 

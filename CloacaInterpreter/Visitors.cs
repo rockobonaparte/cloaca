@@ -108,37 +108,17 @@ public class CodeObjectBuilderStack : List<CodeObjectBuilder>
         return tos;
     }
 
-    public NameInStack FindNameInStack(string name)
+    public CodeObjectBuilder FindNameInStack(string name)
     {
         int stackIdx;
-        bool foundAsName = false;
-        bool foundAsConstant = false;
-        for(stackIdx = Count - 1; stackIdx >= 0; --stackIdx)
+        for (stackIdx = Count - 1; stackIdx >= 0; --stackIdx)
         {
-            if(this[stackIdx].VarNames.Contains(name))
+            if (this[stackIdx].VarNames.Contains(name) || this[stackIdx].Constants.Contains(name))
             {
-                foundAsName = true;
-                break;
-            }
-            else if(this[stackIdx].Constants.Contains(name))
-            {
-                foundAsConstant = true;
-                break;
+                return this[stackIdx];
             }
         }
-
-        if(stackIdx < 0)
-        {
-            return NameInStack.NotFound;
-        }
-        else if(stackIdx == Count - 1)
-        {
-            return foundAsName ? NameInStack.ActiveName : NameInStack.ActiveConstant;
-        }
-        else
-        {
-            return NameInStack.LowerInStack;
-        }
+        return null;
     }
 }
 
@@ -250,32 +230,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             if (variableName == "bar")
             {
-                // DEBUG BREAKPOINT
-                // BOOKMARK: Start generate freevars here for recursive calls of inner functions.
-                //           You need to keep track of your "stack" to be able to tell what outer variables are floating around.
-                //           This is a big change to the code generation.
-                //           Actually, you just get this from ProgramStack, but it can't be a regular stack anymore since you want to peek up it.
-                var whereInStack = codeStack.FindNameInStack(variableName);
-                switch (whereInStack)
+                var containingCodeObj = codeStack.FindNameInStack(variableName);
+                if(containingCodeObj == null)
                 {
-                    case NameInStack.LowerInStack:
-                        {
-                            var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
-                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
-                        }
-                        break;
-                    case NameInStack.ActiveName:
-                        {
-                            var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
-                        }
-                        break;
-                    default:
-                        {
-                            var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
-                        }
-                        break;
+                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+                }
+                else if(containingCodeObj != codeStack.ActiveProgram)
+                {
+                    var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
+                    containingCodeObj.CellNames.AddGetIndex(variableName);              // Using this form to only add as unique.                    
+                }
+                else
+                {
+                    var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
                 }
             }
             else

@@ -244,7 +244,8 @@ namespace CloacaInterpreter
 
             for (int varIndex = 0; varIndex < frame.Function.Code.VarNames.Count; ++varIndex)
             {
-                frame.AddOnlyNewLocal(frame.Function.Code.VarNames[varIndex], null);
+                var varName = frame.Function.Code.VarNames[varIndex];
+                frame.AddOnlyNewLocal(varName, null);                
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
@@ -834,11 +835,18 @@ namespace CloacaInterpreter
                                 for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
                                 {
                                     var frame = context.callStack.ElementAt(callStackIdx);
-                                    if(frame.Locals.ContainsKey(freeVarName))
+                                    if (frame.Function.Code.CellNames.Contains(freeVarName))
                                     {
-                                        context.DataStack.Push(frame.Locals[freeVarName]);
-                                        found = true;
-                                        break;
+                                        if (frame.Locals.ContainsKey(freeVarName))
+                                        {
+                                            context.DataStack.Push(frame.Locals[freeVarName]);
+                                            found = true;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
+                                        }
                                     }
                                 }
 
@@ -1347,6 +1355,7 @@ namespace CloacaInterpreter
 
                                 PyFunction function = (PyFunction)context.DataStack.Pop();
                                 context.DataStack.Push(function);
+                                context.Locals.AddOrSet(qualifiedName, function);                                // Sneaky: The function is added to locals after it is made! CPython does this!
                             }
                             context.Cursor += 2;
                             break;
