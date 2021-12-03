@@ -39,14 +39,6 @@ public class LoopBlockRecord
     }
 }
 
-public enum NameInStack
-{
-    NotFound,
-    ActiveName,
-    ActiveConstant,
-    LowerInStack,
-}
-
 public class CodeObjectBuilderStack : List<CodeObjectBuilder>
 {
     public CodeObjectBuilderStack()
