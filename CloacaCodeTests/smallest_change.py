@@ -1,3 +1,5 @@
+raise NotImplementedError("Unknown NPE")
+
 # Smallest amount of change (coins, whatever)
 # We don't actually need to know which coins, just how few we can use.
 #
