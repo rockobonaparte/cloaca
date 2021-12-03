@@ -1,4 +1,9 @@
-## Emedding
+## Building the Project
+The Cloaca solution leans on multiple projects that lean on various Nuget dependencies that should fix themselves. However, it will be very
+grouchy to wake up for the first time. This is because ANTLR4 has to generate some files before the grammar is usable by the other projects.
+The trick is the build the 'Language' project first. This should the create all the ANTLR4 visitors used by other projects.
+
+## Embedding
 
 ## Working With The Scheduler
 
