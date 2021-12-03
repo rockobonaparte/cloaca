@@ -228,30 +228,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
         else
         {
-            if (variableName == "bar")
+            var containingCodeObj = codeStack.FindNameInStack(variableName);
+            if(containingCodeObj == null || containingCodeObj == codeStack[0])
             {
-                var containingCodeObj = codeStack.FindNameInStack(variableName);
-                if(containingCodeObj == null)
-                {
-                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
-                }
-                else if(containingCodeObj != codeStack.ActiveProgram)
-                {
-                    var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
-                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
-                    containingCodeObj.CellNames.AddGetIndex(variableName);              // Using this form to only add as unique.                    
-                }
-                else
-                {
-                    var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
-                }
+                var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+            }
+            else if(containingCodeObj != codeStack.ActiveProgram)
+            {
+                var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
+                containingCodeObj.CellNames.AddGetIndex(variableName);              // Using this form to only add as unique.                    
             }
             else
             {
-                codeStack.ActiveProgram.Names.Add(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, codeStack.ActiveProgram.Names.Count - 1, context);
+                var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
             }
             return;
         }
