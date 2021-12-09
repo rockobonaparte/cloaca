@@ -1662,6 +1662,25 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return -1;
     }
 
+    public override object VisitAtomCurlyBrackets([NotNull] CloacaParser.AtomCurlyBracketsContext context)
+    {
+        // Real talk: I'm not sure how this got defined and why it still works. It's a Christmas Miracle or something.
+
+        // For now, we are assuming we're building simple dictionaries! We're not doing sets, nor
+        // are the elements complex statements (yet).
+        var dictorsetmaker = context.dictorsetmaker();
+        int dictorsetmaker_len = dictorsetmaker != null ? dictorsetmaker.test().Length : 0;
+        if (context.dictorsetmaker() != null)
+        {
+            foreach (var test in context.dictorsetmaker().test())
+            {
+                Visit(test);
+            }
+        }
+        codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, dictorsetmaker_len / 2, context);
+        return null;
+    }
+
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
         if (context.trailer().Length == 0)
@@ -1740,19 +1759,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 }
             }
         }
-        return null;
-    }
-
-    // TODO: Consider switching to same method that VisitAtomParens is using here, which might make this general-purpose enough.
-    public override object VisitDictorsetmaker([NotNull] CloacaParser.DictorsetmakerContext context)
-    {
-        // For now, we are assuming we're building simple dictionaries! We're not doing sets, nor
-        // are the elements complex statements (yet).
-        foreach (var test in context.test())
-        {
-            Visit(test);
-        }
-        codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, context.test().Length / 2, context);
         return null;
     }
 

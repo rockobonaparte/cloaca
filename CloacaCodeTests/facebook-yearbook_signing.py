@@ -1,5 +1,3 @@
-raise NotImplementedError("Another empty stack")
-
 # There are n students, numbered from 1 to n, each with their own yearbook. They would like
 # to pass their yearbooks around and get them signed by other students.
 #
