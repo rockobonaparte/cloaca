@@ -257,5 +257,17 @@ namespace CloacaTests
                     { "a", referenceDict }
                 }), 1);
         }
+
+        [Test]
+        public async Task DictConstructorEmptyBrackets()
+        {
+            var referenceDict = PyDict.Create();
+            await runBasicTest("a = {}\n",
+                new Dictionary<string, object>(),
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", referenceDict }
+                }), 1);
+        }
     }
 }
