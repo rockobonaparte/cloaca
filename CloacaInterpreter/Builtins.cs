@@ -345,6 +345,19 @@ namespace CloacaInterpreter
             return PyList.Create(built_list);
         }
 
+        public static async Task<PyDict> dict_builtin(IInterpreter interpreter, FrameContext context, params object[] args)
+        {
+            if (args == null || args.Length == 0)
+            {
+                return PyDict.Create();
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: dict() cannot take any arguments yet");
+                return null;
+            }
+        }
+
         public static async Task<PyObject> reversed_builtin(IInterpreter interpreter, FrameContext context, object o)
         {
             // 1. Check if there's a __reversed__ dunder. If so, call and return that.
