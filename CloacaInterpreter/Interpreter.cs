@@ -91,6 +91,7 @@ namespace CloacaInterpreter
             var bool_wrapper = new WrappedCodeObject("bool", typeof(Builtins).GetMethod("bool_builtin"));
             var str_wrapper = new WrappedCodeObject("str", typeof(Builtins).GetMethod("str_builtin"));
             var list_wrapper = new WrappedCodeObject("list", typeof(Builtins).GetMethod("list_builtin"));
+            var dict_wrapper = new WrappedCodeObject("dict", typeof(Builtins).GetMethod("dict_builtin"));
             var min_wrapper = new WrappedCodeObject("min", typeof(Builtins).GetMethod("min_builtin"));
             var max_wrapper = new WrappedCodeObject("max", typeof(Builtins).GetMethod("max_builtin"));
             var range_wrapper = new WrappedCodeObject("range", typeof(Builtins).GetNamedMethods("range_builtin"));
@@ -111,6 +112,7 @@ namespace CloacaInterpreter
                 { "bool", bool_wrapper },
                 { "str", str_wrapper },
                 { "list", list_wrapper },
+                { "dict", dict_wrapper },
                 { "min", min_wrapper },
                 { "max", max_wrapper },
                 { "range", range_wrapper },

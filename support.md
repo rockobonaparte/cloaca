@@ -61,7 +61,7 @@ When it comes to the built-in functions, support is much lower:
 | classmethod  | -1     | Would rather focus on class method decorator                                                          |
 | compile      | -1     | It's bad enough to use an embedded interpreter but arbitrary code execution is even worse. Probably create a callback hook for how to react with reference on how to compile if that's what you want to do!. |
 | complex      | 0      | No complex number support at all.                                                                     |
-| dict         | 2      | I don't know how much we aggressively have tested its casting and arguments. Basic calls work.        |
+| dict         | 1      | Dictionaries have basic functionality. The dict() function itself cannot be called with arguments.        |
 | dir          | 3      | Should even behave consistently to Python's own dir() when it comes to inheritance.                   |
 | divmod       | 0
 | delattr      | 2      | Uses the \_\_delattr__ dunder and should work on most .NET containers, but function not implemented   |
@@ -85,7 +85,7 @@ When it comes to the built-in functions, support is much lower:
 | iter         | 1      | Iterators are a thing but next() isn't nor is this function itself.                                   |
 | len          | 3      | Should also work on .NET containers.                                                                  |
 | locals       | 0
-| list         | 3      | Seems to behave at least in typical usage.
+| list         | 2      | Actual lists have very good support, but we think we may have missed parts of the list() function itself. |
 | map          | 0
 | memoryview   | ?      | Given the focus on C with memoryview, I am not sure what we'd actually do to support this.            |
 | max          | 1      | min and max are surprisingly detailed functions! I support just basic iterators for now.              |
