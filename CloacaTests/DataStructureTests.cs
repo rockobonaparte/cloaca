@@ -247,7 +247,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Dictionary constructor not yet implemented (oops)")]
         public async Task DictConstructorEmpty()
         {
             var referenceDict = PyDict.Create();
