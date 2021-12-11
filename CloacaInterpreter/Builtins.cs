@@ -596,5 +596,10 @@ namespace CloacaInterpreter
                 return null;
             }
         }
+
+        public static async Task<object> enumerate_builtin(IInterpreter interpreter, FrameContext context, object iterable)
+        {
+            return IteratorMaker.MakeIterator(new EnumerateIterator((PyIterable)await IteratorMaker.GetOrMakeIterator(interpreter, context, iterable)));
+        }
     }
 }

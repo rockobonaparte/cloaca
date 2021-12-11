@@ -65,7 +65,7 @@ When it comes to the built-in functions, support is much lower:
 | dir          | 3      | Should even behave consistently to Python's own dir() when it comes to inheritance.                   |
 | divmod       | 0
 | delattr      | 2      | Uses the \_\_delattr__ dunder and should work on most .NET containers, but function not implemented   |
-| enumerate    | 0      | _I should use this function more in general._                                                         |
+| enumerate    | 1      | Initial draft of implementation. Does not support .NET types. Needs to hit some FAANG coding interview integration tests. |
 | eval         | -1     | It's bad enough to use an embedded interpreter but arbitrary code execution is even worse. Probably create a callback hook for how to react. |
 | filter       | 0
 | float        | 2      | Can cast and create floats but I expect technicalities would screw up like NaN, infinity and such.    |

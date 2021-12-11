@@ -98,6 +98,7 @@ namespace CloacaInterpreter
             var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
             var zip_wrapper = new WrappedCodeObject("zip", typeof(Builtins).GetMethod("zip_builtin"));
             var slice_wrapper = new WrappedCodeObject("slice", typeof(Builtins).GetMethod("slice_builtin"));
+            var enumerate_wrapper = new WrappedCodeObject("enumerate", typeof(Builtins).GetMethod("enumerate_builtin"));
 
             builtins = new Dictionary<string, object>
             {
@@ -113,6 +114,7 @@ namespace CloacaInterpreter
                 { "str", str_wrapper },
                 { "list", list_wrapper },
                 { "dict", dict_wrapper },
+                { "enumerate", enumerate_wrapper },
                 { "min", min_wrapper },
                 { "max", max_wrapper },
                 { "range", range_wrapper },

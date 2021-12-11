@@ -173,6 +173,27 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task enumerate_general()
+        {
+            List<object> referenceList = new List<object>();
+            referenceList.Add(PyInteger.Create(0));
+            referenceList.Add(PyInteger.Create(4));
+            referenceList.Add(PyInteger.Create(1));
+            referenceList.Add(PyInteger.Create(5));
+            var assertResultPyList = PyList.Create(referenceList);
+
+            await runBasicTest(
+                "result = []\n" +
+                "for a, b in enumerate([4,5]):\n" +
+                "  result.append(a)\n" +
+                "  result.append(b)\n",
+                new VariableMultimap(new TupleList<string, object>
+            {
+                { "result", assertResultPyList },
+            }), 1);
+        }
+
+        [Test]
         public async Task Range3()
         {
             var runContext = await runProgram(
