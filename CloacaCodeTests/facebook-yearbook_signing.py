@@ -1,4 +1,3 @@
-raise NotImplementedError("enumerate isn't implemented yet")
 # There are n students, numbered from 1 to n, each with their own yearbook. They would like
 # to pass their yearbooks around and get them signed by other students.
 #
@@ -43,10 +42,11 @@ def findSignatureCounts(arr):
 arr_1 = [2, 1]
 expected_1 = [2, 2]
 output_1 = findSignatureCounts(arr_1)
-print(output_1)
 
 arr_2 = [1, 2]
 expected_2 = [1, 1]
 output_2 = findSignatureCounts(arr_2)
-print(output_2)
 
+assert output_1 == [2, 2]
+assert output_2 == [1, 1]
+print("Success!")
