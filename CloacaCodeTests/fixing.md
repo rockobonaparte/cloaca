@@ -7,7 +7,7 @@ Some priorities:
 3. [DONE] Implement multiplication on arrays to create extended versions of them. This accounts for a lot of errors too.
 4. [DONE] Implement array slicing. I don't support array slicing yet! Whoops!
 5. [DONE] Enable sherlock2 
-6. Need to actually implement NotImplementedError, which is ironic!
+6. [DONE] Need to actually implement NotImplementedError, which is ironic!
 7. [DONE] Implement list add
 8. [DONE enough] Implement min
 9. [DONE enough] Implement max

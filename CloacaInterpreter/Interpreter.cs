@@ -122,6 +122,7 @@ namespace CloacaInterpreter
                 { "slice", slice_wrapper },
                 { "zip", zip_wrapper },
                 { "Exception", PyExceptionClass.Instance },
+                { "NotImplementedError", NotImplementedErrorClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
                 { "ModuleNotFoundErrorClass", ModuleNotFoundErrorClass.Instance },
             };

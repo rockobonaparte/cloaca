@@ -81,6 +81,46 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
     }
 
+    public class NotImplementedError : PyException
+    {
+        public NotImplementedError(string msg) : base(msg)
+        {
+
+        }
+
+        public NotImplementedError(PyClass baseClass) : base(baseClass)
+        {
+
+        }
+    }
+
+    public class NotImplementedErrorClass : PyExceptionClass
+    {
+        public NotImplementedErrorClass() :
+            base("NotImplementedError", null, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        public NotImplementedErrorClass(string classname, PyFunction __init__, PyClass[] bases) : base(classname, __init__, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        private static NotImplementedErrorClass instance = null;
+        public static new NotImplementedErrorClass Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new NotImplementedErrorClass();
+                }
+                return instance;
+            }
+        }
+    }
+
     public class TypeError : PyException
     {
         public TypeError(string msg) : base(msg)
