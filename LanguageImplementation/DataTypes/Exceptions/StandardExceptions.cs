@@ -161,12 +161,12 @@ namespace LanguageImplementation.DataTypes.Exceptions
     public class ImportErrorClass : PyExceptionClass
     {
         public ImportErrorClass() :
-            base("ImportError", null, new PyClass[] { new PyExceptionClass() })
+            base("ImportError", null, new PyClass[] { PyExceptionClass.Instance })
         {
 
         }
 
-        public ImportErrorClass(string classname, PyFunction __init__, PyClass[] bases) : base(classname, __init__, bases)
+        public ImportErrorClass(string classname, PyFunction __init__, PyClass[] bases) : base(classname, __init__, new PyClass[] { PyExceptionClass.Instance })
         {
 
         }
@@ -184,7 +184,7 @@ namespace LanguageImplementation.DataTypes.Exceptions
     public class ModuleNotFoundErrorClass : ImportErrorClass
     {
         public ModuleNotFoundErrorClass() :
-            base("ModuleNotFoundError", null, new PyClass[] { new ImportErrorClass() })
+            base("ModuleNotFoundError", null, new PyClass[] { ImportErrorClass.Instance })
         {
 
         }

@@ -124,7 +124,7 @@ namespace CloacaInterpreter
                 { "Exception", PyExceptionClass.Instance },
                 { "NotImplementedError", NotImplementedErrorClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
-                { "ModuleNotFoundErrorClass", ModuleNotFoundErrorClass.Instance },
+                { "ModuleNotFoundError", ModuleNotFoundErrorClass.Instance },
             };
 
             this.Scheduler = scheduler;
