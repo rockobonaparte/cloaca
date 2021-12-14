@@ -1,4 +1,4 @@
-raise NotImplementedError("Another empty stack")
+raise NotImplementedError("'str' object has no attribute named '__getitem__' looks like I can't index a string?")
 
 
 def countGroups(related):

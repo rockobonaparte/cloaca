@@ -1,4 +1,4 @@
-raise NotImplementedError("Unknown NPE")
+raise NotImplementedError("Get 'Microsoft.CSharp.RuntimeBinder.RuntimeBinderException: Cannot perform runtime binding on a null reference'")
 
 # Definition for singly-linked list.
 class ListNode:

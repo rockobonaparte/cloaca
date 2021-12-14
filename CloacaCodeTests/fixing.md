@@ -11,7 +11,8 @@ Some priorities:
 7. [DONE] Implement list add
 8. [DONE enough] Implement min
 9. [DONE enough] Implement max
-10. Implement sorted
+10. Implement sorted()
+12. Double check that we can index into strings
+12. Implement find() for strings
 11. Rerun tests and refile this list
-
 

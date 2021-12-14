@@ -1,4 +1,4 @@
-raise NotImplementedError("Unknown NPE when trying to run")
+raise NotImplementedError("Trying to cast NoneType to a PyObject")
 
 station_costs = [[3, 4],
                  [7, 8],
