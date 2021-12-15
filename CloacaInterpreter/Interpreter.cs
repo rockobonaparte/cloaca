@@ -98,6 +98,7 @@ namespace CloacaInterpreter
             var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
             var zip_wrapper = new WrappedCodeObject("zip", typeof(Builtins).GetMethod("zip_builtin"));
             var slice_wrapper = new WrappedCodeObject("slice", typeof(Builtins).GetMethod("slice_builtin"));
+            var sorted_wrapper = new WrappedCodeObject("sorted", typeof(Builtins).GetMethod("sorted_builtin"));
             var enumerate_wrapper = new WrappedCodeObject("enumerate", typeof(Builtins).GetMethod("enumerate_builtin"));
 
             builtins = new Dictionary<string, object>
@@ -120,6 +121,7 @@ namespace CloacaInterpreter
                 { "range", range_wrapper },
                 { "reversed", reversed_wrapper },
                 { "slice", slice_wrapper },
+                { "sorted", sorted_wrapper },
                 { "zip", zip_wrapper },
                 { "Exception", PyExceptionClass.Instance },
                 { "NotImplementedError", NotImplementedErrorClass.Instance },
