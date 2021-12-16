@@ -137,14 +137,6 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
     }
 
-    public class NotImplemented : PyException
-    {
-        public NotImplemented(string msg) : base(msg)
-        {
-
-        }
-    }
-
     public class ImportError : PyException
     {
         public ImportError(string msg) : base(msg)

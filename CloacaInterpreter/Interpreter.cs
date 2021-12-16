@@ -124,6 +124,7 @@ namespace CloacaInterpreter
                 { "sorted", sorted_wrapper },
                 { "zip", zip_wrapper },
                 { "Exception", PyExceptionClass.Instance },
+                { "NotImplemented", NotImplemented.Instance },
                 { "NotImplementedError", NotImplementedErrorClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
                 { "ModuleNotFoundError", ModuleNotFoundErrorClass.Instance },
