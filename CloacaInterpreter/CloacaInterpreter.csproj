@@ -71,6 +71,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repl.cs" />
     <Compile Include="Scheduler.cs" />
+    <Compile Include="Sorting.cs" />
     <Compile Include="SubscriptHelper.cs" />
     <Compile Include="SysModule.cs" />
     <Compile Include="Visitors.cs" />
