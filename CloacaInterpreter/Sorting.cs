@@ -1,13 +1,9 @@
-﻿namespace CloacaInterpreter
+﻿using System;
+
+namespace CloacaInterpreter
 {
     public class Sorting
     {
-        private static void Swap(int[] arr, int a, int b)
-        {
-            int temp = arr[a];
-            arr[a] = arr[b];
-            arr[b] = temp;
-        }
         public static void Sort(int[] arr)
         {
             // Iterative merge sort
@@ -15,7 +11,6 @@
             {
                 for(int l_start = 0; l_start < arr.Length; l_start += 2 * width)
                 {
-
                     int r_start = l_start + width;
 
                     // The right-side width (r_width) should not exceed the array length.
@@ -26,21 +21,33 @@
                         r_width -= r_start + r_width - arr.Length;
                     }
 
-                    r_start = r_start >= arr.Length ? arr.Length - 1 : r_start;
+                    // Temporary arrays from which to source the original sublists
+                    int[] temp = new int[width + r_width];
+                    Array.Copy(arr, l_start, temp, 0, width + r_width);
 
-                    int r = r_start;
-                    for(int i = l_start; i < r_start && r < arr.Length; ++i)
+                    int r = width;
+                    int l = 0;
+                    for(int temp_i = 0; temp_i < temp.Length; ++temp_i)
                     {
-                        if(arr[i] > arr[r])
+                        if(l >= width)
                         {
-                            Swap(arr, i, r);
-                            if(r < r_start + r_width - 1)
-                            {
-                                // Keep r in-place as the last index for swapping
-                                // if we have more left indices to work on, but move up
-                                // otherwise.
-                                r += 1;
-                            }
+                            arr[l_start + temp_i] = temp[r];
+                            r += 1;
+                        }
+                        else if(r >= width + r_width)
+                        {
+                            arr[l_start + temp_i] = temp[l];
+                            l += 1;
+                        }
+                        else if (temp[r] < temp[l])
+                        {
+                            arr[l_start + temp_i] = temp[r];
+                            r += 1;
+                        }
+                        else
+                        {
+                            arr[l_start + temp_i] = temp[l];
+                            l += 1;
                         }
                     }
                 }
