@@ -1,10 +1,11 @@
-﻿using System.Numerics;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using NUnit.Framework;
 
 using CloacaInterpreter;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
@@ -68,5 +69,45 @@ namespace CloacaTests
             }
         }
 
+        [Test]
+        public async Task BasicSortingPyType()
+        {
+            var i1 = PyInteger.Create(1);
+            var i2 = PyInteger.Create(2);
+            var i3 = PyInteger.Create(3);
+            var i4 = PyInteger.Create(4);
+            var i5 = PyInteger.Create(5);
+            var i6 = PyInteger.Create(6);
+            var i7 = PyInteger.Create(7);
+            var i8 = PyInteger.Create(8);
+
+            var test0 = PyList.Create();
+            var test1 = PyList.Create(new List<object>{ i1 });
+            var test2 = PyList.Create(new List<object> { i1, i2 });
+            var test3 = PyList.Create(new List<object> { i1, i2, i3 });
+            var test4 = PyList.Create(new List<object> { i1, i2, i3, i4 });
+            var test5 = PyList.Create(new List<object> { i1, i2, i3, i4, i5 });
+            var test6 = PyList.Create(new List<object> { i1, i2, i3, i4, i5, i6 });
+            var test7 = PyList.Create(new List<object> { i1, i2, i3, i4, i5, i6, i7 });
+            var test8 = PyList.Create(new List<object> { i1, i2, i3, i4, i5, i6, i7, i8 });
+            await Sorting.Sort(null, null, test0.list);
+            await Sorting.Sort(null, null, test1.list);
+            await Sorting.Sort(null, null, test2.list);
+            await Sorting.Sort(null, null, test3.list);
+            await Sorting.Sort(null, null, test4.list);
+            await Sorting.Sort(null, null, test5.list);
+            await Sorting.Sort(null, null, test6.list);
+            await Sorting.Sort(null, null, test7.list);
+            await Sorting.Sort(null, null, test8.list);
+            Assert.That(test0.list.ToArray(), Is.EqualTo(new PyInteger[] { }));
+            Assert.That(test1.list.ToArray(), Is.EqualTo(new PyInteger[] { i1 }));
+            Assert.That(test2.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2 }));
+            Assert.That(test3.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3 }));
+            Assert.That(test4.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4 }));
+            Assert.That(test5.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5 }));
+            Assert.That(test6.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5, i6 }));
+            Assert.That(test7.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5, i6, i7 }));
+            Assert.That(test8.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5, i6, i7, i8 }));
+        }
     }
 }
