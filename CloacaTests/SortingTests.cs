@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System;
 using System.Collections.Generic;
 
 using NUnit.Framework;
@@ -41,5 +42,31 @@ namespace CloacaTests
             Assert.That(test7, Is.EqualTo(new int[] { 1, 2, 3, 4, 5, 6, 7 }));
             Assert.That(test8, Is.EqualTo(new int[] { 1, 2, 3, 4, 5, 6, 7, 8 }));
         }
+
+        [Test]
+        public void ExhaustiveSorting()
+        {
+            Random rand = new Random();
+            int[] test_sizes = new int[] { 7, 8, 9 };
+            
+            for(int test_i = 0; test_i < test_sizes.Length; ++test_i)
+            {
+                int test_size = test_sizes[test_i];
+                for (int tries = 0; tries < 100; ++tries)
+                {
+                    var test_array = new int[test_size];
+                    for(int i = 0; i < test_array.Length; ++i)
+                    {
+                        test_array[i] = rand.Next();
+                    }
+                    var reference = new int[test_size];
+                    Array.Copy(test_array, reference, test_size);
+                    Array.Sort(reference);
+                    Sorting.Sort(test_array);
+                    Assert.That(test_array, Is.EqualTo(reference));
+                }
+            }
+        }
+
     }
 }
