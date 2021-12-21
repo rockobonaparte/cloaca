@@ -59,8 +59,10 @@ namespace CloacaInterpreter
             }
         }
 
-        private static async Task<bool> comparePyObj(IInterpreter interpreter, FrameContext context, object left, object right)
+        private static async Task<bool> comparePyObj(IInterpreter interpreter, FrameContext context, object left, object right,
+            IPyCallable keyfunc=null, bool reversed=false)
         {
+            var comp_func_name = !reversed ? "__lt__" : "__gt__";
             var pyleft = left as PyObject;
             var pyright = right as PyObject;
             if(pyleft == null)
@@ -71,21 +73,28 @@ namespace CloacaInterpreter
             {
                 throw new Exception(right.ToString() + " is not a PyObject and cannot be compared for sorting.");
             }
-            var lt = pyleft.__dict__.GetDefault("__lt__", null) as IPyCallable;
-            if(lt == null)
+            var comp_func = pyleft.__dict__.GetDefault(comp_func_name, null) as IPyCallable;
+            if(comp_func == null)
             {
-                throw new Exception(pyleft.__class__.Name + " does not have a working, callable __lt__ implementation");
+                throw new Exception(pyleft.__class__.Name + " does not have a working, callable " + comp_func_name + " implementation");
             }
-            var resultObj = await lt.Call(interpreter, context, new object[] { pyleft, pyright });
+
+            if(keyfunc != null)
+            {
+                pyleft = (PyObject) await keyfunc.Call(interpreter, context, new object[] { pyleft });
+                pyright = (PyObject)await keyfunc.Call(interpreter, context, new object[] { pyright });
+            }
+
+            var resultObj = await comp_func.Call(interpreter, context, new object[] { pyleft, pyright });
             var resultPyBool = resultObj as PyBool;
             if(resultPyBool == null)
             {
-                throw new Exception(pyleft.__class__.Name + " __lt__ return not PyBool " + resultPyBool.ToString());
+                throw new Exception(pyleft.__class__.Name + " " + comp_func_name + " did not return PyBool " + resultPyBool.ToString());
             }
             return resultPyBool.InternalValue;
         }
 
-        public static async Task Sort(IInterpreter interpreter, FrameContext context, List<object> list)
+        public static async Task Sort(IInterpreter interpreter, FrameContext context, List<object> list, IPyCallable keyfunc=null, bool reversed=false)
         {
             for (int width = 1; width < list.Count; width <<= 1)
             {
