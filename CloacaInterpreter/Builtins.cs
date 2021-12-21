@@ -610,6 +610,18 @@ namespace CloacaInterpreter
             }
         }
 
+        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, IPyCallable keyfunc = null, PyBool reversed = null)
+        {
+            bool reversed_bool = false;
+            if(reversed != null)
+            {
+                reversed_bool = reversed.InternalValue;
+            }
+            PyList newList = PyList.Create(pyList.list);
+            await Sorting.Sort(interpreter, context, newList.list, keyfunc, reversed_bool);
+            return newList;
+        }
+
         public static async Task<object> enumerate_builtin(IInterpreter interpreter, FrameContext context, object iterable)
         {
             return IteratorMaker.MakeIterator(new EnumerateIterator((PyIterable)await IteratorMaker.GetOrMakeIterator(interpreter, context, iterable)));
