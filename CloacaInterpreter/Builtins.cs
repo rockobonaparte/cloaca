@@ -390,19 +390,6 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task<PyObject> sorted_builtin(IInterpreter interpreter, FrameContext context, object to_sort, object key=null, bool reverse=false)
-        {
-            if(!(to_sort is PyList))
-            {
-                context.CurrentException = new PyException("sorted() currently only works on PyLists");
-                return null;
-            }
-            var asPyList = to_sort as PyList;
-            var listCopy = PyList.Create(asPyList.list);
-            listCopy.list.Sort();
-            return listCopy;
-        }
-
         private static async Task<object> __helper_find_best(IInterpreter interpreter, FrameContext context, object[] inlineArgs, string func_name, string func_dunder)
         {
             if(inlineArgs.Length == 0)

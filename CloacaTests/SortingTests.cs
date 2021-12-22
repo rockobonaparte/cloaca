@@ -49,14 +49,14 @@ namespace CloacaTests
         {
             Random rand = new Random();
             int[] test_sizes = new int[] { 7, 8, 9 };
-            
-            for(int test_i = 0; test_i < test_sizes.Length; ++test_i)
+
+            for (int test_i = 0; test_i < test_sizes.Length; ++test_i)
             {
                 int test_size = test_sizes[test_i];
                 for (int tries = 0; tries < 100; ++tries)
                 {
                     var test_array = new int[test_size];
-                    for(int i = 0; i < test_array.Length; ++i)
+                    for (int i = 0; i < test_array.Length; ++i)
                     {
                         test_array[i] = rand.Next();
                     }
@@ -82,7 +82,7 @@ namespace CloacaTests
             var i8 = PyInteger.Create(8);
 
             var test0 = PyList.Create();
-            var test1 = PyList.Create(new List<object>{ i1 });
+            var test1 = PyList.Create(new List<object> { i1 });
             var test2 = PyList.Create(new List<object> { i1, i2 });
             var test3 = PyList.Create(new List<object> { i1, i2, i3 });
             var test4 = PyList.Create(new List<object> { i1, i2, i3, i4 });
@@ -109,5 +109,56 @@ namespace CloacaTests
             Assert.That(test7.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5, i6, i7 }));
             Assert.That(test8.list.ToArray(), Is.EqualTo(new PyInteger[] { i1, i2, i3, i4, i5, i6, i7, i8 }));
         }
+    }
+
+    [TestFixture]
+    public class SortingCodeTests : RunCodeTest
+    {
+        [Test]
+        public async Task BasicSort()
+        {
+            await runBasicTest(
+                "a = sorted([3, 2, 1])\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2), PyInteger.Create(3) }) },
+            }), 1);
+        }
+
+        [Test]
+        public async Task ReversedSort()
+        {
+            await runBasicTest(
+                "a = sorted([1, 2, 3], reversed=True)\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(3), PyInteger.Create(2), PyInteger.Create(1) }) },
+            }), 1);
+        }
+
+        [Test]
+        public async Task KeyedSort()
+        {
+            await runBasicTest(
+                "def keyfunc(x):\n" +
+                "   return 100-x\n" +
+                "\n" +
+                "a = sorted([1, 2, 3], key=keyfunc)\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(3), PyInteger.Create(2), PyInteger.Create(1) }) },
+            }), 1);
+        }
+
+        [Test]
+        public async Task KeyedReversedSort()
+        {
+            await runBasicTest(
+                "def keyfunc(x):\n" +
+                "   return 100-x\n" +
+                "\n" +
+                "a = sorted([1, 2, 3], key=keyfunc, reversed=True)\n", new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2), PyInteger.Create(3) }) },
+            }), 1);
+        }
+
     }
 }
