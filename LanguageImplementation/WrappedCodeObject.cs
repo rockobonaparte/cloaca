@@ -1,5 +1,6 @@
 ﻿using LanguageImplementation.DataTypes;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -349,10 +350,79 @@ namespace LanguageImplementation
             }
             else
             {
-                errorMessage.Append(String.Join(", ", from x in in_args select x.GetType().Name));
+                errorMessage.Append(String.Join(", ", from x in in_args select x?.GetType().Name));
             }
 
             throw new Exception(errorMessage.ToString());
+        }
+
+        public object[] Resolve(IInterpreter interpreter, FrameContext context, List<object> argsList, Dictionary<string, object> kwargs)
+        {
+            var methodBase = findBestMethodMatch(argsList.ToArray());
+
+            // Current issue: interpreter and frame context can come in anywhere--often right at the beginning,
+            // so you have to deal with them separately!
+            // Fill in .NET default parameters with our keyword arguments (if any)
+            var parameters = methodBase.GetParameters();
+            for(int arg_i = argsList.Count; arg_i < parameters.Length; ++arg_i)
+            {
+                //if(Injector.IsInjectedType(parameters[arg_i].ParameterType))
+                //{
+                //    argsList.Add(null);
+                //}
+                if (parameters[arg_i].IsOptional)
+                {
+                    if (parameters[arg_i].IsOptional &&
+                        kwargs != null &&
+                        kwargs.ContainsKey(parameters[arg_i].Name))
+                    {
+                        argsList.Add(kwargs[parameters[arg_i].Name]);
+                    }
+                    else
+                    {
+                        argsList.Add(parameters[arg_i].DefaultValue);
+                    }
+                }
+                else
+                {
+                    argsList.Add(null);
+                }
+            }
+
+            var args = argsList.ToArray();
+
+            // Strip generic arguments (if any).
+            // Note this is kind of hacky! We get a monomorphized generic method back whether or not
+            // we started out that way already. Current hack is to see if we have more arguments than
+            // the method needs. If we do, then we strip the excess in front since they were used to
+            // monomorphize the generic.
+            int numGenerics = 0;
+            var noGenericArgs = args.ToArray();
+            int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
+            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && args.Length > actualParametersLength)
+            {
+                if (methodBase.IsConstructor)
+                {
+                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                    // defines.
+                    var asConstructor = methodBase as ConstructorInfo;
+                    numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
+                }
+                else
+                {
+                    numGenerics = methodBase.GetGenericArguments().Length;
+                    noGenericArgs = new object[args.Length - numGenerics];
+                }
+            }
+            Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
+
+            // Inject internal types, convert .NET/Cloaca types.
+            // Unit tests like to come in with a null interpreter so we have to test for it.
+            // TODO [INJECTOR-REUSE] Use static methods here or reuse the injector as a singleton or single instance.
+            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
+            var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
+            return injected_args;
         }
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
@@ -387,9 +457,10 @@ namespace LanguageImplementation
 
             // Inject internal types, convert .NET/Cloaca types.
             // Unit tests like to come in with a null interpreter so we have to test for it.
-            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
-            var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
-            object[] final_args = injected_args;
+            //var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
+            //var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
+            //object[] final_args = injected_args;
+            object[] final_args = args;
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;

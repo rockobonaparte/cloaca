@@ -246,6 +246,7 @@ Part 3: Hardening
   * This will probably require various overloaded arguments or a master function that switches off based on arguments
 * Cell variables (oh God)
   * [CELL VARIABLES]: Wrap variables in cells.
+* TODO [INJECTOR-REUSE] Use static methods here or reuse the injector as a singleton or single instance.
 
 Tech debt:
 * [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
