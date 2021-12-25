@@ -98,7 +98,7 @@ namespace CloacaInterpreter
             var reversed_wrapper = new WrappedCodeObject("reversed", typeof(Builtins).GetMethod("reversed_builtin"));
             var zip_wrapper = new WrappedCodeObject("zip", typeof(Builtins).GetMethod("zip_builtin"));
             var slice_wrapper = new WrappedCodeObject("slice", typeof(Builtins).GetMethod("slice_builtin"));
-            var sorted_wrapper = new WrappedCodeObject("sorted", typeof(Builtins).GetMethod("sorted_builtin"));
+            var __sorted_wrapper = new WrappedCodeObject("__sorted", typeof(Builtins).GetMethod("sorted_builtin"));
             var enumerate_wrapper = new WrappedCodeObject("enumerate", typeof(Builtins).GetMethod("enumerate_builtin"));
 
             builtins = new Dictionary<string, object>
@@ -121,7 +121,7 @@ namespace CloacaInterpreter
                 { "range", range_wrapper },
                 { "reversed", reversed_wrapper },
                 { "slice", slice_wrapper },
-                { "sorted", sorted_wrapper },
+                { "__sorted", __sorted_wrapper },
                 { "zip", zip_wrapper },
                 { "Exception", PyExceptionClass.Instance },
                 { "NotImplemented", NotImplemented.Instance },
@@ -473,6 +473,26 @@ namespace CloacaInterpreter
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
         public async Task Run(FrameContext context)
         {
+            // Sorted() has defaults and we can't bind that to .NET yet; this is an effort in another branch. We'll
+            // write a wrapper to manage it for now.
+            // This is a hack that happens on every Run() call for now, but gives us a chance to verify sorted()
+            // BOOKMARK: This recursively calls. We'll need to put it somewhere else.
+            if(!builtins.ContainsKey("sorted"))
+            {
+                var sortedTask = await ByteCodeCompiler.Compile(
+                    "def sorted(l, key=None, reversed=False):\n" +
+                    "  return __sorted(l, key, reversed)\n", new Dictionary<string, object>(), new Dictionary<string, object>(), Scheduler);
+                foreach(var constant in sortedTask.Code.Constants)
+                {
+                    if(constant is PyFunction)
+                    {
+                        builtins["sorted"] = constant;
+                        break;
+                    }
+                }
+            }
+
+
             try
             {
                 while (context.Cursor < context.Code.Length)

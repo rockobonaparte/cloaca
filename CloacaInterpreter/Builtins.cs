@@ -597,15 +597,26 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, IPyCallable keyfunc = null, PyBool reversed = null)
+        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, object keyfunc = null, PyBool reversed = null)
         {
+            IPyCallable callableKey = null;
+            if(keyfunc != NoneType.Instance && !(keyfunc is IPyCallable))
+            {
+                context.CurrentException = new PyException("sorted() key function was not a callable function");
+                return null;
+            }
+            else if(keyfunc is IPyCallable)
+            {
+                callableKey = (IPyCallable)keyfunc;
+            }
+
             bool reversed_bool = false;
             if(reversed != null)
             {
                 reversed_bool = reversed.InternalValue;
             }
             PyList newList = PyList.Create(pyList.list);
-            await Sorting.Sort(interpreter, context, newList.list, keyfunc, reversed_bool);
+            await Sorting.Sort(interpreter, context, newList.list, callableKey, reversed_bool);
             return newList;
         }
 
