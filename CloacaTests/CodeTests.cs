@@ -259,6 +259,55 @@ namespace CloacaTests
 
     }
 
+    public class DotNetBindingTestFunctions
+    {
+        public static void NoArgs()
+        {
+
+        }
+
+        public static void OneRegularReference(object foo)
+        {
+
+        }
+
+        public static void OneRegularValue(decimal foo)
+        {
+            // I'd use an int but that's particularly easy to anticipate.
+        }
+
+        public static void InterpreterContext(IInterpreter interpreter, FrameContext context)
+        {
+
+        }
+
+        public static void InterpreterContextReference(IInterpreter interpreter, FrameContext context, object foo)
+        {
+
+        }
+
+        public static void InterpreterContextValue(IInterpreter interpreter, FrameContext context, decimal foo)
+        {
+
+        }
+
+        public static void InterpreterContextParams(IInterpreter interpreter, FrameContext context, params object[] foo)
+        {
+
+        }
+
+        public static void InterpreterContextDefaults(IInterpreter interpreter, FrameContext context, object foo1=null, int foo2=-1)
+        {
+
+        }
+
+        public static void InterpreterContextDefaultsParams(IInterpreter interpreter, FrameContext context, object foo1 = null, int foo2 = -1, params object[] paramFoos)
+        {
+
+        }
+
+    }
+
     // BOOKMARK: Add tests here for different parameter combinations:
     // 1. Just basic arguments
     // 2. Interpreter and FrameContext added around
@@ -269,14 +318,11 @@ namespace CloacaTests
     public class ArgParamMatchTestsDotNet
     {
         [Test]
-        public void OneToOne()
-        {
-            var co = new CodeObject(new byte[0]);
-            co.ArgCount = 1;
-            co.Defaults = new List<object>();
-            co.VarNames.Add("onevar");
+        public void NoArgs()
+        {            
+            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("NoArgs"));
 
-            var inParams = new object[1];
+            var inParams = new object[0];
             var outParams = ArgParamMatcher.Resolve(co, inParams);
             Assert.That(outParams, Is.EqualTo(inParams));
         }

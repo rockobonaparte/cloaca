@@ -281,7 +281,7 @@ namespace CloacaInterpreter
         // BOOKMARK: Do all the default argument resolution here for .NET wrapped code objects.
         public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Dictionary<string, object> keywords = null)
         {
-            return null;
+            return inArgs;
         }
 
     }
