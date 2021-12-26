@@ -18,7 +18,7 @@ namespace CloacaTests
     /// the implementation of it was also getting out of hand and we really needed a helper.
     /// </summary>
     [TestFixture]
-    public class ArgParamMatchTests
+    public class ArgParamMatchTestsPython
     {
         public void InOutTest(CodeObject co, object[][] ins, Dictionary<string, object>[] keywordsIn, object[][] outs)
         {
@@ -255,6 +255,30 @@ namespace CloacaTests
 
             InOutTest(co, inputs, keywordsIn, outputs);
 
+        }
+
+    }
+
+    // BOOKMARK: Add tests here for different parameter combinations:
+    // 1. Just basic arguments
+    // 2. Interpreter and FrameContext added around
+    // 3. Default arguments
+    // 4. params as *args
+    // 5. Bonus points: **kwargs
+    [TestFixture]
+    public class ArgParamMatchTestsDotNet
+    {
+        [Test]
+        public void OneToOne()
+        {
+            var co = new CodeObject(new byte[0]);
+            co.ArgCount = 1;
+            co.Defaults = new List<object>();
+            co.VarNames.Add("onevar");
+
+            var inParams = new object[1];
+            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
         }
 
     }
