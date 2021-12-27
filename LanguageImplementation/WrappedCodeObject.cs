@@ -213,7 +213,7 @@ namespace LanguageImplementation
         /// </summary>
         /// <param name="in_args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        private MethodBase findBestMethodMatch(object[] in_args)
+        public MethodBase FindBestMethodMatch(object[] in_args)
         {
             foreach(var methodBase_itr in MethodBases)
             {
@@ -358,7 +358,7 @@ namespace LanguageImplementation
 
         public object[] Resolve(IInterpreter interpreter, FrameContext context, List<object> argsList, Dictionary<string, object> kwargs)
         {
-            var methodBase = findBestMethodMatch(argsList.ToArray());
+            var methodBase = FindBestMethodMatch(argsList.ToArray());
 
             // Current issue: interpreter and frame context can come in anywhere--often right at the beginning,
             // so you have to deal with them separately!
@@ -427,7 +427,7 @@ namespace LanguageImplementation
 
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
         {
-            var methodBase = findBestMethodMatch(args);
+            var methodBase = FindBestMethodMatch(args);
 
             // Strip generic arguments (if any).
             // Note this is kind of hacky! We get a monomorphized generic method back whether or not

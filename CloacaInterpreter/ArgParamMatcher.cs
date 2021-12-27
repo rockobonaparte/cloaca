@@ -279,9 +279,10 @@ namespace CloacaInterpreter
         }
 
         // BOOKMARK: Do all the default argument resolution here for .NET wrapped code objects.
-        public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Dictionary<string, object> keywords = null)
+        public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Injector injector, Dictionary<string, object> keywords = null)
         {
-            return inArgs;
+            var methodBase = co.FindBestMethodMatch(inArgs);
+            return injector.Inject(methodBase, inArgs);
         }
 
     }

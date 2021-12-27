@@ -317,16 +317,54 @@ namespace CloacaTests
     [TestFixture]
     public class ArgParamMatchTestsDotNet
     {
+        private Scheduler scheduler;
+        private Interpreter interpreter;
+        private FrameContext context;
+        private Injector injector;
+
+        [SetUp]
+        public void StageInjector()
+        {
+            scheduler = new Scheduler();
+            interpreter = new Interpreter(scheduler);
+            context = new FrameContext();
+            injector = new Injector(interpreter, context, scheduler);
+        }
+
         [Test]
         public void NoArgs()
         {            
             var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("NoArgs"));
 
             var inParams = new object[0];
-            var outParams = ArgParamMatcher.Resolve(co, inParams);
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
             Assert.That(outParams, Is.EqualTo(inParams));
         }
 
+        [Test]
+        public void OneRegularReference()
+        {
+            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("OneRegularReference"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public void InterpreterContextReference()
+        {
+            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextReference"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            var checkParams = new object[] { interpreter, context, arg1 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
     }
 
     [TestFixture]
