@@ -353,6 +353,18 @@ namespace CloacaTests
             Assert.That(outParams, Is.EqualTo(inParams));
         }
 
+
+        [Test]
+        public void InterpreterContext()
+        {
+            var co = new WrappedCodeObject("InterpreterContext", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContext"));
+
+            var inParams = new object[0];
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            var checkParams = new object[] { interpreter, context };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
         [Test]
         public void InterpreterContextReference()
         {
