@@ -334,7 +334,7 @@ namespace CloacaTests
         [Test]
         public void NoArgs()
         {            
-            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("NoArgs"));
+            var co = new WrappedCodeObject("NoArgs", typeof(DotNetBindingTestFunctions).GetMethod("NoArgs"));
 
             var inParams = new object[0];
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
@@ -344,7 +344,7 @@ namespace CloacaTests
         [Test]
         public void OneRegularReference()
         {
-            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("OneRegularReference"));
+            var co = new WrappedCodeObject("OneRegularReference", typeof(DotNetBindingTestFunctions).GetMethod("OneRegularReference"));
 
             object arg1 = new object();
 
@@ -368,7 +368,7 @@ namespace CloacaTests
         [Test]
         public void InterpreterContextReference()
         {
-            var co = new WrappedCodeObject("print", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextReference"));
+            var co = new WrappedCodeObject("InterpreterContextReference", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextReference"));
 
             object arg1 = new object();
 
