@@ -388,6 +388,66 @@ namespace CloacaTests
             var checkParams = new object[] { interpreter, context, 100m };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
+
+        [Test]
+        [Ignore("Not implemented yet")]
+        public void InterpreterContextParams()
+        {
+            var co = new WrappedCodeObject("InterpreterContextParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextParams"));
+
+            object arg1 = new object();
+            object arg2 = new object();
+
+            var inParams = new object[] { arg1, arg2 };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            var checkParams = new object[] { interpreter, context, arg1, arg2 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        [Ignore("Not implemented yet")]
+        public void InterpreterContextDefaults()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaults", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaults"));
+
+            object arg1 = new object();
+            int arg2 = 1337;
+
+            var inParams = new object[0];
+            var overrides = new Dictionary<string, object>()
+            {
+                { "foo1", arg1 },
+                { "foo2", arg2 },
+            };
+
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector, overrides);
+            var checkParams = new object[] { interpreter, context, arg1, arg2};
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        [Ignore("Not implemented yet")]
+        public void InterpreterContextDefaultsParams()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaultsParams"));
+
+            object arg1 = new object();
+            int arg2 = 1337;
+
+            object params1 = new object();
+            object params2 = new object();
+
+            var inParams = new object[] { params1, params2 };
+            var overrides = new Dictionary<string, object>()
+            {
+                { "foo1", arg1 },
+                { "foo2", arg2 },
+            };
+
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector, overrides);
+            var checkParams = new object[] { interpreter, context, arg1, arg2, params1, params2 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
     }
 
     [TestFixture]
