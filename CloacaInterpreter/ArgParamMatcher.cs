@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 using LanguageImplementation.DataTypes;
 using LanguageImplementation;
-using System.Text;
 
 namespace CloacaInterpreter
 {
@@ -279,10 +280,29 @@ namespace CloacaInterpreter
         }
 
         // BOOKMARK: Do all the default argument resolution here for .NET wrapped code objects.
-        public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Injector injector, Dictionary<string, object> keywords = null)
+        public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Injector injector, Dictionary<string, object> defaultOverrides = null)
         {
             var methodBase = co.FindBestMethodMatch(inArgs);
-            return injector.Inject(methodBase, inArgs);
+            object[] transformed = injector.Inject(methodBase, inArgs);
+            if (defaultOverrides != null && defaultOverrides.Count > 0)
+            {
+                var parameters = methodBase.GetParameters();
+                for(int arg_i = 0; arg_i < parameters.Length; ++arg_i)
+                {
+                    if(parameters[arg_i].HasDefaultValue)
+                    {
+                        if(defaultOverrides.ContainsKey(parameters[arg_i].Name))
+                        {
+                            transformed[arg_i] = defaultOverrides[parameters[arg_i].Name];
+                        }
+                        else
+                        {
+                            transformed[arg_i] = parameters[arg_i].DefaultValue;
+                        }
+                    }
+                }
+            }
+            return transformed;
         }
 
     }

@@ -437,7 +437,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not implemented yet")]
         public void InterpreterContextDefaults()
         {
             var co = new WrappedCodeObject("InterpreterContextDefaults", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaults"));
@@ -458,7 +457,22 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not implemented yet")]
+        public void InterpreterContextDefaultsNotDefined()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaults", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaults"));
+
+            object arg1 = new object();
+            int arg2 = 1337;
+
+            var inParams = new object[0];
+
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            var checkParams = new object[] { interpreter, context, null, -1 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        [Ignore("Not accounting for params yet")]
         public void InterpreterContextDefaultsParams()
         {
             var co = new WrappedCodeObject("InterpreterContextDefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaultsParams"));
