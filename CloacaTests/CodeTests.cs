@@ -390,7 +390,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not implemented yet")]
         public void InterpreterContextParams()
         {
             var co = new WrappedCodeObject("InterpreterContextParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextParams"));
@@ -400,7 +399,7 @@ namespace CloacaTests
 
             var inParams = new object[] { arg1, arg2 };
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
-            var checkParams = new object[] { interpreter, context, arg1, arg2 };
+            var checkParams = new object[] { interpreter, context, new object[] { arg1, arg2 } };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
 
@@ -448,6 +447,8 @@ namespace CloacaTests
             var checkParams = new object[] { interpreter, context, arg1, arg2, params1, params2 };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
+
+        // TODO: Generic arguments tests too. That's a lot of what Call() deals with.
     }
 
     [TestFixture]
