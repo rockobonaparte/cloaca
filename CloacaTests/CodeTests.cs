@@ -306,6 +306,16 @@ namespace CloacaTests
 
         }
 
+        // Not going to try all generic possiblities unless we get in trouble with them later.
+        public static void GenericNoArgs<T>()
+        {
+
+        }
+
+        public static void GenericInterpreterContext<T>(IInterpreter interpreter, FrameContext context)
+        {
+
+        }
     }
 
     // BOOKMARK: Add tests here for different parameter combinations:
@@ -342,6 +352,17 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Not working with generic arguments right now")]
+        public void GenericNoArgs()
+        {
+            var co = new WrappedCodeObject("GenericNoArgs", typeof(DotNetBindingTestFunctions).GetMethod("GenericNoArgs"));
+
+            var inParams = new object[] { typeof(object) };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
         public void OneRegularReference()
         {
             var co = new WrappedCodeObject("OneRegularReference", typeof(DotNetBindingTestFunctions).GetMethod("OneRegularReference"));
@@ -362,6 +383,18 @@ namespace CloacaTests
             var inParams = new object[0];
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
             var checkParams = new object[] { interpreter, context };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        [Ignore("Not working with generic arguments right now")]
+        public void GenericInterpreterContext()
+        {
+            var co = new WrappedCodeObject("GenericInterpreterContext", typeof(DotNetBindingTestFunctions).GetMethod("GenericInterpreterContext"));
+
+            var inParams = new object[] { typeof(object) };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+            var checkParams = new object[] { typeof(object), interpreter, context };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
 
