@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
 using System.Text;
 
 using LanguageImplementation.DataTypes;
@@ -283,7 +283,30 @@ namespace CloacaInterpreter
         public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Injector injector, Dictionary<string, object> defaultOverrides = null)
         {
             var methodBase = co.FindBestMethodMatch(inArgs);
-            object[] transformed = injector.Inject(methodBase, inArgs);
+
+            int numGenerics = 0;
+            var noGenericArgs = inArgs;
+            int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
+            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && inArgs.Length > actualParametersLength)
+            {
+                if (methodBase.IsConstructor)
+                {
+                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                    // defines.
+                    var asConstructor = methodBase as ConstructorInfo;
+                    numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
+                }
+                else
+                {
+                    numGenerics = methodBase.GetGenericArguments().Length;
+                    noGenericArgs = new object[inArgs.Length - numGenerics];
+                }
+            }
+
+            Array.Copy(inArgs, numGenerics, noGenericArgs, 0, inArgs.Length - numGenerics);
+            object[] transformed = injector.Inject(methodBase, noGenericArgs);
+
             if (defaultOverrides != null && defaultOverrides.Count > 0)
             {
                 var parameters = methodBase.GetParameters();
