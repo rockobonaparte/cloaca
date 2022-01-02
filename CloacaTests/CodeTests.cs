@@ -319,11 +319,15 @@ namespace CloacaTests
     }
 
     // BOOKMARK: Add tests here for different parameter combinations:
-    // 1. Just basic arguments
-    // 2. Interpreter and FrameContext added around
-    // 3. Default arguments
-    // 4. params as *args
+    // 1. [DONE] Just basic arguments
+    // 2. [DONE] Interpreter and FrameContext added around
+    // 3. [DONE] Default arguments
+    // 4. [DONE] params as *args
     // 5. Bonus points: **kwargs
+    //
+    // [PENDING] also handle generics
+    //
+    // Extra test: verify that the method you bind to can be invoked with the created parameters!
     [TestFixture]
     public class ArgParamMatchTestsDotNet
     {
@@ -352,12 +356,13 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not working with generic arguments right now")]
         public void GenericNoArgs()
         {
             var co = new WrappedCodeObject("GenericNoArgs", typeof(DotNetBindingTestFunctions).GetMethod("GenericNoArgs"));
 
             var inParams = new object[] { typeof(object) };
+            // BOOKMARK: Current problem is that the injector will blow away the generic args since the
+            // MethodInfo shows that the method has zero arguments.
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
             Assert.That(outParams, Is.EqualTo(inParams));
         }
@@ -387,7 +392,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not working with generic arguments right now")]
         public void GenericInterpreterContext()
         {
             var co = new WrappedCodeObject("GenericInterpreterContext", typeof(DotNetBindingTestFunctions).GetMethod("GenericInterpreterContext"));

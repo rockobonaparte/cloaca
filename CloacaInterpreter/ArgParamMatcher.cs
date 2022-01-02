@@ -284,48 +284,54 @@ namespace CloacaInterpreter
         {
             var methodBase = co.FindBestMethodMatch(inArgs);
 
-            int numGenerics = 0;
-            var noGenericArgs = inArgs;
-            int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && inArgs.Length > actualParametersLength)
-            {
-                if (methodBase.IsConstructor)
-                {
-                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
-                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
-                    // defines.
-                    var asConstructor = methodBase as ConstructorInfo;
-                    numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
-                }
-                else
-                {
-                    numGenerics = methodBase.GetGenericArguments().Length;
-                    noGenericArgs = new object[inArgs.Length - numGenerics];
-                }
-            }
+            //int numGenerics = 0;
+            //var noGenericArgs = inArgs;
+            //int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
+            //if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && inArgs.Length > actualParametersLength)
+            //{
+            //    if (methodBase.IsConstructor)
+            //    {
+            //        // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+            //        // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+            //        // defines.
+            //        var asConstructor = methodBase as ConstructorInfo;
+            //        numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
+            //    }
+            //    else
+            //    {
+            //        numGenerics = methodBase.GetGenericArguments().Length;
+            //        noGenericArgs = new object[inArgs.Length + numGenerics];
+            //    }
+            //}
 
-            Array.Copy(inArgs, numGenerics, noGenericArgs, 0, inArgs.Length - numGenerics);
-            object[] transformed = injector.Inject(methodBase, noGenericArgs);
+            //Array.Copy(inArgs, numGenerics, noGenericArgs, 0, inArgs.Length + numGenerics);
+            //object[] transformed = injector.Inject(methodBase, noGenericArgs);
+
+            // We might actually have less arguments than required parameters because some of them
+            // would be injectable.
+            var parameters = methodBase.GetParameters();
+
+            // BOOKMARK: Modify to preserve generic arguments
+            object[] outArgs = injector.Inject2(methodBase, inArgs);
 
             if (defaultOverrides != null && defaultOverrides.Count > 0)
             {
-                var parameters = methodBase.GetParameters();
                 for(int arg_i = 0; arg_i < parameters.Length; ++arg_i)
                 {
                     if(parameters[arg_i].HasDefaultValue)
                     {
                         if(defaultOverrides.ContainsKey(parameters[arg_i].Name))
                         {
-                            transformed[arg_i] = defaultOverrides[parameters[arg_i].Name];
+                            outArgs[arg_i] = defaultOverrides[parameters[arg_i].Name];
                         }
                         else
                         {
-                            transformed[arg_i] = parameters[arg_i].DefaultValue;
+                            outArgs[arg_i] = parameters[arg_i].DefaultValue;
                         }
                     }
                 }
             }
-            return transformed;
+            return outArgs;
         }
 
     }
