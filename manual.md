@@ -71,6 +71,11 @@ These parameters will be injected without appearing in the arguments for the fun
 * FrameContext
 * IScheduler
 
+Default parameters in .NET will be exposed as optionals in Python. The extended params marked with the 'params' keyword
+in C# are effectively exposed as *args. A TBD is a special KwargDictionary type that will be exposed as **kwargs in Python,
+but that's not yet supported.
+
+Generics require their types as the first argument in a call in the order they're expected by the generic.
 
 ## Modules
 
