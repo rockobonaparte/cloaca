@@ -77,9 +77,6 @@ namespace LanguageImplementation
                 {
                     genericsCount = methodBase.GetGenericArguments().Length;
                 }
-
-                methodInfo_i = genericsCount;
-                
             }
 
             outParams = new object[methodParams.Length + genericsCount];

@@ -250,10 +250,26 @@ namespace LanguageImplementation
                     args = new object[in_args.Length - genericsCount];
 
                     // If it's an extension method, then ignore the this Class parameter in our calculation.
-                    var actualParameterCount = methodBase.IsExtensionMethod() ? parameters.Length - 1 : parameters.Length;
-                    if (in_args.Length - genericTypes.Length < actualParameterCount)
+                    int first_param = 0;
+                    int actualParameterCount = parameters.Length;
+                    if(methodBase.IsExtensionMethod())
                     {
-                        // Between generic args and arguments we got, we can't fill in for this one so don't even try.
+                        actualParameterCount -= 1;
+                        first_param += 1;
+                    }
+
+                    // Some of these parameters might be injectable, and we can discount them for the sake of matching.
+                    for(int i = 0; i < parameters.Length && !parameters[i].IsDefined(typeof(ParamArrayAttribute), false); ++i)
+                    {
+                        if(Injector.IsInjectedType(parameters[i].ParameterType))
+                        {
+                            actualParameterCount -= 1;
+                        }
+                    }
+
+                    if (in_args.Length - genericTypes.Length < actualParameterCount)
+                    {                    
+                        // Between generic args and arguments we got, we're coming up short on arguments.
                         continue;
                     }
 
