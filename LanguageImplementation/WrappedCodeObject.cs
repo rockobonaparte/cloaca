@@ -241,6 +241,11 @@ namespace LanguageImplementation
 
                 var parameters = methodBase.GetParameters();
                 bool found = true;
+                bool hasParamsField = false;
+                if(parameters.Length > 0 && parameters[parameters.Length - 1].IsDefined(typeof(ParamArrayAttribute), false))
+                {
+                    hasParamsField = true;
+                }
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
@@ -259,7 +264,7 @@ namespace LanguageImplementation
                     }
 
                     // Some of these parameters might be injectable, and we can discount them for the sake of matching.
-                    for(int i = 0; i < parameters.Length && !parameters[i].IsDefined(typeof(ParamArrayAttribute), false); ++i)
+                    for(int i = 0; i < (hasParamsField ? parameters.Length - 1 : parameters.Length); ++i)
                     {
                         if(Injector.IsInjectedType(parameters[i].ParameterType))
                         {
@@ -323,7 +328,7 @@ namespace LanguageImplementation
                     {
                         // If the parameter is optional ("params") then it'll be optional and be an array. If the type we're trying to feed it is
                         // a single element then we're okay.
-                        if(parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false) && AreCompatible(parameters[params_i].ParameterType.GetElementType(), args[args_i].GetType()))
+                        if(hasParamsField && AreCompatible(parameters[parameters.Length-1].ParameterType.GetElementType(), args[args_i].GetType()))
                         {
                             // Still alive! The args being given exceed the number of parameters defined, but they're fitting just fine into the params
                             // field!

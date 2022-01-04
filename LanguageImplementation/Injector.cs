@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace LanguageImplementation
@@ -46,7 +47,7 @@ namespace LanguageImplementation
         /// <param name="methodBase"></param>
         /// <param name="args"></param>
         /// <param name="thisReference"></param>
-        public object[] Inject2(MethodBase methodBase, object[] args, object thisReference = null)
+        public object[] Inject2(MethodBase methodBase, object[] args, object thisReference = null, Dictionary<string, object> overrides = null)
         {
             var methodParams = methodBase.GetParameters();
 
@@ -111,7 +112,19 @@ namespace LanguageImplementation
                 {
                     outParams[out_param_i] = Scheduler;
                 }
-                else
+                else if(methodParams[methodInfo_i].HasDefaultValue)
+                {
+                    var overrideName = methodParams[methodInfo_i].Name;
+                    if (overrides != null && overrides.ContainsKey(overrideName))
+                    {
+                        outParams[out_param_i] = PyNetConverter.Convert(overrides[overrideName], paramInfo.ParameterType);
+                    }
+                    else
+                    {
+                        outParams[out_param_i] = paramInfo.DefaultValue == null ? null : PyNetConverter.Convert(paramInfo.DefaultValue, paramInfo.ParameterType);
+                    }
+                }
+                else 
                 {
                     if (in_param_i < args.Length)
                     {
@@ -120,15 +133,7 @@ namespace LanguageImplementation
                     }
                     else
                     {
-                        // Might be an optional parameter. If so, we use the default:
-                        if (paramInfo.HasDefaultValue)
-                        {
-                            outParams[out_param_i] = paramInfo.DefaultValue == null ? null : PyNetConverter.Convert(paramInfo.DefaultValue, paramInfo.ParameterType);
-                        }
-                        else
-                        {
-                            throw new ArgumentException("Not enough arguments for " + methodBase.Name + " to satisfy the call");
-                        }
+                        throw new ArgumentException("Not enough arguments for " + methodBase.Name + " to satisfy the call");
                     }
                 }
             }

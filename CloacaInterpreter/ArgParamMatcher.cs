@@ -312,25 +312,25 @@ namespace CloacaInterpreter
             var parameters = methodBase.GetParameters();
 
             // BOOKMARK: Modify to preserve generic arguments
-            object[] outArgs = injector.Inject2(methodBase, inArgs);
+            object[] outArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
 
-            if (defaultOverrides != null && defaultOverrides.Count > 0)
-            {
-                for(int arg_i = 0; arg_i < parameters.Length; ++arg_i)
-                {
-                    if(parameters[arg_i].HasDefaultValue)
-                    {
-                        if(defaultOverrides.ContainsKey(parameters[arg_i].Name))
-                        {
-                            outArgs[arg_i] = defaultOverrides[parameters[arg_i].Name];
-                        }
-                        else
-                        {
-                            outArgs[arg_i] = parameters[arg_i].DefaultValue;
-                        }
-                    }
-                }
-            }
+            //if (defaultOverrides != null && defaultOverrides.Count > 0)
+            //{
+            //    for(int arg_i = 0; arg_i < parameters.Length; ++arg_i)
+            //    {
+            //        if(parameters[arg_i].HasDefaultValue)
+            //        {
+            //            if(defaultOverrides.ContainsKey(parameters[arg_i].Name))
+            //            {
+            //                outArgs[arg_i] = defaultOverrides[parameters[arg_i].Name];
+            //            }
+            //            else
+            //            {
+            //                outArgs[arg_i] = parameters[arg_i].DefaultValue;
+            //            }
+            //        }
+            //    }
+            //}
             return outArgs;
         }
 
