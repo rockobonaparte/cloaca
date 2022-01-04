@@ -517,7 +517,7 @@ namespace CloacaTests
             };
 
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector, overrides);
-            var checkParams = new object[] { interpreter, context, arg1, arg2, params1, params2 };
+            var checkParams = new object[] { interpreter, context, arg1, arg2, new object[] { params1, params2 } };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
 
