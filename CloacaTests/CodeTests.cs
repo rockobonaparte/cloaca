@@ -266,6 +266,16 @@ namespace CloacaTests
 
         }
 
+        public static void OnlyParams(params object[] foo)
+        {
+
+        }
+
+        public static void DefaultsParams(int hooray=1, params object[] foo)
+        {
+
+        }
+
         public static void OneRegularReference(object foo)
         {
 
@@ -379,6 +389,19 @@ namespace CloacaTests
             Assert.That(outParams, Is.EqualTo(inParams));
         }
 
+        [Test]
+        public void OnlyParams()
+        {
+            var co = new WrappedCodeObject("OnlyParams", typeof(DotNetBindingTestFunctions).GetMethod("OnlyParams"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
+
+            // The params field should turn into an object[] in its own right, hence the double-wrapping.
+            Assert.That(outParams, Is.EqualTo(new object[] { new object[] { arg1 } }));
+        }
 
         [Test]
         public void InterpreterContext()
@@ -476,7 +499,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not accounting for params yet")]
         public void InterpreterContextDefaultsParams()
         {
             var co = new WrappedCodeObject("InterpreterContextDefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaultsParams"));
@@ -499,7 +521,24 @@ namespace CloacaTests
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
 
-        // TODO: Generic arguments tests too. That's a lot of what Call() deals with.
+        [Test]
+        public void DefaultsParams()
+        {
+            var co = new WrappedCodeObject("DefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("DefaultsParams"));
+
+            object params1 = new object();
+            object params2 = new object();
+
+            var inParams = new object[] { params1, params2 };
+            var overrides = new Dictionary<string, object>()
+            {
+                { "hooray", true },
+            };
+
+            var outParams = ArgParamMatcher.Resolve(co, inParams, injector, overrides);
+            var checkParams = new object[] { true, new object[] { params1, params2, } };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
     }
 
     [TestFixture]
