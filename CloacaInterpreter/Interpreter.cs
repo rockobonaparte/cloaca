@@ -393,7 +393,8 @@ namespace CloacaInterpreter
             else if(abstractFunctionToRun is WrappedCodeObject)
             {
                 var wrappedCode = (WrappedCodeObject)abstractFunctionToRun;
-                outArgs = wrappedCode.Resolve(this, context, args, defaultOverrides);
+                outArgs = ArgParamMatcher.Resolve(wrappedCode, args.ToArray(), 
+                    new Injector(this, context, Scheduler), defaultOverrides);
             }
             else
             {
@@ -445,7 +446,7 @@ namespace CloacaInterpreter
             {
                 var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                var returned = await functionToRun.Call(this, context, outArgs);
+                                                                                                                                                                                                                                                                                                                var returned = await functionToRun.Call(this, context, outArgs);
                 if (returned != null && !(returned is FutureVoidAwaiter))
                 {
                     if (returned is IGetsFutureAwaiterResult)

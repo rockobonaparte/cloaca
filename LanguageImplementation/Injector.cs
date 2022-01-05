@@ -27,11 +27,20 @@ namespace LanguageImplementation
             Scheduler = scheduler;
         }
 
-        public static bool IsInjectedType(Type parameterType)
+        // Use for parameters; the abstraction we ask for in .NET bindings.
+        public static bool IsInjectedParameterType(Type parameterType)
         {
             return parameterType == typeof(IInterpreter) ||
                parameterType == typeof(FrameContext) ||
                parameterType == typeof(IScheduler);
+        }
+
+        // Use for arguments; the actual instances we pass in.
+        public static bool IsInjectedArgType(Type argType)
+        {
+            return typeof(IInterpreter).IsAssignableFrom(argType) ||
+               typeof(FrameContext).IsAssignableFrom(argType) ||
+               typeof(IScheduler).IsAssignableFrom(argType);
         }
 
         /// <summary>

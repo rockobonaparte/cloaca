@@ -207,6 +207,14 @@ namespace LanguageImplementation
             }
         }
 
+        // Known issue here: We call this twice. First, we call it when trying to resolve arguments. At that point, we will inject arguments.
+        // We will then call it with the injector arguments. However, this will follow resolution since we thought we were going to skip injected
+        // arguments when making a match. However, they're all specified! So we shouldn't.
+        //
+        // This creates a lot of logic bombs around detecting injected types. However, the real solution some day is to just call all this once.
+        // This would mean moving Resolve() next to Call() in some fashion. This requires smoothing out the API between WrappedCodeObject and
+        // regular Pythonic CodeObjects.
+
         /// <summary>
         /// Search all the available MethodInfos and return one that most appropriately matches the given arguments. Note that
         /// injectable arguments will simply be skipped during consideration; it won't expect to find them in the given arguments.
@@ -266,9 +274,13 @@ namespace LanguageImplementation
                     // Some of these parameters might be injectable, and we can discount them for the sake of matching.
                     for(int i = 0; i < (hasParamsField ? parameters.Length - 1 : parameters.Length); ++i)
                     {
-                        if(Injector.IsInjectedType(parameters[i].ParameterType))
+                        if(Injector.IsInjectedParameterType(parameters[i].ParameterType))
                         {
-                            actualParameterCount -= 1;
+                            // Logic bomb. Skip injected parameters UNLESS we have defined them in our input arguments.
+                            if(i >= in_args.Length || !Injector.IsInjectedParameterType(in_args[i].GetType()))
+                            {
+                                actualParameterCount -= 1;
+                            }
                         }
                     }
 
@@ -317,9 +329,16 @@ namespace LanguageImplementation
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
                 while(args_i < args.Length || params_i < parameters.Length)
                 {
-                    while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
+                    while(params_i < parameters.Length && Injector.IsInjectedParameterType(parameters[params_i].ParameterType))
                     {
                         params_i += 1;
+
+                        // Injector logic bomb: if the type was already injected, then skip it in our input arguments too.
+                        // ....BUT, don't do this if we either don't have an argument for this position or it isn't something injected.
+                        if(args_i < in_args.Length && Injector.IsInjectedArgType(in_args[args_i].GetType()))
+                        {
+                            args_i += 1;
+                        }
                     }
 
                     // Type check
