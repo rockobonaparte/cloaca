@@ -396,9 +396,13 @@ namespace LanguageImplementation
             throw new Exception(errorMessage.ToString());
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] inArgs,
+            Dictionary<string, object> defaultOverrides = null,
+            KwargsDict kwargsDict = null)
         {
-            var methodBase = FindBestMethodMatch(args);
+            var methodBase = FindBestMethodMatch(inArgs);
+            var injector = new Injector(interpreter, context, interpreter.Scheduler);       // This should be static or global in some way.
+            object[] args = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
 
             // Strip generic arguments (if any).
             // Note this is kind of hacky! We get a monomorphized generic method back whether or not
