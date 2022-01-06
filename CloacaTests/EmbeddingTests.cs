@@ -192,7 +192,9 @@ namespace CloacaTests
             this.scheduler = scheduler;
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             this.context = context;
             var task = wrappedMethodBody(interpreter);

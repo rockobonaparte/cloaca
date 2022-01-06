@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
@@ -40,7 +41,9 @@ namespace LanguageImplementation.DataTypes
         /// <param name="context">The call stack and state at the time this code was invoked.</param>
         /// <param name="args">Arguments given to this class's call.</param>
         /// <returns>An instance of the .NET object.</returns>
-        public override async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public override async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             // TODO: Should I await here? Does this block?
             return await this.__init__.Call(interpreter, context, args);

@@ -386,6 +386,7 @@ namespace CloacaInterpreter
                 asCodeObject = asPyFunction.Code;
             }
 
+            // BOOKMARK: Figure out if you can strip out these Resolve calls!
             if (asCodeObject != null)
             {
                 outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
