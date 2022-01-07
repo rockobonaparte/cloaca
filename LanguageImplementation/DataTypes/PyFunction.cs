@@ -48,7 +48,8 @@ namespace LanguageImplementation.DataTypes
                                  Dictionary<string, object> defaultOverrides = null,
                                  KwargsDict kwargsDict = null)
         {
-            return interpreter.CallInto(context, this, args, Globals);
+            var finalArgs = ArgParamMatcher.Resolve(Code, args, defaultOverrides);
+            return interpreter.CallInto(context, this, finalArgs, Globals);
         }
 
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)

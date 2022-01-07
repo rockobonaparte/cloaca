@@ -377,39 +377,9 @@ namespace CloacaInterpreter
             object abstractFunctionToRun = context.DataStack.Pop();
             var asPyObject = abstractFunctionToRun as PyObject;
 
-            var asCodeObject = abstractFunctionToRun as CodeObject;
             var asPyFunction = abstractFunctionToRun as PyFunction;
-            object[] outArgs = null;
 
-            if(asPyFunction != null)
-            {
-                asCodeObject = asPyFunction.Code;
-            }
-
-            // BOOKMARK: Figure out if you can strip out these Resolve calls!
-            // Pack the Resolve invocations in the Call() itself.
-            if (asCodeObject != null)
-            {
-                outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
-            }
-            else if(abstractFunctionToRun is WrappedCodeObject)
-            {
-                // WrappedCodeObject resolution has been moved into its Call()
-                // We need to do this for other code objects.
-                //
-                //
-                //
-                //var wrappedCode = (WrappedCodeObject)abstractFunctionToRun;
-                //outArgs = ArgParamMatcher.Resolve(wrappedCode, args.ToArray(), 
-                //    new Injector(this, context, Scheduler), defaultOverrides);
-                //
-                //
-                //
-            }
-            else
-            {
-                outArgs = args.ToArray();
-            }
+            var outArgs = args.ToArray();
 
             if (asPyObject != null)
             {
@@ -419,7 +389,7 @@ namespace CloacaInterpreter
                     var functionToRun = (IPyCallable)__call__;
 
                     // Copypasta from next if clause. Hopefully this will replace it!
-                    var returned = await functionToRun.Call(this, context, outArgs);
+                    var returned = await functionToRun.Call(this, context, outArgs, defaultOverrides: defaultOverrides);
                     if (returned != null && !(returned is FutureVoidAwaiter))
                     {
                         if (returned is IGetsFutureAwaiterResult)
