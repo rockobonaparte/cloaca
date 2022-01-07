@@ -387,15 +387,24 @@ namespace CloacaInterpreter
             }
 
             // BOOKMARK: Figure out if you can strip out these Resolve calls!
+            // Pack the Resolve invocations in the Call() itself.
             if (asCodeObject != null)
             {
                 outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
             }
             else if(abstractFunctionToRun is WrappedCodeObject)
             {
-                var wrappedCode = (WrappedCodeObject)abstractFunctionToRun;
-                outArgs = ArgParamMatcher.Resolve(wrappedCode, args.ToArray(), 
-                    new Injector(this, context, Scheduler), defaultOverrides);
+                // WrappedCodeObject resolution has been moved into its Call()
+                // We need to do this for other code objects.
+                //
+                //
+                //
+                //var wrappedCode = (WrappedCodeObject)abstractFunctionToRun;
+                //outArgs = ArgParamMatcher.Resolve(wrappedCode, args.ToArray(), 
+                //    new Injector(this, context, Scheduler), defaultOverrides);
+                //
+                //
+                //
             }
             else
             {

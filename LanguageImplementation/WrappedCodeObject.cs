@@ -400,9 +400,10 @@ namespace LanguageImplementation
             Dictionary<string, object> defaultOverrides = null,
             KwargsDict kwargsDict = null)
         {
+
             var methodBase = FindBestMethodMatch(inArgs);
-            var injector = new Injector(interpreter, context, interpreter.Scheduler);       // This should be static or global in some way.
-            object[] args = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
+            var injector = new Injector(interpreter, context, interpreter.Scheduler);
+            object[] resolvedArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
 
             // Strip generic arguments (if any).
             // Note this is kind of hacky! We get a monomorphized generic method back whether or not
@@ -410,9 +411,9 @@ namespace LanguageImplementation
             // the method needs. If we do, then we strip the excess in front since they were used to
             // monomorphize the generic.
             int numGenerics = 0;
-            var noGenericArgs = args;
+            var noGenericArgs = resolvedArgs;
             int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && args.Length > actualParametersLength)
+            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && resolvedArgs.Length > actualParametersLength)
             {
                 if (methodBase.IsConstructor)
                 {
@@ -425,17 +426,17 @@ namespace LanguageImplementation
                 else
                 {
                     numGenerics = methodBase.GetGenericArguments().Length;
-                    noGenericArgs = new object[args.Length - numGenerics];
+                    noGenericArgs = new object[resolvedArgs.Length - numGenerics];
                 }
             }
-            Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
+            Array.Copy(resolvedArgs, numGenerics, noGenericArgs, 0, resolvedArgs.Length - numGenerics);
 
             // Inject internal types, convert .NET/Cloaca types.
             // Unit tests like to come in with a null interpreter so we have to test for it.
             //var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
             //var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
             //object[] final_args = injected_args;
-            object[] final_args = args;
+            object[] final_args = resolvedArgs;
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
@@ -468,7 +469,7 @@ namespace LanguageImplementation
                         {
                             constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
                         }
-                        Array.Copy(args, 0, generics, 0, numGenerics);
+                        Array.Copy(resolvedArgs, 0, generics, 0, numGenerics);
                         Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
                         asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
                     }
