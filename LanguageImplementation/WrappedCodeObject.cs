@@ -413,7 +413,7 @@ namespace LanguageImplementation
             int numGenerics = 0;
             var noGenericArgs = resolvedArgs;
             int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && resolvedArgs.Length > actualParametersLength)
+            if (methodBase.ContainsGenericParameters && resolvedArgs.Length > actualParametersLength)
             {
                 if (methodBase.IsConstructor)
                 {

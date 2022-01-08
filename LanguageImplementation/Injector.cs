@@ -73,7 +73,7 @@ namespace LanguageImplementation
             // Test for generic parameters in case we're making internal calls to stuff like DefaultNew and the
             // generic arguments are already filled in.
             int genericsCount = 0;
-            if (methodBase.ContainsGenericParameters || methodBase.IsGenericMethod)
+            if (methodBase.ContainsGenericParameters)
             {
                 if (methodBase.IsConstructor)
                 {
