@@ -431,13 +431,6 @@ namespace LanguageImplementation
             }
             Array.Copy(resolvedArgs, numGenerics, noGenericArgs, 0, resolvedArgs.Length - numGenerics);
 
-            // Inject internal types, convert .NET/Cloaca types.
-            // Unit tests like to come in with a null interpreter so we have to test for it.
-            //var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
-            //var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
-            //object[] final_args = injected_args;
-            object[] final_args = resolvedArgs;
-
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
             if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
@@ -446,11 +439,11 @@ namespace LanguageImplementation
                 // our helper.
                 if (asMethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)methodBase.Invoke(instance, final_args);
+                    return (Task<object>)methodBase.Invoke(instance, resolved_args);
                 }
                 else
                 {
-                    return InvokeAsTaskObject(final_args);
+                    return InvokeAsTaskObject(resolved_args);
                 }
             }
             else
@@ -473,11 +466,11 @@ namespace LanguageImplementation
                         Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
                         asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
                     }
-                    return Task.FromResult(asConstructor.Invoke(final_args));
+                    return Task.FromResult(asConstructor.Invoke(resolved_args));
                 }
                 else
                 {
-                    return Task.FromResult(methodBase.Invoke(instance, final_args));
+                    return Task.FromResult(methodBase.Invoke(instance, resolved_args));
                 }
             }
         }
