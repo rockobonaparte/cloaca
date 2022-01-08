@@ -439,11 +439,11 @@ namespace LanguageImplementation
                 // our helper.
                 if (asMethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)methodBase.Invoke(instance, resolved_args);
+                    return (Task<object>)methodBase.Invoke(instance, resolvedArgs);
                 }
                 else
                 {
-                    return InvokeAsTaskObject(resolved_args);
+                    return InvokeAsTaskObject(resolvedArgs);
                 }
             }
             else
@@ -466,11 +466,11 @@ namespace LanguageImplementation
                         Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
                         asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
                     }
-                    return Task.FromResult(asConstructor.Invoke(resolved_args));
+                    return Task.FromResult(asConstructor.Invoke(resolvedArgs));
                 }
                 else
                 {
-                    return Task.FromResult(methodBase.Invoke(instance, resolved_args));
+                    return Task.FromResult(methodBase.Invoke(instance, resolvedArgs));
                 }
             }
         }
