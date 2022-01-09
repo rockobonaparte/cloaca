@@ -403,7 +403,7 @@ namespace LanguageImplementation
 
             var methodBase = FindBestMethodMatch(inArgs);
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            object[] resolvedArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
+            object[] injectedArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
 
             // Strip generic arguments (if any).
             // Note this is kind of hacky! We get a monomorphized generic method back whether or not
@@ -411,9 +411,9 @@ namespace LanguageImplementation
             // the method needs. If we do, then we strip the excess in front since they were used to
             // monomorphize the generic.
             int numGenerics = 0;
-            var noGenericArgs = resolvedArgs;
+            var noGenericArgs = injectedArgs;
             int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if (methodBase.ContainsGenericParameters && resolvedArgs.Length > actualParametersLength)
+            if (injectedArgs.Length > actualParametersLength)
             {
                 if (methodBase.IsConstructor)
                 {
@@ -426,10 +426,12 @@ namespace LanguageImplementation
                 else
                 {
                     numGenerics = methodBase.GetGenericArguments().Length;
-                    noGenericArgs = new object[resolvedArgs.Length - numGenerics];
+                    noGenericArgs = new object[injectedArgs.Length - numGenerics];
                 }
             }
-            Array.Copy(resolvedArgs, numGenerics, noGenericArgs, 0, resolvedArgs.Length - numGenerics);
+            
+            Array.Copy(injectedArgs, numGenerics, noGenericArgs, 0, injectedArgs.Length - numGenerics);
+
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
@@ -439,11 +441,11 @@ namespace LanguageImplementation
                 // our helper.
                 if (asMethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)methodBase.Invoke(instance, resolvedArgs);
+                    return (Task<object>)methodBase.Invoke(instance, noGenericArgs);
                 }
                 else
                 {
-                    return InvokeAsTaskObject(resolvedArgs);
+                    return InvokeAsTaskObject(noGenericArgs);
                 }
             }
             else
@@ -462,15 +464,15 @@ namespace LanguageImplementation
                         {
                             constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
                         }
-                        Array.Copy(resolvedArgs, 0, generics, 0, numGenerics);
+                        Array.Copy(noGenericArgs, 0, generics, 0, numGenerics);
                         Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
                         asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
                     }
-                    return Task.FromResult(asConstructor.Invoke(resolvedArgs));
+                    return Task.FromResult(asConstructor.Invoke(noGenericArgs));
                 }
                 else
                 {
-                    return Task.FromResult(methodBase.Invoke(instance, resolvedArgs));
+                    return Task.FromResult(methodBase.Invoke(instance, noGenericArgs));
                 }
             }
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LanguageImplementation.DataTypes;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -73,20 +74,17 @@ namespace LanguageImplementation
             // Test for generic parameters in case we're making internal calls to stuff like DefaultNew and the
             // generic arguments are already filled in.
             int genericsCount = 0;
-            if (methodBase.ContainsGenericParameters)
+
+            // We used to first test ContainsGenericArguments but this would return false for monomorphized generics.
+            // This was a problem because we'd still come in with the type variables, and these extra arguments would
+            // foil the rest of parameterization.
+            if (methodBase.IsConstructor)
             {
-                if (methodBase.IsConstructor)
-                {
-                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
-                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
-                    // defines.
-                    var asConstructor = methodBase as ConstructorInfo;
-                    genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
-                }
-                else
-                {
-                    genericsCount = methodBase.GetGenericArguments().Length;
-                }
+                // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                // defines.
+                var asConstructor = methodBase as ConstructorInfo;
+                genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
             }
             else
             {
