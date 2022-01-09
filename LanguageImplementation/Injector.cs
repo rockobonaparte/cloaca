@@ -75,20 +75,27 @@ namespace LanguageImplementation
             // generic arguments are already filled in.
             int genericsCount = 0;
 
-            // We used to first test ContainsGenericArguments but this would return false for monomorphized generics.
-            // This was a problem because we'd still come in with the type variables, and these extra arguments would
-            // foil the rest of parameterization.
-            if (methodBase.IsConstructor)
+            // Generic lookups don't really work how I would expect. I had two situations:
+            // 1. A __new__ wrapper for DefaultNew<T> where T was monomorphized in the wrapper already, so the generic
+            //    stuff shouldn't have been relevant.
+            // 2. An actual generic method call where <T> was not known until Python called it.
+            //
+            // Both paths are incompatible with this code block. I just check if I have more parameters than expected for
+            // the method so only #2 runs it.
+            if ((methodBase.IsGenericMethod || methodBase.ContainsGenericParameters) && args.Length > methodParams.Length)
             {
-                // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
-                // can't legally define additional arguments, so the generic arguments boil down to what the type itself
-                // defines.
-                var asConstructor = methodBase as ConstructorInfo;
-                genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
-            }
-            else
-            {
-                genericsCount = methodBase.GetGenericArguments().Length;
+                if (methodBase.IsConstructor)
+                {
+                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
+                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
+                    // defines.
+                    var asConstructor = methodBase as ConstructorInfo;
+                    genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
+                }
+                else
+                {
+                    genericsCount = methodBase.GetGenericArguments().Length;
+                }
             }
 
             outParams = new object[methodParams.Length + genericsCount];
