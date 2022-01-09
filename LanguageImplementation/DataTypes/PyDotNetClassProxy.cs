@@ -10,6 +10,14 @@ namespace LanguageImplementation.DataTypes
     public class PyDotNetClassProxy : PyTypeObject
     {
         private Type dotNetType;
+        public Type DotNetType
+        {
+            get
+            {
+                return dotNetType;
+            }
+        }
+        
         public const string __dotnettype__ = "__dotnettype__";      // Will contain dotNetType. Cannot be changed.
 
         public PyDotNetClassProxy(Type dotNetType) :

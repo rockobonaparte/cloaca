@@ -88,15 +88,12 @@ namespace LanguageImplementation
                     genericsCount = methodBase.GetGenericArguments().Length;
                 }
             }
+            else
+            {
+                genericsCount = methodBase.GetGenericArguments().Length;
+            }
 
             outParams = new object[methodParams.Length + genericsCount];
-
-            // Copy over generics
-            while(out_param_i < genericsCount)
-            {
-                outParams[out_param_i] = args[out_param_i];
-                out_param_i += 1;
-            }
 
             // Extension method; there's the "this object" parameter in the first position that we need to insert.
             if (isExtensionMethod)
@@ -104,6 +101,24 @@ namespace LanguageImplementation
                 outParams[0] = thisReference;
                 out_param_i = 1;
                 methodInfo_i = 1;
+            }
+
+            // Copy over generics
+            while (out_param_i < genericsCount)
+            {
+                // If we got a .NET proxy then let's extract the type and copy that instead.
+                // Yes, this is really meticulous and delicate.
+                if(args[in_param_i] is PyDotNetClassProxy)
+                {
+                    var proxy = args[in_param_i] as PyDotNetClassProxy;
+                    outParams[out_param_i] = proxy.DotNetType;
+                }
+                else
+                {
+                    outParams[out_param_i] = args[in_param_i];
+                }
+                out_param_i += 1;
+                in_param_i += 1;
             }
 
             for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i, ++methodInfo_i)
