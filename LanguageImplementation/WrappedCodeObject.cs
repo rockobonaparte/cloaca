@@ -312,6 +312,7 @@ namespace LanguageImplementation
                         // We don't have to follow this path for constructors because the generic parameters are part of the type,
                         // not the call itself. On the other hand, we'll suffer that later when invoking it...
                         var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
+                        
                         methodBase = monomorphedMethod;
                         parameters = methodBase.GetParameters();
                     }

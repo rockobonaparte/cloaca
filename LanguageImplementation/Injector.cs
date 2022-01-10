@@ -89,7 +89,7 @@ namespace LanguageImplementation
             //
             //           I pass in T and require interpreter and context to inject.
             //           Seriously, how the hell do I tell I have a generic argument *and* I need to consume it?
-            if ((methodBase.IsGenericMethod || methodBase.ContainsGenericParameters) && args.Length > methodParams.Length)
+            if (methodBase.ContainsGenericParameters)
             {
                 if (methodBase.IsConstructor)
                 {

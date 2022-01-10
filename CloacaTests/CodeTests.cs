@@ -371,10 +371,11 @@ namespace CloacaTests
             var co = new WrappedCodeObject("GenericNoArgs", typeof(DotNetBindingTestFunctions).GetMethod("GenericNoArgs"));
 
             var inParams = new object[] { typeof(object) };
-            // BOOKMARK: Current problem is that the injector will blow away the generic args since the
-            // MethodInfo shows that the method has zero arguments.
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
-            Assert.That(outParams, Is.EqualTo(inParams));
+
+            // The input parameter was generic parameter. We then get a monomorphized method to
+            // call during resolution. So we don't use that parameter any more.
+            Assert.That(outParams, Is.EqualTo(new object[0]));
         }
 
         [Test]
@@ -421,7 +422,10 @@ namespace CloacaTests
 
             var inParams = new object[] { typeof(object) };
             var outParams = ArgParamMatcher.Resolve(co, inParams, injector);
-            var checkParams = new object[] { typeof(object), interpreter, context };
+
+            // The input parameter was generic parameter. We then get a monomorphized method to
+            // call during resolution. So we don't use that parameter any more.
+            var checkParams = new object[] { interpreter, context };
             Assert.That(outParams, Is.EqualTo(checkParams));
         }
 
