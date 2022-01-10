@@ -89,7 +89,10 @@ namespace LanguageImplementation
             //
             //           I pass in T and require interpreter and context to inject.
             //           Seriously, how the hell do I tell I have a generic argument *and* I need to consume it?
-            if (methodBase.ContainsGenericParameters)
+            //
+            // By the time I get here, FindBestMethodMatch has already monomorphized the function. This means I should
+            // strip the generic typing arguments that have been passed in. We wont use them in the call.
+            if (methodBase.IsGenericMethod || methodBase.ContainsGenericParameters)
             {
                 if (methodBase.IsConstructor)
                 {
@@ -97,15 +100,15 @@ namespace LanguageImplementation
                     // can't legally define additional arguments, so the generic arguments boil down to what the type itself
                     // defines.
                     var asConstructor = methodBase as ConstructorInfo;
-                    genericsCount = asConstructor.DeclaringType.GetGenericArguments().Length;
+                    in_param_i = asConstructor.DeclaringType.GetGenericArguments().Length;
                 }
                 else
                 {
-                    genericsCount = methodBase.GetGenericArguments().Length;
+                    in_param_i = methodBase.GetGenericArguments().Length;
                 }
             }
 
-            outParams = new object[methodParams.Length + genericsCount];
+            outParams = new object[methodParams.Length];
 
             // Extension method; there's the "this object" parameter in the first position that we need to insert.
             if (isExtensionMethod)
@@ -115,23 +118,23 @@ namespace LanguageImplementation
                 methodInfo_i = 1;
             }
 
-            // Copy over generics
-            while (out_param_i < genericsCount)
-            {
-                // If we got a .NET proxy then let's extract the type and copy that instead.
-                // Yes, this is really meticulous and delicate.
-                if(args[in_param_i] is PyDotNetClassProxy)
-                {
-                    var proxy = args[in_param_i] as PyDotNetClassProxy;
-                    outParams[out_param_i] = proxy.DotNetType;
-                }
-                else
-                {
-                    outParams[out_param_i] = args[in_param_i];
-                }
-                out_param_i += 1;
-                in_param_i += 1;
-            }
+            //// Copy over generics
+            //while (out_param_i < genericsCount)
+            //{
+            //    // If we got a .NET proxy then let's extract the type and copy that instead.
+            //    // Yes, this is really meticulous and delicate.
+            //    if(args[in_param_i] is PyDotNetClassProxy)
+            //    {
+            //        var proxy = args[in_param_i] as PyDotNetClassProxy;
+            //        outParams[out_param_i] = proxy.DotNetType;
+            //    }
+            //    else
+            //    {
+            //        outParams[out_param_i] = args[in_param_i];
+            //    }
+            //    out_param_i += 1;
+            //    in_param_i += 1;
+            //}
 
             for (; out_param_i < (hasParamsField ? outParams.Length - 1 : outParams.Length); ++out_param_i, ++methodInfo_i)
             {
