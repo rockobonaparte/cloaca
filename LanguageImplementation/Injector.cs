@@ -82,6 +82,13 @@ namespace LanguageImplementation
             //
             // Both paths are incompatible with this code block. I just check if I have more parameters than expected for
             // the method so only #2 runs it.
+            // BOOKMARK: GenericInterpreterContext exposed a problem with this logic. If I have a generic method that
+            //           asks for some injectable arguments that I don't pass in, this won't trigger for the generic
+            //           argument I *did* pass in. This is because I technically have less args than required parameters:
+            //           public static void GenericInterpreterContext<T>(IInterpreter interpreter, FrameContext context)
+            //
+            //           I pass in T and require interpreter and context to inject.
+            //           Seriously, how the hell do I tell I have a generic argument *and* I need to consume it?
             if ((methodBase.IsGenericMethod || methodBase.ContainsGenericParameters) && args.Length > methodParams.Length)
             {
                 if (methodBase.IsConstructor)
