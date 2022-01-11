@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace UnderstandingGenericReflection
@@ -22,7 +23,9 @@ namespace UnderstandingGenericReflection
         {
             Console.WriteLine("Name: " + methodInfo.Name);
             Console.WriteLine("ContainsGenerics: " + methodInfo.ContainsGenericParameters);
-            methodInfo.Invoke(null, new object[] { 1 });
+            Console.WriteLine("IsGeneric: " + methodInfo.IsGenericMethod);
+            Console.WriteLine("IsGenericMethodDefinition: " + methodInfo.IsGenericMethodDefinition);
+            //methodInfo.Invoke(null, new object[] { 1 });
         }
 
         static void Main(string[] args)
@@ -32,6 +35,10 @@ namespace UnderstandingGenericReflection
 
             TryStuff(simpleInt);
             TryStuff(simpleIntGeneric);
+
+            Expression<Action<int>> expr = instance => SomeFunctions.SimpleIntGeneric<float>(0.0f);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            TryStuff(methodInfo);
 
             Console.ReadLine();
         }

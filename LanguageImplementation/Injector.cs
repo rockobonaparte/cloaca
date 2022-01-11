@@ -92,7 +92,7 @@ namespace LanguageImplementation
             //
             // By the time I get here, FindBestMethodMatch has already monomorphized the function. This means I should
             // strip the generic typing arguments that have been passed in. We wont use them in the call.
-            if (methodBase.IsGenericMethod || methodBase.ContainsGenericParameters)
+            if (methodBase.IsGenericMethodDefinition || methodBase.ContainsGenericParameters)
             {
                 if (methodBase.IsConstructor)
                 {
