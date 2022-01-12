@@ -8,6 +8,18 @@ using System.Threading.Tasks;
 
 namespace LanguageImplementation
 {
+    public class FoundBestMethod
+    {
+        public MethodBase FoundMethodInformation { get; private set; }
+        public int MonomorphedParameters { get; private set; }
+
+        public FoundBestMethod(MethodBase methodInfo, int monomorphedParameters)
+        {
+            this.FoundMethodInformation = methodInfo;
+            this.MonomorphedParameters = monomorphedParameters;
+        }
+    }
+
     /// <summary>
     /// Represents callable code outside of the scope of the interpreter.
     /// </summary>
@@ -221,7 +233,7 @@ namespace LanguageImplementation
         /// </summary>
         /// <param name="in_args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        public MethodBase FindBestMethodMatch(object[] in_args)
+        public FoundBestMethod FindBestMethodMatch(object[] in_args)
         {
             foreach(var methodBase_itr in MethodBases)
             {
@@ -257,7 +269,7 @@ namespace LanguageImplementation
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
-                if (methodBase.ContainsGenericParameters)
+                if (methodBase.IsGenericMethodDefinition)
                 {                    
                     var genericTypes = new Type[genericsCount];
                     args = new object[in_args.Length - genericsCount];
@@ -379,7 +391,7 @@ namespace LanguageImplementation
                 }
                 if(found)
                 {
-                    return methodBase;
+                    return new FoundBestMethod(methodBase, genericsCount);
                 }
             }
 
@@ -402,9 +414,22 @@ namespace LanguageImplementation
             KwargsDict kwargsDict = null)
         {
 
-            var methodBase = FindBestMethodMatch(inArgs);
+            var methodInformation = FindBestMethodMatch(inArgs);
+            var methodBase = methodInformation.FoundMethodInformation;
+
+            var strippedGenericsArgs = inArgs;
+            if(methodInformation.MonomorphedParameters > 0)
+            {
+                strippedGenericsArgs = new object[inArgs.Length - methodInformation.MonomorphedParameters];
+                Array.Copy(inArgs,
+                    methodInformation.MonomorphedParameters,
+                    strippedGenericsArgs,
+                    0,
+                    inArgs.Length - methodInformation.MonomorphedParameters);
+            }
+
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            object[] injectedArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
+            object[] injectedArgs = injector.Inject2(methodBase, strippedGenericsArgs, overrides: defaultOverrides);
 
             // Strip generic arguments (if any).
             // Note this is kind of hacky! We get a monomorphized generic method back whether or not

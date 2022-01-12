@@ -280,7 +280,8 @@ namespace LanguageImplementation
         // BOOKMARK: Do all the default argument resolution here for .NET wrapped code objects.
         public static object[] Resolve(WrappedCodeObject co, object[] inArgs, Injector injector, Dictionary<string, object> defaultOverrides = null)
         {
-            var methodBase = co.FindBestMethodMatch(inArgs);
+            var methodInformation = co.FindBestMethodMatch(inArgs);
+            var methodBase = methodInformation.FoundMethodInformation;
             object[] outArgs = injector.Inject2(methodBase, inArgs, overrides: defaultOverrides);
             return outArgs;
         }
