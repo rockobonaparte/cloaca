@@ -269,7 +269,8 @@ namespace LanguageImplementation
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
-                if (methodBase.IsGenericMethodDefinition)
+                // ContainsGenericParameters will be true for generic constructors.
+                if (methodBase.IsGenericMethodDefinition || methodBase.ContainsGenericParameters)
                 {                    
                     var genericTypes = new Type[genericsCount];
                     args = new object[in_args.Length - genericsCount];
@@ -320,36 +321,33 @@ namespace LanguageImplementation
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 
                     parameters = methodBase.GetParameters();
+                    var asConstructor = methodBase as ConstructorInfo;
                     var asMethodInfo = methodBase as MethodInfo;
-                    if (asMethodInfo != null)
+                    if(asConstructor != null)
                     {
-                        var asConstructor = methodBase as ConstructorInfo;
-                        if (asConstructor != null)
+                        // Special handling for generic constructors. The generic arguments for generic constructors are part of the type,
+                        // not the constructor.
+                        if (asConstructor.ContainsGenericParameters)
                         {
-                            // Special handling for generic constructors. The generic arguments for generic constructors are part of the type,
-                            // not the constructor.
-                            if (asConstructor.ContainsGenericParameters)
+                            Type[] generics = new Type[genericsCount];
+                            var constructorParamIns = methodBase.GetParameters();
+                            Type[] constructorInTypes = new Type[constructorParamIns.Length];
+                            for (int param_i = 0; param_i < constructorInTypes.Length; ++param_i)
                             {
-                                Type[] generics = new Type[genericsCount];
-                                var constructorParamIns = methodBase.GetParameters();
-                                Type[] constructorInTypes = new Type[constructorParamIns.Length];
-                                for (int param_i = 0; param_i < constructorInTypes.Length; ++param_i)
-                                {
-                                    constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
-                                }
-                                Array.Copy(in_args, 0, generics, 0, genericsCount);
-                                Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
-                                methodBase = monomorphedConstructor.GetConstructor(constructorInTypes);
+                                constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
                             }
+                            Array.Copy(in_args, 0, generics, 0, genericsCount);
+                            Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
+                            methodBase = monomorphedConstructor.GetConstructor(constructorInTypes);
                         }
-                        else
-                        {
-                            // We don't have to follow this path for constructors because the generic parameters are part of the type,
-                            // not the call itself. On the other hand, we'll suffer that later when invoking it...
-                            methodBase = asMethodInfo.MakeGenericMethod(genericTypes);
-                        }                       
-                        parameters = methodBase.GetParameters();
                     }
+                    else if (asMethodInfo != null)
+                    {
+                        // We don't have to follow this path for constructors because the generic parameters are part of the type,
+                        // not the call itself. On the other hand, we'll suffer that later when invoking it...
+                        methodBase = asMethodInfo.MakeGenericMethod(genericTypes);
+                    }
+                    parameters = methodBase.GetParameters();
                 }
 
                 // Set up parameter checking and casting loop. If this is an extension method then skip the first parameter
