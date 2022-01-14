@@ -1,8 +1,8 @@
-﻿using LanguageImplementation;
+﻿using NUnit.Framework;
+
+using CloacaInterpreter;
+using LanguageImplementation;
 using LanguageImplementation.DataTypes;
-
-using NUnit.Framework;
-
 
 namespace CloacaTests
 {
@@ -49,10 +49,12 @@ namespace CloacaTests
         [Test]
         public void InvokingWrappedMethod()
         {
-            var wrapper = new WrappedCodeObject("hello_void", typeof(TestPythonClass).GetMethod("hello_void"), this);
+            var mockScheduler = new Scheduler();
+            var mockInterpreter = new Interpreter(mockScheduler);
+            var mockFrame = new FrameContext();
             var instance = PyTypeObject.DefaultNew<TestPythonObject>(TestPythonClass.Instance);
             var method = instance.__getattribute__("hello_void") as IPyCallable;
-            method.Call(null, null, new object[0]);
+            method.Call(mockInterpreter, mockFrame, new object[0]);
         }
     }
 }
