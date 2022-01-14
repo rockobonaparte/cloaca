@@ -449,7 +449,7 @@ namespace LanguageImplementation
             }
 
             var injector = new Injector(interpreter, context, interpreter.Scheduler);
-            object[] injectedArgs = injector.Inject2(methodBase, strippedGenericsArgs, overrides: defaultOverrides);
+            object[] injectedArgs = injector.Inject2(methodBase, strippedGenericsArgs, thisReference: instance, overrides: defaultOverrides);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
