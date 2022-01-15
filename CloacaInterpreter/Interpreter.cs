@@ -426,7 +426,7 @@ namespace CloacaInterpreter
             {
                 var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                var returned = await functionToRun.Call(this, context, outArgs);
+                var returned = await functionToRun.Call(this, context, outArgs, defaultOverrides: defaultOverrides);
                 if (returned != null && !(returned is FutureVoidAwaiter))
                 {
                     if (returned is IGetsFutureAwaiterResult)
