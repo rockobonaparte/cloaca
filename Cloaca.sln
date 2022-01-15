@@ -44,8 +44,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApplication", "Conso
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "CloacaCodeTests", "CloacaCodeTests\CloacaCodeTests.pyproj", "{F11639D9-4D28-4C5A-87B3-89D09816374D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnderstandingGenericReflection", "UnderstandingGenericReflection\UnderstandingGenericReflection.csproj", "{2EFE1BBD-908E-4398-AB62-8772EBDD93EF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,10 +102,6 @@ Global
 		{062FBC62-D21E-4863-9D36-2CCB2B6638E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F11639D9-4D28-4C5A-87B3-89D09816374D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F11639D9-4D28-4C5A-87B3-89D09816374D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2EFE1BBD-908E-4398-AB62-8772EBDD93EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2EFE1BBD-908E-4398-AB62-8772EBDD93EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2EFE1BBD-908E-4398-AB62-8772EBDD93EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2EFE1BBD-908E-4398-AB62-8772EBDD93EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
