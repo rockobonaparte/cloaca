@@ -103,6 +103,13 @@ namespace LanguageImplementation
                     {
                         outParams[out_param_i] = PyNetConverter.Convert(overrides[overrideName], paramInfo.ParameterType);
                     }
+                    else if(in_param_i < args.Length && (overrides == null || !overrides.ContainsKey(overrideName)))
+                    {
+                        // Convert it as normal. It was given positionally in our script. This isn't legal C# but it's
+                        // legal Python.
+                        outParams[out_param_i] = PyNetConverter.Convert(args[in_param_i], paramInfo.ParameterType);
+                        ++in_param_i;
+                    }
                     else
                     {
                         outParams[out_param_i] = paramInfo.DefaultValue == null ? null : PyNetConverter.Convert(paramInfo.DefaultValue, paramInfo.ParameterType);
