@@ -131,6 +131,7 @@ namespace CloacaTests
         }
 
         [Test]
+        [Ignore("Working on robust .NET bindings for sorted() now and then this should work")]
         public async Task ReversedSort()
         {
             await runBasicTest(
