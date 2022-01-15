@@ -151,7 +151,7 @@ namespace CloacaTests
             return arg;
         }
 
-        public int Kwargs(int first=1, int second=10)
+        public int Optionals(int first=1, int second=10)
         {
             return first + 10 * second;
         }
@@ -573,10 +573,10 @@ namespace CloacaTests
         public async Task CallDotNetOptionalsImplicit()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs()\n",
+                "a = obj.Optionals()\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -588,10 +588,10 @@ namespace CloacaTests
         public async Task CallDotNetOptionalsImplicitInOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(2, 20)\n",
+                "a = obj.Optionals(2, 20)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -601,14 +601,14 @@ namespace CloacaTests
 
 
         [Test]
-        [Ignore("Cannot support this until we support kwargs")]
+        [Ignore("Cannot support this until we support optionals")]
         public async Task CallDotNetOptionalsExplicitInOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(first=2, second=20)\n",
+                "a = obj.Optionals(first=2, second=20)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -617,14 +617,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Cannot support this until we support kwargs.")]
+        [Ignore("Cannot support this until we support optionals.")]
         public async Task CallDotNetOptionalsExplicitOutOfOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(second=20, first=2)\n",
+                "a = obj.Optionals(second=20, first=2)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
