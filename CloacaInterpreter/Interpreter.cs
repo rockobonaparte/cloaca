@@ -458,26 +458,6 @@ namespace CloacaInterpreter
         /// <returns>A task if the code being run gets pre-empted cooperatively.</returns>
         public async Task Run(FrameContext context)
         {
-            // Sorted() has defaults and we can't bind that to .NET yet; this is an effort in another branch. We'll
-            // write a wrapper to manage it for now.
-            // This is a hack that happens on every Run() call for now, but gives us a chance to verify sorted()
-            // BOOKMARK: This recursively calls. We'll need to put it somewhere else.
-            if(!builtins.ContainsKey("sorted"))
-            {
-                var sortedTask = await ByteCodeCompiler.Compile(
-                    "def sorted(l, key=None, reversed=False):\n" +
-                    "  return __sorted(l, key, reversed)\n", new Dictionary<string, object>(), new Dictionary<string, object>(), Scheduler);
-                foreach(var constant in sortedTask.Code.Constants)
-                {
-                    if(constant is PyFunction)
-                    {
-                        builtins["sorted"] = constant;
-                        break;
-                    }
-                }
-            }
-
-
             try
             {
                 while (context.Cursor < context.Code.Length)
