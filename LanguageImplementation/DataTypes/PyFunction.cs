@@ -43,10 +43,13 @@ namespace LanguageImplementation.DataTypes
             __setattr__("__code__", this);
             __setattr__("__globals__", Globals);
         }
-
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
-            return interpreter.CallInto(context, this, args, Globals);
+            var finalArgs = ArgParamMatcher.Resolve(Code, args, defaultOverrides);
+            return interpreter.CallInto(context, this, finalArgs, Globals);
         }
 
         public static PyFunction Create(CodeObject co, Dictionary<string, object> globals)

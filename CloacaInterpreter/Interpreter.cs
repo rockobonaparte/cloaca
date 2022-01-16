@@ -244,7 +244,6 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
-            // BOOKMARK: See if you can figure out how to add the current function to locals if it isn't already in globals.
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
                 frame.SetFastLocal(argIdx, args[argIdx]);
@@ -378,23 +377,9 @@ namespace CloacaInterpreter
             object abstractFunctionToRun = context.DataStack.Pop();
             var asPyObject = abstractFunctionToRun as PyObject;
 
-            var asCodeObject = abstractFunctionToRun as CodeObject;
             var asPyFunction = abstractFunctionToRun as PyFunction;
-            object[] outArgs = null;
 
-            if(asPyFunction != null)
-            {
-                asCodeObject = asPyFunction.Code;
-            }
-
-            if (asCodeObject != null)
-            {
-                outArgs = ArgParamMatcher.Resolve(asCodeObject, args.ToArray(), defaultOverrides);
-            }
-            else
-            {
-                outArgs = args.ToArray();
-            }
+            var outArgs = args.ToArray();
 
             if (asPyObject != null)
             {
@@ -404,7 +389,7 @@ namespace CloacaInterpreter
                     var functionToRun = (IPyCallable)__call__;
 
                     // Copypasta from next if clause. Hopefully this will replace it!
-                    var returned = await functionToRun.Call(this, context, outArgs);
+                    var returned = await functionToRun.Call(this, context, outArgs, defaultOverrides: defaultOverrides);
                     if (returned != null && !(returned is FutureVoidAwaiter))
                     {
                         if (returned is IGetsFutureAwaiterResult)
@@ -441,7 +426,7 @@ namespace CloacaInterpreter
             {
                 var functionToRun = (IPyCallable)abstractFunctionToRun;
 
-                var returned = await functionToRun.Call(this, context, outArgs);
+                var returned = await functionToRun.Call(this, context, outArgs, defaultOverrides: defaultOverrides);
                 if (returned != null && !(returned is FutureVoidAwaiter))
                 {
                     if (returned is IGetsFutureAwaiterResult)

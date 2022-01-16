@@ -151,7 +151,7 @@ namespace CloacaTests
             return arg;
         }
 
-        public int Kwargs(int first=1, int second=10)
+        public int Optionals(int first=1, int second=10)
         {
             return first + 10 * second;
         }
@@ -192,7 +192,9 @@ namespace CloacaTests
             this.scheduler = scheduler;
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             this.context = context;
             var task = wrappedMethodBody(interpreter);
@@ -485,6 +487,7 @@ namespace CloacaTests
         [Test]
         public async Task CallGenericMethod()
         {
+            // BOOKMARK: Double check that GenericMethod is properly getting monomorphized during resolution.
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",
@@ -570,10 +573,10 @@ namespace CloacaTests
         public async Task CallDotNetOptionalsImplicit()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs()\n",
+                "a = obj.Optionals()\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -585,10 +588,10 @@ namespace CloacaTests
         public async Task CallDotNetOptionalsImplicitInOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(2, 20)\n",
+                "a = obj.Optionals(2, 20)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -598,14 +601,14 @@ namespace CloacaTests
 
 
         [Test]
-        [Ignore("Cannot support this until we support kwargs")]
+        [Ignore("Cannot support this until we support optionals")]
         public async Task CallDotNetOptionalsExplicitInOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(first=2, second=20)\n",
+                "a = obj.Optionals(first=2, second=20)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));
@@ -614,14 +617,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Cannot support this until we support kwargs.")]
+        [Ignore("Cannot support this until we support optionals.")]
         public async Task CallDotNetOptionalsExplicitOutOfOrder()
         {
             FrameContext runContext = await runProgram(
-                "a = obj.Kwargs(second=20, first=2)\n",
+                "a = obj.Optionals(second=20, first=2)\n",
                 new Dictionary<string, object>()
                 {
-                    { "obj", new ReflectIntoPython(1337, "Kwargs test!") }
+                    { "obj", new ReflectIntoPython(1337, "Optionals test!") }
                 }, 1);
             var variables = runContext.DumpVariables();
             Assert.That(variables.ContainsKey("a"));

@@ -1,5 +1,6 @@
 ﻿using LanguageImplementation.DataTypes;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -7,6 +8,18 @@ using System.Threading.Tasks;
 
 namespace LanguageImplementation
 {
+    public class FoundBestMethod
+    {
+        public MethodBase FoundMethodInformation { get; private set; }
+        public int MonomorphedParameters { get; private set; }
+
+        public FoundBestMethod(MethodBase methodInfo, int monomorphedParameters)
+        {
+            this.FoundMethodInformation = methodInfo;
+            this.MonomorphedParameters = monomorphedParameters;
+        }
+    }
+
     /// <summary>
     /// Represents callable code outside of the scope of the interpreter.
     /// </summary>
@@ -206,13 +219,21 @@ namespace LanguageImplementation
             }
         }
 
+        // Known issue here: We call this twice. First, we call it when trying to resolve arguments. At that point, we will inject arguments.
+        // We will then call it with the injector arguments. However, this will follow resolution since we thought we were going to skip injected
+        // arguments when making a match. However, they're all specified! So we shouldn't.
+        //
+        // This creates a lot of logic bombs around detecting injected types. However, the real solution some day is to just call all this once.
+        // This would mean moving Resolve() next to Call() in some fashion. This requires smoothing out the API between WrappedCodeObject and
+        // regular Pythonic CodeObjects.
+
         /// <summary>
         /// Search all the available MethodInfos and return one that most appropriately matches the given arguments. Note that
         /// injectable arguments will simply be skipped during consideration; it won't expect to find them in the given arguments.
         /// </summary>
         /// <param name="in_args">Arguments to call this method with</param>
         /// <returns>The right MethodInformation to use to invoke the method.</returns>
-        private MethodBase findBestMethodMatch(object[] in_args)
+        public FoundBestMethod FindBestMethodMatch(object[] in_args)
         {
             foreach(var methodBase_itr in MethodBases)
             {
@@ -240,23 +261,51 @@ namespace LanguageImplementation
 
                 var parameters = methodBase.GetParameters();
                 bool found = true;
+                bool hasParamsField = false;
+                if(parameters.Length > 0 && parameters[parameters.Length - 1].IsDefined(typeof(ParamArrayAttribute), false))
+                {
+                    hasParamsField = true;
+                }
 
                 // We change all the rules if this is a generic. We'll monomorphize the generic and use that information for
                 // comparisons, so don't get to attached to the args and parameters defined above.
-                if (methodBase.ContainsGenericParameters)
+                // ContainsGenericParameters will be true for generic constructors.
+                if (methodBase.IsGenericMethodDefinition || methodBase.ContainsGenericParameters)
                 {                    
                     var genericTypes = new Type[genericsCount];
                     args = new object[in_args.Length - genericsCount];
 
                     // If it's an extension method, then ignore the this Class parameter in our calculation.
-                    var actualParameterCount = methodBase.IsExtensionMethod() ? parameters.Length - 1 : parameters.Length;
-                    if (in_args.Length - genericTypes.Length < actualParameterCount)
+                    int first_param = 0;
+                    int actualParameterCount = parameters.Length;
+                    if(methodBase.IsExtensionMethod())
                     {
-                        // Between generic args and arguments we got, we can't fill in for this one so don't even try.
+                        actualParameterCount -= 1;
+                        first_param += 1;
+                    }
+
+                    // Some of these parameters might be injectable, and we can discount them for the sake of matching.
+                    for(int i = 0; i < (hasParamsField ? parameters.Length - 1 : parameters.Length); ++i)
+                    {
+                        if(Injector.IsInjectedParameterType(parameters[i].ParameterType))
+                        {
+                            // Logic bomb. Skip injected parameters UNLESS we have defined them in our input arguments.
+                            if(i >= in_args.Length || !Injector.IsInjectedParameterType(in_args[i].GetType()))
+                            {
+                                actualParameterCount -= 1;
+                            }
+                        }
+                    }
+
+                    if (in_args.Length - genericTypes.Length < actualParameterCount)
+                    {                    
+                        // Between generic args and arguments we got, we're coming up short on arguments.
                         continue;
                     }
 
-                    // Can't Array.Copy the actual objects to an array of their types.
+                    // Can't Array.Copy the actual objects to an array of their types because we need to resolve
+                    // .NET types hiding inside PyDotNetClassProxies instead of gingerly passing the proxy as the
+                    // type to resolve.
                     for(int i = 0; i < genericsCount; ++i)
                     {                        
                         if(in_args[i] is PyDotNetClassProxy)
@@ -272,15 +321,33 @@ namespace LanguageImplementation
                     Array.Copy(in_args, genericsCount, args, 0, in_args.Length - genericsCount);
 
                     parameters = methodBase.GetParameters();
+                    var asConstructor = methodBase as ConstructorInfo;
                     var asMethodInfo = methodBase as MethodInfo;
-                    if (asMethodInfo != null)
+                    if(asConstructor != null)
+                    {
+                        // Special handling for generic constructors. The generic arguments for generic constructors are part of the type,
+                        // not the constructor.
+                        if (asConstructor.ContainsGenericParameters)
+                        {
+                            Type[] generics = new Type[genericsCount];
+                            var constructorParamIns = methodBase.GetParameters();
+                            Type[] constructorInTypes = new Type[constructorParamIns.Length];
+                            for (int param_i = 0; param_i < constructorInTypes.Length; ++param_i)
+                            {
+                                constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
+                            }
+                            Array.Copy(in_args, 0, generics, 0, genericsCount);
+                            Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
+                            methodBase = monomorphedConstructor.GetConstructor(constructorInTypes);
+                        }
+                    }
+                    else if (asMethodInfo != null)
                     {
                         // We don't have to follow this path for constructors because the generic parameters are part of the type,
                         // not the call itself. On the other hand, we'll suffer that later when invoking it...
-                        var monomorphedMethod = asMethodInfo.MakeGenericMethod(genericTypes);
-                        methodBase = monomorphedMethod;
-                        parameters = methodBase.GetParameters();
+                        methodBase = asMethodInfo.MakeGenericMethod(genericTypes);
                     }
+                    parameters = methodBase.GetParameters();
                 }
 
                 // Set up parameter checking and casting loop. If this is an extension method then skip the first parameter
@@ -295,9 +362,16 @@ namespace LanguageImplementation
                 // Use the parameters as the base for testing. We'll skip any of the parameters that are injectable.
                 while(args_i < args.Length || params_i < parameters.Length)
                 {
-                    while(params_i < parameters.Length && Injector.IsInjectedType(parameters[params_i].ParameterType))
+                    while(params_i < parameters.Length && Injector.IsInjectedParameterType(parameters[params_i].ParameterType))
                     {
                         params_i += 1;
+
+                        // Injector logic bomb: if the type was already injected, then skip it in our input arguments too.
+                        // ....BUT, don't do this if we either don't have an argument for this position or it isn't something injected.
+                        if(args_i < in_args.Length && Injector.IsInjectedArgType(in_args[args_i].GetType()))
+                        {
+                            args_i += 1;
+                        }
                     }
 
                     // Type check
@@ -306,7 +380,7 @@ namespace LanguageImplementation
                     {
                         // If the parameter is optional ("params") then it'll be optional and be an array. If the type we're trying to feed it is
                         // a single element then we're okay.
-                        if(parameters[params_i].IsDefined(typeof(ParamArrayAttribute), false) && AreCompatible(parameters[params_i].ParameterType.GetElementType(), args[args_i].GetType()))
+                        if(hasParamsField && AreCompatible(parameters[parameters.Length-1].ParameterType.GetElementType(), args[args_i].GetType()))
                         {
                             // Still alive! The args being given exceed the number of parameters defined, but they're fitting just fine into the params
                             // field!
@@ -337,7 +411,7 @@ namespace LanguageImplementation
                 }
                 if(found)
                 {
-                    return methodBase;
+                    return new FoundBestMethod(methodBase, genericsCount);
                 }
             }
 
@@ -349,89 +423,57 @@ namespace LanguageImplementation
             }
             else
             {
-                errorMessage.Append(String.Join(", ", from x in in_args select x.GetType().Name));
+                errorMessage.Append(String.Join(", ", from x in in_args select x?.GetType().Name));
             }
 
             throw new Exception(errorMessage.ToString());
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] inArgs,
+            Dictionary<string, object> defaultOverrides = null,
+            KwargsDict kwargsDict = null)
         {
-            var methodBase = findBestMethodMatch(args);
 
-            // Strip generic arguments (if any).
-            // Note this is kind of hacky! We get a monomorphized generic method back whether or not
-            // we started out that way already. Current hack is to see if we have more arguments than
-            // the method needs. If we do, then we strip the excess in front since they were used to
-            // monomorphize the generic.
-            int numGenerics = 0;
-            var noGenericArgs = args;
-            int actualParametersLength = methodBase.IsExtensionMethod() ? methodBase.GetParameters().Length - 1 : methodBase.GetParameters().Length;
-            if ((methodBase.ContainsGenericParameters || methodBase.IsGenericMethod) && args.Length > actualParametersLength)
+            var methodInformation = FindBestMethodMatch(inArgs);
+            var methodBase = methodInformation.FoundMethodInformation;
+
+            var strippedGenericsArgs = inArgs;
+            if(methodInformation.MonomorphedParameters > 0)
             {
-                if (methodBase.IsConstructor)
-                {
-                    // If this is a constructor, then the class we're instantiating itself might be generic. The constructor
-                    // can't legally define additional arguments, so the generic arguments boil down to what the type itself
-                    // defines.
-                    var asConstructor = methodBase as ConstructorInfo;
-                    numGenerics = asConstructor.DeclaringType.GetGenericArguments().Length;
-                }
-                else
-                {
-                    numGenerics = methodBase.GetGenericArguments().Length;
-                    noGenericArgs = new object[args.Length - numGenerics];
-                }
+                strippedGenericsArgs = new object[inArgs.Length - methodInformation.MonomorphedParameters];
+                Array.Copy(inArgs,
+                    methodInformation.MonomorphedParameters,
+                    strippedGenericsArgs,
+                    0,
+                    inArgs.Length - methodInformation.MonomorphedParameters);
             }
-            Array.Copy(args, numGenerics, noGenericArgs, 0, args.Length - numGenerics);
 
-            // Inject internal types, convert .NET/Cloaca types.
-            // Unit tests like to come in with a null interpreter so we have to test for it.
-            var injector = new Injector(interpreter, context, interpreter != null ? interpreter.Scheduler : null);
-            var injected_args = injector.Inject(methodBase, noGenericArgs, instance);
-            object[] final_args = injected_args;
+            var injector = new Injector(interpreter, context, interpreter.Scheduler);
+            object[] injectedArgs = injector.Inject2(methodBase, strippedGenericsArgs, thisReference: instance, overrides: defaultOverrides);
 
             // Little convenience here. We'll convert a non-task Task<object> type to a task.
             var asMethodInfo = methodBase as MethodInfo;
-            if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
+            var asConstructorInfo = methodBase as ConstructorInfo;
+            if (methodBase is ConstructorInfo)
+            {
+                return Task.FromResult(asConstructorInfo.Invoke(injectedArgs));
+            }
+            else if (asMethodInfo != null && asMethodInfo.ReturnType.IsGenericType && asMethodInfo.ReturnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 // Task<object> is straightforward and we can just return it. Other return types need to go through
                 // our helper.
                 if (asMethodInfo.ReturnType == typeof(Task<object>))
                 {
-                    return (Task<object>)methodBase.Invoke(instance, final_args);
+                    return (Task<object>)methodBase.Invoke(instance, injectedArgs);
                 }
                 else
                 {
-                    return InvokeAsTaskObject(final_args);
+                    return InvokeAsTaskObject(injectedArgs);
                 }
             }
             else
             {
-                var asConstructor = methodBase as ConstructorInfo;
-                if (asConstructor != null)
-                {
-                    // Special handling for generic constructors. The generic arguments for generic constructors are part of the type,
-                    // not the constructor.
-                    if(asConstructor.ContainsGenericParameters)
-                    {
-                        Type[] generics = new Type[numGenerics];
-                        var constructorParamIns = methodBase.GetParameters();
-                        Type[] constructorInTypes = new Type[constructorParamIns.Length];
-                        for(int param_i = 0; param_i < constructorInTypes.Length; ++param_i)
-                        {
-                            constructorInTypes[param_i] = constructorParamIns[param_i].ParameterType;
-                        }
-                        Array.Copy(args, 0, generics, 0, numGenerics);
-                        Type monomorphedConstructor = asConstructor.DeclaringType.MakeGenericType(generics);
-                        asConstructor = monomorphedConstructor.GetConstructor(constructorInTypes);
-                    }
-                    return Task.FromResult(asConstructor.Invoke(final_args));
-                }
-                else
-                {
-                    return Task.FromResult(methodBase.Invoke(instance, final_args));
-                }
+                return Task.FromResult(methodBase.Invoke(instance, injectedArgs));
             }
         }
 

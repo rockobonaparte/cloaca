@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -45,7 +46,9 @@ namespace LanguageImplementation.DataTypes.Exceptions
             return exc;
         }
 
-        public override async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public override async Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             if(args.Length == 0)
             {
