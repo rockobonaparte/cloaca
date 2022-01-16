@@ -94,6 +94,24 @@ namespace CloacaInterpreter
             return resultPyBool.InternalValue;
         }
 
+        public static object DefaultSortKeyfunc(object o)
+        {
+            return o;
+        }
+
+        private static WrappedCodeObject _defaultKeyFunc = null;
+        public static WrappedCodeObject DefaultKeyFunc
+        {
+            get
+            {
+                if(_defaultKeyFunc == null)
+                {
+                    _defaultKeyFunc = new WrappedCodeObject("DefaultSortKeyfunc", typeof(Sorting).GetMethod("DefaultSortKeyfunc"));
+                }
+                return _defaultKeyFunc;
+            }
+        }
+
         public static async Task Sort(IInterpreter interpreter, FrameContext context, List<object> list, IPyCallable keyfunc=null, bool reversed=false)
         {
             for (int width = 1; width < list.Count; width <<= 1)
