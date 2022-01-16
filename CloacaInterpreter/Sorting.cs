@@ -134,6 +134,7 @@ namespace CloacaInterpreter
 
                     int r = width;
                     int l = 0;
+
                     for (int temp_i = 0; temp_i < temp.Length; ++temp_i)
                     {
                         if (l >= width)
@@ -146,7 +147,11 @@ namespace CloacaInterpreter
                             list[l_start + temp_i] = temp[l];
                             l += 1;
                         }
-                        else if (await comparePyObj(interpreter, context, temp[r], temp[l]))
+                        else if (await comparePyObj(interpreter, context,
+                            temp[r],
+                            temp[l],
+                            keyfunc,
+                            reversed))
                         {
                             list[l_start + temp_i] = temp[r];
                             r += 1;
