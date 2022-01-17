@@ -69,49 +69,6 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        private static async Task<int> castSliceIndex(IInterpreter interpreter, FrameContext context, object sliceIdx)
-        {
-            var asPyObject = sliceIdx as PyObject;
-            if(asPyObject != null)
-            {
-                // Slight optimization: PyInteger has __index__ but we already know to get its index.
-                var asPyInt = asPyObject as PyInteger;
-                if(asPyInt != null)
-                {
-                    return (int)asPyInt.InternalValue;
-                }
-                else if(asPyObject.__dict__.ContainsKey("__index__"))
-                {
-                    var index_dunder = (IPyCallable)asPyObject.__dict__["__index__"];
-                    var index = await index_dunder.Call(interpreter, context, new object[0]);
-                    var asPyIndex = index as PyInteger;
-                    if(asPyIndex == null)
-                    {
-                        context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
-                        return 0;
-                    }
-                    else
-                    {
-                        return (int) asPyIndex.InternalValue;
-                    }
-                }
-                else
-                {
-                    context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
-                    return 0;
-                }
-            }
-            else if(sliceIdx is BigInteger || sliceIdx is int)
-            {
-                return (int)sliceIdx;
-            }
-            else
-            {
-                context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
-                return 0;
-            }
-        }
-
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyList self, PyObject index_or_slice)
         {
@@ -138,15 +95,15 @@ namespace LanguageImplementation.DataTypes
                 int step = 1;
                 if(asPySlice.Start != null && asPySlice.Start != NoneType.Instance)
                 {
-                    start = await castSliceIndex(interpreter, context, asPySlice.Start);
+                    start = await SliceHelper.CastSliceIndex(interpreter, context, asPySlice.Start);
                 }
                 if (asPySlice.Stop != null && asPySlice.Stop != NoneType.Instance)
                 {
-                    stop = await castSliceIndex(interpreter, context, asPySlice.Stop);
+                    stop = await SliceHelper.CastSliceIndex(interpreter, context, asPySlice.Stop);
                 }
                 if (asPySlice.Step != null && asPySlice.Step != NoneType.Instance)
                 {
-                    step = await castSliceIndex(interpreter, context, asPySlice.Step);
+                    step = await SliceHelper.CastSliceIndex(interpreter, context, asPySlice.Step);
                 }
                 if (context.CurrentException != null)
                 {

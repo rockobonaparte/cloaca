@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using NUnit.Framework;
 
@@ -10,10 +11,10 @@ namespace CloacaTests
     public class StringTests : RunCodeTest
     {
         [Test]
-        public void StringConcatenation()
+        public async Task StringConcatenation()
         {
             // Making sure that we're properly parsing and generating all of these when there's multiples of the operator.
-            runBasicTest(
+            await runBasicTest(
                 "a = 'Hello'\n" +
                 "a = a + ', World!'\n",
                 new VariableMultimap(new TupleList<string, object>
@@ -24,10 +25,10 @@ namespace CloacaTests
 
         [Test]
         [Ignore("Currently fails from mixing .NET with PyString. Winds up in DynamicDispatchOperation thinking it's working with numbers")]
-        public void StringConcatenateDotNetType()
+        public async Task StringConcatenateDotNetType()
         {
             // Making sure that we're properly parsing and generating all of these when there's multiples of the operator.
-            runBasicTest(
+            await runBasicTest(
                 "a = a + ', World!'\n",
                 new Dictionary<string, object>
                 {
@@ -36,6 +37,42 @@ namespace CloacaTests
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", "Hello, World!" }
+                }), 1);
+        }
+
+        [Test]
+        public async Task StringSubscriptNormal()
+        {
+            await runBasicTest(
+                "a = 'Hello'\n" +
+                "b = a[0]\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyString.Create("H") },
+                }), 1);
+        }
+
+        [Test]
+        public async Task StringSubscriptNegative()
+        {
+            await runBasicTest(
+                "a = 'Hello'\n" +
+                "b = a[-1]\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyString.Create("o") },
+                }), 1);
+        }
+
+        [Test]
+        public async Task StringSubscriptSlice()
+        {
+            await runBasicTest(
+                "a = 'Hello'\n" +
+                "b = a[1:3]\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyString.Create("el") },
                 }), 1);
         }
     }

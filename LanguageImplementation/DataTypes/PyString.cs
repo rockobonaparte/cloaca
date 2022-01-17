@@ -2,6 +2,8 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
 {
@@ -179,6 +181,62 @@ namespace LanguageImplementation.DataTypes
         public static PyFloat __neg__(PyObject self)
         {
             return PyFloat.Create(-((PyFloat)self).InternalValue);
+        }
+
+        [ClassMember]
+        public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
+        {
+            var asPyInt = index_or_slice as PyInteger;
+            if (asPyInt != null)
+            {
+                var index = (int)asPyInt.InternalValue;
+                if (index < 0)
+                {
+                    index = self.InternalValue.Length + index;
+                }
+
+                if (index < 0 || index >= self.InternalValue.Length)
+                {
+                    // TODO: Represent as a more natural Python exception;
+                    throw new Exception("IndexError: string index out of range");
+                }
+
+                try
+                {
+                    return PyString.Create(self.InternalValue[index].ToString());
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // TODO: Represent as a more natural Python exception;
+                    throw new Exception("IndexError: string index out of range");
+                }
+            }
+
+            var asPySlice = index_or_slice as PySlice;
+            if (asPySlice != null)
+            {
+                var dotNetSlice = await SliceHelper.extractSliceIndices(interpreter, context, asPySlice, self.InternalValue.Length);
+                if(dotNetSlice.Step == 1)
+                {
+                    return PyString.Create(self.InternalValue.Substring(dotNetSlice.Start, dotNetSlice.Stop - dotNetSlice.Start));
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+                    for (int i = dotNetSlice.Start;
+                        i < dotNetSlice.Stop && i < self.InternalValue.Length && i >= 0;
+                        i += dotNetSlice.Step)
+                    {
+                        sb.Append(self.InternalValue[i]);
+                    }
+                    return PyString.Create(sb.ToString());
+                }
+            }
+            else
+            {
+                context.CurrentException = new PyException("__getitem__ requires an integer index or slice, received " + index_or_slice.GetType().Name);
+                return null;
+            }
         }
     }
 
