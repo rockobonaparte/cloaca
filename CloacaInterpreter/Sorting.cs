@@ -73,16 +73,17 @@ namespace CloacaInterpreter
             {
                 throw new Exception(right.ToString() + " is not a PyObject and cannot be compared for sorting.");
             }
-            var comp_func = pyleft.__dict__.GetDefault(comp_func_name, null) as IPyCallable;
-            if(comp_func == null)
-            {
-                throw new Exception(pyleft.__class__.Name + " does not have a working, callable " + comp_func_name + " implementation");
-            }
 
             if(keyfunc != null)
             {
                 pyleft = (PyObject) await keyfunc.Call(interpreter, context, new object[] { pyleft });
                 pyright = (PyObject)await keyfunc.Call(interpreter, context, new object[] { pyright });
+            }
+
+            var comp_func = pyleft.__dict__.GetDefault(comp_func_name, null) as IPyCallable;
+            if (comp_func == null)
+            {
+                throw new Exception(pyleft.__class__.Name + " does not have a working, callable " + comp_func_name + " implementation");
             }
 
             var resultObj = await comp_func.Call(interpreter, context, new object[] { pyleft, pyright });

@@ -1,5 +1,5 @@
-# I bet __lt__ is from running sorted but I haven't confirmed yet.
-raise NotImplementedError("Exception: Tried to use a non-PyString for lvalue of: less-than")
+# I guess I can't index by character. Time to harden PyString.
+raise NotImplementedError("Exception: 'str' object has no attribute named '__getitem__'")
 
 # Given a string S and a set of words D, find the longest word in D that is a subsequence of S.
 #
