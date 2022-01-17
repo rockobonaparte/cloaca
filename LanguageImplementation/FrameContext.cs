@@ -19,6 +19,11 @@ namespace LanguageImplementation
 
         public Dictionary<string, object> Builtins;
 
+        public FrameContext() : this(new Dictionary<string, object>())
+        {
+
+        }
+
         public FrameContext(Dictionary<string, object> builtins) : this(new Stack<Frame>(), builtins)
         {
         }

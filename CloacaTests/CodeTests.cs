@@ -18,7 +18,7 @@ namespace CloacaTests
     /// the implementation of it was also getting out of hand and we really needed a helper.
     /// </summary>
     [TestFixture]
-    public class ArgParamMatchTests
+    public class ArgParamMatchTestsPython
     {
         public void InOutTest(CodeObject co, object[][] ins, Dictionary<string, object>[] keywordsIn, object[][] outs)
         {
@@ -257,6 +257,285 @@ namespace CloacaTests
 
         }
 
+    }
+
+    public class DotNetBindingTestFunctions
+    {
+        public static object[] NoArgs()
+        {
+            return new object[0];
+        }
+
+        public static object[] OnlyParams(params object[] foo)
+        {
+            return new object[] { foo };
+        }
+
+        public static object[] DefaultsParams(int hooray=1, params object[] foo)
+        {
+            return new object[] { hooray, foo };
+        }
+
+        public static object[] OneRegularReference(object foo)
+        {
+            return new object[] { foo };
+        }
+
+        public static object[] OneRegularValue(decimal foo)
+        {
+            // I'd use an int but that's particularly easy to anticipate.
+            return new object[] { foo };
+        }
+
+        public static object[] InterpreterContext(IInterpreter interpreter, FrameContext context)
+        {
+            return new object[] { interpreter, context };
+        }
+
+        public static object[] InterpreterContextReference(IInterpreter interpreter, FrameContext context, object foo)
+        {
+            return new object[] { interpreter, context, foo };
+        }
+
+        public static object[] InterpreterContextValue(IInterpreter interpreter, FrameContext context, decimal foo)
+        {
+            return new object[] { interpreter, context, foo };
+        }
+
+        public static object[] InterpreterContextParams(IInterpreter interpreter, FrameContext context, params object[] foo)
+        {
+            return new object[] { interpreter, context, foo };
+        }
+
+        public static object[] InterpreterContextDefaults(IInterpreter interpreter, FrameContext context, object foo1=null, int foo2=-1)
+        {
+            return new object[] { interpreter, context, foo1, foo2 };
+        }
+
+        public static object[] InterpreterContextDefaultsParams(IInterpreter interpreter, FrameContext context, object foo1 = null, int foo2 = -1, params object[] paramFoos)
+        {
+            return new object[] { interpreter, context, foo1, foo2, paramFoos };
+        }
+
+        // Not going to try all generic possiblities unless we get in trouble with them later.
+        public static object[] GenericNoArgs<T>()
+        {
+            return new object[0];
+        }
+
+        public static object[] GenericInterpreterContext<T>(IInterpreter interpreter, FrameContext context)
+        {
+            return new object[] { interpreter, context };
+        }
+    }
+
+
+    /// <summary>
+    /// Tests for calling wrapped code requiring various kinds of parameters. There are code tests that do similar, but this
+    /// tests it without dealing with any Python syntax at all. We can compare results here to what we get elsewhere when
+    /// something is acting up.
+    /// </summary>
+    [TestFixture]
+    public class WrappedCodeCallBindingTests
+    {
+        private Scheduler scheduler;
+        private Interpreter interpreter;
+        private FrameContext context;
+        private Injector injector;
+
+        [SetUp]
+        public void StageInjector()
+        {
+            scheduler = new Scheduler();
+            interpreter = new Interpreter(scheduler);
+            context = new FrameContext();
+            injector = new Injector(interpreter, context, scheduler);
+        }
+
+        [Test]
+        public async Task NoArgs()
+        {            
+            var co = new WrappedCodeObject("NoArgs", typeof(DotNetBindingTestFunctions).GetMethod("NoArgs"));
+            var inParams = new object[0];
+            var outParams = await co.Call(interpreter, context, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public async Task GenericNoArgs()
+        {
+            var co = new WrappedCodeObject("GenericNoArgs", typeof(DotNetBindingTestFunctions).GetMethod("GenericNoArgs"));
+
+            var inParams = new object[] { typeof(object) };
+            var outParams = await co.Call(interpreter, context, inParams);
+
+            // The input parameter was generic parameter. We then get a monomorphized method to
+            // call during resolution. So we don't use that parameter any more.
+            Assert.That(outParams, Is.EqualTo(new object[0]));
+        }
+
+        [Test]
+        public async Task OneRegularReference()
+        {
+            var co = new WrappedCodeObject("OneRegularReference", typeof(DotNetBindingTestFunctions).GetMethod("OneRegularReference"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = await co.Call(interpreter, context, inParams);
+            Assert.That(outParams, Is.EqualTo(inParams));
+        }
+
+        [Test]
+        public async Task OnlyParams()
+        {
+            var co = new WrappedCodeObject("OnlyParams", typeof(DotNetBindingTestFunctions).GetMethod("OnlyParams"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = await co.Call(interpreter, context, inParams);
+
+            // The params field should turn into an object[] in its own right, hence the double-wrapping.
+            Assert.That(outParams, Is.EqualTo(new object[] { new object[] { arg1 } }));
+        }
+
+        [Test]
+        public async Task InterpreterContext()
+        {
+            var co = new WrappedCodeObject("InterpreterContext", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContext"));
+
+            var inParams = new object[0];
+            var outParams = await co.Call(interpreter, context, inParams);
+            var checkParams = new object[] { interpreter, context };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task GenericInterpreterContext()
+        {
+            var co = new WrappedCodeObject("GenericInterpreterContext", typeof(DotNetBindingTestFunctions).GetMethod("GenericInterpreterContext"));
+
+            var inParams = new object[] { typeof(object) };
+            var outParams = await co.Call(interpreter, context, inParams);
+
+            // The input parameter was generic parameter. We then get a monomorphized method to
+            // call during resolution. So we don't use that parameter any more.
+            var checkParams = new object[] { interpreter, context };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextReference()
+        {
+            var co = new WrappedCodeObject("InterpreterContextReference", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextReference"));
+
+            object arg1 = new object();
+
+            var inParams = new object[] { arg1 };
+            var outParams = await co.Call(interpreter, context, inParams);
+            var checkParams = new object[] { interpreter, context, arg1 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextValue()
+        {
+            var co = new WrappedCodeObject("InterpreterContextValue", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextValue"));
+
+            var inParams = new object[] { 100m };
+            var outParams = await co.Call(interpreter, context, inParams);
+            var checkParams = new object[] { interpreter, context, 100m };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextParams()
+        {
+            var co = new WrappedCodeObject("InterpreterContextParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextParams"));
+
+            object arg1 = new object();
+            object arg2 = new object();
+
+            var inParams = new object[] { arg1, arg2 };
+            var outParams = await co.Call(interpreter, context, inParams);
+            var checkParams = new object[] { interpreter, context, new object[] { arg1, arg2 } };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextDefaults()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaults", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaults"));
+
+            object arg1 = new object();
+            int arg2 = 1337;
+
+            var inParams = new object[0];
+            var overrides = new Dictionary<string, object>()
+            {
+                { "foo1", arg1 },
+                { "foo2", arg2 },
+            };
+
+            var outParams = await co.Call(interpreter, context, inParams, overrides);
+            var checkParams = new object[] { interpreter, context, arg1, arg2};
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextDefaultsNotDefined()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaults", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaults"));
+
+            var inParams = new object[0];
+
+            var outParams = await co.Call(interpreter, context, inParams);
+            var checkParams = new object[] { interpreter, context, null, -1 };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task InterpreterContextDefaultsParams()
+        {
+            var co = new WrappedCodeObject("InterpreterContextDefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("InterpreterContextDefaultsParams"));
+
+            object arg1 = new object();
+            int arg2 = 1337;
+
+            object params1 = new object();
+            object params2 = new object();
+
+            var inParams = new object[] { params1, params2 };
+            var overrides = new Dictionary<string, object>()
+            {
+                { "foo1", arg1 },
+                { "foo2", arg2 },
+            };
+
+            var outParams = await co.Call(interpreter, context, inParams, overrides);
+            var checkParams = new object[] { interpreter, context, arg1, arg2, new object[] { params1, params2 } };
+            Assert.That(outParams, Is.EqualTo(checkParams));
+        }
+
+        [Test]
+        public async Task DefaultsParams()
+        {
+            var co = new WrappedCodeObject("DefaultsParams", typeof(DotNetBindingTestFunctions).GetMethod("DefaultsParams"));
+
+            object params1 = new object();
+            object params2 = new object();
+
+            var inParams = new object[] { params1, params2 };
+            var overrides = new Dictionary<string, object>()
+            {
+                { "hooray", 1337 },
+            };
+
+            var outParams = await co.Call(interpreter, context, inParams, overrides);
+            var checkParams = new object[] { 1337, new object[] { params1, params2, } };
+            Assert.That(outParams, Is.EqualTo(checkParams));               
+        }
     }
 
     [TestFixture]

@@ -29,7 +29,9 @@ namespace LanguageImplementation.DataTypes
             __setattr__("__call__", this);
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             object[] massagedArgs = new object[args.Length + 1];
             massagedArgs[0] = selfHandle;

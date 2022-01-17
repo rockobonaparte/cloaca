@@ -476,8 +476,18 @@ namespace LanguageImplementation
         IScheduler Scheduler { get; }
     }
 
+    /// <summary>
+    /// Data type to denote a **kwargs mapping.
+    /// </summary>
+    public class KwargsDict : Dictionary<object, object>
+    {
+
+    }
+
     public interface IPyCallable
     {
-        Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args);
+        Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+            Dictionary<string, object> defaultOverrides=null,
+            KwargsDict kwargsDict=null);
     }
 }

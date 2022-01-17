@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
@@ -180,7 +181,9 @@ namespace LanguageImplementation
             this.self = self;
         }
 
-        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args)
+        public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
+                                 Dictionary<string, object> defaultOverrides = null,
+                                 KwargsDict kwargsDict = null)
         {
             return Task.FromResult(self);
         }
