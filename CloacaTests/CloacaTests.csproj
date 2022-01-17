@@ -46,6 +46,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SortingTests.cs" />
     <Compile Include="BuiltinsTests.cs" />
     <Compile Include="ListTests.cs" />
     <Compile Include="ComprehensionsTests.cs" />

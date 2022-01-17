@@ -84,7 +84,7 @@ namespace CloacaInterpreter
                     }
                     else
                     {
-                        throw new EscapedPyException(new NotImplemented("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
+                        throw new EscapedPyException(new NotImplementedError("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
                     }
                 }
                 catch (ArgumentException e)
@@ -206,7 +206,7 @@ namespace CloacaInterpreter
                     }
                     else
                     {
-                        throw new EscapedPyException(new NotImplemented("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
+                        throw new EscapedPyException(new NotImplementedError("'" + objType.Name + "' object attribute named '" + attrName + "' is neither a field, method, event, nor property."));
                     }
                 }
                 catch (ArgumentException e)

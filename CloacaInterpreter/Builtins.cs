@@ -401,7 +401,7 @@ namespace CloacaInterpreter
             object best = inlineArgs[0];
             if (!(best is PyObject))
             {
-                context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
+                context.CurrentException = new NotImplementedError("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
                 return null;
             }
 
@@ -410,7 +410,7 @@ namespace CloacaInterpreter
                 object next = inlineArgs[i];
                 if (!(next is PyObject))
                 {
-                    context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
+                    context.CurrentException = new NotImplementedError("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
                     return null;
                 }
 
@@ -418,7 +418,7 @@ namespace CloacaInterpreter
                 var lowestPyObj = best as PyObject;
                 if (!lowestPyObj.__dict__.ContainsKey(func_dunder))
                 {
-                    context.CurrentException = new NotImplemented("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
+                    context.CurrentException = new NotImplementedError("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
                     return null;
                 }
                 else
@@ -460,7 +460,7 @@ namespace CloacaInterpreter
             }
             else if (!(best is PyObject))
             {
-                context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
+                context.CurrentException = new NotImplementedError("We cannot compare non-PyObjects in" + func_name + "() yet: " + best.ToString());
                 return null;
             }
 
@@ -469,7 +469,7 @@ namespace CloacaInterpreter
             {
                 if (!(next is PyObject))
                 {
-                    context.CurrentException = new NotImplemented("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
+                    context.CurrentException = new NotImplementedError("We cannot compare non-PyObjects in" + func_name + "() yet: " + next.ToString());
                     return null;
                 }
 
@@ -477,7 +477,7 @@ namespace CloacaInterpreter
                 var lowestPyObj = best as PyObject;
                 if (!lowestPyObj.__dict__.ContainsKey(func_dunder))
                 {
-                    context.CurrentException = new NotImplemented("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
+                    context.CurrentException = new NotImplementedError("We cannot compare PyObjects that do not implement " + func_dunder + "(): " + best.ToString());
                     return null;
                 }
                 else
@@ -595,6 +595,29 @@ namespace CloacaInterpreter
                 context.CurrentException = new TypeError("slice expected at most 3 arguments, got " + args.Length);
                 return null;
             }
+        }
+
+        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, object key = null, PyBool reversed = null)
+        {
+            IPyCallable callableKey = Sorting.DefaultKeyFunc;
+            if (key != null && key != NoneType.Instance && !(key is IPyCallable))
+            {
+                context.CurrentException = new PyException("sorted() key function was not a callable function");
+                return null;
+            }
+            else if (key is IPyCallable)
+            {
+                callableKey = (IPyCallable)key;
+            }
+
+            bool reversed_bool = false;
+            if(reversed != null)
+            {
+                reversed_bool = reversed.InternalValue;
+            }
+            PyList newList = PyList.Create(pyList.list);
+            await Sorting.Sort(interpreter, context, newList.list, callableKey, reversed_bool);
+            return newList;
         }
 
         public static async Task<object> enumerate_builtin(IInterpreter interpreter, FrameContext context, object iterable)

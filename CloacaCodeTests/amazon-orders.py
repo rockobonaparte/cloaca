@@ -1,4 +1,4 @@
-raise NotImplementedError("find not implemented for str yet, nor is sorted")
+raise NotImplementedError("find not implemented for str yet")
 
 def prioritizedOrders(numOrders, orderList):
     # Will assume orderList should not be mutated, since a new list is expected

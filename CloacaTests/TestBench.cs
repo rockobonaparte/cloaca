@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 using CloacaInterpreter;
-using Language;
 using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 

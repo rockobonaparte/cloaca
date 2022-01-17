@@ -28,5 +28,11 @@ namespace LanguageImplementation
                 dict.Add(key, value);
             }
         }
+
+        public static object GetDefault<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue defaultValue)
+        {
+            TValue value;
+            return dict.TryGetValue(key, out value) ? value : defaultValue;
+        }
     }
 }
