@@ -49,6 +49,34 @@ namespace CloacaTests
             }), 1);
         }
 
+        // There was a bug we found during the FAANG coding integration tests that showed we couldn't
+        // properly create a list from a set of things:
+        //
+        // {"able", "ale", "apple", "bale", "kangaroo"}
+        // became
+        // ["bale", "ale"]
+        //
+        // The problem is that the set was being recognized as a dictionary, not a set. Sets aren't even
+        // supported yet. We keep the test here to check our work afterwards.
+        [Test]
+        [Ignore("Sets are not yet supported properly")]
+        public async Task CreateFromSets()
+        {
+            await runBasicTest(
+                "s = {'able', 'ale', 'apple', 'bale', 'kangaroo'}\n" +
+                "l = sorted(list(s))\n",            // We will sort it so we get consistent output.
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "l", PyList.Create(new List<object>() { 
+                    PyString.Create("able"),
+                    PyString.Create("ale"),
+                    PyString.Create("apple"),
+                    PyString.Create("bale"),
+                    PyString.Create("kangaroo"),
+                }) }
+            }), 1);
+        }
+
         [Test]
         public async Task MultiplyList1()
         {
