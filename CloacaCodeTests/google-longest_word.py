@@ -37,7 +37,7 @@ test_str = "abpppleease"
 test_set1 = {"able", "ale", "apple", "bale", "kangaroo"}
 test_set2 = {"able", "ale", "apple", "bale", "kangaroo", "please"}
 
-print(longest_word(test_str, test_set1))
+#print(longest_word(test_str, test_set1))
 
-#assert longest_word(test_str, test_set1) == "apple"
-#assert longest_word(test_str, test_set2) == "please"
+assert longest_word(test_str, test_set1) == "apple"
+assert longest_word(test_str, test_set2) == "please"
