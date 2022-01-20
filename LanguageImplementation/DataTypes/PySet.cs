@@ -11,7 +11,7 @@ namespace LanguageImplementation.DataTypes
     public class PySetClass : PyClass
     {
         public PySetClass(PyFunction __init__) :
-            base("list", __init__, new PyClass[0])
+            base("set", __init__, new PyClass[0])
         {
             __instance = this;
 
@@ -35,12 +35,12 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        [ClassMember]
-        public static PyObject __iter__(PyObject self)
-        {
-            var asList = self as PySet;
-            return PySetIterator.Create(asList);
-        }
+        //[ClassMember]
+        //public static PyObject __iter__(PyObject self)
+        //{
+        //    var asList = self as PySet;
+        //    return PySetIterator.Create(asList);
+        //}
 
         [ClassMember]
         public static PyBool __contains__(PySet self, PyObject v)
@@ -254,11 +254,11 @@ namespace LanguageImplementation.DataTypes
 
     //    }
 
-    //    public static PySetIterator Create(PySet list)
+    //    public static PySetIterator Create(PySet pySet)
     //    {
     //        var iterator = PyTypeObject.DefaultNew<PySetIterator>(PySetIteratorClass.Instance);
     //        iterator.CurrentIdx = 0;
-    //        iterator.IteratedList = list;
+    //        iterator.IteratedList = pySet;
 
     //        return iterator;
     //    }
