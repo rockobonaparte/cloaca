@@ -35,12 +35,12 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
-        //[ClassMember]
-        //public static PyObject __iter__(PyObject self)
-        //{
-        //    var asList = self as PySet;
-        //    return PySetIterator.Create(asList);
-        //}
+        [ClassMember]
+        public static PyObject __iter__(PyObject self)
+        {
+            var asList = self as PySet;
+            return PySetIterator.Create(asList);
+        }
 
         [ClassMember]
         public static PyBool __contains__(PySet self, PyObject v)
@@ -208,74 +208,70 @@ namespace LanguageImplementation.DataTypes
         }
     }
 
-    //public class PySetIteratorClass : PyClass
-    //{
-    //    private static PySetIteratorClass __instance;
+    public class PySetIteratorClass : PyClass
+    {
+        private static PySetIteratorClass __instance;
 
-    //    public static PySetIteratorClass Instance
-    //    {
-    //        get
-    //        {
-    //            if (__instance == null)
-    //            {
-    //                __instance = new PySetIteratorClass(null);
-    //            }
-    //            return __instance;
-    //        }
-    //    }
+        public static PySetIteratorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PySetIteratorClass(null);
+                }
+                return __instance;
+            }
+        }
 
-    //    public PySetIteratorClass(PyFunction __init__) :
-    //        base("set_iterator", __init__, new PyClass[0])
-    //    {
-    //        __instance = this;
+        public PySetIteratorClass(PyFunction __init__) :
+            base("set_iterator", __init__, new PyClass[0])
+        {
+            __instance = this;
 
-    //        // We have to replace PyTypeObject.DefaultNew with one that creates a PyRangeIterator.
-    //        // TODO: Can this be better consolidated?
-    //        Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PySetIterator>(null);
-    //        var methodInfo = ((MethodCallExpression)expr.Body).Method;
-    //        __new__ = new WrappedCodeObject("__new__", methodInfo, this);
-    //    }
+            // We have to replace PyTypeObject.DefaultNew with one that creates a PyRangeIterator.
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PySetIterator>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
 
-    //    [ClassMember]
-    //    public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
-    //    {
-    //        var asIterator = self as PySetIterator;
-    //        return await asIterator.Next(interpreter, context, self);
-    //    }
-    //}
+        [ClassMember]
+        public static async Task<object> __next__(IInterpreter interpreter, FrameContext context, PyObject self)
+        {
+            var asIterator = self as PySetIterator;
+            return await asIterator.Next(interpreter, context, self);
+        }
+    }
 
-    //public class PySetIterator : PyObject, PyIterable
-    //{
-    //    public int CurrentIdx;
-    //    public PySet IteratedList;
+    public class PySetIterator : PyObject, PyIterable
+    {
+        private IEnumerator<object> enumerator;
 
-    //    public PySetIterator() : base(PySetClass.Instance)
-    //    {
+        public PySetIterator() : base(PySetClass.Instance)
+        {
 
-    //    }
+        }
 
-    //    public static PySetIterator Create(PySet pySet)
-    //    {
-    //        var iterator = PyTypeObject.DefaultNew<PySetIterator>(PySetIteratorClass.Instance);
-    //        iterator.CurrentIdx = 0;
-    //        iterator.IteratedList = pySet;
+        public static PySetIterator Create(PySet pySet)
+        {
+            var iterator = PyTypeObject.DefaultNew<PySetIterator>(PySetIteratorClass.Instance);
+            iterator.enumerator = pySet.set.GetEnumerator();
+            return iterator;
+        }
 
-    //        return iterator;
-    //    }
-
-    //    public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
-    //    {
-    //        if (CurrentIdx >= IteratedList.set.Count)
-    //        {
-    //            context.CurrentException = new StopIteration();
-    //            return null;
-    //        }
-    //        else
-    //        {
-    //            CurrentIdx += 1;
-    //            return await PySetClass.__getitem__(interpreter, context, IteratedList, PyInteger.Create(CurrentIdx - 1));
-    //        }
-
-    //    }
-    //}
+        public async Task<object> Next(IInterpreter interpreter, FrameContext context, object selfHandle)
+        {
+            var asItr = selfHandle as PySetIterator;
+            if(!asItr.enumerator.MoveNext())
+            {
+                context.CurrentException = new StopIteration();
+                return null;
+            }
+            else
+            {
+                return asItr.enumerator.Current;
+            }
+        }
+    }
 }
