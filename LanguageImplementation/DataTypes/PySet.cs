@@ -38,8 +38,8 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyObject __iter__(PyObject self)
         {
-            var asList = self as PySet;
-            return PySetIterator.Create(asList);
+            var asSet = self as PySet;
+            return PySetIterator.Create(asSet);
         }
 
         [ClassMember]
@@ -140,8 +140,8 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         public static PyInteger __len__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
-            var asList = (PySet)self;
-            return PyInteger.Create(asList.set.Count);
+            var asSet = (PySet)self;
+            return PyInteger.Create(asSet.set.Count);
         }
     }
 
@@ -175,14 +175,14 @@ namespace LanguageImplementation.DataTypes
 
         public override bool Equals(object obj)
         {
-            var asList = obj as PySet;
-            if(asList == null)
+            var asSet = obj as PySet;
+            if(asSet == null)
             {
                 return false;
             }
             else
             {
-                return PySetClass.__eq__(this, asList).InternalValue;
+                return PySetClass.__eq__(this, asSet).InternalValue;
             }
         }
 
@@ -202,7 +202,7 @@ namespace LanguageImplementation.DataTypes
             return "PySet(contents are not yet displayed)";
         }
 
-        public void SetList(HashSet<object> newSet)
+        public void SetSet(HashSet<object> newSet)
         {
             set = newSet;
         }
