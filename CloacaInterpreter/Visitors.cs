@@ -1666,8 +1666,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // Real talk: I'm not sure how this got defined and why it still works. It's a Christmas Miracle or something.
 
-        // For now, we are assuming we're building simple dictionaries! We're not doing sets, nor
-        // are the elements complex statements (yet).
         var dictorsetmaker = context.dictorsetmaker();
         int dictorsetmaker_len = dictorsetmaker != null ? dictorsetmaker.test().Length : 0;
         if (context.dictorsetmaker() != null)
@@ -1676,8 +1674,19 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             {
                 Visit(test);
             }
+
+            if (context.dictorsetmaker().children[1].GetText() == ":")
+            {
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, dictorsetmaker_len / 2, context);
+            }
+            else
+            {
+                codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_SET, dictorsetmaker_len, context);
+            }
+        } else
+        {
+            codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, 0, context);
         }
-        codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, dictorsetmaker_len / 2, context);
         return null;
     }
 

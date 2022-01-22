@@ -35,7 +35,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("We don't generate sets in code yet")]
+        [Ignore("BUILD_SET not yet implemented")]
         public async Task DeclareSet()
         {
             await runBasicTest(
