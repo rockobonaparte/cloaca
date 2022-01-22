@@ -71,7 +71,7 @@ namespace LanguageImplementation.DataTypes
                 return PyBool.False;
             }
 
-            return self.set.Equals(otherSet.set) ? PyBool.True : PyBool.False;
+            return self.set.SetEquals(otherSet.set) ? PyBool.True : PyBool.False;
         }
 
         [ClassMember]
@@ -164,6 +164,18 @@ namespace LanguageImplementation.DataTypes
         {
             var pySet = PyTypeObject.DefaultNew<PySet>(PySetClass.Instance);
             pySet.set = existingSet;
+            return pySet;
+        }
+
+        public static PySet Create(IEnumerable<object> iterable)
+        {
+            var inner_set = new HashSet<object>(); 
+            foreach(var element in iterable)
+            {
+                inner_set.Add(element);
+            }
+            var pySet = PyTypeObject.DefaultNew<PySet>(PySetClass.Instance);
+            pySet.set = inner_set;
             return pySet;
         }
 
