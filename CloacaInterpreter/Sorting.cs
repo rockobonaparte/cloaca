@@ -60,9 +60,9 @@ namespace CloacaInterpreter
         }
 
         private static async Task<bool> comparePyObj(IInterpreter interpreter, FrameContext context, object left, object right,
-            IPyCallable keyfunc=null, bool reversed=false)
+            IPyCallable keyfunc=null, bool reverse=false)
         {
-            var comp_func_name = !reversed ? "__lt__" : "__gt__";
+            var comp_func_name = !reverse ? "__lt__" : "__gt__";
             var pyleft = left as PyObject;
             var pyright = right as PyObject;
             if(pyleft == null)
@@ -113,7 +113,7 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task Sort(IInterpreter interpreter, FrameContext context, List<object> list, IPyCallable keyfunc=null, bool reversed=false)
+        public static async Task Sort(IInterpreter interpreter, FrameContext context, List<object> list, IPyCallable keyfunc=null, bool reverse=false)
         {
             for (int width = 1; width < list.Count; width <<= 1)
             {
@@ -152,7 +152,7 @@ namespace CloacaInterpreter
                             temp[r],
                             temp[l],
                             keyfunc,
-                            reversed))
+                            reverse))
                         {
                             list[l_start + temp_i] = temp[r];
                             r += 1;
