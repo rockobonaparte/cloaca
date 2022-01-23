@@ -1,6 +1,3 @@
-# I guess I can't index by character. Time to harden PyString.
-#raise NotImplementedError("Sets are not yet supported.")
-
 # Given a string S and a set of words D, find the longest word in D that is a subsequence of S.
 #
 # Word W is a subsequence of S if some number of characters, possibly zero, can be deleted from S to form W, without
@@ -28,28 +25,15 @@ def longest_word(s: str, d: set[str]):
                 w_i += 1
             s_i += 1
         if w_i >= len(word):
-            print("Returning " + word)
             return word
 
     return None
 
 
 test_str = "abpppleease"
-test_set0 = {"ale", "apple"}
 test_set1 = {"able", "ale", "apple", "bale", "kangaroo"}
 test_set2 = {"able", "ale", "apple", "bale", "kangaroo", "please"}
 
-print("test_set0")
-print(longest_word(test_str, test_set0))
-
-assert longest_word(test_str, test_set0) == "apple"
-
-print("test_set1")
-print(longest_word(test_str, test_set1))
-
 assert longest_word(test_str, test_set1) == "apple"
-
-print("test_set2")
-print(longest_word(test_str, test_set2))
-
 assert longest_word(test_str, test_set2) == "please"
+print("Success!")
