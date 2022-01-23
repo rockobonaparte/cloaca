@@ -134,7 +134,7 @@ namespace CloacaTests
         public async Task ReversedSort()
         {
             await runBasicTest(
-                "a = sorted([1, 2, 3], reversed=True)\n", new VariableMultimap(new TupleList<string, object>
+                "a = sorted([1, 2, 3], reverse=True)\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyList.Create(new List<object>() { PyInteger.Create(3), PyInteger.Create(2), PyInteger.Create(1) }) },
             }), 1);
@@ -160,11 +160,10 @@ namespace CloacaTests
                 "def keyfunc(x):\n" +
                 "   return 100-x\n" +
                 "\n" +
-                "a = sorted([2, 1, 3], key=keyfunc, reversed=True)\n", new VariableMultimap(new TupleList<string, object>
+                "a = sorted([2, 1, 3], key=keyfunc, reverse=True)\n", new VariableMultimap(new TupleList<string, object>
             {
                 { "a", PyList.Create(new List<object>() { PyInteger.Create(1), PyInteger.Create(2), PyInteger.Create(3) }) },
             }), 1);
         }
-
     }
 }

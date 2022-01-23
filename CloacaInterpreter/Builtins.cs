@@ -676,7 +676,7 @@ namespace CloacaInterpreter
             }
         }
 
-        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, object key = null, PyBool reversed = null)
+        public static async Task<PyList> sorted_builtin(IInterpreter interpreter, FrameContext context, PyList pyList, object key = null, PyBool reverse = null)
         {
             IPyCallable callableKey = Sorting.DefaultKeyFunc;
             if (key != null && key != NoneType.Instance && !(key is IPyCallable))
@@ -690,9 +690,9 @@ namespace CloacaInterpreter
             }
 
             bool reversed_bool = false;
-            if(reversed != null)
+            if(reverse != null)
             {
-                reversed_bool = reversed.InternalValue;
+                reversed_bool = reverse.InternalValue;
             }
             PyList newList = PyList.Create(pyList.list);
             await Sorting.Sort(interpreter, context, newList.list, callableKey, reversed_bool);
