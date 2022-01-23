@@ -1475,6 +1475,20 @@ namespace CloacaInterpreter
                                 context.DataStack.Push(dict);
                             }
                             break;
+                        case ByteCodes.BUILD_SET:
+                            {
+                                context.Cursor += 1;
+                                var setSize = context.CodeBytes.GetUShort(context.Cursor);
+                                context.Cursor += 2;
+                                var anonymousSetObj = await PySetClass.Instance.Call(this, context, new object[0]);
+                                var setObj = (PySet)anonymousSetObj;
+                                for (int i = 0; i < setSize; ++i)
+                                {
+                                    setObj.set.Add(context.DataStack.Pop());
+                                }
+                                context.DataStack.Push(setObj);
+                            }
+                            break;
                         case ByteCodes.BUILD_CONST_KEY_MAP:
                             {
                                 // NOTE: Our code visitor doesn't generate this opcode.
