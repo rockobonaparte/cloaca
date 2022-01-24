@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -105,9 +106,15 @@ namespace LanguageImplementation.DataTypes
         //    Return the difference of two or more sets as a new set.
         //
         // (i.e.all elements that are in this set but not the others.)
-        public static PySet difference(PySet self, PySet other)
+        public static PySet difference(PySet self, params PySet[] others)
         {
-            throw new NotImplementedException();
+            var enumerable = (IEnumerable<object>) self.set;
+            foreach(var otherSet in others)
+            {
+                enumerable = enumerable.Except(otherSet.set);
+            }
+            var retSet = PySet.Create(enumerable.ToHashSet<object>());
+            return retSet;
         }
 
         [ClassMember]

@@ -50,5 +50,21 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task Difference()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}\n" +
+                "b = {1, 4, 5}\n" +
+                "c = {3, 4}\n" +
+                "s = a.difference(b, c)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "s", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(2),
+                }) }
+            }), 1);
+        }
     }
 }
