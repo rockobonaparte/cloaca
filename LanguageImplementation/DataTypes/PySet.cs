@@ -81,15 +81,141 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //
+        // clear(...) method of builtins.set instance
+        //    Remove all elements from this set.
         public static void clear(PySet self)
         {
             self.set.Clear();
         }
 
         [ClassMember]
+        //
+        // add(...) method of builtins.set instance
+        //    Add an element to a set.
+        //
+        // This has no effect if the element is already present.
         public static void add(PySet self, PyObject toAdd)
         {
             self.set.Add(toAdd);
+        }
+
+        [ClassMember]
+        // difference(...) method of builtins.set instance
+        //    Return the difference of two or more sets as a new set.
+        //
+        // (i.e.all elements that are in this set but not the others.)
+        public static PySet difference(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // difference_update(...) method of builtins.set instance
+        //    Remove all elements of another set from this set.
+        public static void difference_update(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // discard(...) method of builtins.set instance
+        //    Remove an element from a set if it is a member.
+        //
+        // If the element is not a member, do nothing.
+        public static void discard(PySet self, object element)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // intersection(...) method of builtins.set instance
+        //    Return the intersection of two sets as a new set.
+        //
+        // (i.e.all elements that are in both sets.)
+        public static PySet intersection(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // intersection_update(...) method of builtins.set instance
+        //    Update a set with the intersection of itself and another.
+        public static void intersection_update(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // isdisjoint(...) method of builtins.set instance
+        //    Return True if two sets have a null intersection.
+        public static PyBool isdisjoint(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // issubset(...) method of builtins.set instance
+        //    Report whether another set contains this set.
+        public static PyBool issuperset(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // pop(...) method of builtins.set instance
+        //    Remove and return an arbitrary set element.
+        //    Raises KeyError if the set is empty.
+        public static object pop(PySet self, FrameContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // remove(...) method of builtins.set instance
+        //    Remove an element from a set; it must be a member.
+        //    If the element is not a member, raise a KeyError.
+        public static void remove(PySet self, PyObject to_remove, FrameContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // symmetric_difference(...) method of builtins.set instance
+        //    Return the symmetric difference of two sets as a new set.
+        //
+        //   (i.e.all elements that are in exactly one of the sets.)
+        public static PySet symmetric_difference(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // symmetric_difference_update(...) method of builtins.set instance
+        //    Update a set with the symmetric difference of itself and another.
+        public static void symmetric_difference_update(PySet self, PySet other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // union(...) method of builtins.set instance
+        //    Return the union of sets as a new set.
+        //
+        //    (i.e.all elements that are in either set.)
+        public static PySet union(PySet self, params PySet[] other)
+        {
+            throw new NotImplementedException();
+        }
+
+        [ClassMember]
+        // union(...) method of builtins.set instance
+        //    Return the union of sets as a new set.
+        //
+        //    (i.e.all elements that are in either set.)
+        public static void update(PySet self, params PySet[] other)
+        {
+            throw new NotImplementedException();
         }
 
         [ClassMember]
