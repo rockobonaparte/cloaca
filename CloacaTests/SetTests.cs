@@ -140,5 +140,31 @@ namespace CloacaTests
             }), 1);
         }
 
+        [Test]
+        public async Task IsSuperset()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}.issuperset({1, 2})\n" +
+                "b = {1, 2}.issuperset({1, 2, 3})\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyBool.True },
+                { "b", PyBool.False },
+            }), 1);
+        }
+
+        [Test]
+        public async Task Pop()
+        {
+            await runBasicTest(
+                "a = {1}\n" +
+                "b = a.pop()\n" +
+                "c = len(a)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "b", PyInteger.Create(1) },
+                { "c", PyInteger.Create(0) },
+            }), 1);
+        }
     }
 }

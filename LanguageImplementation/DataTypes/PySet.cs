@@ -171,7 +171,7 @@ namespace LanguageImplementation.DataTypes
         //    Report whether another set contains this set.
         public static PyBool issuperset(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            return PyBool.Create(self.set.IsSupersetOf(other.set));
         }
 
         [ClassMember]
@@ -180,7 +180,14 @@ namespace LanguageImplementation.DataTypes
         //    Raises KeyError if the set is empty.
         public static object pop(PySet self, FrameContext context)
         {
-            throw new NotImplementedException();
+            if(self.set.Count <= 0)
+            {
+                context.CurrentException = new PyException("KeyError: 'pop from an empty set'");
+                return null;
+            }
+            var toReturn = self.set.FirstOrDefault();
+            self.set.Remove(toReturn);
+            return toReturn;
         }
 
         [ClassMember]
