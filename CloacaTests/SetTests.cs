@@ -126,5 +126,19 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task IsDisjoint()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}.isdisjoint({1, 2})\n" +
+                "b = {1, 2, 3}.isdisjoint({4, 5})\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyBool.False },
+                { "b", PyBool.True },
+            }), 1);
+        }
+
     }
 }

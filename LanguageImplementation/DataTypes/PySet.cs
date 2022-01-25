@@ -163,7 +163,7 @@ namespace LanguageImplementation.DataTypes
         //    Return True if two sets have a null intersection.
         public static PyBool isdisjoint(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            return PyBool.Create(!self.set.Overlaps(other.set));
         }
 
         [ClassMember]
