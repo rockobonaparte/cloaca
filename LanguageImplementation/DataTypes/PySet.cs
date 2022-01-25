@@ -155,7 +155,7 @@ namespace LanguageImplementation.DataTypes
         //    Update a set with the intersection of itself and another.
         public static void intersection_update(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            self.set.IntersectWith(other.set);
         }
 
         [ClassMember]
