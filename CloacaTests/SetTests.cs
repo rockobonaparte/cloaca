@@ -97,5 +97,19 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task Intersection()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}.intersection({1, 2})\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                }) }
+            }), 1);
+        }
     }
 }

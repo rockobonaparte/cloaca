@@ -145,7 +145,9 @@ namespace LanguageImplementation.DataTypes
         // (i.e.all elements that are in both sets.)
         public static PySet intersection(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            var intersection = new HashSet<object>(self.set);
+            intersection.IntersectWith(other.set);
+            return PySet.Create(intersection);
         }
 
         [ClassMember]
