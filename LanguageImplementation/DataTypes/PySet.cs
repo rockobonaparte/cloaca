@@ -120,9 +120,12 @@ namespace LanguageImplementation.DataTypes
         [ClassMember]
         // difference_update(...) method of builtins.set instance
         //    Remove all elements of another set from this set.
-        public static void difference_update(PySet self, PySet other)
+        public static void difference_update(PySet self, params PySet[] others)
         {
-            throw new NotImplementedException();
+            foreach(var otherSet in others)
+            {
+                self.set.ExceptWith(otherSet.set);
+            }
         }
 
         [ClassMember]
