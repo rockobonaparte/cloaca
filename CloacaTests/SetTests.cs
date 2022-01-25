@@ -82,5 +82,20 @@ namespace CloacaTests
             }), 1);
         }
 
+        [Test]
+        public async Task Discard()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}\n" +
+                "a.discard(1)\n" +
+                "a.discard(1337)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(2),
+                    PyInteger.Create(3),
+                }) }
+            }), 1);
+        }
     }
 }

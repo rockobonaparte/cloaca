@@ -135,7 +135,7 @@ namespace LanguageImplementation.DataTypes
         // If the element is not a member, do nothing.
         public static void discard(PySet self, object element)
         {
-            throw new NotImplementedException();
+            self.set.Remove(element);
         }
 
         [ClassMember]
