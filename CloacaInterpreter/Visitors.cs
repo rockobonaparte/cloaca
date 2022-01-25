@@ -1675,7 +1675,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 Visit(test);
             }
 
-            if (context.dictorsetmaker().children[1].GetText() == ":")
+            if (context.dictorsetmaker().children.Count > 1 && context.dictorsetmaker().children[1].GetText() == ":")
             {
                 codeStack.ActiveProgram.AddInstruction(ByteCodes.BUILD_MAP, dictorsetmaker_len / 2, context);
             }
