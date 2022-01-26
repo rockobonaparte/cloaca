@@ -180,5 +180,41 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task SymmetricDifference()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}\n" +
+                "b = {3, 4, 5}\n" +
+                "c = a.symmetric_difference(b)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "c", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(4),
+                    PyInteger.Create(5),
+                }) }
+            }), 1);
+        }
+
+        [Test]
+        public async Task SymmetricDifferenceUpdate()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3}\n" +
+                "b = {3, 4, 5}\n" +
+                "a.symmetric_difference_update(b)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(4),
+                    PyInteger.Create(5),
+                }) }
+            }), 1);
+        }
     }
 }

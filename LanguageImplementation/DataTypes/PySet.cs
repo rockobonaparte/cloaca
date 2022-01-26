@@ -213,7 +213,9 @@ namespace LanguageImplementation.DataTypes
         //   (i.e.all elements that are in exactly one of the sets.)
         public static PySet symmetric_difference(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            var newSet = new HashSet<object>(self.set);
+            newSet.SymmetricExceptWith(other.set);
+            return PySet.Create(newSet);
         }
 
         [ClassMember]
@@ -221,7 +223,7 @@ namespace LanguageImplementation.DataTypes
         //    Update a set with the symmetric difference of itself and another.
         public static void symmetric_difference_update(PySet self, PySet other)
         {
-            throw new NotImplementedException();
+            self.set.SymmetricExceptWith(other.set);
         }
 
         [ClassMember]
