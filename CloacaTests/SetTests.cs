@@ -276,6 +276,7 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
         [Test]
         public async Task Or()
         {
@@ -291,6 +292,7 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
         [Test]
         public async Task Xor()
         {
@@ -305,5 +307,19 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task Iterator()
+        {
+            await runBasicTest(
+                "a = 0\n" +
+                "for set_i in {1, 2, 3}:\n" +
+                "   a += set_i\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyInteger.Create(6) }
+            }), 1);
+        }
+
     }
 }
