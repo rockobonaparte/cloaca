@@ -216,5 +216,38 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task Union()
+        {
+            await runBasicTest(
+                "a = {1, 2}.union({2, 3}, {3, 4})\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(3),
+                    PyInteger.Create(4),
+                }) }
+            }), 1);
+        }
+
+        [Test]
+        public async Task Update()
+        {
+            await runBasicTest(
+                "a = {1, 2}\n" +
+                "a.update({2, 3}, {3, 4})\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(3),
+                    PyInteger.Create(4),
+                }) }
+            }), 1);
+        }
     }
 }

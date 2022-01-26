@@ -231,19 +231,25 @@ namespace LanguageImplementation.DataTypes
         //    Return the union of sets as a new set.
         //
         //    (i.e.all elements that are in either set.)
-        public static PySet union(PySet self, params PySet[] other)
+        public static PySet union(PySet self, params PySet[] others)
         {
-            throw new NotImplementedException();
+            var newSet = new HashSet<object>(self.set);
+            foreach(var otherSet in others)
+            {
+                newSet.UnionWith(otherSet.set);
+            }
+            return PySet.Create(newSet);
         }
 
         [ClassMember]
-        // union(...) method of builtins.set instance
-        //    Return the union of sets as a new set.
-        //
-        //    (i.e.all elements that are in either set.)
-        public static void update(PySet self, params PySet[] other)
+        // update(...) method of builtins.set instance
+        //    Update a set with the union of itself and others.
+        public static void update(PySet self, params PySet[] others)
         {
-            throw new NotImplementedException();
+            foreach (var otherSet in others)
+            {
+                self.set.UnionWith(otherSet.set);
+            }
         }
 
         [ClassMember]
