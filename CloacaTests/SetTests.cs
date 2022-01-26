@@ -249,5 +249,61 @@ namespace CloacaTests
                 }) }
             }), 1);
         }
+
+        [Test]
+        public async Task Sub()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3} - {3, 4}\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                }) }
+            }), 1);
+        }
+
+        [Test]
+        public async Task And()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3} & {3, 4}\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(3),
+                }) }
+            }), 1);
+        }
+        [Test]
+        public async Task Or()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3} | {3, 4}\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(3),
+                    PyInteger.Create(4),
+                }) }
+            }), 1);
+        }
+        [Test]
+        public async Task Xor()
+        {
+            await runBasicTest(
+                "a = {1, 2, 3} ^ {3, 4}\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                    PyInteger.Create(2),
+                    PyInteger.Create(4),
+                }) }
+            }), 1);
+        }
     }
 }

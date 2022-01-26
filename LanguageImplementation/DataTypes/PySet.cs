@@ -253,6 +253,66 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        public static PyObject __sub__(PySet self, object other, FrameContext context)
+        {
+            if (other is PySet)
+            {
+                var otherSet = other as PySet;
+                return PySetClass.difference(self, otherSet);
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for -: 'set' and '" + other.GetType().Name + "'");
+                return null;
+            }
+        }
+
+        [ClassMember]
+        public static PyObject __and__(PySet self, object other, FrameContext context)
+        {
+            if (other is PySet)
+            {
+                var otherSet = other as PySet;
+                return PySetClass.intersection(self, otherSet);
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for &: 'set' and '" + other.GetType().Name + "'");
+                return null;
+            }
+        }
+
+        [ClassMember]
+        public static PyObject __or__(PySet self, object other, FrameContext context)
+        {
+            if (other is PySet)
+            {
+                var otherSet = other as PySet;
+                return PySetClass.union(self, otherSet);
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for |: 'set' and '" + other.GetType().Name + "'");
+                return null;
+            }
+        }
+
+        [ClassMember]
+        public static PyObject __xor__(PySet self, object other, FrameContext context)
+        {
+            if (other is PySet)
+            {
+                var otherSet = other as PySet;
+                return PySetClass.symmetric_difference(self, otherSet);
+            }
+            else
+            {
+                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for ^: 'set' and '" + other.GetType().Name + "'");
+                return null;
+            }
+        }
+
+        [ClassMember]
         public static Task<PyString> __str__(IInterpreter interpreter, FrameContext context, PyObject self)
         {
             return __repr__(interpreter, context, self);
