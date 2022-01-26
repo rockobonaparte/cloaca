@@ -196,7 +196,14 @@ namespace LanguageImplementation.DataTypes
         //    If the element is not a member, raise a KeyError.
         public static void remove(PySet self, PyObject to_remove, FrameContext context)
         {
-            throw new NotImplementedException();
+            if(!self.set.Contains(to_remove))
+            {
+                context.CurrentException = new PyException("KeyError: " + to_remove.ToString());
+            }
+            else
+            {
+                self.set.Remove(to_remove);
+            }
         }
 
         [ClassMember]

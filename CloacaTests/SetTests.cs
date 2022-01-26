@@ -166,5 +166,19 @@ namespace CloacaTests
                 { "c", PyInteger.Create(0) },
             }), 1);
         }
+
+        [Test]
+        public async Task Remove()
+        {
+            await runBasicTest(
+                "a = {1, 2}\n" +
+                "a.remove(2)\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PySet.Create(new HashSet<object>() {
+                    PyInteger.Create(1),
+                }) }
+            }), 1);
+        }
     }
 }
