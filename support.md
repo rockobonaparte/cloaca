@@ -70,7 +70,7 @@ When it comes to the built-in functions, support is much lower:
 | filter       | 0
 | float        | 2      | Can cast and create floats but I expect technicalities would screw up like NaN, infinity and such.    |
 | format       | 0      | Not too keen on fulling supporting this, and I'd rather go in on f-strings.                           |
-| frozenset    | 0      | Frozen sets have not be implemented at all.                                                           |
+| frozenset    | 0      | I have to compare with the regular set type. If they are the same, no probs.                          |
 | getattr      | 1      | The \_\_getattr__ dunder is supported but we haven't implemented this actual function.
 | globals      | 0
 | hash         | 2      | We should use an object-ID-based hash like Python's default and we support hashing, but didn't make this function yet. |
@@ -102,7 +102,7 @@ When it comes to the built-in functions, support is much lower:
 | repr         | 2      | The \_\_repr__ dunde is supported but we haven't actually implemented this function.                  |
 | reversed     | 2      | It works for Python types but has not been enabled for most .NET types                                |  
 | round        | 0
-| set          | 0
+| set          | 2      | Python sets are well-supported but there's no interoperation with .NET types                          |
 | setattr      | 2      | The \_\_setattr__ dunder is supported but we haven't implemented this actual function.                |
 | slice        | 2      | We have slice objects and list slicing, but I haven't explored if slicing is used elsewhere, and I haven't tested crazy corner cases. |
 | sorted       | ?      | There's some decisionmaking that has to happen first. Do we defer to .NET sorting? Mimic TimSort?     |
