@@ -91,6 +91,7 @@ namespace CloacaInterpreter
             var bool_wrapper = new WrappedCodeObject("bool", typeof(Builtins).GetMethod("bool_builtin"));
             var str_wrapper = new WrappedCodeObject("str", typeof(Builtins).GetMethod("str_builtin"));
             var list_wrapper = new WrappedCodeObject("list", typeof(Builtins).GetMethod("list_builtin"));
+            var set_wrapper = new WrappedCodeObject("set", typeof(Builtins).GetMethod("set_builtin"));
             var dict_wrapper = new WrappedCodeObject("dict", typeof(Builtins).GetMethod("dict_builtin"));
             var min_wrapper = new WrappedCodeObject("min", typeof(Builtins).GetMethod("min_builtin"));
             var max_wrapper = new WrappedCodeObject("max", typeof(Builtins).GetMethod("max_builtin"));
@@ -114,6 +115,7 @@ namespace CloacaInterpreter
                 { "bool", bool_wrapper },
                 { "str", str_wrapper },
                 { "list", list_wrapper },
+                { "set", set_wrapper },
                 { "dict", dict_wrapper },
                 { "enumerate", enumerate_wrapper },
                 { "min", min_wrapper },
@@ -1471,6 +1473,20 @@ namespace CloacaInterpreter
                                     PyDictClass.__setitem__(dict, key, value);
                                 }
                                 context.DataStack.Push(dict);
+                            }
+                            break;
+                        case ByteCodes.BUILD_SET:
+                            {
+                                context.Cursor += 1;
+                                var setSize = context.CodeBytes.GetUShort(context.Cursor);
+                                context.Cursor += 2;
+                                var anonymousSetObj = await PySetClass.Instance.Call(this, context, new object[0]);
+                                var setObj = (PySet)anonymousSetObj;
+                                for (int i = 0; i < setSize; ++i)
+                                {
+                                    setObj.set.Add(context.DataStack.Pop());
+                                }
+                                context.DataStack.Push(setObj);
                             }
                             break;
                         case ByteCodes.BUILD_CONST_KEY_MAP:

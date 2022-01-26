@@ -128,6 +128,8 @@
 		// TODO: Figure out the actual opcode byte for this.
 		BUILD_CONST_KEY_MAP = 0x9C, // (2) The version of BUILD_MAP specialized for constant keys. count values are consumed from the stack. The top element on the stack contains a tuple of keys.
 		WAIT = 0xA0, // (0) Custom Cloaca green thread yield
+
+		BUILD_SET = 0x95,					// Don't know why this doesn't get a byte with the other BUILD_* opcodes
     }
 
     // Temporary method of establishing comparison operators. It looks like we need a cmp_op table--probably due to overrides of comparisons--but

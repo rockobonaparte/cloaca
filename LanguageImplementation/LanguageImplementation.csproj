@@ -79,6 +79,7 @@
     <Compile Include="DataTypes\PyDotNetClassProxy.cs" />
     <Compile Include="DataTypes\PyFloat.cs" />
     <Compile Include="DataTypes\PyDict.cs" />
+    <Compile Include="DataTypes\PySet.cs" />
     <Compile Include="DataTypes\PyList.cs" />
     <Compile Include="DataTypes\PyFunction.cs" />
     <Compile Include="DataTypes\PyModuleSpec.cs" />

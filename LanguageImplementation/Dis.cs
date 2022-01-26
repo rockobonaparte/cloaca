@@ -338,7 +338,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var tuple_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "BUILD_TUPLE", tuple_size, null);
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "BUILD_TUPLE", tuple_size, null);
                             cursor += 2;
                         }
                         break;
@@ -346,7 +346,15 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var dict_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "BUILD_MAP", dict_size, null);
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "BUILD_MAP", dict_size, null);
+                            cursor += 2;
+                        }
+                        break;
+                    case ByteCodes.BUILD_SET:
+                        {
+                            cursor += 1;
+                            var set_size = code.GetUShort(cursor);
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "BUILD_SET", set_size, null);
                             cursor += 2;
                         }
                         break;
@@ -354,7 +362,7 @@ namespace LanguageImplementation
                         {
                             cursor += 1;
                             var dict_size = code.GetUShort(cursor);
-                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor-1, "BUILD_CONST_KEY_MAP", dict_size, null);
+                            disassembly += disassembleLine(lastLineNumber, currentLineNumber, cursor - 1, "BUILD_CONST_KEY_MAP", dict_size, null);
                             cursor += 2;
                         }
                         break;
