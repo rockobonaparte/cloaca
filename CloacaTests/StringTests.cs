@@ -75,5 +75,18 @@ namespace CloacaTests
                     { "b", PyString.Create("el") },
                 }), 1);
         }
+
+        [Test]
+        public async Task Contains()
+        {
+            await runBasicTest(
+                "a = 'e' in 'Hello'\n" +
+                "b = 'F' in 'Hello'\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.True },
+                    { "b", PyBool.False },
+                }), 1);
+        }
     }
 }

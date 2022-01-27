@@ -880,6 +880,7 @@ namespace CloacaInterpreter
                                 {
                                     var leftObj = left as PyObject;
                                     var rightObj = right as PyObject;
+                                    PyObject swapTemp;
                                     string compareFunc = null;
                                     switch (compare_op)
                                     {
@@ -905,7 +906,12 @@ namespace CloacaInterpreter
                                             compareFunc = "__ne__";
                                             break;
                                         case CompareOps.In:
-                                            throw new NotImplementedException("'In' comparison operation");
+                                            compareFunc = "__contains__";
+                                            // Swap left and right
+                                            swapTemp = leftObj;
+                                            leftObj = rightObj;
+                                            rightObj = swapTemp;
+                                            break;
                                         case CompareOps.NotIn:
                                             throw new NotImplementedException("'Not In' comparison operation");
                                         case CompareOps.Is:
