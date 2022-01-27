@@ -278,6 +278,20 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task Contains()
+        {
+            await runBasicTest(
+                "s = {'foo', 'bar'}\n" +
+                "a = 'foo' in s\n" +
+                "b = 200 in s\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.True },
+                    { "b", PyBool.False },
+                }), 1);
+        }
+
+        [Test]
         public async Task Or()
         {
             await runBasicTest(
