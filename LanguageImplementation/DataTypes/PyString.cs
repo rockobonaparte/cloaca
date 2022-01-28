@@ -81,7 +81,7 @@ namespace LanguageImplementation.DataTypes
         //  __mul__(self, value, /)
         //      Return self*value.
         //
-        public static PyObject __mul__(PyObject self, PyObject other)
+        public static PyObject __mul__(PyString self, PyObject other, FrameContext context)
         {
             PyString a;
             PyInteger b;
@@ -89,13 +89,14 @@ namespace LanguageImplementation.DataTypes
             b = other as PyInteger;
             if(a == null)
             {
-                throw new Exception("Tried to use a non-PyString for lvalue of: multiplication");
+                context.CurrentException = new PyException("Tried to use a non-PyString for lvalue of: multiplication");
+                return null;
             }
 
             if(b == null)
             {
-                // TODO: Try to realize this as a real TypeError object in some way.
-                throw new Exception("TypeError: can't multiply sequence by non-int of type 'str'");
+                context.CurrentException = new TypeError("can't multiply sequence by non-int of type '" + other.__class__.Name + "'");
+                return null;
             }
             var newPyString = PyString.Create(string.Concat(Enumerable.Repeat(a.InternalValue, (int) b.InternalValue)));
             return newPyString;
@@ -106,6 +107,15 @@ namespace LanguageImplementation.DataTypes
         {
             // TODO: TypeError: unsupported operand type(s) for -: '[self type]' and '[other type]'
             throw new Exception("Strings do not support subtraction");
+        }
+
+        //  __rmul__(self, value, /)
+        //      Return value*self.
+        //
+        [ClassMember]
+        public static PyObject __rmul__(PyString self, PyObject lother, FrameContext context)
+        {
+            return __mul__(self, lother, context);
         }
 
         [ClassMember]
@@ -299,9 +309,6 @@ namespace LanguageImplementation.DataTypes
         //
         //  __rmod__(self, value, /)
         //      Return value%self.
-        //
-        //  __rmul__(self, value, /)
-        //      Return value*self.
         //
         //  __sizeof__(self, /)
         //      Return the size of the string in memory, in bytes.
