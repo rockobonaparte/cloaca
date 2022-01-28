@@ -228,6 +228,24 @@ namespace LanguageImplementation.DataTypes
             return PyInteger.Create(asStr.InternalValue.Length);
         }
 
+        [ClassMember]
+        //  capitalize(self, /)
+        //      Return a capitalized version of the string.
+        //
+        //      More specifically, make the first character have upper case and the rest lower
+        //      case.
+        //
+        public static PyString capitalize(PyString self)
+        {
+            if(self.InternalValue.Length > 0)
+            {
+                return PyString.Create(self.InternalValue[0].ToString().ToUpper() + self.InternalValue.Substring(1));
+            }
+            else
+            {
+                return PyString.Create();
+            }
+        }
 
         [ClassMember]
         //  __getitem__(self, key, /)
@@ -312,12 +330,6 @@ namespace LanguageImplementation.DataTypes
         //
         //  __sizeof__(self, /)
         //      Return the size of the string in memory, in bytes.
-        //
-        //  capitalize(self, /)
-        //      Return a capitalized version of the string.
-        //
-        //      More specifically, make the first character have upper case and the rest lower
-        //      case.
         //
         //  casefold(self, /)
         //      Return a version of the string suitable for caseless comparisons.

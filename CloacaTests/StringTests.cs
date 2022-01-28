@@ -88,5 +88,20 @@ namespace CloacaTests
                     { "b", PyBool.False },
                 }), 1);
         }
+
+        [Test]
+        public async Task Capitalize()
+        {
+            await runBasicTest(
+                "a = 'hello'.capitalize()\n" +
+                "b = 'hello world'.capitalize()\n" +
+                "c = ''.capitalize()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyString.Create("Hello")},
+                    { "b", PyString.Create("Hello world")},
+                    { "c", PyString.Create()},
+                }), 1);
+        }
     }
 }
