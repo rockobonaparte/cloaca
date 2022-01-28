@@ -103,5 +103,19 @@ namespace CloacaTests
                     { "c", PyString.Create()},
                 }), 1);
         }
+
+        [Test]
+        [Ignore(".NET's string ToLower() doesn't do this and I'm looking up the deal with this.")]
+        public async Task Casefold()
+        {
+            await runBasicTest(
+                "a = 'HELLO'.casefold()\n" +
+                "b = 'der Fluß'.casefold()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyString.Create("hello")},
+                    { "b", PyString.Create("der Fluss")},
+                }), 1);
+        }
     }
 }

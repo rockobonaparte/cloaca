@@ -248,6 +248,15 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //  casefold(self, /)
+        //      Return a version of the string suitable for caseless comparisons.
+        //
+        public static PyString casefold(PyString self)
+        {
+            return PyString.Create(self.InternalValue.ToLower());
+        }
+
+        [ClassMember]
         //  __getitem__(self, key, /)
         //      Return self[key].
         //
