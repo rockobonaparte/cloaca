@@ -262,9 +262,53 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        //  __getitem__(self, key, /)
-        //      Return self[key].
+        //  find(...)
+        //      S.find(sub[, start[, end]]) -> int
         //
+        //      Return the lowest index in S where substring sub is found,
+        //      such that sub is contained within S[start:end].  Optional
+        //      arguments start and end are interpreted as in slice notation.
+        //
+        //      Return -1 on failure.
+        //
+        public static async Task<PyInteger> find(IInterpreter interpreter, FrameContext context, PyString self, PyString substring, params PyInteger[] startstop)
+        {
+            PySlice pySlice;
+            if (startstop != null)
+            {
+                if (startstop.Length == 1)
+                {
+                    pySlice = PySlice.Create(startstop[0], self.InternalValue.Length);
+                }
+                else if (startstop.Length <= 2)
+                {
+                    pySlice = PySlice.Create(startstop[0], startstop[1]);
+                }
+                else
+                {
+                    context.CurrentException = new TypeError("TypeError: find() takes at most 3 arguments (" +
+                        (startstop.Length + 1) + "given)");
+                    return null;
+                }
+            }
+            else
+            {
+                pySlice = PySlice.Create(self.InternalValue.Length);
+            }
+
+            var dotNetSlice = await SliceHelper.extractSliceIndices(interpreter, context, pySlice, self.InternalValue.Length);
+            dotNetSlice.AdjustToLength(self.InternalValue.Length);
+            if (dotNetSlice.Stop - dotNetSlice.Start <= 0)
+            {
+                return PyInteger.Create(-1);
+            }
+            else
+            {
+                return PyInteger.Create(self.InternalValue.IndexOf(substring.InternalValue, dotNetSlice.Start, dotNetSlice.Stop - dotNetSlice.Start));
+            }
+        }
+
+        [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
             var asPyInt = index_or_slice as PyInteger;
@@ -381,15 +425,6 @@ namespace LanguageImplementation.DataTypes
         //      Return a copy where all tab characters are expanded using spaces.
         //
         //      If tabsize is not given, a tab size of 8 characters is assumed.
-        //
-        //  find(...)
-        //      S.find(sub[, start[, end]]) -> int
-        //
-        //      Return the lowest index in S where substring sub is found,
-        //      such that sub is contained within S[start:end].  Optional
-        //      arguments start and end are interpreted as in slice notation.
-        //
-        //      Return -1 on failure.
         //
         //  format(...)
         //      S.format(*args, **kwargs) -> str

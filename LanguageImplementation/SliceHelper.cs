@@ -13,6 +13,14 @@ namespace LanguageImplementation
         public int Start;
         public int Step;
         public int Stop;
+
+        // Given a length, this will fixup the start and stop indices to not be negative any more.
+        public void AdjustToLength(int len)
+        {
+            // Adjust negative starts and stops based on array length.
+            Start = Start >= 0 ? Start : len + Start;
+            Stop = Stop >= 0 ? Stop : len + Stop;
+        }
     }
 
     public class SliceHelper

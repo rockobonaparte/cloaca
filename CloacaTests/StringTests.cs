@@ -117,5 +117,24 @@ namespace CloacaTests
                     { "b", PyString.Create("der Fluss")},
                 }), 1);
         }
+
+        [Test]
+        public async Task Find()
+        {
+            await runBasicTest(
+                "meowbeep = 'meowbeep'\n" +
+                "b = meowbeep.find('ow')\n" +
+                "c = meowbeep.find('e', 4)\n" +
+                "d = meowbeep.find('e', -2)\n" +
+                "e = meowbeep.find('beep', 0, 3)\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyInteger.Create(2)},
+                    { "c", PyInteger.Create(5)},
+                    { "d", PyInteger.Create(6)},
+                    { "e", PyInteger.Create(-1)},
+                }), 1);
+        }
+
     }
 }
