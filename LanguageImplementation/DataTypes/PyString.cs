@@ -247,13 +247,18 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        // TODO [str.casefold] implement.
         [ClassMember]
         //  casefold(self, /)
         //      Return a version of the string suitable for caseless comparisons.
         //
-        public static PyString casefold(PyString self)
+        public static PyString casefold(PyString self, FrameContext context)
         {
-            return PyString.Create(self.InternalValue.ToLower());
+            context.CurrentException = new NotImplementedError(
+                "casefold is not implemented yet. We tried ToLower() but discovered it doesn't handle characters " +
+                "in other languages. You have to set a culture, but we don't necessarily know that. So we'll " +
+                "probably have to reference Python's implementation.");
+            return null;
         }
 
         [ClassMember]
@@ -339,9 +344,6 @@ namespace LanguageImplementation.DataTypes
         //
         //  __sizeof__(self, /)
         //      Return the size of the string in memory, in bytes.
-        //
-        //  casefold(self, /)
-        //      Return a version of the string suitable for caseless comparisons.
         //
         //  center(self, width, fillchar=' ', /)
         //      Return a centered string of length width.
