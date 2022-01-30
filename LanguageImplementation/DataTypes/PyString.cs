@@ -273,30 +273,31 @@ namespace LanguageImplementation.DataTypes
         //
         public static async Task<PyInteger> find(IInterpreter interpreter, FrameContext context, PyString self, PyString substring, params PyInteger[] startstop)
         {
-            PySlice pySlice;
+            DotNetSlice dotNetSlice = new DotNetSlice();
+            dotNetSlice.Start = 0;
+            dotNetSlice.Stop = self.InternalValue.Length - 1;
+            dotNetSlice.Step = 1;
+
             if (startstop != null)
             {
-                if (startstop.Length == 1)
-                {
-                    pySlice = PySlice.Create(startstop[0], self.InternalValue.Length);
-                }
-                else if (startstop.Length <= 2)
-                {
-                    pySlice = PySlice.Create(startstop[0], startstop[1]);
-                }
-                else
+                if(startstop.Length > 2)
                 {
                     context.CurrentException = new TypeError("TypeError: find() takes at most 3 arguments (" +
                         (startstop.Length + 1) + "given)");
                     return null;
                 }
-            }
-            else
-            {
-                pySlice = PySlice.Create(self.InternalValue.Length);
+
+                if (startstop.Length >= 1)
+                {
+                    dotNetSlice.Start = (int) startstop[0].InternalValue;
+                }
+                if (startstop.Length >= 2)
+                {
+                    dotNetSlice.Stop = (int)startstop[1].InternalValue;
+                }
+
             }
 
-            var dotNetSlice = await SliceHelper.extractSliceIndices(interpreter, context, pySlice, self.InternalValue.Length);
             dotNetSlice.AdjustToLength(self.InternalValue.Length);
             if (dotNetSlice.Stop - dotNetSlice.Start <= 0)
             {
