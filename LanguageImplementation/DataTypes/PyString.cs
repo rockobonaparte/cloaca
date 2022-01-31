@@ -48,6 +48,39 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+
+        // So much stuff assumes a slice notation in string that we use this helper to prepare it.
+        private static DotNetSlice get_slice(FrameContext context, int length, PyInteger[] startstop)
+        {
+            DotNetSlice dotNetSlice = new DotNetSlice();
+            dotNetSlice.Start = 0;
+            dotNetSlice.Stop = length - 1;
+            dotNetSlice.Step = 1;
+
+            if (startstop != null)
+            {
+                if (startstop.Length > 2)
+                {
+                    context.CurrentException = new TypeError("TypeError: find() takes at most 3 arguments (" +
+                        (startstop.Length + 1) + "given)");
+                    return null;
+                }
+
+                if (startstop.Length >= 1)
+                {
+                    dotNetSlice.Start = (int)startstop[0].InternalValue;
+                }
+                if (startstop.Length >= 2)
+                {
+                    dotNetSlice.Stop = (int)startstop[1].InternalValue;
+                }
+
+            }
+
+            dotNetSlice.AdjustToLength(length);
+            return dotNetSlice;
+        }
+
         [ClassMember]
         //  __add__(self, value, /)
         //      Return self+value.
@@ -261,37 +294,33 @@ namespace LanguageImplementation.DataTypes
             return null;
         }
 
-        // So much stuff assumes a slice notation in string that we use this helper to prepare it.
-        private static DotNetSlice get_slice(FrameContext context, int length, PyInteger[] startstop)
+        [ClassMember]
+        //  count(...)
+        //      S.count(sub[, start[, end]]) -> int
+        //
+        //      Return the number of non-overlapping occurrences of substring sub in
+        //      string S[start:end].  Optional arguments start and end are
+        //      interpreted as in slice notation.
+        //
+        public static async Task<PyInteger> count(FrameContext context, PyString self, PyString substring, params PyInteger[] startstop)
         {
-            DotNetSlice dotNetSlice = new DotNetSlice();
-            dotNetSlice.Start = 0;
-            dotNetSlice.Stop = length - 1;
-            dotNetSlice.Step = 1;
-
-            if (startstop != null)
+            DotNetSlice dotNetSlice = get_slice(context, self.InternalValue.Length, startstop);
+            if (dotNetSlice == null)
             {
-                if (startstop.Length > 2)
-                {
-                    context.CurrentException = new TypeError("TypeError: find() takes at most 3 arguments (" +
-                        (startstop.Length + 1) + "given)");
-                    return null;
-                }
-
-                if (startstop.Length >= 1)
-                {
-                    dotNetSlice.Start = (int)startstop[0].InternalValue;
-                }
-                if (startstop.Length >= 2)
-                {
-                    dotNetSlice.Stop = (int)startstop[1].InternalValue;
-                }
-
+                return null;
             }
 
-            dotNetSlice.AdjustToLength(length);
-            return dotNetSlice;
+            int count = 0;
+            int index = self.InternalValue.IndexOf(substring.InternalValue, dotNetSlice.Start);
+            while (index != -1 && index <= dotNetSlice.Stop)
+            {
+                count++;
+                index = self.InternalValue.IndexOf(substring.InternalValue, index + substring.InternalValue.Length);
+            }
+            
+            return PyInteger.Create(count);
         }
+
 
         [ClassMember]
         //  find(...)
@@ -405,13 +434,6 @@ namespace LanguageImplementation.DataTypes
         //      Return a centered string of length width.
         //
         //      Padding is done using the specified fill character (default is a space).
-        //
-        //  count(...)
-        //      S.count(sub[, start[, end]]) -> int
-        //
-        //      Return the number of non-overlapping occurrences of substring sub in
-        //      string S[start:end].  Optional arguments start and end are
-        //      interpreted as in slice notation.
         //
         //  encode(self, /, encoding='utf-8', errors='strict')
         //      Encode the string using the codec registered for encoding.

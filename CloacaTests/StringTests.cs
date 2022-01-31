@@ -119,6 +119,26 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task Count()
+        {
+            await runBasicTest(
+                "searchies = 'erererrerere'\n" +
+                "a = searchies.count('e')\n" +
+                "b = searchies.count('e', 11)\n" +
+                "c = searchies.count('e', 11, 12)\n" +
+                "d = searchies.count('e', -1)\n" +
+                "e = searchies.count('r', 11)\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(6)},
+                    { "b", PyInteger.Create(1)},
+                    { "c", PyInteger.Create(1)},
+                    { "d", PyInteger.Create(1)},
+                    { "e", PyInteger.Create(0)},
+                }), 1);
+        }
+
+        [Test]
         public async Task Find()
         {
             await runBasicTest(
@@ -135,6 +155,5 @@ namespace CloacaTests
                     { "e", PyInteger.Create(-1)},
                 }), 1);
         }
-
     }
 }
