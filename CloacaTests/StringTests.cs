@@ -155,5 +155,27 @@ namespace CloacaTests
                     { "e", PyInteger.Create(-1)},
                 }), 1);
         }
+
+        [Test]
+        public async Task Index()
+        {
+            await runBasicTest(
+                "meowbeep = 'meowbeep'\n" +
+                "b = meowbeep.index('ow')\n" +
+                "c = meowbeep.index('e', 4)\n" +
+                "d = meowbeep.index('e', -2)\n" +
+                "e_err = False\n" +
+                "try:\n" +
+                "   e = meowbeep.index('beep', 0, 3)\n" +
+                "except ValueError:\n" +
+                "   e_err = True\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyInteger.Create(2)},
+                    { "c", PyInteger.Create(5)},
+                    { "d", PyInteger.Create(6)},
+                    { "e_err", PyBool.Create(true)},
+                }), 1);
+        }
     }
 }

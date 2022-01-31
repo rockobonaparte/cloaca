@@ -350,6 +350,40 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //  index(...)
+        //      S.index(sub[, start[, end]]) -> int
+        //
+        //      Return the lowest index in S where substring sub is found,
+        //      such that sub is contained within S[start:end].  Optional
+        //      arguments start and end are interpreted as in slice notation.
+        //
+        //      Raises ValueError when the substring is not found.
+        //
+        public static async Task<PyInteger> index(FrameContext context, PyString self, PyString substring, params PyInteger[] startstop)
+        {
+            DotNetSlice dotNetSlice = get_slice(context, self.InternalValue.Length, startstop);
+            if (dotNetSlice == null)
+            {
+                return null;
+            }
+            if (dotNetSlice.Stop - dotNetSlice.Start <= 0)
+            {
+                context.CurrentException = new ValueError("ValueError: substring not found");
+                return null;
+            }
+            else
+            {
+                int i = self.InternalValue.IndexOf(substring.InternalValue, dotNetSlice.Start, dotNetSlice.Stop - dotNetSlice.Start);
+                if(i < 0)
+                {
+                    context.CurrentException = ValueErrorClass.Create("ValueError: substring not found");
+                    return null;
+                }
+                return PyInteger.Create(i);
+            }
+        }
+
+        [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
             var asPyInt = index_or_slice as PyInteger;
@@ -471,15 +505,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      Return a formatted version of S, using substitutions from mapping.
         //      The substitutions are identified by braces ('{' and '}').
-        //
-        //  index(...)
-        //      S.index(sub[, start[, end]]) -> int
-        //
-        //      Return the lowest index in S where substring sub is found,
-        //      such that sub is contained within S[start:end].  Optional
-        //      arguments start and end are interpreted as in slice notation.
-        //
-        //      Raises ValueError when the substring is not found.
         //
         //  isalnum(self, /)
         //      Return True if the string is an alpha-numeric string, False otherwise.
