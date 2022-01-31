@@ -213,7 +213,7 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task TryExceptTwoExceptions()
+        public async Task TryExceptTwoExceptionsLessSpecificFirst()
         {
             var context = await runProgram(
                 "class MeowException(Exception):\n" +
@@ -226,6 +226,25 @@ namespace CloacaTests
                 "  a = -1\n" +
                 "except MeowException as e:\n" +
                 "  a = e.number\n", new Dictionary<string, object>(), 1);
+            var variables = new VariableMultimap(context);
+            var a = (PyInteger)variables.Get("a");
+            Assert.That(a, Is.EqualTo(PyInteger.Create(-1)));
+        }
+
+        [Test]
+        public async Task TryExceptTwoExceptions()
+        {
+            var context = await runProgram(
+                "class MeowException(Exception):\n" +
+                "  def __init__(self, number):\n" +
+                "    self.number = number\n" +
+                "a = 0\n" +
+                "try:\n" +
+                "  raise MeowException(1)\n" +
+                "except MeowException as e:\n" +
+                "  a = e.number\n" +
+                "except Exception as ignored:\n" +
+                "  a = -1\n", new Dictionary<string, object>(), 1);
             var variables = new VariableMultimap(context);
             var a = (PyInteger)variables.Get("a");
             Assert.That(a, Is.EqualTo(PyInteger.Create(1)));
