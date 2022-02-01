@@ -926,7 +926,8 @@ namespace CloacaInterpreter
                                                 else
                                                 {
                                                     var leftObject = left as PyObject;
-                                                    context.DataStack.Push(new PyBool(leftObject.__class__ == right));
+                                                    bool match = Builtins.issubclass(leftObject, right);
+                                                    context.DataStack.Push(new PyBool(match));
                                                 }
                                                 break;
                                             }
