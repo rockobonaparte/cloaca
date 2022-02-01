@@ -129,6 +129,7 @@ namespace CloacaInterpreter
                 { "NotImplemented", NotImplemented.Instance },
                 { "NotImplementedError", NotImplementedErrorClass.Instance },
                 { "ImportError", ImportErrorClass.Instance },
+                { "ValueError", ValueErrorClass.Instance },
                 { "ModuleNotFoundError", ModuleNotFoundErrorClass.Instance },
             };
 

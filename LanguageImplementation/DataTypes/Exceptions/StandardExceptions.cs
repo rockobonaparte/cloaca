@@ -134,9 +134,44 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
     public class ValueError : PyException
     {
+        public ValueError() : base()
+        {
+
+        }
+
         public ValueError(string msg) : base(msg)
         {
 
+        }
+
+    }
+
+    public class ValueErrorClass : PyExceptionClass
+    {
+        public ValueErrorClass() :
+            base("ValueError", null, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        private static ValueErrorClass __instance;
+        public static new ValueErrorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new ValueErrorClass();
+                }
+                return __instance;
+            }
+        }
+
+        public static ValueError Create(string message)
+        {
+            var exc = PyTypeObject.DefaultNew<ValueError>(ValueErrorClass.Instance);
+            exc.Message = message;
+            return exc;
         }
     }
 
@@ -203,7 +238,6 @@ namespace LanguageImplementation.DataTypes.Exceptions
             exc.Message = message;
             return exc;
         }
-
     }
 
     public class StopIteration : PyException
