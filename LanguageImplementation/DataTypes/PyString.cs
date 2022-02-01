@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LanguageImplementation.DataTypes
@@ -383,6 +384,21 @@ namespace LanguageImplementation.DataTypes
             }
         }
 
+        private static Regex digitRegex = new Regex("^\\d+$");
+
+        [ClassMember]
+        //  isdigit(self, /)
+        //      Return True if the string is a digit string, False otherwise.
+        //
+        //      A string is a digit string if all characters in the string are digits and there
+        //      is at least one character in the string.
+        //
+        public static PyBool isdigit(PyString self)
+        {
+            var matcher = digitRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
@@ -529,12 +545,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      A string is a decimal string if all characters in the string are decimal and
         //      there is at least one character in the string.
-        //
-        //  isdigit(self, /)
-        //      Return True if the string is a digit string, False otherwise.
-        //
-        //      A string is a digit string if all characters in the string are digits and there
-        //      is at least one character in the string.
         //
         //  isidentifier(self, /)
         //      Return True if the string is a valid Python identifier, False otherwise.

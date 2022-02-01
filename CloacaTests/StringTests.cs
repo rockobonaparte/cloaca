@@ -177,5 +177,23 @@ namespace CloacaTests
                     { "e_err", PyBool.Create(true)},
                 }), 1);
         }
+
+        [Test]
+        public async Task IsDigit()
+        {
+            await runBasicTest(
+                "a = '22'.isdigit()\n" +
+                "b = '-22'.isdigit()\n" +
+                "c = '2.2'.isdigit()\n" +
+                "d = ''.isdigit()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(true)},
+                    { "b", PyBool.Create(false)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                }), 1);
+        }
+
     }
 }
