@@ -399,6 +399,21 @@ namespace LanguageImplementation.DataTypes
             return PyBool.Create(matcher.Success);
         }
 
+        private static Regex alphaRegex = new Regex("^\\p{L}+$");
+
+        [ClassMember]
+        //  isalpha(self, /)
+        //      Return True if the string is an alphabetic string, False otherwise.
+        //
+        //      A string is alphabetic if all characters in the string are alphabetic and there
+        //      is at least one character in the string.
+        //
+        public static PyBool isalpha(PyString self)
+        {
+            var matcher = alphaRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
@@ -527,12 +542,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      A string is alpha-numeric if all characters in the string are alpha-numeric and
         //      there is at least one character in the string.
-        //
-        //  isalpha(self, /)
-        //      Return True if the string is an alphabetic string, False otherwise.
-        //
-        //      A string is alphabetic if all characters in the string are alphabetic and there
-        //      is at least one character in the string.
         //
         //  isascii(self, /)
         //      Return True if all characters in the string are ASCII, False otherwise.

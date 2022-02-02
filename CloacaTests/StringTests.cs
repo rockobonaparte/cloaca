@@ -195,5 +195,21 @@ namespace CloacaTests
                 }), 1);
         }
 
+        [Test]
+        public async Task IsAlpha()
+        {
+            await runBasicTest(
+                "a = '22'.isalpha()\n" +
+                "b = 'ae'.isalpha()\n" +
+                "c = 'a-'.isalpha()\n" +
+                "d = ''.isalpha()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(false)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                }), 1);
+        }
     }
 }
