@@ -211,5 +211,46 @@ namespace CloacaTests
                     { "d", PyBool.Create(false)},
                 }), 1);
         }
+
+        [Test]
+        [Ignore("Doesn't work yet. The .NET regex I got doesn't even work with itself.")]
+        public async Task IsAlnumUnicode()
+        {
+            await runBasicTest(
+                "a = '22'.isalnum()\n" +
+                "b = 'ae'.isalnum()\n" +
+                "c = 'a-'.isalnum()\n" +
+                "d = ''.isalnum()\n" +
+                "e = 'ắẮằẰẵẴẳẲấẤầẦẫẪẩẨảẢạẠặẶậẬḁḀẚḃḂḅḄḇḆḉḈḋḊḑḐḍḌḓḒḏḎẟếẾềỀễỄểỂẽẼḝḜḗḖḕḔẻẺẹẸệỆḙḘḛḚḟḞḡḠḧḦḣḢḩḨḥḤḫḪẖḯḮỉỈịỊḭḬḱḰḳḲḵḴḷḶḹḸḽḼḻḺỻỺḿḾṁṀṃṂṅṄṇṆṋṊṉṈốỐồỒỗỖổỔṍṌṏṎṓṒṑṐỏỎớỚờỜỡỠởỞợỢọỌộỘṕṔṗṖṙṘṛṚṝṜṟṞṥṤṧṦṡṠṣṢṩṨẛẞẜẝẗṫṪṭṬṱṰṯṮṹṸṻṺủỦứỨừỪữỮửỬựỰụỤṳṲṷṶṵṴṽṼṿṾỽỼẃẂẁẀẘẅẄẇẆẉẈẍẌẋẊỳỲẙỹỸẏẎỷỶỵỴỿỾẑẐẓẒẕẔ'.isalnum()\n" +
+                "f = 'a1'.isalnum()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(true)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                    { "e", PyBool.Create(true)},
+                    { "f", PyBool.Create(true)},
+                }), 1);
+        }
+
+        [Test]
+        public async Task IsAlnum()
+        {
+            await runBasicTest(
+                "a = '22'.isalnum()\n" +
+                "b = 'ae'.isalnum()\n" +
+                "c = 'a-'.isalnum()\n" +
+                "d = ''.isalnum()\n" +
+                "f = 'a1'.isalnum()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(true)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                    { "f", PyBool.Create(true)},
+                }), 1);
+        }
     }
 }

@@ -414,6 +414,25 @@ namespace LanguageImplementation.DataTypes
             return PyBool.Create(matcher.Success);
         }
 
+        // https://stackoverflow.com/questions/43327630/match-alphanumeric-characters-including-latin-unicode
+        // This doesn't actually work as posted.
+        // private static Regex alphaNumUnicodeRegex = new Regex(@"^[\p{IsBasicLatin}\x80-\xFF\p{IsLatinExtended-A}\p{IsLatinExtended-B}0-9]+$");
+        private static Regex alphaNumRegex = new Regex(@"^\w+$");
+
+
+        [ClassMember]
+        //  isalnum(self, /)
+        //      Return True if the string is an alpha-numeric string, False otherwise.
+        //
+        //      A string is alpha-numeric if all characters in the string are alpha-numeric and
+        //      there is at least one character in the string.
+        //
+        public static PyBool isalnum(PyString self)
+        {
+            var matcher = alphaNumRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
@@ -536,12 +555,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      Return a formatted version of S, using substitutions from mapping.
         //      The substitutions are identified by braces ('{' and '}').
-        //
-        //  isalnum(self, /)
-        //      Return True if the string is an alpha-numeric string, False otherwise.
-        //
-        //      A string is alpha-numeric if all characters in the string are alpha-numeric and
-        //      there is at least one character in the string.
         //
         //  isascii(self, /)
         //      Return True if all characters in the string are ASCII, False otherwise.
