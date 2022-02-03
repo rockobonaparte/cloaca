@@ -252,5 +252,43 @@ namespace CloacaTests
                     { "f", PyBool.Create(true)},
                 }), 1);
         }
+
+        [Test]
+        public async Task IsLower()
+        {
+            await runBasicTest(
+                "a = '22'.islower()\n" +
+                "b = 'ae'.islower()\n" +
+                "c = 'AE'.islower()\n" +
+                "d = ''.islower()\n" +
+                "f = 'a-'.islower()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(false)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                    { "f", PyBool.Create(false)},
+                }), 1);
+        }
+
+        [Test]
+        public async Task IsUpper()
+        {
+            await runBasicTest(
+                "a = '22'.isupper()\n" +
+                "b = 'ae'.isupper()\n" +
+                "c = 'AE'.isupper()\n" +
+                "d = ''.isupper()\n" +
+                "f = 'a-'.isupper()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(false)},
+                    { "b", PyBool.Create(false)},
+                    { "c", PyBool.Create(true)},
+                    { "d", PyBool.Create(false)},
+                    { "f", PyBool.Create(false)},
+                }), 1);
+        }
     }
 }

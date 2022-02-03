@@ -427,9 +427,45 @@ namespace LanguageImplementation.DataTypes
         //      A string is alpha-numeric if all characters in the string are alpha-numeric and
         //      there is at least one character in the string.
         //
+        //      THIS IMPLEMENTATION IS NOT UNICODE AWARE.
+        //
         public static PyBool isalnum(PyString self)
         {
             var matcher = alphaNumRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
+        private static Regex lowerRegexNonunicode = new Regex(@"^[a-z]+$");
+
+        [ClassMember]
+        //  islower(self, /)
+        //      Return True if the string is a lowercase string, False otherwise.
+        //
+        //      A string is lowercase if all cased characters in the string are lowercase and
+        //      there is at least one cased character in the string.
+        //
+        //      THIS IMPLEMENTATION IS NOT UNICODE AWARE.
+        //
+        public static PyBool islower(PyString self)
+        {
+            var matcher = lowerRegexNonunicode.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
+        private static Regex upperRegexNonunicode = new Regex(@"^[A-Z]+$");
+
+        [ClassMember]
+        //  isupper(self, /)
+        //      Return True if the string is an uppercase string, False otherwise.
+        //
+        //      A string is uppercase if all cased characters in the string are uppercase and
+        //      there is at least one cased character in the string.
+        //
+        //      THIS IMPLEMENTATION IS NOT UNICODE AWARE.
+        //
+        public static PyBool isupper(PyString self)
+        {
+            var matcher = upperRegexNonunicode.Match(self.InternalValue);
             return PyBool.Create(matcher.Success);
         }
 
@@ -574,12 +610,6 @@ namespace LanguageImplementation.DataTypes
         //      Call keyword.iskeyword(s) to test whether string s is a reserved identifier,
         //      such as "def" or "class".
         //
-        //  islower(self, /)
-        //      Return True if the string is a lowercase string, False otherwise.
-        //
-        //      A string is lowercase if all cased characters in the string are lowercase and
-        //      there is at least one cased character in the string.
-        //
         //  isnumeric(self, /)
         //      Return True if the string is a numeric string, False otherwise.
         //
@@ -603,12 +633,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      In a title-cased string, upper- and title-case characters may only
         //      follow uncased characters and lowercase characters only cased ones.
-        //
-        //  isupper(self, /)
-        //      Return True if the string is an uppercase string, False otherwise.
-        //
-        //      A string is uppercase if all cased characters in the string are uppercase and
-        //      there is at least one cased character in the string.
         //
         //  join(self, iterable, /)
         //      Concatenate any number of strings.
