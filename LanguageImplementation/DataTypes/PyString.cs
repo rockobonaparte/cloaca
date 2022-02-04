@@ -541,6 +541,41 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //  replace(self, old, new, count=-1, /)
+        //      Return a copy with all occurrences of substring old replaced by new.
+        //
+        //        count
+        //          Maximum number of occurrences to replace.
+        //          -1 (the default value) means replace all occurrences.
+        //
+        //      If the optional argument count is given, only the first count occurrences are
+        //      replaced.
+        //
+        public static PyString replace(PyString self, PyString oldStr, PyString newStr, PyInteger count=null)
+        {
+            int countUsed = -1;
+            if(count != null)
+            {
+                countUsed = (int)count.InternalValue;
+            }
+
+            StringBuilder replacer = new StringBuilder();
+            int i, next_i = 0;
+            
+            // International abuse of for-loop aware winner here. Best of show.
+            for(i = 0, next_i = self.InternalValue.IndexOf(oldStr); 
+                next_i != -1 && countUsed != 0;
+                i = next_i + oldStr.InternalValue.Length, next_i = self.InternalValue.IndexOf(oldStr, next_i + oldStr.InternalValue.Length), --countUsed)
+            {
+                replacer.Append(self.InternalValue.Substring(i, next_i - i));
+                replacer.Append(newStr);
+            }
+            replacer.Append(self.InternalValue.Substring(i, self.InternalValue.Length - i));
+            return PyString.Create(replacer.ToString());
+        }
+
+
+        [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
             var asPyInt = index_or_slice as PyInteger;
@@ -724,16 +759,6 @@ namespace LanguageImplementation.DataTypes
         //      If the string ends with the suffix string and that suffix is not empty,
         //      return string[:-len(suffix)]. Otherwise, return a copy of the original
         //      string.
-        //
-        //  replace(self, old, new, count=-1, /)
-        //      Return a copy with all occurrences of substring old replaced by new.
-        //
-        //        count
-        //          Maximum number of occurrences to replace.
-        //          -1 (the default value) means replace all occurrences.
-        //
-        //      If the optional argument count is given, only the first count occurrences are
-        //      replaced.
         //
         //  rfind(...)
         //      S.rfind(sub[, start[, end]]) -> int
