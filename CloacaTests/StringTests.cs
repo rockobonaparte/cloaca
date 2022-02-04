@@ -290,5 +290,21 @@ namespace CloacaTests
                     { "f", PyBool.Create(false)},
                 }), 1);
         }
+
+        [Test]
+        public async Task IsSpace()
+        {
+            await runBasicTest(
+                "a = '22'.isspace()\n" +
+                "b = ' '.isspace()\n" +
+                "c = ''.isspace()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(false)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
+                }), 1);
+        }
+
     }
 }

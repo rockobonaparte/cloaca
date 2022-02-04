@@ -469,6 +469,21 @@ namespace LanguageImplementation.DataTypes
             return PyBool.Create(matcher.Success);
         }
 
+        private static Regex spaceRegex = new Regex(@"^\s+$");
+
+        [ClassMember]
+        //  isspace(self, /)
+        //      Return True if the string is a whitespace string, False otherwise.
+        //
+        //      A string is whitespace if all characters in the string are whitespace and there
+        //      is at least one character in the string.
+        //
+        public static PyBool isspace(PyString self)
+        {
+            var matcher = spaceRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
@@ -621,12 +636,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      A string is printable if all of its characters are considered printable in
         //      repr() or if it is empty.
-        //
-        //  isspace(self, /)
-        //      Return True if the string is a whitespace string, False otherwise.
-        //
-        //      A string is whitespace if all characters in the string are whitespace and there
-        //      is at least one character in the string.
         //
         //  istitle(self, /)
         //      Return True if the string is a title-cased string, False otherwise.
