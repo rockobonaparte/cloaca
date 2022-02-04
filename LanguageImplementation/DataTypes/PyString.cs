@@ -484,6 +484,21 @@ namespace LanguageImplementation.DataTypes
             return PyBool.Create(matcher.Success);
         }
 
+        private static Regex numericRegex = new Regex(@"^\d+$");
+        [ClassMember]
+        //  isnumeric(self, /)
+        //      Return True if the string is a numeric string, False otherwise.
+        //
+        //      A string is numeric if all characters in the string are numeric and there is at
+        //      least one character in the string.
+        //
+        public static PyBool isnumeric(PyString self)
+        {
+            var matcher = numericRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
+
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
         {
@@ -624,12 +639,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      Call keyword.iskeyword(s) to test whether string s is a reserved identifier,
         //      such as "def" or "class".
-        //
-        //  isnumeric(self, /)
-        //      Return True if the string is a numeric string, False otherwise.
-        //
-        //      A string is numeric if all characters in the string are numeric and there is at
-        //      least one character in the string.
         //
         //  isprintable(self, /)
         //      Return True if the string is printable, False otherwise.

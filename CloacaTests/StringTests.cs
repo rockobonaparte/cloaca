@@ -273,21 +273,19 @@ namespace CloacaTests
         }
 
         [Test]
-        public async Task IsUpper()
+        public async Task IsNumeric()
         {
             await runBasicTest(
-                "a = '22'.isupper()\n" +
-                "b = 'ae'.isupper()\n" +
-                "c = 'AE'.isupper()\n" +
-                "d = ''.isupper()\n" +
-                "f = 'a-'.isupper()\n",
+                "a = '22'.isnumeric()\n" +
+                "b = '-2'.isnumeric()\n" +
+                "c = '2.0'.isnumeric()\n" +
+                "d = ''.isnumeric()\n",
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "a", PyBool.Create(false)},
+                    { "a", PyBool.Create(true)},
                     { "b", PyBool.Create(false)},
-                    { "c", PyBool.Create(true)},
+                    { "c", PyBool.Create(false)},
                     { "d", PyBool.Create(false)},
-                    { "f", PyBool.Create(false)},
                 }), 1);
         }
 
@@ -306,5 +304,23 @@ namespace CloacaTests
                 }), 1);
         }
 
+        [Test]
+        public async Task IsUpper()
+        {
+            await runBasicTest(
+                "a = '22'.isupper()\n" +
+                "b = 'ae'.isupper()\n" +
+                "c = 'AE'.isupper()\n" +
+                "d = ''.isupper()\n" +
+                "f = 'a-'.isupper()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(false)},
+                    { "b", PyBool.Create(false)},
+                    { "c", PyBool.Create(true)},
+                    { "d", PyBool.Create(false)},
+                    { "f", PyBool.Create(false)},
+                }), 1);
+        }
     }
 }
