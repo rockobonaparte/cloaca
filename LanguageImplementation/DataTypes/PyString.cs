@@ -453,7 +453,27 @@ namespace LanguageImplementation.DataTypes
             return PyBool.Create(matcher.Success);
         }
 
+        // Some comparisons of how isdigit, isdecimal, and isnumeric are actually different:
+        // https://stackoverflow.com/questions/44891070/whats-the-difference-between-str-isdigit-isnumeric-and-isdecimal-in-python/44891278
+        //
+        // We don't delve into any of that. We suck. Or rather, .NET sucks and I'm not going to implement a bunch of
+        // Unicode logic for it.
+        private static Regex decimalRegex = new Regex(@"^\d+$");
 
+        [ClassMember]
+        //  isdecimal(self, /)
+        //      Return True if the string is a decimal string, False otherwise.
+        //
+        //      A string is a decimal string if all characters in the string are decimal and
+        //      there is at least one character in the string.
+        //
+        //      THIS IMPLEMENTATION IS NOT UNICODE AWARE.
+        //
+        public static PyBool isdecimal(PyString self)
+        {
+            var matcher = decimalRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
 
         private static Regex lowerRegexNonunicode = new Regex(@"^[a-z]+$");
 
@@ -511,6 +531,8 @@ namespace LanguageImplementation.DataTypes
         //
         //      A string is numeric if all characters in the string are numeric and there is at
         //      least one character in the string.
+        //
+        //      THIS IMPLEMENTATION IS NOT UNICODE AWARE.
         //
         public static PyBool isnumeric(PyString self)
         {
@@ -640,12 +662,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      Return a formatted version of S, using substitutions from mapping.
         //      The substitutions are identified by braces ('{' and '}').
-        //
-        //  isdecimal(self, /)
-        //      Return True if the string is a decimal string, False otherwise.
-        //
-        //      A string is a decimal string if all characters in the string are decimal and
-        //      there is at least one character in the string.
         //
         //  isidentifier(self, /)
         //      Return True if the string is a valid Python identifier, False otherwise.

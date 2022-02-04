@@ -271,6 +271,23 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task IsDecimal()
+        {
+            await runBasicTest(
+                "a = '22'.isdecimal()\n" +
+                "b = '-2'.isdecimal()\n" +
+                "c = '2.0'.isdecimal()\n" +
+                "d = ''.isdecimal()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(true)},
+                    { "b", PyBool.Create(false)},
+                    { "c", PyBool.Create(false)},
+                    { "d", PyBool.Create(false)},
+                }), 1);
+        }
+
+        [Test]
         public async Task IsLower()
         {
             await runBasicTest(
