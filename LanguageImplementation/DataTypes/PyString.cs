@@ -419,7 +419,6 @@ namespace LanguageImplementation.DataTypes
         // private static Regex alphaNumUnicodeRegex = new Regex(@"^[\p{IsBasicLatin}\x80-\xFF\p{IsLatinExtended-A}\p{IsLatinExtended-B}0-9]+$");
         private static Regex alphaNumRegex = new Regex(@"^\w+$");
 
-
         [ClassMember]
         //  isalnum(self, /)
         //      Return True if the string is an alpha-numeric string, False otherwise.
@@ -434,6 +433,27 @@ namespace LanguageImplementation.DataTypes
             var matcher = alphaNumRegex.Match(self.InternalValue);
             return PyBool.Create(matcher.Success);
         }
+
+        private static Regex asciiRegex = new Regex(@"^[\x00-\x7F]+$");
+
+        [ClassMember]
+        //  isascii(self, /)
+        //      Return True if all characters in the string are ASCII, False otherwise.
+        //
+        //      ASCII characters have code points in the range U+0000-U+007F.
+        //      Empty string is ASCII too.
+        //
+        public static PyBool isascii(PyString self)
+        {
+            if(self.InternalValue.Length == 0)
+            {
+                return PyBool.True;
+            }
+            var matcher = asciiRegex.Match(self.InternalValue);
+            return PyBool.Create(matcher.Success);
+        }
+
+
 
         private static Regex lowerRegexNonunicode = new Regex(@"^[a-z]+$");
 
@@ -497,7 +517,6 @@ namespace LanguageImplementation.DataTypes
             var matcher = numericRegex.Match(self.InternalValue);
             return PyBool.Create(matcher.Success);
         }
-
 
         [ClassMember]
         public static async Task<object> __getitem__(IInterpreter interpreter, FrameContext context, PyString self, PyObject index_or_slice)
@@ -621,12 +640,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      Return a formatted version of S, using substitutions from mapping.
         //      The substitutions are identified by braces ('{' and '}').
-        //
-        //  isascii(self, /)
-        //      Return True if all characters in the string are ASCII, False otherwise.
-        //
-        //      ASCII characters have code points in the range U+0000-U+007F.
-        //      Empty string is ASCII too.
         //
         //  isdecimal(self, /)
         //      Return True if the string is a decimal string, False otherwise.

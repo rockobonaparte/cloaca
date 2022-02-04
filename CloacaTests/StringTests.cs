@@ -213,6 +213,23 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task IsAscii()
+        {
+            await runBasicTest(
+                "a = '22'.isascii()\n" +
+                "b = 'a '.isascii()\n" +
+                "c = ''.isascii()\n" +
+                "d = 'ắẮ'.isascii()\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.Create(true)},
+                    { "b", PyBool.Create(true)},
+                    { "c", PyBool.Create(true)},            // Empty string is consider ASCII
+                    { "d", PyBool.Create(false)},
+                }), 1);
+        }
+
+        [Test]
         [Ignore("Doesn't work yet. The .NET regex I got doesn't even work with itself.")]
         public async Task IsAlnumUnicode()
         {
