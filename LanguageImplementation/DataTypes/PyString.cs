@@ -541,6 +541,48 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //  join(self, iterable, /)
+        //      Concatenate any number of strings.
+        //
+        //      The string whose method is called is inserted in between each given string.
+        //      The result is returned as a new string.
+        //
+        //      Example: '.'.join(['ab', 'pq', 'rs']) -> 'ab.pq.rs'
+        //
+        public static async Task<PyString> join(IInterpreter interpreter, FrameContext context, PyString self, PyIterable iterable)
+        {
+            var sb = new StringBuilder();
+            var next_item = await iterable.Next(interpreter, context, iterable);
+            int sequence_i = 0;
+            if(!(context.CurrentException is StopIteration))
+            {
+                var asPyString = next_item as PyString;
+                if(asPyString == null)
+                {
+                    context.CurrentException = TypeError.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
+                    return null;
+                }
+                sb.Append(asPyString.InternalValue);
+            }
+
+            next_item = await iterable.Next(interpreter, context, iterable);
+            sequence_i += 1;
+            while (!(context.CurrentException is StopIteration))
+            {
+                sb.Append(self.InternalValue);
+                var asPyString = next_item as PyString;
+                if (asPyString == null)
+                {
+                    context.CurrentException = TypeError.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
+                    return null;
+                }
+                sb.Append(asPyString.InternalValue);
+            }
+            context.CurrentException = null;
+            return PyString.Create(sb.ToString());
+        }
+
+        [ClassMember]
         //  replace(self, old, new, count=-1, /)
         //      Return a copy with all occurrences of substring old replaced by new.
         //
@@ -715,14 +757,6 @@ namespace LanguageImplementation.DataTypes
         //
         //      In a title-cased string, upper- and title-case characters may only
         //      follow uncased characters and lowercase characters only cased ones.
-        //
-        //  join(self, iterable, /)
-        //      Concatenate any number of strings.
-        //
-        //      The string whose method is called is inserted in between each given string.
-        //      The result is returned as a new string.
-        //
-        //      Example: '.'.join(['ab', 'pq', 'rs']) -> 'ab.pq.rs'
         //
         //  ljust(self, width, fillchar=' ', /)
         //      Return a left-justified string of length width.
