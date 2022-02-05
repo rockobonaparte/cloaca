@@ -37,7 +37,7 @@ namespace LanguageImplementation.DataTypes
             massagedArgs[0] = selfHandle;
             Array.Copy(args, 0, massagedArgs, 1, args.Length);
 
-            return callable.Call(interpreter, context, massagedArgs);
+            return callable.Call(interpreter, context, massagedArgs, defaultOverrides);
         }
     }
 }
