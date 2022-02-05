@@ -359,24 +359,23 @@ namespace CloacaTests
 
 
         [Test]
-        [Ignore("Looks like I have a bug with optional arguments here.")]
         public async Task Replace()
         {
             await runBasicTest(
-                //"a = 'dont replace anything'.replace('nothing', 'meow')\n" +
-                //"b = 'replace this'.replace('this', 'thatter')\n" +
-                "c = 'replace this this'.replace('this', 'that', count=1)\n",
-                //"d = 'first second'.replace('first', 'that')\n" +
-                //"e = 'snippity snip cut'.replace('snip', '')\n" +
-                //"f = ''.replace('this', 'that')\n",
+                "a = 'dont replace anything'.replace('nothing', 'meow')\n" +
+                "b = 'replace this'.replace('this', 'thatter')\n" +
+                "c = 'replace this this'.replace('this', 'that', count=1)\n" +
+                "d = 'first second'.replace('first', 'that')\n" +
+                "e = 'snippity snip cut'.replace('snip', '')\n" +
+                "f = ''.replace('this', 'that')\n",
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    //{ "a", PyString.Create("dont replace anything")},
-                    //{ "b", PyString.Create("replace thatter")},
+                    { "a", PyString.Create("dont replace anything")},
+                    { "b", PyString.Create("replace thatter")},
                     { "c", PyString.Create("replace that this")},
-                    //{ "d", PyString.Create("that second")},
-                    //{ "e", PyString.Create("ity  cut")},
-                    //{ "f", PyString.Create("")},
+                    { "d", PyString.Create("that second")},
+                    { "e", PyString.Create("pity  cut")},
+                    { "f", PyString.Create("")},
                 }), 1);
         }
 
