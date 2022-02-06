@@ -230,13 +230,13 @@ namespace LanguageImplementation
                 {
                     var typeClass = (PyObject)asPyObject.__dict__["__class__"];
                     var typeName = typeClass.__dict__["__name__"].ToString();
-                    context.CurrentException = new TypeError("TypeError: '" + typeName + "' is not iterable");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: '" + typeName + "' is not iterable");
                     return null;
                 }
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: '" + o.GetType().Name + "' is not iterable");
+                context.CurrentException = TypeErrorClass.Create("TypeError: '" + o.GetType().Name + "' is not iterable");
                 return null;
             }
         }

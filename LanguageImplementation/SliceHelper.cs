@@ -43,7 +43,7 @@ namespace LanguageImplementation
                     var asPyIndex = index as PyInteger;
                     if (asPyIndex == null)
                     {
-                        context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                        context.CurrentException = TypeErrorClass.Create("TypeError: slice indices must be integers or None or have an __index__ method");
                         return 0;
                     }
                     else
@@ -53,7 +53,7 @@ namespace LanguageImplementation
                 }
                 else
                 {
-                    context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: slice indices must be integers or None or have an __index__ method");
                     return 0;
                 }
             }
@@ -63,7 +63,7 @@ namespace LanguageImplementation
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: slice indices must be integers or None or have an __index__ method");
+                context.CurrentException = TypeErrorClass.Create("TypeError: slice indices must be integers or None or have an __index__ method");
                 return 0;
             }
         }

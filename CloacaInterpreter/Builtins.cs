@@ -129,7 +129,8 @@ namespace CloacaInterpreter
             {
                 if(!asPyObject.__dict__.ContainsKey("__len__"))
                 {
-                    throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                    return null;
                 }
                 else
                 {
@@ -137,7 +138,8 @@ namespace CloacaInterpreter
                     if(callable_len == null)
                     {
                         // Yeah, same error as if __len__ was not found in the first place...
-                        throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                        context.CurrentException = TypeErrorClass.Create("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                        return null;
                     }
                     else
                     {
@@ -146,7 +148,8 @@ namespace CloacaInterpreter
                         if(asPyInteger == null)
                         {
                             // Yeah, same error as if __len__ if it's a function but it returns moon crap.
-                            throw new Exception("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                            context.CurrentException = TypeErrorClass.Create("TypeError: object of type " + asPyObject.__class__.Name + " has no len()");
+                            return null;
                         }
                         return asPyInteger;
                     }
@@ -173,7 +176,8 @@ namespace CloacaInterpreter
                 return PyInteger.Create((int)asLengthProperty.GetValue(o));
             }
 
-            throw new Exception("TypeError: cannot calculate length for object of type " + o.GetType().Name);
+            context.CurrentException = TypeErrorClass.Create("TypeError: cannot calculate length for object of type " + o.GetType().Name);
+            return null;
         }
 
         public static PyClass builtin_type(PyObject obj)
@@ -276,7 +280,7 @@ namespace CloacaInterpreter
             }
             else if(args.Length > 1)
             {
-                context.CurrentException = new TypeError("TypeError: list expected at most 1 argument, got " + args.Length);
+                context.CurrentException = TypeErrorClass.Create("TypeError: list expected at most 1 argument, got " + args.Length);
                 return null;
             }
 
@@ -289,7 +293,7 @@ namespace CloacaInterpreter
                 // There should be an exception but we'll see if we need to throw one ourselves.
                 if(context.CurrentException == null)
                 {
-                    context.CurrentException = new TypeError("TypeError: '" + o.GetType().Name + "' is not iterable");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: '" + o.GetType().Name + "' is not iterable");
                 }
                 return null;
             }
@@ -355,7 +359,7 @@ namespace CloacaInterpreter
             }
             else if (args.Length > 1)
             {
-                context.CurrentException = new TypeError("TypeError: set expected at most 1 argument, got " + args.Length);
+                context.CurrentException = TypeErrorClass.Create("TypeError: set expected at most 1 argument, got " + args.Length);
                 return null;
             }
 
@@ -368,7 +372,7 @@ namespace CloacaInterpreter
                 // There should be an exception but we'll see if we need to throw one ourselves.
                 if (context.CurrentException == null)
                 {
-                    context.CurrentException = new TypeError("TypeError: '" + o.GetType().Name + "' is not iterable");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: '" + o.GetType().Name + "' is not iterable");
                 }
                 return null;
             }
@@ -432,7 +436,7 @@ namespace CloacaInterpreter
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: dict() cannot take any arguments yet");
+                context.CurrentException = TypeErrorClass.Create("TypeError: dict() cannot take any arguments yet");
                 return null;
             }
         }
@@ -460,7 +464,8 @@ namespace CloacaInterpreter
                 }
                 else
                 {
-                    throw new Exception("TypeError: '" + asPyObject.__class__.Name + "' object is not reversible");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: '" + asPyObject.__class__.Name + "' object is not reversible");
+                    return null;
                 }
             }
             else
@@ -473,7 +478,7 @@ namespace CloacaInterpreter
         {
             if(inlineArgs.Length == 0)
             {
-                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg is an empty sequence");
+                context.CurrentException = ValueErrorClass.Create("ValueError:" + func_name + "() arg is an empty sequence");
                 return null;
             }
 
@@ -519,7 +524,7 @@ namespace CloacaInterpreter
             // Try to get an iterator off of this thing.
             if (!obj.__dict__.ContainsKey("__iter__"))
             {
-                context.CurrentException = new TypeError("TypeError: '" + obj.__class__.Name + "' object is not iterable");
+                context.CurrentException = TypeErrorClass.Create("TypeError: '" + obj.__class__.Name + "' object is not iterable");
                 return null;
             }
 
@@ -527,14 +532,14 @@ namespace CloacaInterpreter
             var iterator = (await iterator_func.Call(interpreter, context, new object[] { obj })) as PyIterable;
             if (iterator == null)
             {
-                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg does not implement a PyIterable for __iter__");
+                context.CurrentException = ValueErrorClass.Create("ValueError:" + func_name + "() arg does not implement a PyIterable for __iter__");
                 return null;
             }
 
             object best = await iterator.Next(interpreter, context, obj);
             if (context.CurrentException is StopIteration)
             {
-                context.CurrentException = new ValueError("ValueError:" + func_name + "() arg is an empty sequence");
+                context.CurrentException = ValueErrorClass.Create("ValueError:" + func_name + "() arg is an empty sequence");
                 return null;
             }
             else if (!(best is PyObject))
@@ -639,7 +644,8 @@ namespace CloacaInterpreter
                     }
                     else
                     {
-                        throw new Exception("TypeError: '" + asPyObject.__class__.Name + "' object is not iterable");
+                        context.CurrentException = TypeErrorClass.Create("TypeError: '" + asPyObject.__class__.Name + "' object is not iterable");
+                        return null;
                     }
                 }
                 else

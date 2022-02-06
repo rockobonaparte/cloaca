@@ -230,7 +230,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: '" + index.GetType().Name + "' object cannot be interpreted as an integer");
+                context.CurrentException = TypeErrorClass.Create("TypeError: '" + index.GetType().Name + "' object cannot be interpreted as an integer");
                 return null;
             }
 
@@ -274,7 +274,7 @@ namespace LanguageImplementation.DataTypes
         {
             if(!(other is PyInteger) && !(other is int))
             {
-                context.CurrentException = new TypeError("TypeError: can't multiply sequence by non-int of type " + other.GetType().Name);
+                context.CurrentException = TypeErrorClass.Create("TypeError: can't multiply sequence by non-int of type " + other.GetType().Name);
                 return null;
             }
 
@@ -306,7 +306,7 @@ namespace LanguageImplementation.DataTypes
             var otherPyList = other as PyList;
             if(otherPyList == null)
             {
-                context.CurrentException = new TypeError("TypeError: can only concatenate list (not \"" + other.GetType().Name + "\") to list ");
+                context.CurrentException = TypeErrorClass.Create("TypeError: can only concatenate list (not \"" + other.GetType().Name + "\") to list ");
                 return null;
             }
 

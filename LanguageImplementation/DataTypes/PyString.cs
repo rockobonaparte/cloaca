@@ -62,7 +62,7 @@ namespace LanguageImplementation.DataTypes
             {
                 if (startstop.Length > 2)
                 {
-                    context.CurrentException = new TypeError("TypeError: find() takes at most 3 arguments (" +
+                    context.CurrentException = TypeErrorClass.Create("TypeError: find() takes at most 3 arguments (" +
                         (startstop.Length + 1) + "given)");
                     return null;
                 }
