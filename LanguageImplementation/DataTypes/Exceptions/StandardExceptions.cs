@@ -126,9 +126,43 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
     public class TypeError : PyException
     {
+        public TypeError() : base()
+        {
+            // Default parameterless constructor for Create()
+        }
+
         public TypeError(string msg) : base(msg)
         {
 
+        }
+    }
+
+    public class TypeErrorClass : PyExceptionClass
+    {
+        public TypeErrorClass() :
+            base("TypeError", null, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        private static TypeErrorClass __instance;
+        public static new TypeErrorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new TypeErrorClass();
+                }
+                return __instance;
+            }
+        }
+
+        public static TypeError Create(string message)
+        {
+            var exc = PyTypeObject.DefaultNew<TypeError>(TypeErrorClass.Instance);
+            exc.Message = message;
+            return exc;
         }
     }
 
