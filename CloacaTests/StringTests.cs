@@ -357,6 +357,22 @@ namespace CloacaTests
                 }), 1);
         }
 
+        [Test]
+        public async Task Join()
+        {
+            await runBasicTest(
+                "a = ', '.join(['hello', 'world!'])\n" +
+                "b = ', '.join(['hello'])\n" +
+                "c = ''.join(['hello', 'world!'])\n" +
+                "d = ', '.join(['', ''])\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyString.Create("hello, world!")},
+                    { "b", PyString.Create("hello")},
+                    { "c", PyString.Create("helloworld!")},
+                    { "d", PyString.Create(", ")},
+                }), 1);
+        }
 
         [Test]
         public async Task Replace()

@@ -1,5 +1,6 @@
 ﻿using LanguageImplementation.DataTypes.Exceptions;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -549,36 +550,44 @@ namespace LanguageImplementation.DataTypes
         //
         //      Example: '.'.join(['ab', 'pq', 'rs']) -> 'ab.pq.rs'
         //
-        public static async Task<PyString> join(IInterpreter interpreter, FrameContext context, PyString self, PyIterable iterable)
+        public static async Task<PyString> join(IInterpreter interpreter, FrameContext context, PyString self, IEnumerable iterable)
         {
             var sb = new StringBuilder();
-            var next_item = await iterable.Next(interpreter, context, iterable);
-            int sequence_i = 0;
-            if(!(context.CurrentException is StopIteration))
+            var enumerator = iterable.GetEnumerator();
+            if(!enumerator.MoveNext())
             {
-                var asPyString = next_item as PyString;
-                if(asPyString == null)
-                {
-                    context.CurrentException = TypeErrorClass.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
-                    return null;
-                }
-                sb.Append(asPyString.InternalValue);
+                return PyString.Create("");
             }
 
-            next_item = await iterable.Next(interpreter, context, iterable);
-            sequence_i += 1;
-            while (!(context.CurrentException is StopIteration))
+            var next_item = enumerator.Current;
+            int sequence_i = 0;
+            var asPyString = next_item as PyString;
+            if(asPyString == null)
             {
+                context.CurrentException = TypeErrorClass.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
+                return null;
+            }
+            sb.Append(asPyString.InternalValue);
+
+            if (!enumerator.MoveNext())
+            {
+                return PyString.Create(sb.ToString());
+            }
+
+            do
+            {
+                next_item = enumerator.Current;
+                sequence_i += 1;
                 sb.Append(self.InternalValue);
-                var asPyString = next_item as PyString;
+                asPyString = next_item as PyString;
                 if (asPyString == null)
                 {
                     context.CurrentException = TypeErrorClass.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
                     return null;
                 }
                 sb.Append(asPyString.InternalValue);
-            }
-            context.CurrentException = null;
+            } while (enumerator.MoveNext()) ;
+
             return PyString.Create(sb.ToString());
         }
 
