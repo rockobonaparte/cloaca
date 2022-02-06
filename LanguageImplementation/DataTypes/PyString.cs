@@ -559,7 +559,7 @@ namespace LanguageImplementation.DataTypes
                 var asPyString = next_item as PyString;
                 if(asPyString == null)
                 {
-                    context.CurrentException = TypeError.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
                     return null;
                 }
                 sb.Append(asPyString.InternalValue);
@@ -573,7 +573,7 @@ namespace LanguageImplementation.DataTypes
                 var asPyString = next_item as PyString;
                 if (asPyString == null)
                 {
-                    context.CurrentException = TypeError.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: sequence item " + sequence_i + ": expected str instance, " + next_item.GetType().Name + " found");
                     return null;
                 }
                 sb.Append(asPyString.InternalValue);
