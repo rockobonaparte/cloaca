@@ -46,6 +46,8 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TupleTests.cs" />
+    <Compile Include="DictionaryTests.cs" />
     <Compile Include="SetTests.cs" />
     <Compile Include="SortingTests.cs" />
     <Compile Include="BuiltinsTests.cs" />

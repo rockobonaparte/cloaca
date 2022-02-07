@@ -1,4 +1,4 @@
-raise NotImplementedError("'str' object has no attribute named '__getitem__' looks like I can't index a string?")
+raise NotImplementedError("'not in' not implemented. Particularly for 'if user_id not in users_in_group'")
 
 
 def countGroups(related):

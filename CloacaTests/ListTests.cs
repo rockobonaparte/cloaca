@@ -1,13 +1,9 @@
-﻿using System.Numerics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using NUnit.Framework;
 
 using LanguageImplementation.DataTypes;
-using LanguageImplementation;
-using CloacaInterpreter;
-using System;
-using System.Threading.Tasks;
 
 namespace CloacaTests
 {
@@ -291,6 +287,19 @@ namespace CloacaTests
                 { "j", PyList.Create(new List<object>() { PyInteger.Create(0) }) },
                 { "k", PyList.Create(new List<object>()) },
             }), 1);
+        }
+
+        [Test]
+        public async Task Contains()
+        {
+            await runBasicTest(
+                "a = 2 in [1, 2, 3]\n" +
+                "b = 'F' in [1, 2, 3]\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.True },
+                    { "b", PyBool.False },
+                }), 1);
         }
     }
 }
