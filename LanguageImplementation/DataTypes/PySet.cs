@@ -262,7 +262,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for -: 'set' and '" + other.GetType().Name + "'");
+                context.CurrentException = TypeErrorClass.Create("TypeError: unsupported operand type(s) for -: 'set' and '" + other.GetType().Name + "'");
                 return null;
             }
         }
@@ -277,7 +277,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for &: 'set' and '" + other.GetType().Name + "'");
+                context.CurrentException = TypeErrorClass.Create("TypeError: unsupported operand type(s) for &: 'set' and '" + other.GetType().Name + "'");
                 return null;
             }
         }
@@ -292,7 +292,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for |: 'set' and '" + other.GetType().Name + "'");
+                context.CurrentException = TypeErrorClass.Create("TypeError: unsupported operand type(s) for |: 'set' and '" + other.GetType().Name + "'");
                 return null;
             }
         }
@@ -307,7 +307,7 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
-                context.CurrentException = new TypeError("TypeError: unsupported operand type(s) for ^: 'set' and '" + other.GetType().Name + "'");
+                context.CurrentException = TypeErrorClass.Create("TypeError: unsupported operand type(s) for ^: 'set' and '" + other.GetType().Name + "'");
                 return null;
             }
         }

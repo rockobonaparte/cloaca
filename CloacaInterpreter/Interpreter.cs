@@ -922,7 +922,8 @@ namespace CloacaInterpreter
                                                 {
                                                     // Well, now we're raising a type error!
                                                     // TypeError: catching classes that do not inherit from BaseException is not allowed
-                                                    context.CurrentException = new TypeError("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                                    context.CurrentException = TypeErrorClass.Create("TypeError: catching classes that do not inherit from BaseException is not allowed");
+                                                    break;
                                                 }
                                                 else
                                                 {
@@ -1129,8 +1130,9 @@ namespace CloacaInterpreter
                                 }
                                 else
                                 {
-                                    // [UNPACK .NET] Unpack more .NET container types. This was put in TODO because there isn't a real silver bullet for this. We should handle most collection<T> and collection types
-                                    throw new Exception("TypeError: cannot unpack non-iterable " + unpackee.GetType().Name + " object");
+                                    // [UNPACK .NET] Unpack more .NET container types. This was put in TODO because there isn't a real silver bullet for this. We should handle most collection<T> and collection types                                    
+                                    context.CurrentException = TypeErrorClass.Create("TypeError: cannot unpack non-iterable " + unpackee.GetType().Name + " object");
+                                    break;
                                 }
 
                                 if (unpack_count < iterable.Length)
