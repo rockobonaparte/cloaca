@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 using NUnit.Framework;
 
+using LanguageImplementation;
 using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
@@ -395,5 +396,44 @@ namespace CloacaTests
                 }), 1);
         }
 
+    }
+
+
+    [TestFixture]
+    public class PrintfStringTests
+    {
+        public void PrintfTest(string in_string, string expected_out, params object[] instances)
+        {
+            Assert.That(PrintfHelper.Format(in_string, instances), Is.EqualTo(expected_out));
+        }
+
+        [Test]
+        public void Passthrough()
+        {
+            PrintfTest(
+                "experiment",
+                "experiment",
+                new object[0]);
+        }
+
+        [Test]
+        [Ignore("Just getting test cases for starters")]
+        public void BasicDecimal()
+        {
+            PrintfTest(
+                "decimal %d here",
+                "decimal 1337 here",
+                new object[] { PyInteger.Create(1337) });
+        }
+
+        [Test]
+        [Ignore("Just getting test cases for starters")]
+        public void BasicString()
+        {
+            PrintfTest(
+                "string %s here",
+                "string butt here",
+                new object[] { PyString.Create("butt") });
+        }
     }
 }
