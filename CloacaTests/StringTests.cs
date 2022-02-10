@@ -404,7 +404,10 @@ namespace CloacaTests
     {
         public void PrintfTest(string in_string, string expected_out, params object[] instances)
         {
-            Assert.That(PrintfHelper.Format(in_string, instances), Is.EqualTo(expected_out));
+            object format_err;
+            string format_out = PrintfHelper.Format(in_string, out format_err, instances);
+            Assert.That(format_err, Is.Null);
+            Assert.That(format_out, Is.EqualTo(expected_out));
         }
 
         [Test]
@@ -417,7 +420,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Just getting test cases for starters")]
         public void BasicDecimal()
         {
             PrintfTest(
@@ -427,7 +429,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Just getting test cases for starters")]
         public void BasicString()
         {
             PrintfTest(
