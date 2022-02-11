@@ -18,7 +18,16 @@ namespace LanguageImplementation
                 next_i < in_str.Length && next_i >= 0;
                 prev_i = next_i, next_i = in_str.IndexOf('%', next_i + 1))
             {
-                if(next_i >= in_str.Length-1)
+                // These might be conversion flag characters: [#0-+ ]
+                // OR it might be another % sign which means that it's being escaped.
+                if(in_str[next_i+1] == '%')
+                {
+                    builder.Append(in_str.Substring(prev_i, 1 + next_i - prev_i));
+                    next_i += 2;
+                    continue;
+                }
+
+                if (next_i >= in_str.Length - 1)
                 {
                     error_out = ValueErrorClass.Create("ValueError: incomplete format");
                     return null;

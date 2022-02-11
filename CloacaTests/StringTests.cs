@@ -438,6 +438,15 @@ namespace CloacaTests
         }
 
         [Test]
+        public void EscapedDelimiter()
+        {
+            PrintfTest(
+                "what %%100",
+                "what %100",
+                new object[0]);
+        }
+
+        [Test]
         [Ignore("Numeric arguments to delimiters not yet implemented")]
         public void StringNumberPositiveNumber()
         {
