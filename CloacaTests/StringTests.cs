@@ -436,5 +436,25 @@ namespace CloacaTests
                 "string butt here",
                 new object[] { PyString.Create("butt") });
         }
+
+        [Test]
+        [Ignore("Numeric arguments to delimiters not yet implemented")]
+        public void StringNumberPositiveNumber()
+        {
+            PrintfTest(
+                "what %10s",
+                "what       butt",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        [Ignore("Numeric arguments to delimiters not yet implemented")]
+        public void StringNumberNegativeNumber()
+        {
+            PrintfTest(
+                "what %-10s",
+                "what butt      ",
+                new object[] { PyString.Create("butt") });
+        }
     }
 }
