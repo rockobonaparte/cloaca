@@ -32,18 +32,36 @@ namespace LanguageImplementation
                     error_out = ValueErrorClass.Create("ValueError: incomplete format");
                     return null;
                 }
+                else
+                {
+                    builder.Append(in_str.Substring(prev_i, next_i - prev_i));
+                    // break out if it's a conversion type or invalid. Otherwise, keep reading to eat up
+                    // a conversion flag.
+                    next_i += 1;
+                    prev_i = next_i;
+                    while(next_i < in_str.Length && (
+                        in_str[next_i] == '#' ||
+                        in_str[next_i] == '+' ||
+                        in_str[next_i] == '-' ||
+                        in_str[next_i] == ' ' ||
+                        (in_str[next_i] >= '0' && in_str[next_i] <= '9')
+                        ))
+                    {
+                        next_i += 1;
+                    }
+                }
 
                 builder.Append(in_str.Substring(prev_i, next_i - prev_i));
 
-                switch(in_str[next_i + 1])
+                switch(in_str[next_i])
                 {
                     case 's':
                         builder.Append(in_obj[param_i]);
-                        next_i += 2;
+                        next_i += 1;
                         break;
                     case 'd':
                         builder.Append(in_obj[param_i]);
-                        next_i += 2;
+                        next_i += 1;
                         break;
                     default:
                         error_out = ValueErrorClass.Create("ValueError: unsupported format character '"
