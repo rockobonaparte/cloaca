@@ -5,6 +5,13 @@ using LanguageImplementation.DataTypes.Exceptions;
 
 namespace LanguageImplementation
 {
+    public enum TextParseMode
+    {
+        WidthMode,
+        PrecisionMode,
+        MappingMode,
+    }
+
     // https://docs.python.org/3/library/stdtypes.html#printf-style-string-formatting
     //
     // A conversion specifier contains two or more characters and has the following components, which must occur in this order:
@@ -40,9 +47,113 @@ namespace LanguageImplementation
             SpaceBeforePos = false;
         }
 
-        public static void ParseFromString(string format_str, int start_idx)
+        public static bool StartsConversionSpecifier(char c)
         {
-            // TODO Here: parse and fill in.
+            return c == '#' ||
+                   c == '+' ||
+                   c == '-' ||
+                   c == ' ' ||
+                   (c >= '0' && c <= '9');
+        }
+
+        public int ParseFromString(string format_str, int start_idx, out object error_out)
+        {
+            TextParseMode mode = TextParseMode.WidthMode;
+            StringBuilder numBuilder = new StringBuilder();
+            int idx = start_idx;
+            int dotcount = 0;
+            bool done = false;
+            while(idx < format_str.Length && !done)
+            {
+                switch(format_str[idx])
+                {
+                    case '#':
+                        AlternateForm = true;
+                        break;
+                    case '+':
+                        SignPosAndNeg = true;
+                        break;
+                    case '-':
+                        LeftAdjusted = true;
+                        break;
+                    case ' ':
+                        SpaceBeforePos = true;
+                        break;
+                    case '(':
+                        if(mode == TextParseMode.MappingMode)
+                        {
+                            error_out = ValueErrorClass.Create("ValueError: incomplete format key");
+                            return start_idx;
+                        }
+                        else if(numBuilder.Length > 0)
+                        {
+                            error_out = ValueErrorClass.Create("ValueError: unsupported format character '('(0x28) at index " + idx);
+                            return start_idx;
+                        }
+                        mode = TextParseMode.MappingMode;
+                        break;
+                    case ')':
+                        if(mode != TextParseMode.MappingMode)
+                        {
+                            error_out = ValueErrorClass.Create("ValueError: unsupported format character ')'(0x29) at index " + idx);
+                            return start_idx;
+                        }
+                        else
+                        {
+                            MappingKey = numBuilder.ToString();
+                            mode = TextParseMode.WidthMode;
+                        }
+                        break;
+                    case '.':
+                        dotcount += 1;
+                        if(dotcount > 1)
+                        {
+                            error_out = ValueErrorClass.Create("ValueError: unsupported format character '.'(0x2e) at index " + idx);
+                            return start_idx;
+                        }
+                        else
+                        {
+                            Width = Int32.Parse(numBuilder.ToString());
+                            mode = TextParseMode.PrecisionMode;
+                            numBuilder.Clear();
+                        }
+                        break;
+                    default:
+                        {
+                            if (format_str[idx] >= '0' && format_str[idx] <= '9')
+                            {
+                                if(numBuilder.Length == 0 && format_str[idx] == '0')
+                                {
+                                    ZeroPadded = true;
+                                }
+                                else
+                                {
+                                    numBuilder.Append(format_str[idx]);
+                                }
+                            }
+                            else
+                            {
+                                done = true;
+                            }
+                        }
+                        break;
+                }
+                idx += 1;
+            }
+
+            if(numBuilder.Length > 0)
+            {
+                if(mode == TextParseMode.PrecisionMode)
+                {
+                    Precision = Int32.Parse(numBuilder.ToString());
+                }
+                else
+                {
+                    Width = Int32.Parse(numBuilder.ToString());
+                }
+            }
+            error_out = null;
+            return idx;
         }
     }
 
