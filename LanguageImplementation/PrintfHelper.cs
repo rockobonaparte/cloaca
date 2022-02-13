@@ -34,6 +34,12 @@ namespace LanguageImplementation
         public bool ZeroPadded;
         public bool SpaceBeforePos;
 
+        public ConversionSpecifier()
+        {
+            // Probably redundant but paranoid.
+            Clear();
+        }
+
         // Clear a ConversionSpecifier. Use to reuse this object for another run.
         public void Clear()
         {
@@ -138,7 +144,11 @@ namespace LanguageImplementation
                         }
                         break;
                 }
-                idx += 1;
+
+                if(!done)
+                {
+                    idx += 1;
+                }
             }
 
             if(numBuilder.Length > 0)

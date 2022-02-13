@@ -398,6 +398,40 @@ namespace CloacaTests
 
     }
 
+    [TestFixture]
+    public class ConversionSpecifierTests
+    {
+        public static void TestSpecifier(string in_str, int start_idx, int end_idx, object error, 
+            string mapping_key,
+            int width,
+            int precision,
+            bool use_alternate_form,
+            bool left_adjusted,
+            bool sign_pos_and_neg,
+            bool zero_padded,
+            bool space_before_pos)
+        {
+            var conv = new ConversionSpecifier();
+            object err;
+            int ret_end_idx = conv.ParseFromString(in_str, start_idx, out err);
+            Assert.That(error, Is.EqualTo(error));
+            Assert.That(end_idx, Is.EqualTo(ret_end_idx));
+            Assert.That(mapping_key, Is.EqualTo(conv.MappingKey));
+            Assert.That(width, Is.EqualTo(conv.Width));
+            Assert.That(precision, Is.EqualTo(conv.Precision));
+            Assert.That(use_alternate_form, Is.EqualTo(conv.AlternateForm));
+            Assert.That(left_adjusted, Is.EqualTo(conv.LeftAdjusted));
+            Assert.That(sign_pos_and_neg, Is.EqualTo(conv.SignPosAndNeg));
+            Assert.That(zero_padded, Is.EqualTo(conv.ZeroPadded));
+            Assert.That(space_before_pos, Is.EqualTo(conv.SpaceBeforePos));
+        }
+
+        [Test]
+        public void NoSpecifier()
+        {
+            TestSpecifier("%s", 1, 1, null, null, 0, 0, false, false, false, false, false);
+        }
+    }
 
     [TestFixture]
     public class PrintfStringTests
