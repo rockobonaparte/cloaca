@@ -431,6 +431,14 @@ namespace CloacaTests
         {
             TestSpecifier("%s", 1, 1, null, null, 0, 0, false, false, false, false, false);
         }
+
+        [Test]
+        public void WidthsAndPrecisions()
+        {
+            TestSpecifier("%123d", 1, 4, null, null, 123, 0, false, false, false, false, false);
+            TestSpecifier("%12.3d", 1, 5, null, null, 12, 3, false, false, false, false, false);
+            TestSpecifier("%.1d", 1, 3, null, null, 0, 1, false, false, false, false, false);
+        }
     }
 
     [TestFixture]

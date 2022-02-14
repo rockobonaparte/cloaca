@@ -119,7 +119,11 @@ namespace LanguageImplementation
                         }
                         else
                         {
-                            Width = Int32.Parse(numBuilder.ToString());
+                            // Can't Int32.Parse and empty string.
+                            if(numBuilder.Length > 0)
+                            {
+                                Width = Int32.Parse(numBuilder.ToString());
+                            }
                             mode = TextParseMode.PrecisionMode;
                             numBuilder.Clear();
                         }
