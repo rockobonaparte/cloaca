@@ -439,6 +439,21 @@ namespace CloacaTests
             TestSpecifier("%12.3d", 1, 5, null, null, 12, 3, false, false, false, false, false);
             TestSpecifier("%.1d", 1, 3, null, null, 0, 1, false, false, false, false, false);
         }
+
+        [Test]
+        public void AllConversionOperators()
+        {
+            // CPython doesn't really care about orders and duplicates so we'll try some
+            // funny combinations
+            // >>> "Hey %# +-f" % 10.4
+            // 'Hey +10.400000'
+            // >>> "Hey %# +---+f" % 10.4
+            // 'Hey +10.400000'
+            // >>> "Hey %# +---+- +f" % 10.4
+            TestSpecifier("%# +-0f", 1, 6, null, null, 0, 0, true, true, true, true, true);
+            TestSpecifier("%# +-0--+f", 1, 9, null, null, 0, 0, true, true, true, true, true);
+            TestSpecifier("%# +---+-0 +f", 1, 12, null, null, 0, 0, true, true, true, true, true);
+        }
     }
 
     [TestFixture]
