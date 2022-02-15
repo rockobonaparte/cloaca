@@ -175,8 +175,20 @@ namespace LanguageImplementation
     // https://docs.python.org/3/library/stdtypes.html#old-string-formatting
     public class PrintfHelper
     {
+        private static string formatString(ConversionSpecifier spec, object insert, out object error_out)
+        {
+            string insert_str = insert as string;
+            if(insert_str == null)
+            {
+                insert_str = insert.ToString();
+            }
+            error_out = null;
+            return insert_str;
+        }
+
         public static string Format(string in_str, out object error_out, params object[] in_obj)
         {
+            error_out = null;
             var conversion_spec = new ConversionSpecifier();
             var builder = new StringBuilder();
             int prev_i, next_i, param_i = 0;
@@ -215,11 +227,10 @@ namespace LanguageImplementation
                     next_i += 1;
                 }
 
-
                 switch(in_str[next_i])
                 {
                     case 's':
-                        builder.Append(in_obj[param_i]);
+                        builder.Append(formatString(conversion_spec, in_obj[param_i], out error_out));
                         next_i += 1;
                         break;
                     case 'd':
@@ -231,11 +242,14 @@ namespace LanguageImplementation
                             + in_str[next_i] +"' (0x" + Convert.ToByte(in_str[next_i]) + ") at index " + next_i + 1);
                         return null;
                 }
+                if(error_out != null)
+                {
+                    return null;
+                }
                 param_i += 1;
             }
 
             builder.Append(in_str.Substring(prev_i));
-            error_out = null;
             return builder.ToString();
         }
     }
