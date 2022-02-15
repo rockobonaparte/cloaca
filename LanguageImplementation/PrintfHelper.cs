@@ -177,6 +177,7 @@ namespace LanguageImplementation
     {
         public static string Format(string in_str, out object error_out, params object[] in_obj)
         {
+            var conversion_spec = new ConversionSpecifier();
             var builder = new StringBuilder();
             int prev_i, next_i, param_i = 0;
 
@@ -186,41 +187,34 @@ namespace LanguageImplementation
             {
                 // These might be conversion flag characters: [#0-+ ]
                 // OR it might be another % sign which means that it's being escaped.
-                string conversion_flag = null;
-                int conversion_flag_start = next_i;
                 if(in_str[next_i+1] == '%')
                 {
                     builder.Append(in_str.Substring(prev_i, 1 + next_i - prev_i));
                     next_i += 2;
                     continue;
-                }
+                } 
 
-                if (next_i >= in_str.Length - 1)
+                if (next_i + 1 >= in_str.Length - 1)
                 {
                     error_out = ValueErrorClass.Create("ValueError: incomplete format");
                     return null;
                 }
-                else
+
+                builder.Append(in_str.Substring(prev_i, next_i - prev_i));
+
+                if (ConversionSpecifier.StartsConversionSpecifier(in_str[next_i + 1]))
                 {
-                    builder.Append(in_str.Substring(prev_i, next_i - prev_i));
-                    // break out if it's a conversion type or invalid. Otherwise, keep reading to eat up
-                    // a conversion flag.
-                    next_i += 1;
-                    prev_i = next_i;
-                    while(next_i < in_str.Length && (
-                        in_str[next_i] == '#' ||
-                        in_str[next_i] == '+' ||
-                        in_str[next_i] == '-' ||
-                        in_str[next_i] == ' ' ||
-                        (in_str[next_i] >= '0' && in_str[next_i] <= '9')
-                        ))
+                    next_i = conversion_spec.ParseFromString(in_str, next_i + 1, out error_out);
+                    if(error_out != null)
                     {
-                        next_i += 1;
+                        return null;
                     }
                 }
+                else
+                {
+                    next_i += 1;
+                }
 
-                conversion_flag = in_str.Substring(conversion_flag_start, next_i - conversion_flag_start);
-                builder.Append(in_str.Substring(prev_i, next_i - prev_i));
 
                 switch(in_str[next_i])
                 {
