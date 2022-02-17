@@ -504,7 +504,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Numeric arguments to delimiters not yet implemented")]
         public void StringNumberPositiveNumber()
         {
             PrintfTest(
@@ -514,7 +513,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Numeric arguments to delimiters not yet implemented")]
         public void StringNumberNegativeNumber()
         {
             PrintfTest(

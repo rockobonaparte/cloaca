@@ -183,7 +183,32 @@ namespace LanguageImplementation
                 insert_str = insert.ToString();
             }
             error_out = null;
+
+            if(spec.Width > 0 && spec.Width > insert_str.Length)
+            {
+                if(spec.LeftAdjusted)
+                {
+                    insert_str = insert_str.PadRight(spec.Width);
+                }
+                else
+                {
+                    insert_str = insert_str.PadLeft(spec.Width);
+                }
+            }
             return insert_str;
+        }
+
+        // Allows going out of bounds. Returns negative one.
+        private static int nextPercentSign(string in_str, int next_i)
+        {
+            if(next_i >= in_str.Length)
+            {
+                return -1;
+            }
+            else
+            {
+                return in_str.IndexOf('%', next_i);
+            }
         }
 
         public static string Format(string in_str, out object error_out, params object[] in_obj)
@@ -195,7 +220,7 @@ namespace LanguageImplementation
 
             for(prev_i = 0, next_i = in_str.IndexOf('%'); 
                 next_i < in_str.Length && next_i >= 0;
-                prev_i = next_i, next_i = in_str.IndexOf('%', next_i + 1))
+                prev_i = next_i, next_i = nextPercentSign(in_str, next_i + 1))
             {
                 // These might be conversion flag characters: [#0-+ ]
                 // OR it might be another % sign which means that it's being escaped.
