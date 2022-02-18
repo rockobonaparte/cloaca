@@ -520,5 +520,26 @@ namespace CloacaTests
                 "what butt      ",
                 new object[] { PyString.Create("butt") });
         }
+
+        [Test]
+        public void DecimalFormatting()
+        {
+            PrintfTest(
+                "%5d",
+                " 1234",
+                new object[] { PyInteger.Create(1234) });
+            PrintfTest(
+                "%-5d",
+                "1234 ",
+                new object[] { PyInteger.Create(1234) });
+            PrintfTest(
+                "%05d",
+                "01234",
+                new object[] { PyInteger.Create(1234) });
+            PrintfTest(
+                "%-05d",
+                "1234 ",
+                new object[] { PyInteger.Create(1234) });
+        }
     }
 }

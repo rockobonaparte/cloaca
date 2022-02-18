@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using LanguageImplementation.DataTypes.Exceptions;
 
@@ -259,7 +260,12 @@ namespace LanguageImplementation
                         next_i += 1;
                         break;
                     case 'd':
-                        builder.Append(in_obj[param_i]);
+                        var formatted = formatString(conversion_spec, in_obj[param_i], out error_out);
+                        if (conversion_spec.ZeroPadded)
+                        {
+                            formatted = Regex.Replace(formatted, @"^\s", "0");
+                        }
+                        builder.Append(formatted);
                         next_i += 1;
                         break;
                     default:
