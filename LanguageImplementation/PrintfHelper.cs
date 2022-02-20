@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
-
+using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 
 namespace LanguageImplementation
@@ -267,6 +268,46 @@ namespace LanguageImplementation
                         }
                         builder.Append(formatted);
                         next_i += 1;
+                        break;
+                    case 'f':
+                        {
+                            var p = in_obj[param_i];
+                            string s;
+
+                            if(p is PyBool)
+                            {
+                                var asPyBool = p as PyBool;
+                                s = asPyBool.InternalValue ? "1.0" : "0.0";
+                            }
+                            else if(p is bool)
+                            {
+                                var asBool = (bool) p;
+                                s = asBool ? "1.0" : "0.0";
+                            }
+                            else if (p is PyInteger || 
+                                p is int ||
+                                p is long ||
+                                p is ulong ||
+                                p is uint ||
+                                p is BigInteger)
+                            {
+                                s = p.ToString() + ".0";
+                            }
+                            else if (!(
+                                p is PyFloat ||
+                                p is float ||
+                                p is decimal ||
+                                p is double
+                                ))
+                            {
+                                s = p.ToString();
+                            }
+                            else
+                            {
+                                error_out = TypeErrorClass.Create("TypeError: must be real number, not " + p.GetType().Name);
+                                return null;
+                            }
+                        }
                         break;
                     default:
                         error_out = ValueErrorClass.Create("ValueError: unsupported format character '"

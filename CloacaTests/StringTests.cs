@@ -541,5 +541,35 @@ namespace CloacaTests
                 "1234 ",
                 new object[] { PyInteger.Create(1234) });
         }
+
+        [Test]
+        [Ignore("Work in progress to support floating point types")]
+        public void FloatFormattingPositive()
+        {
+            PrintfTest(
+                "%2.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%02.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%1.5f",
+                "123.45000",
+                new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%05.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%010.1f",
+                "00000123.5",
+                new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%3.0f",
+                "123",
+                new object[] { PyFloat.Create(123.45) });
+        }
     }
 }
