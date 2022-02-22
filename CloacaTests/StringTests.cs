@@ -557,10 +557,10 @@ namespace CloacaTests
                 "%1.5f",
                 "123.45000",
                 new object[] { PyFloat.Create(123.45) });
-            //PrintfTest(
-            //    "%05.1f",
-            //    "123.5",
-            //    new object[] { PyFloat.Create(123.45) });
+            PrintfTest(
+                "%05.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
             //PrintfTest(
             //    "%010.1f",
             //    "00000123.5",

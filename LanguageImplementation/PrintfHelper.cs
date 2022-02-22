@@ -331,7 +331,6 @@ namespace LanguageImplementation
                             }
                             var intPart = splitArr[0];
                             var fractPart = splitArr.Length == 2 ? splitArr[1] : "";
-                            intPart = formatString(conversion_spec, intPart, out error_out);
                             if(error_out != null)
                             {
                                 return null;
@@ -341,7 +340,14 @@ namespace LanguageImplementation
                             {
                                 return null;
                             }
-                            return intPart + "." + fractPart;
+
+                            var combined = intPart + "." + fractPart;
+                            combined = formatString(conversion_spec, combined, out error_out);
+                            if (error_out != null)
+                            {
+                                return null;
+                            }
+                            return combined;
                         }
                         break;
                     default:
