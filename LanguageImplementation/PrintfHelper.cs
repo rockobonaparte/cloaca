@@ -177,6 +177,18 @@ namespace LanguageImplementation
     // https://docs.python.org/3/library/stdtypes.html#old-string-formatting
     public class PrintfHelper
     {
+        private static string FormatStringFromPrecision(int precision, object insert, out object error_out)
+        {
+            string insert_str = insert as string;
+            if (insert_str == null)
+            {
+                insert_str = insert.ToString();
+            }
+            error_out = null;
+
+            return insert_str.PadRight(precision, '0');
+        }
+
         private static string formatString(ConversionSpecifier spec, object insert, out object error_out)
         {
             string insert_str = insert as string;
@@ -293,20 +305,43 @@ namespace LanguageImplementation
                             {
                                 s = p.ToString() + ".0";
                             }
-                            else if (!(
-                                p is PyFloat ||
+                            else if(p is PyFloat)
+                            {
+                                s = Math.Round(((PyFloat) p).InternalValue, conversion_spec.Precision, MidpointRounding.AwayFromZero).ToString();
+                            }
+                            else if (
                                 p is float ||
                                 p is decimal ||
                                 p is double
-                                ))
+                                )
                             {
-                                s = p.ToString();
+                                s = Math.Round((decimal) p, conversion_spec.Precision, MidpointRounding.AwayFromZero).ToString();
                             }
                             else
                             {
                                 error_out = TypeErrorClass.Create("TypeError: must be real number, not " + p.GetType().Name);
                                 return null;
                             }
+
+                            var splitArr = s.Split('.');
+                            if(splitArr.Length > 2)
+                            {
+                                error_out = ValueErrorClass.Create("ValueError: unsupported floating-point conversion: " + s);
+                                return null;
+                            }
+                            var intPart = splitArr[0];
+                            var fractPart = splitArr.Length == 2 ? splitArr[1] : "";
+                            intPart = formatString(conversion_spec, intPart, out error_out);
+                            if(error_out != null)
+                            {
+                                return null;
+                            }
+                            fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart, out error_out);
+                            if (error_out != null)
+                            {
+                                return null;
+                            }
+                            return intPart + "." + fractPart;
                         }
                         break;
                     default:
