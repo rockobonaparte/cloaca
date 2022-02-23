@@ -570,5 +570,34 @@ namespace CloacaTests
                 "123",
                 new object[] { PyFloat.Create(123.45) });
         }
+
+        [Test]
+        public void FloatFormattingNegative()
+        {
+            PrintfTest(
+                "%-2.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            PrintfTest(
+                "%-02.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            PrintfTest(
+                "%-1.5f",
+                "-123.45000",
+                new object[] { PyFloat.Create(-123.45) });
+            PrintfTest(
+                "%-05.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            PrintfTest(
+                "%-010.1f",
+                "-123.5    ",
+                new object[] { PyFloat.Create(-123.45) });
+            PrintfTest(
+                "%-3.0f",
+                "-123",
+                new object[] { PyFloat.Create(-123.45) });
+        }
     }
 }
