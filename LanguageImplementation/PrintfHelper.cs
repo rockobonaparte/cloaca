@@ -206,7 +206,7 @@ namespace LanguageImplementation
                 }
                 else
                 {
-                    insert_str = insert_str.PadLeft(spec.Width);
+                    insert_str = insert_str.PadLeft(spec.Width, spec.ZeroPadded? '0' : ' ');
                 }
             }
             return insert_str;
@@ -341,7 +341,16 @@ namespace LanguageImplementation
                                 return null;
                             }
 
-                            var combined = intPart + "." + fractPart;
+                            string combined;
+                            if (conversion_spec.Precision > 0)
+                            {
+                                combined = intPart + "." + fractPart;
+                            }
+                            else
+                            {
+                                combined = intPart;
+                            }
+
                             combined = formatString(conversion_spec, combined, out error_out);
                             if (error_out != null)
                             {
