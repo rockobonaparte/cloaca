@@ -272,6 +272,8 @@ namespace LanguageImplementation
                         builder.Append(formatString(conversion_spec, in_obj[param_i], out error_out));
                         next_i += 1;
                         break;
+                    case 'i':
+                    case 'u':
                     case 'd':
                         var formatted = formatString(conversion_spec, in_obj[param_i], out error_out);
                         if (conversion_spec.ZeroPadded)
@@ -282,6 +284,7 @@ namespace LanguageImplementation
                         next_i += 1;
                         break;
                     case 'f':
+                    case 'F':
                         {
                             var p = in_obj[param_i];
                             string s;
