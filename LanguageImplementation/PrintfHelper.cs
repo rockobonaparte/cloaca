@@ -268,10 +268,39 @@ namespace LanguageImplementation
 
                 switch(in_str[next_i])
                 {
+                    case 'a':
+                        // string, using ascii() on Python objects.
+                        error_out = NotImplementedErrorClass.Create("%a is not yet implemented");
+                        return null;
+                    case 'c':
+                        // single character either as a, well, single character, or as an integer
+                        error_out = NotImplementedErrorClass.Create("%c is not yet implemented");
+                        return null;
                     case 's':
                         builder.Append(formatString(conversion_spec, in_obj[param_i], out error_out));
                         next_i += 1;
                         break;
+                    case 'r':
+                        // %r calls __repr__ for Python objects.
+                        error_out = NotImplementedErrorClass.Create("%r is not yet implemented");
+                        return null;
+                    case 'x':
+                    case 'X':
+                        // %x and %X are for hex representation of integers, with %X handling uppercase
+                        error_out = NotImplementedErrorClass.Create("%x and %X are not yet implemented");
+                        return null;
+                    case 'e':
+                    case 'E':
+                        // Exponential format for floating point numbers
+                        error_out = NotImplementedErrorClass.Create("%e and %E are not yet implemented");
+                        return null;
+                    case 'g':
+                    case 'G':
+                        // "Floating point format. Uses uppercase exponential format if exponent is less than -4
+                        // or not less than precision, decimal format otherwise."
+                        // %G being uppercase form
+                        error_out = NotImplementedErrorClass.Create("%g and %G are not yet implemented");
+                        return null;
                     case 'i':
                     case 'u':
                     case 'd':
