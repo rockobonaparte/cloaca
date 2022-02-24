@@ -86,6 +86,11 @@ namespace LanguageImplementation.DataTypes.Exceptions
 
     public class NotImplementedError : PyException
     {
+        public NotImplementedError() : base()
+        {
+            // Parameterless constructor for DefaultNew() and Create()
+        }
+
         public NotImplementedError(string msg) : base(msg)
         {
 
@@ -122,6 +127,14 @@ namespace LanguageImplementation.DataTypes.Exceptions
                 return instance;
             }
         }
+
+        public static NotImplementedError Create(string message)
+        {
+            var exc = PyTypeObject.DefaultNew<NotImplementedError>(NotImplementedErrorClass.Instance);
+            exc.Message = message;
+            return exc;
+        }
+
     }
 
     public class TypeError : PyException
