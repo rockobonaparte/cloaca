@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using LanguageImplementation.DataTypes;
 using LanguageImplementation.DataTypes.Exceptions;
 
@@ -173,6 +174,12 @@ namespace LanguageImplementation
         }
     }
 
+    public class FormatStringResult
+    {
+        public string Formatted;
+        public object Error;
+    }
+
     // Used for implementing printf-like functionality like:
     // https://docs.python.org/3/library/stdtypes.html#old-string-formatting
     public class PrintfHelper
@@ -189,15 +196,9 @@ namespace LanguageImplementation
             return insert_str.PadRight(precision, '0');
         }
 
-        private static string formatString(ConversionSpecifier spec, object insert, out object error_out)
+        private static string formatString(ConversionSpecifier spec, string insert_str, out object error_out)
         {
-            string insert_str = insert as string;
-            if(insert_str == null)
-            {
-                insert_str = insert.ToString();
-            }
             error_out = null;
-
             if(spec.Width > 0 && spec.Width > insert_str.Length)
             {
                 if(spec.LeftAdjusted)
@@ -225,9 +226,11 @@ namespace LanguageImplementation
             }
         }
 
-        public static string Format(string in_str, out object error_out, params object[] in_obj)
+        // The goofy result value is necessary because I can't set errors in an out parameter when using asynchronous functions.
+        // I have to use asynchronous functions since some of the formatters will call PyObject functions like __str__ or __repr__.
+        public static async Task<FormatStringResult> Format(IInterpreter interpreter, FrameContext context, string in_str, params object[] in_obj)
         {
-            error_out = null;
+            var formatResult = new FormatStringResult();
             var conversion_spec = new ConversionSpecifier();
             var builder = new StringBuilder();
             int prev_i, next_i, param_i = 0;
@@ -247,7 +250,7 @@ namespace LanguageImplementation
 
                 if (next_i + 1 >= in_str.Length - 1)
                 {
-                    error_out = ValueErrorClass.Create("ValueError: incomplete format");
+                    formatResult.Error = ValueErrorClass.Create("ValueError: incomplete format");
                     return null;
                 }
 
@@ -255,8 +258,8 @@ namespace LanguageImplementation
 
                 if (ConversionSpecifier.StartsConversionSpecifier(in_str[next_i + 1]))
                 {
-                    next_i = conversion_spec.ParseFromString(in_str, next_i + 1, out error_out);
-                    if(error_out != null)
+                    next_i = conversion_spec.ParseFromString(in_str, next_i + 1, out formatResult.Error);
+                    if(formatResult.Error != null)
                     {
                         return null;
                     }
@@ -270,41 +273,56 @@ namespace LanguageImplementation
                 {
                     case 'a':
                         // string, using ascii() on Python objects.
-                        error_out = NotImplementedErrorClass.Create("%a is not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%a is not yet implemented");
                         return null;
                     case 'c':
                         // single character either as a, well, single character, or as an integer
-                        error_out = NotImplementedErrorClass.Create("%c is not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%c is not yet implemented");
                         return null;
                     case 's':
-                        builder.Append(formatString(conversion_spec, in_obj[param_i], out error_out));
-                        next_i += 1;
+                        {
+                            var asPyObject = in_obj[param_i] as PyObject;
+                            string as_string;
+                            if(asPyObject != null)
+                            {
+                                var retval = await asPyObject.InvokeFromDict(interpreter, context, "__str__");
+                                as_string = retval.ToString();
+                            }
+                            else
+                            {
+                                as_string = in_obj[param_i].ToString();
+                            }
+                            formatResult.Error = null;
+
+                            builder.Append(formatString(conversion_spec, as_string, out formatResult.Error));
+                            next_i += 1;
+                        }
                         break;
                     case 'r':
                         // %r calls __repr__ for Python objects.
-                        error_out = NotImplementedErrorClass.Create("%r is not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%r is not yet implemented");
                         return null;
                     case 'x':
                     case 'X':
                         // %x and %X are for hex representation of integers, with %X handling uppercase
-                        error_out = NotImplementedErrorClass.Create("%x and %X are not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%x and %X are not yet implemented");
                         return null;
                     case 'e':
                     case 'E':
                         // Exponential format for floating point numbers
-                        error_out = NotImplementedErrorClass.Create("%e and %E are not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%e and %E are not yet implemented");
                         return null;
                     case 'g':
                     case 'G':
                         // "Floating point format. Uses uppercase exponential format if exponent is less than -4
                         // or not less than precision, decimal format otherwise."
                         // %G being uppercase form
-                        error_out = NotImplementedErrorClass.Create("%g and %G are not yet implemented");
+                        formatResult.Error = NotImplementedErrorClass.Create("%g and %G are not yet implemented");
                         return null;
                     case 'i':
                     case 'u':
                     case 'd':
-                        var formatted = formatString(conversion_spec, in_obj[param_i], out error_out);
+                        var formatted = formatString(conversion_spec, in_obj[param_i].ToString(), out formatResult.Error);
                         if (conversion_spec.ZeroPadded)
                         {
                             formatted = Regex.Replace(formatted, @"^\s", "0");
@@ -351,24 +369,24 @@ namespace LanguageImplementation
                             }
                             else
                             {
-                                error_out = TypeErrorClass.Create("TypeError: must be real number, not " + p.GetType().Name);
+                                formatResult.Error = TypeErrorClass.Create("TypeError: must be real number, not " + p.GetType().Name);
                                 return null;
                             }
 
                             var splitArr = s.Split('.');
                             if(splitArr.Length > 2)
                             {
-                                error_out = ValueErrorClass.Create("ValueError: unsupported floating-point conversion: " + s);
+                                formatResult.Error = ValueErrorClass.Create("ValueError: unsupported floating-point conversion: " + s);
                                 return null;
                             }
                             var intPart = splitArr[0];
                             var fractPart = splitArr.Length == 2 ? splitArr[1] : "";
-                            if(error_out != null)
+                            if(formatResult.Error != null)
                             {
                                 return null;
                             }
-                            fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart, out error_out);
-                            if (error_out != null)
+                            fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart, out formatResult.Error);
+                            if (formatResult.Error != null)
                             {
                                 return null;
                             }
@@ -383,20 +401,21 @@ namespace LanguageImplementation
                                 combined = intPart;
                             }
 
-                            combined = formatString(conversion_spec, combined, out error_out);
-                            if (error_out != null)
+                            combined = formatString(conversion_spec, combined, out formatResult.Error);
+                            if (formatResult.Error != null)
                             {
                                 return null;
                             }
-                            return combined;
+                            formatResult.Formatted = combined;
+                            return formatResult;
                         }
                         break;
                     default:
-                        error_out = ValueErrorClass.Create("ValueError: unsupported format character '"
+                        formatResult.Error = ValueErrorClass.Create("ValueError: unsupported format character '"
                             + in_str[next_i] +"' (0x" + Convert.ToByte(in_str[next_i]) + ") at index " + next_i + 1);
                         return null;
                 }
-                if(error_out != null)
+                if(formatResult.Error != null)
                 {
                     return null;
                 }
@@ -404,7 +423,8 @@ namespace LanguageImplementation
             }
 
             builder.Append(in_str.Substring(prev_i));
-            return builder.ToString();
+            formatResult.Formatted = builder.ToString();
+            return formatResult;
         }
     }
 }
