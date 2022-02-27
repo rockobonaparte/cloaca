@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -255,18 +256,18 @@ namespace LanguageImplementation
             var builder = new StringBuilder();
             int prev_i, next_i, param_i = 0;
 
-            for(prev_i = 0, next_i = in_str.IndexOf('%'); 
+            for (prev_i = 0, next_i = in_str.IndexOf('%');
                 next_i < in_str.Length && next_i >= 0;
                 prev_i = next_i, next_i = nextPercentSign(in_str, next_i + 1))
             {
                 // These might be conversion flag characters: [#0-+ ]
                 // OR it might be another % sign which means that it's being escaped.
-                if(in_str[next_i+1] == '%')
+                if (in_str[next_i + 1] == '%')
                 {
                     builder.Append(in_str.Substring(prev_i, 1 + next_i - prev_i));
                     next_i += 2;
                     continue;
-                } 
+                }
 
                 if (next_i + 1 >= in_str.Length - 1)
                 {
@@ -279,7 +280,7 @@ namespace LanguageImplementation
                 if (ConversionSpecifier.StartsConversionSpecifier(in_str[next_i + 1]))
                 {
                     next_i = conversion_spec.ParseFromString(in_str, next_i + 1, out formatResult.Error);
-                    if(formatResult.Error != null)
+                    if (formatResult.Error != null)
                     {
                         return formatResult;
                     }
@@ -289,7 +290,7 @@ namespace LanguageImplementation
                     next_i += 1;
                 }
 
-                switch(in_str[next_i])
+                switch (in_str[next_i])
                 {
                     case 'a':
                         // string, using ascii() on Python objects.
@@ -320,9 +321,30 @@ namespace LanguageImplementation
                         return formatResult;
                     case 'e':
                     case 'E':
-                        // Exponential format for floating point numbers
-                        formatResult.Error = NotImplementedErrorClass.Create("%e and %E are not yet implemented");
-                        return formatResult;
+                        {
+                            // Probably want to start with an object and unpack into it before using ToString() on it.
+                            // Exponential format for floating point numbers
+                            int digits = conversion_spec.Precision;
+                            digits = digits < 0 ? 0 : digits;
+                            string formattedExp;
+
+                            var asPyFloat = in_obj[param_i] as PyFloat;
+                            if (asPyFloat != null)
+                            {
+                                //var numberFormat = (NumberFormatInfo)NumberFormatInfo.CurrentInfo.Clone();
+                                //numberFormat.NumberDecimalDigits = digits;
+                                formattedExp = asPyFloat.InternalValue.ToString("e" + digits);
+                            }
+                            else
+                            {
+                                formatResult.Error = TypeErrorClass.Create("TypeError: must be real number, not " + in_obj[param_i].GetType().Name);
+                                return formatResult;
+                            }
+
+                            builder.Append(formattedExp);
+                            next_i += 1;
+                            break;
+                        }
                     case 'g':
                     case 'G':
                         // "Floating point format. Uses uppercase exponential format if exponent is less than -4
