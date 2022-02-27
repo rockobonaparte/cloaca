@@ -226,6 +226,26 @@ namespace LanguageImplementation
             }
         }
 
+        private async static Task<string> formatFromCall(IInterpreter interpreter, FrameContext context, string str_getter_func,
+            object in_obj, ConversionSpecifier conversion_spec, FormatStringResult res)
+        {
+            var asPyObject = in_obj as PyObject;
+            string as_string;
+            if (asPyObject != null)
+            {
+                var retval = await asPyObject.InvokeFromDict(interpreter, context, str_getter_func);
+                as_string = retval.ToString();
+            }
+            else
+            {
+                as_string = in_obj.ToString();
+            }
+            res.Error = null;
+
+            return formatString(conversion_spec, as_string, out res.Error);
+
+        }
+
         // The goofy result value is necessary because I can't set errors in an out parameter when using asynchronous functions.
         // I have to use asynchronous functions since some of the formatters will call PyObject functions like __str__ or __repr__.
         public static async Task<FormatStringResult> Format(IInterpreter interpreter, FrameContext context, string in_str, params object[] in_obj)
