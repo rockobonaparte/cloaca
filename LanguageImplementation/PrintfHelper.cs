@@ -261,7 +261,7 @@ namespace LanguageImplementation
                     next_i = conversion_spec.ParseFromString(in_str, next_i + 1, out formatResult.Error);
                     if(formatResult.Error != null)
                     {
-                        return null;
+                        return formatResult;
                     }
                 }
                 else
@@ -274,51 +274,39 @@ namespace LanguageImplementation
                     case 'a':
                         // string, using ascii() on Python objects.
                         formatResult.Error = NotImplementedErrorClass.Create("%a is not yet implemented");
-                        return null;
+                        return formatResult;
                     case 'c':
                         // single character either as a, well, single character, or as an integer
                         formatResult.Error = NotImplementedErrorClass.Create("%c is not yet implemented");
-                        return null;
+                        return formatResult;
                     case 's':
                         {
-                            var asPyObject = in_obj[param_i] as PyObject;
-                            string as_string;
-                            if(asPyObject != null)
-                            {
-                                var retval = await asPyObject.InvokeFromDict(interpreter, context, "__str__");
-                                as_string = retval.ToString();
-                            }
-                            else
-                            {
-                                as_string = in_obj[param_i].ToString();
-                            }
-                            formatResult.Error = null;
-
-                            builder.Append(formatString(conversion_spec, as_string, out formatResult.Error));
+                            var str_formatted = await formatFromCall(interpreter, context, "__str__", in_obj[param_i], conversion_spec, formatResult);
+                            builder.Append(str_formatted);
                             next_i += 1;
                         }
                         break;
                     case 'r':
                         // %r calls __repr__ for Python objects.
                         formatResult.Error = NotImplementedErrorClass.Create("%r is not yet implemented");
-                        return null;
+                        return formatResult;
                     case 'x':
                     case 'X':
                         // %x and %X are for hex representation of integers, with %X handling uppercase
                         formatResult.Error = NotImplementedErrorClass.Create("%x and %X are not yet implemented");
-                        return null;
+                        return formatResult;
                     case 'e':
                     case 'E':
                         // Exponential format for floating point numbers
                         formatResult.Error = NotImplementedErrorClass.Create("%e and %E are not yet implemented");
-                        return null;
+                        return formatResult;
                     case 'g':
                     case 'G':
                         // "Floating point format. Uses uppercase exponential format if exponent is less than -4
                         // or not less than precision, decimal format otherwise."
                         // %G being uppercase form
                         formatResult.Error = NotImplementedErrorClass.Create("%g and %G are not yet implemented");
-                        return null;
+                        return formatResult;
                     case 'i':
                     case 'u':
                     case 'd':
@@ -370,25 +358,25 @@ namespace LanguageImplementation
                             else
                             {
                                 formatResult.Error = TypeErrorClass.Create("TypeError: must be real number, not " + p.GetType().Name);
-                                return null;
+                                return formatResult;
                             }
 
                             var splitArr = s.Split('.');
                             if(splitArr.Length > 2)
                             {
                                 formatResult.Error = ValueErrorClass.Create("ValueError: unsupported floating-point conversion: " + s);
-                                return null;
+                                return formatResult;
                             }
                             var intPart = splitArr[0];
                             var fractPart = splitArr.Length == 2 ? splitArr[1] : "";
                             if(formatResult.Error != null)
                             {
-                                return null;
+                                return formatResult;
                             }
                             fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart, out formatResult.Error);
                             if (formatResult.Error != null)
                             {
-                                return null;
+                                return formatResult;
                             }
 
                             string combined;
@@ -404,7 +392,7 @@ namespace LanguageImplementation
                             combined = formatString(conversion_spec, combined, out formatResult.Error);
                             if (formatResult.Error != null)
                             {
-                                return null;
+                                return formatResult;
                             }
                             formatResult.Formatted = combined;
                             return formatResult;
@@ -417,7 +405,7 @@ namespace LanguageImplementation
                 }
                 if(formatResult.Error != null)
                 {
-                    return null;
+                    return formatResult;
                 }
                 param_i += 1;
             }
