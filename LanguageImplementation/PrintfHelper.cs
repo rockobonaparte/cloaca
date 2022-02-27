@@ -307,9 +307,12 @@ namespace LanguageImplementation
                         }
                         break;
                     case 'r':
-                        // %r calls __repr__ for Python objects.
-                        formatResult.Error = NotImplementedErrorClass.Create("%r is not yet implemented");
-                        return formatResult;
+                        {
+                            var str_formatted = await formatFromCall(interpreter, context, "__repr__", in_obj[param_i], conversion_spec, formatResult);
+                            builder.Append(str_formatted);
+                            next_i += 1;
+                        }
+                        break;
                     case 'x':
                     case 'X':
                         // %x and %X are for hex representation of integers, with %X handling uppercase

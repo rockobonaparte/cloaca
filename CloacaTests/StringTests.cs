@@ -499,6 +499,15 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task BasicReprString()
+        {
+            await PrintfTest(
+                "string %r here",
+                "string butt here",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
         public async Task EscapedDelimiter()
         {
             await PrintfTest(
