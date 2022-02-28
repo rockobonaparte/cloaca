@@ -329,16 +329,40 @@ namespace LanguageImplementation
                             string formattedExp;
 
                             var asPyFloat = in_obj[param_i] as PyFloat;
+                            dynamic number;
                             if (asPyFloat != null)
                             {
-                                //var numberFormat = (NumberFormatInfo)NumberFormatInfo.CurrentInfo.Clone();
-                                //numberFormat.NumberDecimalDigits = digits;
-                                formattedExp = asPyFloat.InternalValue.ToString("e" + digits);
-                            }
+                                // A basic discussion online got me the impression it's not possible to do this a better way.
+                                // I was thinking a NumberFormatInfo object could take care of things, but it looks like those
+                                // do something more like set how the locale treats stuff and not how a particular ToString will
+                                // format something. Like, it won't get rid of me having to use an "e" here.
+                                number = asPyFloat.InternalValue;
+                            } 
                             else
+                            {
+                                // We'll see if .NET can wrangle the number into something meaningful when we use the "e" format
+                                // specifier on it.
+                                number = in_obj[param_i];
+                            }
+
+                            try
+                            {
+                                formattedExp = number.ToString("e" + digits);
+                            }
+                            catch (Exception e)
                             {
                                 formatResult.Error = TypeErrorClass.Create("TypeError: must be real number, not " + in_obj[param_i].GetType().Name);
                                 return formatResult;
+                            }
+
+                            if (conversion_spec.SignPosAndNeg && formattedExp[0] != '-')
+                            {
+                                formattedExp = "+" + formattedExp;
+                            }
+
+                            if(in_str[next_i] == 'E')
+                            {
+                                formattedExp = formattedExp.ToUpper();
                             }
 
                             builder.Append(formattedExp);

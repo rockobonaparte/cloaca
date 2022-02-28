@@ -593,22 +593,47 @@ namespace CloacaTests
                 "%1.1e",
                 "1.2e+002",
                 new object[] { PyFloat.Create(123.45) });
-            //await PrintfTest(
-            //    "%1.4e",
-            //    "1.2345e+02",
-            //    new object[] { PyFloat.Create(123.45) });
-            //await PrintfTest(
-            //    "%1.8e",
-            //    "1.23450000e+02",
-            //    new object[] { PyFloat.Create(123.45) });
-            //await PrintfTest(
-            //    "%1.8e",
-            //    "-1.23450000e+02",
-            //    new object[] { PyFloat.Create(-123.45) });
-            //await PrintfTest(
-            //    "%+1.8e",
-            //    "+1.23450000e+02",
-            //    new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.4e",
+                "1.2345e+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8e",
+                "1.23450000e+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8e",
+                "-1.23450000e+002",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%+1.8e",
+                "+1.23450000e+002",
+                new object[] { PyFloat.Create(123.45) });
+        }
+
+        [Test]
+        public async Task ExponentFormattingCapitalE()
+        {
+            await PrintfTest(
+                "%1.1E",
+                "1.2E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.4E",
+                "1.2345E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8E",
+                "1.23450000E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8E",
+                "-1.23450000E+002",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%+1.8E",
+                "+1.23450000E+002",
+                new object[] { PyFloat.Create(123.45) });
         }
 
         [Test]
