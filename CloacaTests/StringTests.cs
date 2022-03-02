@@ -3,7 +3,9 @@ using System.Threading.Tasks;
 
 using NUnit.Framework;
 
+using LanguageImplementation;
 using LanguageImplementation.DataTypes;
+using CloacaInterpreter;
 
 namespace CloacaTests
 {
@@ -395,5 +397,272 @@ namespace CloacaTests
                 }), 1);
         }
 
+    }
+
+    [TestFixture]
+    public class ConversionSpecifierTests
+    {
+        public static void TestSpecifier(string in_str, int start_idx, int end_idx, object error, 
+            string mapping_key,
+            int width,
+            int precision,
+            bool use_alternate_form,
+            bool left_adjusted,
+            bool sign_pos_and_neg,
+            bool zero_padded,
+            bool space_before_pos)
+        {
+            var conv = new ConversionSpecifier();
+            object err;
+            int ret_end_idx = conv.ParseFromString(in_str, start_idx, out err);
+            Assert.That(error, Is.EqualTo(error));
+            Assert.That(end_idx, Is.EqualTo(ret_end_idx));
+            Assert.That(mapping_key, Is.EqualTo(conv.MappingKey));
+            Assert.That(width, Is.EqualTo(conv.Width));
+            Assert.That(precision, Is.EqualTo(conv.Precision));
+            Assert.That(use_alternate_form, Is.EqualTo(conv.AlternateForm));
+            Assert.That(left_adjusted, Is.EqualTo(conv.LeftAdjusted));
+            Assert.That(sign_pos_and_neg, Is.EqualTo(conv.SignPosAndNeg));
+            Assert.That(zero_padded, Is.EqualTo(conv.ZeroPadded));
+            Assert.That(space_before_pos, Is.EqualTo(conv.SpaceBeforePos));
+        }
+
+        [Test]
+        public void NoSpecifier()
+        {
+            TestSpecifier("%s", 1, 1, null, null, 0, 0, false, false, false, false, false);
+        }
+
+        [Test]
+        public void WidthsAndPrecisions()
+        {
+            TestSpecifier("%123d", 1, 4, null, null, 123, 0, false, false, false, false, false);
+            TestSpecifier("%12.3d", 1, 5, null, null, 12, 3, false, false, false, false, false);
+            TestSpecifier("%.1d", 1, 3, null, null, 0, 1, false, false, false, false, false);
+        }
+
+        [Test]
+        public void AllConversionOperators()
+        {
+            // CPython doesn't really care about orders and duplicates so we'll try some
+            // funny combinations
+            // >>> "Hey %# +-f" % 10.4
+            // 'Hey +10.400000'
+            // >>> "Hey %# +---+f" % 10.4
+            // 'Hey +10.400000'
+            // >>> "Hey %# +---+- +f" % 10.4
+            TestSpecifier("%# +-0f", 1, 6, null, null, 0, 0, true, true, true, true, true);
+            TestSpecifier("%# +-0--+f", 1, 9, null, null, 0, 0, true, true, true, true, true);
+            TestSpecifier("%# +---+-0 +f", 1, 12, null, null, 0, 0, true, true, true, true, true);
+        }
+    }
+
+    [TestFixture]
+    public class PrintfStringTests
+    {
+        public async Task PrintfTest(string in_string, string expected_out, params object[] instances)
+        {
+            var scheduler = new Scheduler();
+            var interpreter = new Interpreter(scheduler);
+            scheduler.SetInterpreter(interpreter);
+
+            var format_out = await PrintfHelper.Format(interpreter, null, in_string, instances);
+            Assert.That(format_out.Error, Is.Null);
+            Assert.That(format_out.Formatted, Is.EqualTo(expected_out));
+        }
+
+        [Test]
+        public async Task Passthrough()
+        {
+            await PrintfTest(
+                "experiment",
+                "experiment",
+                new object[0]);
+        }
+
+        [Test]
+        public async Task BasicDecimal()
+        {
+            await PrintfTest(
+                "decimal %d here",
+                "decimal 1337 here",
+                new object[] { PyInteger.Create(1337) });
+        }
+
+        [Test]
+        public async Task BasicString()
+        {
+            await PrintfTest(
+                "string %s here",
+                "string butt here",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        public async Task BasicReprString()
+        {
+            await PrintfTest(
+                "string %r here",
+                "string butt here",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        public async Task EscapedDelimiter()
+        {
+            await PrintfTest(
+                "what %%100",
+                "what %100",
+                new object[0]);
+        }
+
+        [Test]
+        public async Task StringNumberPositiveNumber()
+        {
+            await PrintfTest(
+                "what %10s",
+                "what       butt",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        public async Task StringNumberNegativeNumber()
+        {
+            await PrintfTest(
+                "what %-10s",
+                "what butt      ",
+                new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        public async Task DecimalFormatting()
+        {
+            await PrintfTest(
+                "%5d",
+                " 1234",
+                new object[] { PyInteger.Create(1234) });
+            await PrintfTest(
+                "%-5d",
+                "1234 ",
+                new object[] { PyInteger.Create(1234) });
+            await PrintfTest(
+                "%05d",
+                "01234",
+                new object[] { PyInteger.Create(1234) });
+            await PrintfTest(
+                "%-05d",
+                "1234 ",
+                new object[] { PyInteger.Create(1234) });
+        }
+
+        [Test]
+        public async Task FloatFormattingPositive()
+        {
+            await PrintfTest(
+                "%2.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%02.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.5f",
+                "123.45000",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%05.1f",
+                "123.5",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%010.1f",
+                "00000123.5",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%3.0f",
+                "123",
+                new object[] { PyFloat.Create(123.45) });
+        }
+
+        // FYI: We're kind of phoning this one in. We'll lean on the .NET conversion
+        // and even use its three digit output instead of Python's default two-digit output.
+        [Test]
+        public async Task ExponentFormatting()
+        {
+            await PrintfTest(
+                "%1.1e",
+                "1.2e+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.4e",
+                "1.2345e+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8e",
+                "1.23450000e+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8e",
+                "-1.23450000e+002",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%+1.8e",
+                "+1.23450000e+002",
+                new object[] { PyFloat.Create(123.45) });
+        }
+
+        [Test]
+        public async Task ExponentFormattingCapitalE()
+        {
+            await PrintfTest(
+                "%1.1E",
+                "1.2E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.4E",
+                "1.2345E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8E",
+                "1.23450000E+002",
+                new object[] { PyFloat.Create(123.45) });
+            await PrintfTest(
+                "%1.8E",
+                "-1.23450000E+002",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%+1.8E",
+                "+1.23450000E+002",
+                new object[] { PyFloat.Create(123.45) });
+        }
+
+        [Test]
+        public async Task FloatFormattingNegative()
+        {
+            await PrintfTest(
+                "%-2.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%-02.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%-1.5f",
+                "-123.45000",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%-05.1f",
+                "-123.5",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%-010.1f",
+                "-123.5    ",
+                new object[] { PyFloat.Create(-123.45) });
+            await PrintfTest(
+                "%-3.0f",
+                "-123",
+                new object[] { PyFloat.Create(-123.45) });
+        }
     }
 }
