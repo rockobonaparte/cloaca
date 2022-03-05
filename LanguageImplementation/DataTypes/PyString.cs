@@ -216,6 +216,36 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
+        //  __mod__(self, value, /)
+        //      Return self%value.
+        //
+        public static async Task<PyString> __mod__(IInterpreter interpreter, FrameContext context, PyString self, PyObject value)
+        {
+            // Can be an object that is a single element. Otherwise a tuple for
+            // multiple elements.
+            object[] inserts;
+            var asTuple = value as PyTuple;
+            if(asTuple != null)
+            {
+                inserts = asTuple.Values;
+            }
+            else
+            {
+                inserts = new object[1] { value };
+            }
+            var result = await PrintfHelper.Format(interpreter, context, self.InternalValue, inserts);
+            if (result.Error != null)
+            {
+                context.CurrentException = result.Error;
+                return null;
+            }
+            else
+            {
+                return PyString.Create(result.Formatted);
+            }
+        }
+
+        [ClassMember]
         //  __ne__(self, value, /)
         //      Return self!=value.
         //
@@ -697,9 +727,6 @@ namespace LanguageImplementation.DataTypes
         //
         //  __iter__(self, /)
         //      Implement iter(self).
-        //
-        //  __mod__(self, value, /)
-        //      Return self%value.
         //
         //  __rmod__(self, value, /)
         //      Return value%self.

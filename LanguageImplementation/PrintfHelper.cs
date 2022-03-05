@@ -66,7 +66,7 @@ namespace LanguageImplementation
                    (c >= '0' && c <= '9');
         }
 
-        public int ParseFromString(string format_str, int start_idx, out object error_out)
+        public int ParseFromString(string format_str, int start_idx, out PyObject error_out)
         {
             TextParseMode mode = TextParseMode.WidthMode;
             StringBuilder numBuilder = new StringBuilder();
@@ -178,28 +178,26 @@ namespace LanguageImplementation
     public class FormatStringResult
     {
         public string Formatted;
-        public object Error;
+        public PyObject Error;
     }
 
     // Used for implementing printf-like functionality like:
     // https://docs.python.org/3/library/stdtypes.html#old-string-formatting
     public class PrintfHelper
     {
-        private static string FormatStringFromPrecision(int precision, object insert, out object error_out)
+        private static string FormatStringFromPrecision(int precision, object insert)
         {
             string insert_str = insert as string;
             if (insert_str == null)
             {
                 insert_str = insert.ToString();
             }
-            error_out = null;
 
             return insert_str.PadRight(precision, '0');
         }
 
-        private static string formatString(ConversionSpecifier spec, string insert_str, out object error_out)
+        private static string formatString(ConversionSpecifier spec, string insert_str)
         {
-            error_out = null;
             if(spec.Width > 0 && spec.Width > insert_str.Length)
             {
                 if(spec.LeftAdjusted)
@@ -243,7 +241,7 @@ namespace LanguageImplementation
             }
             res.Error = null;
 
-            return formatString(conversion_spec, as_string, out res.Error);
+            return formatString(conversion_spec, as_string);
 
         }
 
@@ -379,7 +377,7 @@ namespace LanguageImplementation
                     case 'i':
                     case 'u':
                     case 'd':
-                        var formatted = formatString(conversion_spec, in_obj[param_i].ToString(), out formatResult.Error);
+                        var formatted = formatString(conversion_spec, in_obj[param_i].ToString());
                         if (conversion_spec.ZeroPadded)
                         {
                             formatted = Regex.Replace(formatted, @"^\s", "0");
@@ -442,7 +440,7 @@ namespace LanguageImplementation
                             {
                                 return formatResult;
                             }
-                            fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart, out formatResult.Error);
+                            fractPart = FormatStringFromPrecision(conversion_spec.Precision, fractPart);
                             if (formatResult.Error != null)
                             {
                                 return formatResult;
@@ -458,7 +456,7 @@ namespace LanguageImplementation
                                 combined = intPart;
                             }
 
-                            combined = formatString(conversion_spec, combined, out formatResult.Error);
+                            combined = formatString(conversion_spec, combined);
                             if (formatResult.Error != null)
                             {
                                 return formatResult;
