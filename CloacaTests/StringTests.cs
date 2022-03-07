@@ -388,6 +388,17 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task ModBasicTuple()
+        {
+            await runBasicTest(
+                "a = '%s, %s' % ('Hello', 'World!')\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyString.Create("Hello, World!")},
+                }), 1);
+        }
+
+        [Test]
         public async Task Replace()
         {
             await runBasicTest(
