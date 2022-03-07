@@ -377,6 +377,17 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task ModBasicSingle()
+        {
+            await runBasicTest(
+                "a = 'Hello, %s' % 'World!'\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyString.Create("Hello, World!")},
+                }), 1);
+        }
+
+        [Test]
         public async Task Replace()
         {
             await runBasicTest(
@@ -402,7 +413,7 @@ namespace CloacaTests
     [TestFixture]
     public class ConversionSpecifierTests
     {
-        public static void TestSpecifier(string in_str, int start_idx, int end_idx, object error, 
+        public static void TestSpecifier(string in_str, int start_idx, int end_idx, PyObject error, 
             string mapping_key,
             int width,
             int precision,
@@ -413,7 +424,7 @@ namespace CloacaTests
             bool space_before_pos)
         {
             var conv = new ConversionSpecifier();
-            object err;
+            PyObject err;
             int ret_end_idx = conv.ParseFromString(in_str, start_idx, out err);
             Assert.That(error, Is.EqualTo(error));
             Assert.That(end_idx, Is.EqualTo(ret_end_idx));
@@ -496,6 +507,15 @@ namespace CloacaTests
                 "string %s here",
                 "string butt here",
                 new object[] { PyString.Create("butt") });
+        }
+
+        [Test]
+        public async Task InsertAtEnd()
+        {
+            await PrintfTest(
+                "Hello, %s",
+                "Hello, World!",
+                new object[] { PyString.Create("World!") });
         }
 
         [Test]

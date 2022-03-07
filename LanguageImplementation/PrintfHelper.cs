@@ -267,10 +267,10 @@ namespace LanguageImplementation
                     continue;
                 }
 
-                if (next_i + 1 >= in_str.Length - 1)
+                if (next_i + 1 > in_str.Length - 1)
                 {
                     formatResult.Error = ValueErrorClass.Create("ValueError: incomplete format");
-                    return null;
+                    return formatResult;
                 }
 
                 builder.Append(in_str.Substring(prev_i, next_i - prev_i));
@@ -468,7 +468,7 @@ namespace LanguageImplementation
                     default:
                         formatResult.Error = ValueErrorClass.Create("ValueError: unsupported format character '"
                             + in_str[next_i] +"' (0x" + Convert.ToByte(in_str[next_i]) + ") at index " + next_i + 1);
-                        return null;
+                        return formatResult;
                 }
                 if(formatResult.Error != null)
                 {
