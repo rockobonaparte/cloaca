@@ -17,11 +17,12 @@ Some priorities:
 11. [DONE] Rerun tests and refile this list
 
 
-1. Need to get tracebacks for exceptions created inside C# code. Specifically this would be for quicksort.
+1. [DONE] Need to get tracebacks for exceptions created inside C# code. Specifically this would be for quicksort.
 2. Implementing "not in" seems straightforward enough.
 3. Figure out the problem with add_two_numbers and that __init__. 
 
 The others look like a bit of a slog.
+It would also be nice to get a more accurate traceback but that's going to be rough with ANTLR and all.
 
 
 add_two_numbers: Some `__init__` was given 2 arguments when it expected 3

@@ -216,6 +216,38 @@ namespace CloacaInterpreter
         }
 
         /// <summary>
+        /// Helper to add a traceback to an exception if it doesn't have one already. This is
+        /// based on the current frame's position. This is particularly useful to add tracebacks
+        /// for PyExceptions created from .NET code that are meant to look like Python exceptions.
+        /// </summary>
+        /// <param name="context">Context to use for the traceback frame</param>
+        /// <param name="theException">PyException to modify with a traceback based on the given context.
+        /// It is taken as a PyObject since we really only need to inspect the __dict__ and the exceptions
+        /// can come in multiple composite forms.</param>
+        private void AddTracebackToException(FrameContext context, PyObject theException)
+        {
+            var offendingFrame = context.callStack.Peek();
+            if (theException.__dict__.ContainsKey(PyException.TracebackName))
+            {
+                var tb = (PyTraceback) theException.__dict__[PyException.TracebackName];
+                if (tb == null || tb.Frame != offendingFrame)
+                {
+                    theException.__dict__[PyException.TracebackName] =
+                        new PyTraceback((PyTraceback)theException.__dict__[PyException.TracebackName],
+                        offendingFrame,
+                        offendingFrame.Function.Code.GetCodeLine(context.Cursor));
+                }
+            }
+            else
+            {
+                theException.__dict__.Add(PyException.TracebackName,
+                    new PyTraceback(null,
+                    offendingFrame,
+                    offendingFrame.Function.Code.GetCodeLine(context.Cursor)));
+            }
+        }
+
+        /// <summary>
         /// Retains the current frame state but enters a new child CodeObject. This is equivalent to
         /// using a CALL_FUNCTION opcode to descend into a subroutine or similar, but can be invoked
         /// external into the interpreter. It is used for inner, coordinating code to call back into
@@ -261,7 +293,12 @@ namespace CloacaInterpreter
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
 
-            if(context.EscapedDotNetException != null)
+            if(context.CurrentException != null)
+            {
+                AddTracebackToException(context, context.CurrentException);
+            }
+
+            if (context.EscapedDotNetException != null)
             {
                 throw context.EscapedDotNetException;
             }
@@ -1614,22 +1651,7 @@ namespace CloacaInterpreter
                                     theException = new PyException("exceptions must derive from BaseException");
                                 }
 
-                                var offendingFrame = context.callStack.Peek();
-                                if (theException.__dict__.ContainsKey(PyException.TracebackName))
-                                {
-                                    theException.__dict__[PyException.TracebackName] =
-                                        new PyTraceback((PyTraceback)theException.__dict__[PyException.TracebackName],
-                                        offendingFrame,
-                                        offendingFrame.Function.Code.GetCodeLine(context.Cursor));
-                                }
-                                else
-                                {
-                                    theException.__dict__.Add(PyException.TracebackName,
-                                        new PyTraceback(null,
-                                        offendingFrame,
-                                        offendingFrame.Function.Code.GetCodeLine(context.Cursor)));
-                                }
-
+                                AddTracebackToException(context, theException);
                                 context.Cursor += 2;
                                 context.CurrentException = theException;
 
