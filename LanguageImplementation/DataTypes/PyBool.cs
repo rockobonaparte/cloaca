@@ -255,6 +255,18 @@ namespace LanguageImplementation.DataTypes
         public static readonly PyBool True = _makeInstance(true);
         public static readonly PyBool False = _makeInstance(false);
 
+        public static PyBool GetFlipped(PyBool original)
+        {
+            if(original.InternalValue)
+            {
+                return False;
+            }
+            else
+            {
+                return True;
+            }
+        }
+
         public static PyBool Create(bool fromBool)
         {
             if(fromBool)

@@ -301,5 +301,19 @@ namespace CloacaTests
                     { "b", PyBool.False },
                 }), 1);
         }
+
+        [Test]
+        public async Task NotContains()
+        {
+            await runBasicTest(
+                "a = 2 not in [1, 2, 3]\n" +
+                "b = 'F' not in [1, 2, 3]\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.False },
+                    { "b", PyBool.True },
+                }), 1);
+        }
+
     }
 }

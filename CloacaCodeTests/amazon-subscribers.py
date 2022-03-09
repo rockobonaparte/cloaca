@@ -1,4 +1,4 @@
-raise NotImplementedError("'not in' not implemented. Particularly for 'if user_id not in users_in_group'")
+raise NotImplementedError("dict.keys() not yet implemented.")
 
 
 def countGroups(related):

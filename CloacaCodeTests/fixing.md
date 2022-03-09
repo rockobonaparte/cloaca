@@ -26,7 +26,7 @@ It would also be nice to get a more accurate traceback but that's going to be ro
 
 
 add_two_numbers: Some `__init__` was given 2 arguments when it expected 3
-amazon-subscribers: "Not In" unimplemented
+amazon-subscribers: dict.keys() not yet implemented
 assembly_line: NoneType to PyObject
 minheap: Still get an NPE trying to parse the code
 quicksort: TypeError while running, but tracebacks are not working right yet so I can't say where.

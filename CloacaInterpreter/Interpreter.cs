@@ -944,14 +944,13 @@ namespace CloacaInterpreter
                                             compareFunc = "__ne__";
                                             break;
                                         case CompareOps.In:
+                                        case CompareOps.NotIn:
                                             compareFunc = "__contains__";
                                             // Swap left and right
                                             swapTemp = leftObj;
                                             leftObj = rightObj;
                                             rightObj = swapTemp;
                                             break;
-                                        case CompareOps.NotIn:
-                                            throw new NotImplementedException("'Not In' comparison operation");
                                         case CompareOps.Is:
                                             context.DataStack.Push(new PyBool(left.GetType() == right.GetType() && left == right));
                                             break;
@@ -984,7 +983,15 @@ namespace CloacaInterpreter
                                         var returned = await leftObj.InvokeFromDict(this, context, compareFunc, new PyObject[] { rightObj });
                                         if (returned != null)
                                         {
-                                            context.DataStack.Push((PyBool)returned);
+                                            // Invert in some cases such as NotIn
+                                            if(compare_op == CompareOps.NotIn)
+                                            {
+                                                context.DataStack.Push(PyBool.GetFlipped((PyBool)returned));
+                                            }
+                                            else
+                                            {
+                                                context.DataStack.Push((PyBool)returned);
+                                            }
                                         }
                                     }
                                 }
