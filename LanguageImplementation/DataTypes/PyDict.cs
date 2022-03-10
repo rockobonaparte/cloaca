@@ -209,7 +209,8 @@ namespace LanguageImplementation.DataTypes
             //
             // keys(...) method of builtins.dict instance
             //     D.keys() -> a set-like object providing a view on D's keys
-            throw new NotImplementedException();
+            var asPyDict = self as PyDict;
+            return PyDict_Keys.Create(asPyDict);
         }
 
         [ClassMember]
@@ -458,6 +459,138 @@ namespace LanguageImplementation.DataTypes
             return iterator;
         }
     }
+
+    #region dict.keys() iteration
+    public class PyDict_KeysClass : PyClass
+    {
+        private static PyDict_KeysClass __instance;
+
+        public static PyDict_KeysClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyDict_KeysClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyDict_KeysClass(PyFunction __init__) :
+            base("dict_keys", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyDict_Keys>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static PyObject __iter__(PyObject self)
+        {
+            var asDict = self as PyDict_Keys;
+            return PyDictKeysIterator.Create(asDict.Dict);
+        }
+
+        [ClassMember]
+        public static PyBool __contains__(PyDict_Keys self, object k)
+        {
+            // Help on built-in function __contains__:
+            //
+            // __contains__(key, /) method of builtins.dict instance
+            //     True if D has a key k, else False.
+            if (self.Dict.dict.ContainsKey(k))
+            {
+                return PyBool.True;
+            }
+            else
+            {
+                return PyBool.False;
+            }
+        }
+    }
+
+    public class PyDict_Keys : PyObject
+    {
+        public PyDict Dict;
+
+        public PyDict_Keys() : base(PyDict_KeysClass.Instance)
+        {
+        }
+
+        public static PyDict_Keys Create(PyDict dict)
+        {
+            var dict_items = PyTypeObject.DefaultNew<PyDict_Keys>(PyDict_KeysClass.Instance);
+            dict_items.Dict = dict;
+            return dict_items;
+        }
+    }
+
+    public class PyDictKeysIteratorClass : PyClass
+    {
+        private static PyDictKeysIteratorClass __instance;
+
+        public static PyDictKeysIteratorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new PyDictKeysIteratorClass(null);
+                }
+                return __instance;
+            }
+        }
+
+        public PyDictKeysIteratorClass(PyFunction __init__) :
+            base("dict_keyiterator", __init__, new PyClass[0])
+        {
+            __instance = this;
+
+            // TODO: Can this be better consolidated?
+            Expression<Action<PyTypeObject>> expr = instance => DefaultNew<PyDictKeysIterator>(null);
+            var methodInfo = ((MethodCallExpression)expr.Body).Method;
+            __new__ = new WrappedCodeObject("__new__", methodInfo, this);
+        }
+
+        [ClassMember]
+        public static object __next__(PyObject self)
+        {
+            var asKeyIterator = self as PyDictKeysIterator;
+            if (!asKeyIterator.Keys.MoveNext())
+            {
+                throw new StopIterationException();
+            }
+            else
+            {
+                // TODO: [SORTED KEYS] Keys would be expected to by sorted to mimick Python 3.6+
+                var key = (object)asKeyIterator.Keys.Current;
+                return key;
+            }
+        }
+    }
+    public class PyDictKeysIterator : PyObject
+    {
+        public IEnumerator Keys;
+        public PyDict Dict;
+
+        public PyDictKeysIterator() : base(PyDictKeysIteratorClass.Instance)
+        {
+        }
+
+        public static PyDictKeysIterator Create(PyDict dict)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyDictKeysIterator>(PyDictKeysIteratorClass.Instance);
+            iterator.Keys = dict.dict.Keys.GetEnumerator();
+            iterator.Dict = dict;
+            return iterator;
+        }
+    }
+
+    #endregion
 
     #region dict.items() iteration
     public class PyDict_ItemsClass : PyClass
