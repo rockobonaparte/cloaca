@@ -26,5 +26,20 @@ namespace CloacaTests
                     { "b", PyBool.False },
                 }), 1);
         }
+
+        [Test]
+        public async Task Keys()
+        {
+            await runBasicTest(
+                "h = {'a': 1, 'b': 2}\n" +
+                "k = h.keys()\n" +
+                "a = 'a' in k\n" +
+                "l = k == ['a', 'b']\n",
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyBool.True },
+                    { "l", PyBool.True },
+                }), 1);
+        }
     }
 }
