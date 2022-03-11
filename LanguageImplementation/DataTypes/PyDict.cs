@@ -209,7 +209,8 @@ namespace LanguageImplementation.DataTypes
             //
             // keys(...) method of builtins.dict instance
             //     D.keys() -> a set-like object providing a view on D's keys
-            throw new NotImplementedException();
+            var asPyDict = self as PyDict;
+            return PyDict_Keys.Create(asPyDict);
         }
 
         [ClassMember]
@@ -493,6 +494,23 @@ namespace LanguageImplementation.DataTypes
             var asDict = self as PyDict_Keys;
             return PyDictKeysIterator.Create(asDict.Dict);
         }
+
+        [ClassMember]
+        public static PyBool __contains__(PyDict_Keys self, object k)
+        {
+            // Help on built-in function __contains__:
+            //
+            // __contains__(key, /) method of builtins.dict instance
+            //     True if D has a key k, else False.
+            if (self.Dict.dict.ContainsKey(k))
+            {
+                return PyBool.True;
+            }
+            else
+            {
+                return PyBool.False;
+            }
+        }
     }
 
     public class PyDict_Keys : PyObject
@@ -552,23 +570,22 @@ namespace LanguageImplementation.DataTypes
                 return PyTuple.Create(new object[] { key, PyDictClass.__getitem__(asKeyIterator.Dict, key) });
             }
         }
+    }
+    public class PyDictKeysIterator : PyObject
+    {
+        public IEnumerator Keys;
+        public PyDict Dict;
 
-        public class PyDictKeysIterator : PyObject
+        public PyDictKeysIterator() : base(PyDictKeysIteratorClass.Instance)
         {
-            public IEnumerator Keys;
-            public PyDict Dict;
+        }
 
-            public PyDictKeysIterator() : base(PyDictKeysIteratorClass.Instance)
-            {
-            }
-
-            public static PyDictKeysIterator Create(PyDict dict)
-            {
-                var iterator = PyTypeObject.DefaultNew<PyDictKeysIterator>(PyDictKeysIteratorClass.Instance);
-                iterator.Keys = dict.dict.Keys.GetEnumerator();
-                iterator.Dict = dict;
-                return iterator;
-            }
+        public static PyDictKeysIterator Create(PyDict dict)
+        {
+            var iterator = PyTypeObject.DefaultNew<PyDictKeysIterator>(PyDictKeysIteratorClass.Instance);
+            iterator.Keys = dict.dict.Keys.GetEnumerator();
+            iterator.Dict = dict;
+            return iterator;
         }
     }
 
