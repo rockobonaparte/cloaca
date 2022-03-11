@@ -566,8 +566,9 @@ namespace LanguageImplementation.DataTypes
             }
             else
             {
+                // TODO: [SORTED KEYS] Keys would be expected to by sorted to mimick Python 3.6+
                 var key = (object)asKeyIterator.Keys.Current;
-                return PyTuple.Create(new object[] { key, PyDictClass.__getitem__(asKeyIterator.Dict, key) });
+                return key;
             }
         }
     }

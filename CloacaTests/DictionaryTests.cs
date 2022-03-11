@@ -34,11 +34,12 @@ namespace CloacaTests
                 "h = {'a': 1, 'b': 2}\n" +
                 "k = h.keys()\n" +
                 "a = 'a' in k\n" +
-                "l = k == ['a', 'b']\n",
+                "l = sorted(list(k))\n" +   // TODO: [SORTED KEYS] Keys would be expected to by sorted to mimick Python 3.6+
+                "match = l == ['a', 'b']\n",
                 new VariableMultimap(new TupleList<string, object>
                 {
                     { "a", PyBool.True },
-                    { "l", PyBool.True },
+                    { "match", PyBool.True },
                 }), 1);
         }
     }

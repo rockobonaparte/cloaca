@@ -244,6 +244,7 @@ Part 3: Hardening
 * TODO [INJECTOR-REUSE] Use static methods here or reuse the injector as a singleton or single instance.
 * string functions
   * TODO [str.casefold] implement.
+* TODO: [SORTED KEYS] Keys would be expected to by sorted to mimick Python 3.6+
 
 Tech debt:
 * [Escaped StopIteration] StopIteration (and other Python exceptions thrown in .NET should be caught as regular Python exceptions)* Implement BYTES_LITERAL
