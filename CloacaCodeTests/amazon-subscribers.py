@@ -1,6 +1,3 @@
-raise NotImplementedError("dict.keys() not yet implemented.")
-
-
 def countGroups(related):
     groups = 0
 
@@ -41,4 +38,7 @@ def countGroups(related):
     return groups
 
 
-print(countGroups(["1100", "1110", "0110", "0001"]))
+#print(countGroups(["1100", "1110", "0110", "0001"]))
+assert countGroups(["1100", "1110", "0110", "0001"]) == 2
+
+print("Success!")
