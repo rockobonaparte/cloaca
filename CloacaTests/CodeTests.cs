@@ -1424,6 +1424,51 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task InitDefaultsArgsDefined()
+        {
+            string program =
+                "class Butt:\n" +
+                "   def __init__(self, some_def=3, *args):\n" +
+                "      self.some_def = some_def\n" +
+                "      self.arg1 = args[0]\n" +
+                "      self.arg2 = args[1]\n" +
+                "butt = Butt(4, 10, 11)\n" +
+                "a = butt.some_def\n" +
+                "b = butt.arg1\n" +
+                "c = butt.arg2\n";
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(4) },
+                    { "b", PyInteger.Create(10) },
+                    { "c", PyInteger.Create(11) }
+                }), 2);
+        }
+
+        [Test]
+        public async Task InitDefaultsArgsNotDefined()
+        {
+            string program =
+                "class Butt:\n" +
+                "   def __init__(self, some_def=3, *args):\n" +
+                "      self.some_def = some_def\n" +
+                "      self.arg1 = args[0] if len(args) > 0 else 0\n" +
+                "      self.arg2 = args[1] if len(args) > 1 else 1\n" +
+                "butt = Butt()\n" +
+                "a = butt.some_def\n" +
+                "b = butt.arg1\n" +
+                "c = butt.arg2\n";
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(3) },
+                    { "b", PyInteger.Create(0) },
+                    { "c", PyInteger.Create(1) }
+                }), 2);
+        }
+
+
+        [Test]
         [Ignore("Implementing defaults/kwargs is a work-in-progress. This isn't even syntactically correct right now; I'm not sure how to use mad1")]
         public async Task DefaultsVargsArgsKwargs()
         {
