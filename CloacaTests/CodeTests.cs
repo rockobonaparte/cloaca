@@ -918,6 +918,22 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task TernaryIf()
+        {
+            await runBasicTest("blip = 1 if 99 == 100 else 2\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "blip", PyInteger.Create(2) }
+            }), 1);
+
+            await runBasicTest("blip = 1 if 100 == 100 else 2\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "blip", PyInteger.Create(1) }
+            }), 1);
+        }
+
+        [Test]
         public async Task LogicOperations()
         {
             // When first implemented, this was generated a bunch of loads
