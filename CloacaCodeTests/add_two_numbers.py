@@ -1,4 +1,4 @@
-raise NotImplementedError("Get 'System.Exception: TypeError: __init__ takes 3 position arguments but 2 were given'")
+#raise NotImplementedError("Get 'System.Exception: TypeError: __init__ takes 3 position arguments but 2 were given'")
 
 # Definition for singly-linked list.
 class ListNode:
