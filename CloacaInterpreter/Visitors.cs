@@ -1412,6 +1412,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
     }
 
+    public override object VisitTest([NotNull] CloacaParser.TestContext context)
+    {
+        // TODO: I suspect I have to process ternary operators here.
+        // test: or_test ('if' or_test 'else' test)? | lambdef;
+        if(context.children.Count > 1 && context.children[1].GetText() == "if")
+        {
+            throw new NotImplementedException("Ternary not yet supported. It is a work-in-progress here.");
+        }
+        return VisitChildren(context);
+    }
+
     public override object VisitExpr([NotNull] CloacaParser.ExprContext context)
     {
         var inner_and_tests = context.xor_expr();
