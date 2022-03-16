@@ -1414,13 +1414,34 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTest([NotNull] CloacaParser.TestContext context)
     {
-        // TODO: I suspect I have to process ternary operators here.
         // test: or_test ('if' or_test 'else' test)? | lambdef;
         if(context.children.Count > 1 && context.children[1].GetText() == "if")
         {
-            throw new NotImplementedException("Ternary not yet supported. It is a work-in-progress here.");
+            var conditional_block_fixups = new List<JumpOpcodeFixer>();
+
+            // if clause
+            Visit(context.or_test(1));
+            var jumpFalseSkip = new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.POP_JUMP_IF_FALSE, -1, context));
+
+            // If conditional "payload" that we assign when the if test is true.
+            Visit(context.or_test(0));
+
+            // Skipping the else clause (if we evaluated true)
+            conditional_block_fixups.Add(new JumpOpcodeFixer(codeStack.ActiveProgram.Code, codeStack.ActiveProgram.AddInstruction(ByteCodes.JUMP_FORWARD, -1, context)));
+            jumpFalseSkip.FixupAbsolute(codeStack.ActiveProgram.Code.Count);
+
+            // else clause
+            Visit(context.test());
+
+            // Fixup any forward jumps we might have. They should all come to our current program position.
+            foreach (var fixup in conditional_block_fixups)
+            {
+                fixup.Fixup(codeStack.ActiveProgram.Code.Count);
+            }
+            return null;
         }
         return VisitChildren(context);
+
     }
 
     public override object VisitExpr([NotNull] CloacaParser.ExprContext context)
