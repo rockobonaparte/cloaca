@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
 using System.IO;
 
-using Antlr4.Runtime;
 
 using CloacaInterpreter;
-using Language;
 using LanguageImplementation;
 using CloacaInterpreter.ModuleImporting;
 using LanguageImplementation.DataTypes;
-
+using System.Threading.Tasks;
 
 namespace ConsoleApplication
 {
@@ -36,7 +33,32 @@ namespace ConsoleApplication
             Console.WriteLine(finalStr);
         }
 
-        static int Main(string[] cmdline_args)
+        static int ScheduleLoop(Scheduler scheduler, string scriptNameForErrors)
+        {
+            while (!scheduler.Done)
+            {
+                try
+                {
+                    scheduler.Tick().Wait();
+                }
+                catch (AggregateException wrappedEscapedException)
+                {
+                    Console.WriteLine("Cloaca exception thrown while running " + scriptNameForErrors);
+                    Console.WriteLine(wrappedEscapedException.InnerExceptions[0]);
+                    return 1;
+                }
+
+                if (scheduler.LastTasklet.EscapedDotNetException != null)
+                {
+                    Console.WriteLine(".NET exception thrown while running " + scriptNameForErrors);
+                    Console.WriteLine(scheduler.LastTasklet.EscapedDotNetException);
+                    return 1;
+                }
+            }
+            return 0;
+        }
+
+        static async Task<int> Main(string[] cmdline_args)
         {
             if (cmdline_args.Length != 1)
             {
@@ -50,26 +72,6 @@ namespace ConsoleApplication
                 program = inFile.ReadToEnd();
             }
 
-            var inputStream = new AntlrInputStream(program);
-            var lexer = new CloacaLexer(inputStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-            var errorListener = new ParseErrorListener();
-            var parser = new CloacaParser(commonTokenStream);
-            parser.AddErrorListener(errorListener);
-            if (errorListener.Errors.Count > 0)
-            {
-                Console.WriteLine("There were errors trying to compile the script. We cannot run it.");
-                return 1;
-            }
-
-            var antlrVisitorContext = parser.file_input();
-
-            var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
-            visitor.Visit(antlrVisitorContext);
-
-            PyFunction compiledFunction = visitor.RootProgram.Build(variablesIn);
-
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
             interpreter.DumpState = true;
@@ -81,30 +83,15 @@ namespace ConsoleApplication
 
             scheduler.SetInterpreter(interpreter);
             interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(ConsoleApplication).GetMethod("print_func")));
+            interpreter.StepMode = false;
 
+            var compiledFunctionTask = ByteCodeCompiler.Compile(program, new Dictionary<string, object>(), new Dictionary<string, object>(), scheduler);
+            ScheduleLoop(scheduler, cmdline_args[0]);
+
+            var compiledFunction = await compiledFunctionTask;
             var context = scheduler.Schedule(compiledFunction).Frame;
 
-            interpreter.StepMode = false;
-            while (!scheduler.Done)
-            {
-                try
-                {
-                    scheduler.Tick().Wait();
-                }
-                catch (AggregateException wrappedEscapedException)
-                {
-                    Console.WriteLine("Cloaca exception thrown while running " + cmdline_args[0]);
-                    Console.WriteLine(wrappedEscapedException.InnerExceptions[0]);
-                    return 1;
-                }
-
-                if (scheduler.LastTasklet.EscapedDotNetException != null)
-                {
-                    Console.WriteLine(".NET exception thrown while running " + cmdline_args[0]);
-                    Console.WriteLine(scheduler.LastTasklet.EscapedDotNetException);
-                    return 1;
-                }
-            }
+            ScheduleLoop(scheduler, cmdline_args[0]);
 
             return 0;
         }
