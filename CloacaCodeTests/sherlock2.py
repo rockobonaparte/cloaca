@@ -1,4 +1,4 @@
-#raise NotImplementedError("'int' object has no attribute named '__getitem__'")
+raise NotImplementedError("Need to modify to make some assertions")
 
 def subset(left_orig, right):
     if right is None or len(right) == 0:
