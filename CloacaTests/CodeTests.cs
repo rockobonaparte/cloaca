@@ -1462,6 +1462,42 @@ namespace CloacaTests
         }
 
         [Test]
+        public async Task InitDefaultsPartDefined()
+        {
+            string program =
+                "class Butt:\n" +
+                "   def __init__(self, some_def=3, some_other=10):\n" +
+                "      self.some_def = some_def\n" +
+                "      self.some_other = some_other\n" +
+                "butt = Butt(4)\n" +
+                "a = butt.some_def\n" +
+                "b = butt.some_other\n";
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(4) },
+                    { "b", PyInteger.Create(10) }
+                }), 3);
+        }
+
+        [Test]
+        public async Task DebuggingInitDefaultsPartDefined()
+        {
+            string program =
+                "class ListNode:\n" +
+                "   def __init__(self, val=0, next=None):\n" +
+                "      self.val = val\n" +
+                "      self.next = next\n" +
+                "ln = ListNode(3)\n" +
+                "a = ln.val\n";
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "a", PyInteger.Create(3) }
+                }), 3);
+        }
+
+        [Test]
         public async Task InitDefaultsArgsNotDefined()
         {
             string program =

@@ -1,5 +1,3 @@
-#raise NotImplementedError("Get 'System.Exception: TypeError: __init__ takes 3 position arguments but 2 were given'")
-
 # Definition for singly-linked list.
 class ListNode:
     def __init__(self, val=0, next=None):
@@ -65,6 +63,6 @@ def joinDigits(node: ListNode):
         iter = iter.next
     return joined
 
-# Should be [8,9,9,9,0,0,0,1]
-print(joinDigits(addTwoNumbers(makeListNode([9,9,9,9,9,9,9]), makeListNode([9,9,9,9]))))
+assert(joinDigits(addTwoNumbers(makeListNode([9,9,9,9,9,9,9]), makeListNode([9,9,9,9]))) == "89990001")
 
+print("Success!")
