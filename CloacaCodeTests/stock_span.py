@@ -1,4 +1,4 @@
-raise NotImplementedError("Casting NoneType to an object for some reason")
+raise NotImplementedError("Now raises Casting NoneType to an object for some reason")
 
 # https://www.geeksforgeeks.org/the-stock-span-problem/
 prices = [100, 80, 60, 70, 60, 75, 85]
@@ -23,5 +23,5 @@ def span():
     return spans
 
 
-print(span())
-
+assert(span() == [1, 1, 1, 2, 1, 4, 6])
+print("Success!")
