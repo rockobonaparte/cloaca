@@ -94,6 +94,18 @@ namespace CloacaTests
         }
 
         [Test]
+        // Not necessarily a list test but we encountered the problem with NoneType when we tried to
+        // build a list with None in it. We couldn't cast NoneType.Instance to a PyObject.
+        public async Task PrependNone()
+        {
+            await runBasicTest("a = [None]\n",
+            new VariableMultimap(new TupleList<string, object>
+            {
+                { "a", PyList.Create(new List<object>() { NoneType.Instance }) }
+            }), 1);
+        }
+
+        [Test]
         public async Task ListPop()
         {
             await runBasicTest("a = [0, 1]\n" +

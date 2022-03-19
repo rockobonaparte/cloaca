@@ -1,5 +1,3 @@
-raise NotImplementedError("Trying to cast NoneType to a PyObject")
-
 station_costs = [[3, 4],
                  [7, 8],
                  [9, 10]]
@@ -46,5 +44,7 @@ def iterate_cost():
 
     print(min(sum_l, sum_r))
 
-iterate_cost()
+assert(iterate_cost() == 33)
+print("Success!")
+
 

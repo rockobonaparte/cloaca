@@ -26,9 +26,8 @@ It would also be nice to get a more accurate traceback but that's going to be ro
 
 
 add_two_numbers: Some `__init__` was given 2 arguments when it expected 3
-assembly_line: NoneType to PyObject
 minheap: Still get an NPE trying to parse the code
 quicksort: TypeError while running, but tracebacks are not working right yet so I can't say where.
 sherlock2: 'int' object has no attribute named '__getitem__'
 smallest_change: Unknown NPE
-stock_span: Casting NoneType to an object for some reason
+stock_span: IndexError
