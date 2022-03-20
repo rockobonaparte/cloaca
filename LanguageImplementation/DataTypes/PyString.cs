@@ -670,8 +670,8 @@ namespace LanguageImplementation.DataTypes
 
                 if (index < 0 || index >= self.InternalValue.Length)
                 {
-                    // TODO: Represent as a more natural Python exception;
-                    throw new Exception("IndexError: string index out of range");
+                    context.CurrentException = IndexErrorClass.Create("IndexError: string index out of range");
+                    return null;
                 }
 
                 try
@@ -680,8 +680,8 @@ namespace LanguageImplementation.DataTypes
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    // TODO: Represent as a more natural Python exception;
-                    throw new Exception("IndexError: string index out of range");
+                    context.CurrentException = IndexErrorClass.Create("IndexError: string index out of range");
+                    return null;
                 }
             }
 

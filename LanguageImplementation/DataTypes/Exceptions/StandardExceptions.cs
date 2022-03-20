@@ -179,6 +179,50 @@ namespace LanguageImplementation.DataTypes.Exceptions
         }
     }
 
+    public class IndexError : PyException
+    {
+        public IndexError() : base()
+        {
+
+        }
+
+        public IndexError(string msg) : base(msg)
+        {
+
+        }
+
+    }
+
+    public class IndexErrorClass : PyExceptionClass
+    {
+        public IndexErrorClass() :
+            base("IndexError", null, new PyClass[] { PyExceptionClass.Instance })
+        {
+
+        }
+
+        private static IndexErrorClass __instance;
+        public static new IndexErrorClass Instance
+        {
+            get
+            {
+                if (__instance == null)
+                {
+                    __instance = new IndexErrorClass();
+                }
+                return __instance;
+            }
+        }
+
+        public static IndexError Create(string message)
+        {
+            var exc = PyTypeObject.DefaultNew<IndexError>(IndexErrorClass.Instance);
+            exc.Message = message;
+            return exc;
+        }
+    }
+
+
     public class ValueError : PyException
     {
         public ValueError() : base()

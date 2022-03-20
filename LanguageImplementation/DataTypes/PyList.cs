@@ -56,7 +56,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static void __delitem__(PyList self, PyInteger i)
+        public static void __delitem__(FrameContext context, PyList self, PyInteger i)
         {
             try
             {
@@ -64,8 +64,7 @@ namespace LanguageImplementation.DataTypes
             }
             catch (ArgumentOutOfRangeException)
             {
-                // TODO: Represent as a more natural Python exception;
-                throw new Exception("IndexError: list assignment index out of range");
+                context.CurrentException = IndexErrorClass.Create("IndexError: list assignment index out of range");
             }
         }
 
@@ -81,8 +80,8 @@ namespace LanguageImplementation.DataTypes
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    // TODO: Represent as a more natural Python exception;
-                    throw new Exception("IndexError: list index out of range");
+                    context.CurrentException = IndexErrorClass.Create("IndexError: list assignment index out of range");
+                    return null;
                 }
             }
 
@@ -136,13 +135,13 @@ namespace LanguageImplementation.DataTypes
 
         // TODO: Manage slices
         [ClassMember]
-        public static void __setitem__(PyList self, PyInteger i, PyObject value)
+        public static void __setitem__(FrameContext context, PyList self, PyInteger i, PyObject value)
         {
-            __setitem__(self, (int)i.InternalValue, value);
+            __setitem__(context, self, (int)i.InternalValue, value);
         }
 
         // TODO: Manage slices
-        public static void __setitem__(PyList self, int i, PyObject value)
+        public static void __setitem__(FrameContext context, PyList self, int i, PyObject value)
         {
             try
             {
@@ -150,8 +149,7 @@ namespace LanguageImplementation.DataTypes
             }
             catch (ArgumentOutOfRangeException)
             {
-                // TODO: Represent as a more natural Python exception;
-                throw new Exception("IndexError: list assignment index out of range");
+                context.CurrentException = IndexErrorClass.Create("IndexError: list assignment index out of range");
             }
         }
 
@@ -241,7 +239,7 @@ namespace LanguageImplementation.DataTypes
 
             if (popIdx < 0 || popIdx >= self.list.Count)
             {
-                context.CurrentException = new PyException("IndexError: pop index out of range");
+                context.CurrentException = IndexErrorClass.Create("IndexError: pop index out of range");
                 return null;
             }
 

@@ -93,7 +93,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static object __getitem__(PyTuple self, PyInteger i)
+        public static object __getitem__(FrameContext context, PyTuple self, PyInteger i)
         {
             try
             {
@@ -102,7 +102,9 @@ namespace LanguageImplementation.DataTypes
             catch (ArgumentOutOfRangeException)
             {
                 // TODO: Represent as a more natural Python exception;
-                throw new Exception("IndexError: tuple index out of range");
+                context.CurrentException = IndexErrorClass.Create("IndexError: tuple index out of range");
+                return null;
+
             }
         }
 
@@ -256,7 +258,7 @@ namespace LanguageImplementation.DataTypes
         }
 
         [ClassMember]
-        public static object __next__(PyObject self)
+        public static object __next__(FrameContext context, PyObject self)
         {
             var asIterator = self as PyTupleIterator;
             if (asIterator.CurrentIdx >= asIterator.IteratedTuple.Values.Length)
@@ -266,7 +268,7 @@ namespace LanguageImplementation.DataTypes
             else
             {
                 asIterator.CurrentIdx += 1;
-                return PyTupleClass.__getitem__(asIterator.IteratedTuple, asIterator.CurrentIdx - 1);
+                return PyTupleClass.__getitem__(context, asIterator.IteratedTuple, asIterator.CurrentIdx - 1);
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using LanguageImplementation;
 using LanguageImplementation.DataTypes;
+using LanguageImplementation.DataTypes.Exceptions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -92,7 +93,7 @@ namespace CloacaInterpreter
             }
         }
 
-        private static object LoadSubscriptArray(Array asArray, int arrayIndex)
+        private static object LoadSubscriptArray(FrameContext context, Array asArray, int arrayIndex)
         {
             if (arrayIndex < 0)
             {
@@ -102,7 +103,9 @@ namespace CloacaInterpreter
 
             if (arrayIndex < 0 || arrayIndex >= asArray.Length)
             {
-                throw new Exception("IndexError: list index out of range");
+                context.CurrentException = IndexErrorClass.Create("IndexError: list index out of range");
+                return null;
+
             }
             return asArray.GetValue(arrayIndex);
         }
@@ -120,7 +123,7 @@ namespace CloacaInterpreter
                 {
                     var asArray = container as Array;
                     var arrayIndex = GetIntIndex(index);
-                    return LoadSubscriptArray(asArray, arrayIndex);
+                    return LoadSubscriptArray(context, asArray, arrayIndex);
                 }
                 else if(container is IList)
                 {
@@ -132,7 +135,8 @@ namespace CloacaInterpreter
                 }
                 else
                 {
-                    throw new Exception("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject nor .NET array");
+                    context.CurrentException = TypeErrorClass.Create("TypeError: '" + container.GetType().Name + "' object is not subscriptable; could not be converted to PyObject nor .NET array");
+                    return null;
                 }
             }
             else

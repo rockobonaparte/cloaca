@@ -1,4 +1,4 @@
-raise NotImplementedError("Now raises Casting NoneType to an object for some reason")
+raise NotImplementedError("Raising IndexError")
 
 # https://www.geeksforgeeks.org/the-stock-span-problem/
 prices = [100, 80, 60, 70, 60, 75, 85]
