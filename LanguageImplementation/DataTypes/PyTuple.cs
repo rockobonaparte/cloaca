@@ -97,7 +97,13 @@ namespace LanguageImplementation.DataTypes
         {
             try
             {
-                return self.Values[(int)i.InternalValue];
+                // Might get a negative index so we have to check it against 0 and adjust based on our length.
+                // Same thing happens in PyList and PyString.
+                int listLen = self.Values.Length;
+                int original_i = (int)i.InternalValue;
+                int actual_index = original_i >= 0 ? original_i : listLen + original_i;
+
+                return self.Values[actual_index];
             }
             catch (ArgumentOutOfRangeException)
             {

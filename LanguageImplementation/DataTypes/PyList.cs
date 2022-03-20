@@ -76,7 +76,13 @@ namespace LanguageImplementation.DataTypes
             {
                 try
                 {
-                    return self.list[(int)asPyInt.InternalValue];
+                    // Might get a negative index so we have to check it against 0 and adjust based on our length.
+                    // Same thing happens in PyTuple and PyString.
+                    int listLen = self.list.Count;
+                    int original_i = (int)asPyInt.InternalValue;
+                    int actual_index = original_i >= 0 ? original_i : listLen + original_i;
+
+                    return self.list[actual_index];
                 }
                 catch (ArgumentOutOfRangeException)
                 {

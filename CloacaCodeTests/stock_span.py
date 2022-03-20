@@ -1,5 +1,3 @@
-raise NotImplementedError("Raising IndexError")
-
 # https://www.geeksforgeeks.org/the-stock-span-problem/
 prices = [100, 80, 60, 70, 60, 75, 85]
 
