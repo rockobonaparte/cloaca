@@ -19,15 +19,13 @@ Some priorities:
 
 1. [DONE] Need to get tracebacks for exceptions created inside C# code. Specifically this would be for quicksort.
 2. [DONE] Implementing "not in" seems straightforward enough.
-3. Figure out the problem with add_two_numbers and that __init__. 
+3. [DONE] Figure out the problem with add_two_numbers and that __init__. 
 
 The others look like a bit of a slog.
 It would also be nice to get a more accurate traceback but that's going to be rough with ANTLR and all.
 
 
-add_two_numbers: Some `__init__` was given 2 arguments when it expected 3
 minheap: Still get an NPE trying to parse the code
 quicksort: TypeError while running, but tracebacks are not working right yet so I can't say where.
-sherlock2: 'int' object has no attribute named '__getitem__'
+sherlock2: Needs actual assertions and maybe context of why the code is even here
 smallest_change: Unknown NPE
-stock_span: IndexError
