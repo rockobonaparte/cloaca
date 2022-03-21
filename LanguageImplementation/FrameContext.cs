@@ -149,6 +149,14 @@ namespace LanguageImplementation
             }
         }
 
+        public PyCellObject[] Cells
+        {
+            get
+            {
+                return callStack.Peek().CellVars;
+            }
+        }
+
         public List<string> LocalNames
         {
             get

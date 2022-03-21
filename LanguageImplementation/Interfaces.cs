@@ -16,7 +16,56 @@ namespace LanguageImplementation
         public PyFunction Function;
 
         public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
-        public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
+        public Dictionary<string, object> Locals;   // Used by LOAD/STORE_NAME
+
+        // In CPython, cell variables are a part of f_localsplus, combined with the stack.
+        // Our stack is separate so we're not going to have "localplus."
+        public PyCellObject[] CellVars;   // Cell variables, used by LOAD/STORE_DEREF
+
+        // If the cell doesn't exist, it is added. If it exists, the value is replaced.
+        public void SetCellVar(string name, object value)
+        {
+            int cellIdx = Function.Code.CellNames.IndexOf(name);
+            if(cellIdx < 0)
+            {
+                cellIdx = Function.Code.CellNames.Count + Function.Code.FreeNames.IndexOf(name);
+            }
+
+            var cell = CellVars[cellIdx];
+            if (cell == null)
+            {
+                if (value is PyCellObject)
+                {
+                    CellVars[cellIdx] = value as PyCellObject;
+                }
+                else
+                {
+                    CellVars[cellIdx] = new PyCellObject(value);
+                }
+            }
+            else
+            {
+                if(value is PyCellObject)
+                {
+                    CellVars[cellIdx].ob_ref = (value as PyCellObject).ob_ref;
+                }
+                else
+                {
+                    CellVars[cellIdx].ob_ref = value;
+                }
+            }
+        }
+
+        public PyCellObject GetCellVar(string name)
+        {
+            int cellIdx = Function.Code.CellNames.IndexOf(name);
+            if (cellIdx < 0)
+            {
+                cellIdx = Function.Code.CellNames.Count + Function.Code.FreeNames.IndexOf(name);
+            }
+
+            return CellVars[cellIdx];
+        }
 
         // Technically, globals are owned by the module owning the context of everything we're running.
         // I think in the long term that this will get assigned by those modules. You might see it getting.
@@ -31,6 +80,7 @@ namespace LanguageImplementation
             Function = null;
             LocalFasts = new List<object>();
             Locals = new Dictionary<string, object>();
+            CellVars = null;
 
             // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
             // setting it to an empty one.
@@ -50,10 +100,20 @@ namespace LanguageImplementation
             }
         }
 
+        private void createCells(CodeObject co)
+        {
+            CellVars = new PyCellObject[co.CellNames.Count + co.FreeNames.Count];
+            for(int i = 0; i < CellVars.Length; ++i)
+            {
+                CellVars[i] = new PyCellObject();
+            }
+        }
+
         public Frame(PyFunction function) : this()
         {
             Function = function;
             createFasts(function.Code);
+            createCells(function.Code);
         }
 
         public Frame(Dictionary<string, object> globals) : this()
@@ -77,10 +137,33 @@ namespace LanguageImplementation
             {
                 Globals = new Dictionary<string, object>();
             }
+            takeCellVariables(parentContext);
         }
+
         public Frame(PyFunction function, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(function)
         {
-            Globals = function.Globals;
+            if(newGlobals == null)
+            {
+                Globals = function.Globals;
+            }
+            else
+            {
+                Globals = newGlobals;
+            }
+            takeCellVariables(parentContext);
+        }
+
+        private void takeCellVariables(FrameContext parent)
+        {
+            for (int child_cell_i = 0; child_cell_i < Function.Code.CellNames.Count; ++child_cell_i)
+            { 
+                var cellName = Function.Code.CellNames[child_cell_i];
+                var parentCellIdx = parent.Function.Code.CellNames.IndexOf(cellName);
+                if(parentCellIdx >= 0)
+                {
+                    CellVars[child_cell_i] = parent.Cells[parentCellIdx];
+                }
+            }
         }
 
         /// <summary>

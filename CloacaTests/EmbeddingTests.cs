@@ -487,7 +487,6 @@ namespace CloacaTests
         [Test]
         public async Task CallGenericMethod()
         {
-            // BOOKMARK: Double check that GenericMethod is properly getting monomorphized during resolution.
             FrameContext runContext = await runProgram(
                 "obj = ReflectIntoPython(1337, 'Generic test!')\n" +
                 "a = obj.GenericMethod(ReflectIntoPython, obj)\n",

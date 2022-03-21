@@ -121,6 +121,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private List<Func<IScheduler, Task>> postProcessActions;
     private bool replMode;
     private Dictionary<string, object> namespaceGlobals;
+    private CodeNamesNode nameScopeRoot;
+    private CodeNamesNode currentNameScope;
 
     /// <summary>
     /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
@@ -129,7 +131,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public bool IsRootProgram => codeStack.IsRootProgram;
     public CodeObjectBuilder RootProgram => codeStack.RootProgram;
 
-    public CloacaBytecodeVisitor(bool replMode=false)
+    public CloacaBytecodeVisitor(bool replMode = false)
     {
         codeStack = new CodeObjectBuilderStack();
         LoopBlocks = new Stack<LoopBlockRecord>();
@@ -137,13 +139,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.replMode = replMode;
     }
 
-    public CloacaBytecodeVisitor(Dictionary<string, object> existingVariables, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
+    public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> globals, bool replMode = false) : this(replMode)
     {
+        this.nameScopeRoot = nameScopeRoot;
+        currentNameScope = this.nameScopeRoot;
         this.namespaceGlobals = globals;
-        foreach (var name in existingVariables.Keys)
-        {
-            codeStack.ActiveProgram.Names.Add(name);
-        }
+        prepareCellVariables();
     }
 
     ///// <summary>
@@ -160,6 +161,38 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             await action.Invoke(scheduler);
         }
         postProcessActions.Clear();
+    }
+
+    private void PushNewCode(string name, CodeObjectBuilder builder)
+    {
+        // TODO: Start navigating the variable scan visitor here along with PopCode
+        codeStack.Push(builder);
+        currentNameScope = currentNameScope.Children[name];
+        prepareCellVariables();
+    }
+
+    private CodeObjectBuilder PopCode()
+    {
+        currentNameScope = currentNameScope.Parent;
+        return codeStack.Pop();
+    }
+
+    private void prepareCellVariables()
+    {
+        foreach(var namepair in currentNameScope.NamedScopesRead)
+        {
+            if(namepair.Value == NameScope.EnclosedCell)
+            {
+                codeStack.ActiveProgram.CellNames.AddGetIndex(namepair.Key);
+            }
+        }
+        foreach (var namepair in currentNameScope.NamedScopesWrite)
+        {
+            if (namepair.Value == NameScope.EnclosedCell)
+            {
+                codeStack.ActiveProgram.CellNames.AddGetIndex(namepair.Key);
+            }
+        }
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
@@ -188,56 +221,57 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //          optype = OP_FAST;
         //          break;
         //
-        if (variableName.StartsWith("__"))
-        {
-            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
-            return;
-        }
 
 
-        // If it's in VarNames, we use it from there. If not, 
-        // we assume it's global and deal with it at run time if
-        // we can't find it.
-        var idx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
-        if (idx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
-            return;
-        }
-        else if(IsRootProgram)
-        {
-            var rootNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
-            return;
-        }
+        // For debugging: Put a breakpoint here to fix issues with missing keys.
+        //if (!currentNameScope.NamedScopesRead.ContainsKey(variableName))
+        //{
+        //    int h = 3;      // DEBUG BREAKPOINT.
+        //}
 
-        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
-        if (nameIdx >= 0)
+        var scope = currentNameScope.NamedScopesRead[variableName];
+        switch(scope)
         {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx, context);
-            return;
-        }
-        else
-        {
-            var containingCodeObj = codeStack.FindNameInStack(variableName);
-            if(containingCodeObj == null || containingCodeObj == codeStack[0])
-            {
-                var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
-            }
-            else if(containingCodeObj != codeStack.ActiveProgram)
-            {
-                var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
-                containingCodeObj.CellNames.AddGetIndex(variableName);              // Using this form to only add as unique.                    
-            }
-            else
-            {
-                var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
-            }
-            return;
+            case NameScope.EnclosedCell:
+                {
+                    var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.EnclosedFree:
+                {
+                    // Free variables are references in CellVars after cell variables
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName)
+                        + codeStack.ActiveProgram.CellNames.Count;
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.Name:
+                {
+                    var rootNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
+                    return;
+                }
+            case NameScope.LocalFast:
+                {
+                    var fastIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, fastIdx, context);
+                    return;
+                }
+            case NameScope.Global:
+                {
+                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+                    return;
+                }
+            case NameScope.Builtin:
+                {
+                    // There isn't actually a LOAD_BUILTIN opcode. Use LOAD_GLOBAL.
+                    // I find this kind of silly.
+                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+                    return;
+                }
         }
     }
 
@@ -248,50 +282,47 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             throw new Exception(context.Start.Line + ":" + context.Start.Column + " SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
 
-        // If the variable starts with a dunder, use STORE_NAME.
-        // Well, in the CPython source, it just checks if the first character is an underscore:
-        // 3.9 source
-        // compile.c: 3901
-        //
-        //     /* XXX Leave assert here, but handle __doc__ and the like better */
-        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
-        //
-        // ...and the mode previously fell through to OP_NAME, so we'll use STORENAME
-        //
-        // It's kind of bizarre.
-        //
-        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
-        // particularly ensure that we don't try to use STORE_FAST on it.
-        //
-        // This comes from compile.c:
-        //     case LOCAL:
-        //          if (c->u->u_ste->ste_type == FunctionBlock)
-        //          optype = OP_FAST;
-        //          break;
-        //
-        // We just flip it around and use _NAME if we're in the root.
-        if (variableName.StartsWith("__") || IsRootProgram)
+        var scope = currentNameScope.NamedScopesWrite[variableName];
+        switch (scope)
         {
-            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
-            return;
+            case NameScope.EnclosedCell:
+                {
+                    var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.EnclosedFree:
+                {
+                    // Free variables are references in CellVars after cell variables
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName)
+                        + codeStack.ActiveProgram.CellNames.Count;
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.Name:
+                {
+                    var rootNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, rootNameIdx, context);
+                    return;
+                }
+            case NameScope.LocalFast:
+                {
+                    var fastIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, fastIdx, context);
+                    return;
+                }
+            case NameScope.Global:
+                {
+                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, globalIdx, context);
+                    return;
+                }
+            case NameScope.Builtin:
+                {
+                    throw new NotImplementedException("Cannot generate stores for built-ins yet (if ever? Seriously, what the hell?!)");
+                }
         }
 
-        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
-        if (nameIdx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
-        }
-        else
-        {
-            var idx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
-        }
-    }
-
-    private ByteCodes store_fast_if_not_root()
-    {
-        return IsRootProgram ? ByteCodes.STORE_NAME : ByteCodes.STORE_FAST;
     }
 
     private void AddStoreFastUnlessRoot(string name, ParserRuleContext context)
@@ -392,16 +423,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
-        // It might be a function name. Look for it in names.
-        int nameIdx = codeStack.ActiveProgram.VarNames.IndexOf(context.GetText());
-        if (nameIdx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, nameIdx, context);
-        }
-        else
-        {
-            generateLoadForVariable(context.GetText(), context);
-        }
+        generateLoadForVariable(context.GetText(), context);
         return null;
     }
 
@@ -497,14 +519,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             //   5. Call list comp function
 
             var newFunctionCode = new CodeObjectBuilder();
-            newFunctionCode.Name = "listcomp";
+            newFunctionCode.Name = "<listcomp>";
 
             codeStack.ActiveProgram.Constants.Add(newFunctionCode);
             var compCodeIndex = codeStack.ActiveProgram.Constants.Count - 1;
 
             var callingProgram = codeStack.ActiveProgram;
 
-            codeStack.Push(newFunctionCode);
+            PushNewCode("<listcomp>", newFunctionCode);
             codeStack.ActiveProgram.ArgCount = 1;
             var listNameIdx = codeStack.ActiveProgram.ArgVarNames.AddGetIndex(".0");
             codeStack.ActiveProgram.VarNames.Add(".0");
@@ -530,7 +552,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
 
             // Back to the originator of the list comprehension...
-            codeStack.Pop();
+            PopCode();
 
             codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
             codeStack.ActiveProgram.Constants.Add(PyString.Create(codeStack.ActiveProgram.Name + ".<locals>.<listcomp>"));
@@ -538,7 +560,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
             // Loading the list we'll be using.
+            currentNameScope = currentNameScope.Children["<listcomp>"];
+
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
+
+            currentNameScope = currentNameScope.Parent;
+
             codeStack.ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
             codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
         }
@@ -1272,7 +1299,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         // This should fill into newFunctionCode.
-        codeStack.Push(newFunctionCode);
+        PushNewCode(funcName, newFunctionCode);
 
         // Let's have our parameters set first. This should go to VisitTfpdef in particular.
         base.Visit(context.parameters());
@@ -1291,39 +1318,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
 
         // This should restore us back to the original function with which we started.
-        codeStack.Pop();
+        PopCode();
 
         // We don't support any additional flags yet.       
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
-        // TODO: Apparently sometimes (class methods) we need to store this using STORE_NAME. Why?
-        // Class declarations need all their functions declared using STORE_NAME. I'm not sure why yet. I am speculating that it's 
-        // more proper to say that *everything* needs STORE_NAME by default but we're able to optimize it in just about every other
-        // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
-        // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
-        //
-        // New notes 8/20/2021: I bet it has to do with root context! However, it's not *that* simple. Replacing this with
-        // StoreFastUnlessRoot didn't just work.
-        //
-        // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
-        //
-        //8/27/2021: Gotcha! I need to check if I'm declaring a function in the root context. If so, I need to use STORE_NAME too.
-        //           Otherwise, it gets stuffed in as a fast local and we'll never be able to use it in subsequent statements.
-        if ((context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
-            context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
-            ||
-            IsRootProgram)
-        {
-            var nameIdx = codeStack.ActiveProgram.Names.AddGetIndex(funcName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
-        }
-        else
-        {
-            var nameIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(funcName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, nameIdx, context);
-        }
+        generateStoreForVariable(funcName, context);
 
         return null;
     }
@@ -1593,7 +1595,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     defaultsList = codeStack.ActiveProgram.KWDefaults;
                     codeStack.ActiveProgram.KWOnlyArgCount += 1;
                 }
-                
+
+                var nameNodeAtSchedule = currentNameScope;
+
                 postProcessActions.Add(async (scheduler) =>
                 {
                     // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
@@ -1610,9 +1614,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
                     // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
                     // do them too.
-                    codeStack.Push(defaultBuilder);
+
+                    // If we use PushNewCode naively, the current name node will probably be wrong when this runs. I don't think
+                    // the code stack necessarily matters. So we're going to take a small trip to HackTown:
+                    // 1. Pass in the current name node when this was scheduled (as opposed to when it was run)
+                    // 2. Set the name scope to the backup while visiting the default builder routine.
+                    // 3. Restore it afterwards.
+                    // This makes this code very non-atomic and is some serious cruft. It was retrofitted when the code name nodes
+                    // were created for other reasons. It would take a real good sit-down-and-think to try to clear around this problem.
+                    var backupNameNode = currentNameScope;
+                    currentNameScope = nameNodeAtSchedule;
+                    PushNewCode(visit_builder_name, defaultBuilder);
+
                     Visit(context.children[visit_child_i_copy]);
-                    codeStack.Pop();
+
+                    PopCode();
+                    currentNameScope = backupNameNode;
 
                     var currentTask = scheduler.GetCurrentTask();
                     var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
@@ -1883,7 +1900,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         newFunctionCode.Name = className;
 
         // Descend into the constructor's body as its own program
-        codeStack.Push(newFunctionCode);
+        PushNewCode(className, newFunctionCode);
 
         // This is what happens in a class code object that just passes __init__
         //
@@ -1921,7 +1938,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var return_none_idx = codeStack.ActiveProgram.Constants.AddGetIndex(null);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, return_none_idx, context);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
-        codeStack.Pop();
+        PopCode();
 
         // We'll replace an existing name if we have one because assholes may overwrite a function.
         int funcIndex = findFunctionIndex(className);

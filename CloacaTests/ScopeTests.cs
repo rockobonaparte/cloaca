@@ -171,5 +171,91 @@ namespace CloacaTests
             var bar = context.GetVariable("bar");
             Assert.That(bar, Is.EqualTo(PyInteger.Create(1)));
         }
+
+        [Test]
+        public async Task InnerFunctionReadsOuter()
+        {
+            string program =
+                "def outer():\n" +
+                "  a = 100\n" +
+                "  def inner():\n" +
+                "    return a + 1\n" +
+                "  b = inner()\n" +
+                "  return b\n" +
+                "c = outer()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "c", PyInteger.Create(101) }
+                }), 1);
+        }
+
+        [Test]
+        public async Task InnerFunctionWritersOuterNonlocal()
+        {
+            string program =
+                "def outer():\n" +
+                "  a = 100\n" +
+                "  def inner():\n" +
+                "    nonlocal a\n" +
+                "    a += 1\n" +
+                "    return a\n" +
+                "  return a + inner()\n" +
+                "b = outer()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyInteger.Create(201) }
+                }), 1);
+        }
+
+        /// <summary>
+        /// Testing that cell variables can retain some context when enclosed functions are
+        /// returned from their parent.
+        /// </summary>
+        [Test]
+        public async Task ClosureWithCells()
+        {
+            string program =
+                "def maker(base_val):\n" +
+                "  def made(x):\n" +
+                "    return base_val + x\n" +
+                "  return made\n" +
+                "foo = maker(100)\n" +
+                "bar = foo(1)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "bar", PyInteger.Create(101) }
+                }), 1);
+        }
+
+        /// <summary>
+        /// Testing that cell variables can retain some context when enclosed functions are
+        /// returned from their parent.
+        /// </summary>
+        [Test]
+        public async Task ClosureWithCellsX2()
+        {
+            string program =
+                "def maker(base_val):\n" +
+                "  def made(x):\n" +
+                "    return base_val + x\n" +
+                "  return made\n" +
+                "a = maker(100)\n" +
+                "b = maker(200)\n" +
+                "bar1 = a(2)\n" +
+                "bar2 = b(1)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "bar1", PyInteger.Create(102) },
+                    { "bar2", PyInteger.Create(201) }
+                }), 1);
+        }
     }
 }

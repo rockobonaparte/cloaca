@@ -1,4 +1,4 @@
-raise NotImplementedError("Unknown NPE")
+#raise NotImplementedError("Unknown NPE")
 
 # Smallest amount of change (coins, whatever)
 # We don't actually need to know which coins, just how few we can use.
@@ -41,6 +41,6 @@ def smallest_change(denominations: list[int], total):
     return subtotals[-1]
 
 
-print(smallest_change([1, 2, 5], 11))
-print(smallest_change([1, 4, 5], 13))
-
+assert(smallest_change([1, 2, 5], 11) == 3)
+assert(smallest_change([1, 4, 5], 13) == 3)
+print("Success!")

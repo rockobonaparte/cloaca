@@ -273,8 +273,9 @@ namespace LanguageImplementation
         }
 
         // Converts into a regular code object using byte arrays.
-        // Functions in constants will also get converted to regular CodeObjects            
-        public PyFunction Build(Dictionary<string, object> globals=null)
+        // context is used to pass along parent function and cell variables for functions-inside-functions
+        // that share information.
+        public PyFunction Build(Dictionary<string, object> globals=null, FrameContext context=null)
         {
             if(globals == null)
             {
@@ -296,21 +297,26 @@ namespace LanguageImplementation
             newCodeObj.KWDefaults = KWDefaults != null ? KWDefaults : new List<object>();
             newCodeObj.KWOnlyArgCount = KWOnlyArgCount;
 
-            for (int i = 0; i < newCodeObj.Constants.Count; ++i)
-            {
-                if(newCodeObj.Constants[i] is CodeObjectBuilder)
-                {
-                    var asBuilder = newCodeObj.Constants[i] as CodeObjectBuilder;
-
-                    PyFunction func = asBuilder.Build(globals);
-                    newCodeObj.Constants[i] = func;
-                }
-            }
-
             newCodeObj.firstlineno = firstLine;
             newCodeObj.lnotab = lnotab_builder.ToArray();
 
-            return PyFunction.Create(newCodeObj, globals);
+            var func = PyFunction.Create(newCodeObj, globals);
+
+            if (context != null) {                
+                if (func.Code.FreeNames.Count > 0)
+                {
+                    var freeVars = new object[func.Code.FreeNames.Count];
+                    for (int i = 0; i < func.Code.FreeNames.Count; ++i)
+                    {
+                        freeVars[i] = context.callStack.Peek().GetCellVar(func.Code.FreeNames[i]);
+                    }
+
+                    // Carry paired cell/free variables into __closure__
+                    func.SetClosure(PyTuple.Create(freeVars));
+                }
+            }
+
+            return func;
         }
     }
 }

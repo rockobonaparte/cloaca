@@ -28,8 +28,8 @@ namespace CloacaInterpreter
         /// that then gets assigned as defaults.</param>
         /// <returns>The compiled code.</returns>
         /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
-        public static async Task<PyFunction> Compile(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> globals, 
-            IScheduler scheduler)
+        public static async Task<PyFunction> Compile(string program, Dictionary<string, object> globals, 
+            Dictionary<string, object> builtins, IScheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -42,12 +42,15 @@ namespace CloacaInterpreter
 
             errorListener.AssertNoErrors();
 
-            var visitor = new CloacaBytecodeVisitor(variablesIn, globals);
-            visitor.Visit(antlrVisitorContext);
+            var varVisitor = new VariableScanVisitor(globals.Keys, builtins.Keys);
+            varVisitor.Visit(antlrVisitorContext);
 
-            await visitor.PostProcess(scheduler);
+            var byteVisitor = new CloacaBytecodeVisitor(varVisitor.RootNode, globals);
+            byteVisitor.Visit(antlrVisitorContext);
 
-            PyFunction compiledFunction = visitor.RootProgram.Build(globals);
+            await byteVisitor.PostProcess(scheduler);
+
+            PyFunction compiledFunction = byteVisitor.RootProgram.Build(globals);
             return compiledFunction;
         }
     }

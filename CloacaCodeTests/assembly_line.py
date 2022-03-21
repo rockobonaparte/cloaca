@@ -42,9 +42,7 @@ def iterate_cost():
     sum_l += exit_costs[0]
     sum_r += exit_costs[1]
 
-    print(min(sum_l, sum_r))
+    return min(sum_l, sum_r)
 
 assert(iterate_cost() == 33)
 print("Success!")
-
-

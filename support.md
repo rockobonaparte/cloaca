@@ -30,7 +30,7 @@
 | lambda       | 1      | We use code objects like Python and nothing is really stopping us from actually supporting it but time |
 | or           | 3      |
 | None         | 3      |
-| nonlocal     | 1      | We do support global but we never went all the way and added nonlocal too                             |
+| nonlocal     | 3      | Paid for in blood! Switched to a double-phase parser to resolve variable names correctly. Saved over Python LEGB variable resolution combined with fast locals optimization. Finally, went totally into cell variables with support for closures. You're welcome. Sing my praises! |
 | not          | 3      |
 | return       | 3      |
 | True/False   | 3      |                                                                                                       |

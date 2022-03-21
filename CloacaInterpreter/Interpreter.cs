@@ -259,9 +259,26 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals=null)
+        public async Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals = null)
         {
             Frame nextFrame = new Frame(functionToRun, context, newGlobals);
+
+            // If the function has a __closure__ dunder that isn't just None or whatever, then assign the
+            // closure's contents as cell variables for the current frame. These are determined by
+            // the functions list of free variable names (FreeNames). They are a 1:1 correspondence in their
+            // respective lists. 
+            if (functionToRun.__dict__.ContainsKey(PyFunction.ClosureDunder))
+            {
+                var closure = functionToRun.GetClosure();
+                if (closure != null)
+                {
+                    for (int var_i = 0; var_i < functionToRun.Code.FreeNames.Count; ++var_i)
+                    {
+                        nextFrame.SetCellVar(functionToRun.Code.FreeNames[var_i], (PyCellObject)closure.Values[var_i]);
+                    }
+                }
+            }
+
             return await CallInto(context, nextFrame, args);
         }
 
@@ -279,15 +296,59 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
+            // Populate fast locals with arguments that are NOT cell variables.
+            // Arguments that are cell variables are ones that get propagated to inner functions.
+            // Common use case would be a factory function:
+            // def maker(x):
+            //   def made(y):
+            //     return x + y
+            //   return made
+            // made is a closure using x as a free variable, and x in maker is a cell variable that provides it.
+            int fastIdx = 0;
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                frame.SetFastLocal(argIdx, args[argIdx]);
+                var argName = frame.Function.Code.ArgVarNames[argIdx];
+
+                // Normally variables will just be fast locals to function calls, but the
+                // parameter might be a cell variable! If it's a cell (an originator), then
+                // we need to divert it into a cell. If it is a free variable, then it's none
+                // of our business here (is that even valid for argument names?!).
+                if(frame.Function.Code.CellNames.Contains(argName))
+                {
+                    frame.SetCellVar(argName, args[argIdx]);
+                }
+                else if (frame.Function.Code.FreeNames.Contains(argName))
+                {
+                    continue;       // Skip the free variable!
+                }
+                else
+                {
+                    frame.SetFastLocal(fastIdx, args[argIdx]);
+                }
+                ++fastIdx;
             }
 
             for (int varIndex = 0; varIndex < frame.Function.Code.VarNames.Count; ++varIndex)
             {
                 var varName = frame.Function.Code.VarNames[varIndex];
                 frame.AddOnlyNewLocal(varName, null);                
+            }
+
+            // Carry values from the closure into our available cell variables (if we have a closure).
+            // Closures are functions that carry some state with them. The norm is to make them from
+            // functions that return a function. The __closure__ dunder contains the persistant cell
+            // variables that the function carries with itself.
+            if (frame.Function.Code.Name == "outer")
+            {
+                int h = 3;      // DEBUG BREAKPOINT
+            }
+            var closure = frame.Function.GetClosure();
+            if(closure != null)
+            {
+                for(int freeVar_i = 0; freeVar_i < frame.Function.Code.FreeNames.Count; ++freeVar_i)
+                {
+                    frame.SetCellVar(frame.Function.Code.FreeNames[freeVar_i], (PyCellObject)closure.Values[freeVar_i]);
+                }
             }
 
             context.callStack.Push(frame);      // nextFrame is now the active frame.
@@ -796,6 +857,14 @@ namespace CloacaInterpreter
                                 context.Cursor += 2;
                                 break;
                             }
+                        case ByteCodes.LOAD_DEREF:
+                            {
+                                context.Cursor += 1;
+                                var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                context.DataStack.Push(context.Cells[cellVarIdx].ob_ref);
+                                context.Cursor += 2;
+                                break;
+                            }
                         case ByteCodes.STORE_ATTR:
                             {
                                 {
@@ -858,37 +927,38 @@ namespace CloacaInterpreter
                                 context.Cursor += 2;
                                 break;
                             }
-                        case ByteCodes.LOAD_DEREF:
+                        case ByteCodes.STORE_DEREF:
                             {
                                 context.Cursor += 1;
-                                var freeVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var freeVarName = context.Function.Code.FreeNames[freeVarIdx];
-
-                                bool found = false;
-                                for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
-                                {
-                                    var frame = context.callStack.ElementAt(callStackIdx);
-                                    if (frame.Function.Code.CellNames.Contains(freeVarName))
-                                    {
-                                        if (frame.Locals.ContainsKey(freeVarName))
-                                        {
-                                            context.DataStack.Push(frame.Locals[freeVarName]);
-                                            found = true;
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
-                                        }
-                                    }
-                                }
-
-                                if(!found)
-                                {
-                                    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
-                                }
-
+                                var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                context.Cells[cellVarIdx].ob_ref = context.DataStack.Pop();
                                 context.Cursor += 2;
+
+                                //bool found = false;
+                                //for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
+                                //{
+                                //    var frame = context.callStack.ElementAt(callStackIdx);
+                                //    if (frame.Function.Code.CellNames.Contains(freeVarName))
+                                //    {
+                                //        if (frame.Locals.ContainsKey(freeVarName))
+                                //        {
+                                //            context.DataStack.Push(frame.Locals[freeVarName]);
+                                //            found = true;
+                                //            break;
+                                //        }
+                                //        else
+                                //        {
+                                //            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
+                                //        }
+                                //    }
+                                //}
+
+                                //if(!found)
+                                //{
+                                //    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
+                                //}
+
+                                //context.Cursor += 2;
                                 break;
                             }
                         case ByteCodes.LOAD_ATTR:
@@ -1402,9 +1472,10 @@ namespace CloacaInterpreter
                                     qualifiedName = (string)nameString;
                                 }
 
-                                PyFunction function = (PyFunction)context.DataStack.Pop();
-                                context.DataStack.Push(function);
-                                context.Locals.AddOrSet(qualifiedName, function);                                // Sneaky: The function is added to locals after it is made! CPython does this!
+                                CodeObjectBuilder asBuilder = (CodeObjectBuilder)context.DataStack.Pop();
+                                PyFunction func = asBuilder.Build(context.Globals, context);
+
+                                context.DataStack.Push(func);
                             }
                             context.Cursor += 2;
                             break;
