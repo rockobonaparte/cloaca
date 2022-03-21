@@ -24,6 +24,9 @@ def smallest_change(denominations: list[int], total):
 
     def get_subdenomination(subtotal, denomination):
         nonlocal subtotals
+        print("Printing subtotals")
+        print(subtotals)
+        print("Printed subtotals")
         reduced = subtotal - denomination
         if reduced < 0:
             return None
@@ -32,6 +35,7 @@ def smallest_change(denominations: list[int], total):
     for i in range(1, len(subtotals), 1):
         best = total
         for denom in denominations:
+            print(denom)
             subcount = get_subdenomination(i, denom)
             if subcount is None:
                 break
