@@ -170,5 +170,44 @@ namespace CloacaTests
             var bar = context.GetVariable("bar");
             Assert.That(bar, Is.EqualTo(PyInteger.Create(1)));
         }
+
+        [Test]
+        public async Task InnerFunctionReadsOuter()
+        {
+            string program =
+                "def outer():\n" +
+                "  a = 100\n" +
+                "  def inner():\n" +
+                "    return a + 1\n" +
+                "  b = inner()\n" +
+                "  return b\n" +
+                "c = outer()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "c", PyInteger.Create(101) }
+                }), 1);
+        }
+
+        [Test]
+        public async Task InnerFunctionWritersOuterNonlocal()
+        {
+            string program =
+                "def outer():\n" +
+                "  a = 100\n" +
+                "  def inner():\n" +
+                "    nonlocal a\n" +
+                "    a += 1\n" +
+                "    return a\n" +
+                "  return a + inner()\n" +
+                "b = outer()\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "b", PyInteger.Create(201) }
+                }), 1);
+        }
     }
 }
