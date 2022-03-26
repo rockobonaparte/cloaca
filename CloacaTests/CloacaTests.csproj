@@ -72,6 +72,7 @@
     <Compile Include="ReplTests.cs" />
     <Compile Include="TestBench.cs" />
     <Compile Include="TestBenchHelpersTest.cs" />
+    <Compile Include="VariableScanVisitorTests.cs" />
     <Compile Include="VariableMultimap.cs" />
     <Compile Include="WrappedCodeObjectTests.cs" />
   </ItemGroup>
