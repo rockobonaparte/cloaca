@@ -1,9 +1,10 @@
-﻿using NUnit.Framework;
-
-using LanguageImplementation.DataTypes;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+
+using NUnit.Framework;
+
 using CloacaInterpreter.ModuleImporting;
-using System.Collections.Generic;
+using LanguageImplementation.DataTypes;
 
 namespace CloacaTests
 {
