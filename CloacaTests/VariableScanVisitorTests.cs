@@ -3,6 +3,7 @@ using NUnit.Framework;
 
 using Language;
 using LanguageImplementation;
+using System.Collections.Generic;
 
 namespace CloacaTests
 {
@@ -25,9 +26,12 @@ namespace CloacaTests
 
             errorListener.AssertNoErrors();
 
-
-            var visitor = new VariableScanVisitor();
+            var names = new List<string>();
+            var visitor = new VariableScanVisitor(names);
             visitor.Visit(antlrVisitorContext);
+
+            Assert.That(names.Count, Is.EqualTo(1));
+            Assert.That(names[0], Is.EqualTo("a"));
         }
     }
 }
