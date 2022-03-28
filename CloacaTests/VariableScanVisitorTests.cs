@@ -10,11 +10,8 @@ namespace CloacaTests
     [TestFixture]
     class VariableScanVisitorTests
     {
-        [Test]
-        public void Hello()
+        public void RunTest(string program, string[] in_names)
         {
-            string program = "a = 1\n";
-
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
@@ -30,8 +27,24 @@ namespace CloacaTests
             var visitor = new VariableScanVisitor(names);
             visitor.Visit(antlrVisitorContext);
 
-            Assert.That(names.Count, Is.EqualTo(1));
-            Assert.That(names[0], Is.EqualTo("a"));
+            Assert.That(names.ToArray(), Is.EqualTo(in_names));
+        }
+
+        [Test]
+        public void Hello()
+        {
+            string program = "a = 1\n";
+            RunTest(program, new string[] { "a" });
+        }
+
+        [Test]
+        public void HelloFinc()
+        {
+            string program = "a = 1\n" +
+                             "def foo():\n" +
+                             "   b = 2\n" +
+                             "   return b";
+            RunTest(program, new string[] { "a", "b" });
         }
     }
 }
