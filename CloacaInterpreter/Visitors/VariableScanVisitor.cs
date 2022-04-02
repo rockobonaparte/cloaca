@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 using Antlr4.Runtime.Misc;
 
@@ -34,6 +36,38 @@ public class CodeNamesNode
         {
             NamedScopes.Add(global, NameScope.Global);
         }
+    }
+
+    public string ToReportString(int indent=0)
+    {
+        var b = new StringBuilder();
+        var keys = NamedScopes.Keys.ToList();
+        keys.Sort();
+
+        // We're not using AppendLine because it produces a classic Windows
+        // \r\n and I don't want to have to put both in my assertions because
+        // it looks like garbage.
+        foreach(var key in keys)
+        {
+            b.Append(new string(' ', indent));
+            b.Append(key);
+            b.Append(": ");
+            b.Append(NamedScopes[key].ToString());
+            b.Append("\n");
+        }
+
+        keys = Children.Keys.ToList();
+        keys.Sort();
+        foreach(var key in keys)
+        {
+            b.Append(new string(' ', indent));
+            b.Append(key);
+            b.Append(":\n");
+            b.Append(Children[key].ToReportString(indent + 2));
+            b.Append("\n");
+        }
+
+        return b.ToString();
     }
 }
 

@@ -11,7 +11,7 @@ namespace CloacaTests
     [TestFixture]
     class VariableScanVisitorTests
     {
-        public void RunTest(string program, string[] in_names, string[] globals=null)
+        public void RunTest(string program, string compare_dump, string[] globals=null)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -28,34 +28,30 @@ namespace CloacaTests
             visitor.Visit(antlrVisitorContext);
 
             var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
-            var rootNames = new string[rootNamesKeys.Count];
-            var enumerator = rootNamesKeys.GetEnumerator();
-            for(int i = 0; i < rootNames.Length; ++i)
-            {
-                enumerator.MoveNext();
-                rootNames[i] = enumerator.Current;
-            }
-            Array.Sort(rootNames);
-            Array.Sort(in_names);
 
-            Assert.That(rootNames, Is.EqualTo(in_names));
+            var result = visitor.RootNode.ToReportString();
+
+            Assert.That(result, Is.EqualTo(compare_dump));
         }
 
         [Test]
         public void Hello()
         {
             string program = "a = 1\n";
-            RunTest(program, new string[] { "a" });
+            RunTest(program, "a: Local\n");
         }
 
         [Test]
-        public void HelloFinc()
+        [Ignore("Not recording functions names yet")]
+        public void HelloFunc()
         {
             string program = "a = 1\n" +
                              "def foo():\n" +
                              "   b = 2\n" +
                              "   return b";
-            RunTest(program, new string[] { "a", "b" });
+            RunTest(program, "a: Local\n" +
+                             "foo:\n" +
+                             "  b: Local\n");
         }
     }
 }
