@@ -42,7 +42,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not recording functions names yet")]
         public void HelloFunc()
         {
             string program = "a = 1\n" +
@@ -51,6 +50,20 @@ namespace CloacaTests
                              "   return b";
             RunTest(program, "a: Local\n" +
                              "foo:\n" +
+                             "  b: Local\n");
+        }
+
+        [Test]
+        [Ignore("Function parameters not yet scanned")]
+        public void FuncParameters()
+        {
+            string program = "a = 1\n" +
+                             "def foo(c):\n" +
+                             "   b = 2\n" +
+                             "   return b";
+            RunTest(program, "a: Local\n" +
+                             "foo:\n" +
+                             "  c: Local\n" +
                              "  b: Local\n");
         }
     }

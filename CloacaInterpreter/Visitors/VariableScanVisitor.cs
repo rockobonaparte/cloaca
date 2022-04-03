@@ -64,7 +64,6 @@ public class CodeNamesNode
             b.Append(key);
             b.Append(":\n");
             b.Append(Children[key].ToReportString(indent + 2));
-            b.Append("\n");
         }
 
         return b.ToString();
@@ -84,6 +83,28 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
     }
 
+    private CodeNamesNode descendFromName(string new_name)
+    {
+        var newNode = new CodeNamesNode();
+        foreach(var name in currentNode.NamedScopes.Keys)
+        {
+            if(currentNode.NamedScopes[name] == NameScope.Global)
+            {
+                newNode.NamedScopes.Add(name, NameScope.Global);
+            }
+        }
+        currentNode.Children.Add(new_name, newNode);
+        newNode.Parent = currentNode;
+        currentNode = newNode;
+        return currentNode;
+    }
+
+    private CodeNamesNode ascendNameNode()
+    {
+        currentNode = currentNode.Parent;
+        return currentNode;
+    }
+
     public VariableScanVisitor(IEnumerable<string> names)
     {
         rootNode = new CodeNamesNode(names);
@@ -100,6 +121,14 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
         currentNode.NamedScopes.Add(variableName, NameScope.Local);
+        return null;
+    }
+
+    public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
+    {
+        descendFromName(context.NAME().GetText());
+        base.VisitSuite(context.suite());
+        ascendNameNode();
         return null;
     }
 }
