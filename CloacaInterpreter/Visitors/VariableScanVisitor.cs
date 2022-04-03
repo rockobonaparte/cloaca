@@ -124,9 +124,17 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
+    {
+        var variableName = context.GetText();
+        currentNode.NamedScopes.Add(variableName, NameScope.Local);
+        return null;
+    }
+
     public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
     {
         descendFromName(context.NAME().GetText());
+        base.Visit(context.parameters());
         base.VisitSuite(context.suite());
         ascendNameNode();
         return null;

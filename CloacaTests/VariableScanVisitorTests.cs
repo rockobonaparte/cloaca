@@ -54,7 +54,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Function parameters not yet scanned")]
         public void FuncParameters()
         {
             string program = "a = 1\n" +
@@ -63,8 +62,8 @@ namespace CloacaTests
                              "   return b";
             RunTest(program, "a: Local\n" +
                              "foo:\n" +
-                             "  c: Local\n" +
-                             "  b: Local\n");
+                             "  b: Local\n" +
+                             "  c: Local\n");
         }
     }
 }
