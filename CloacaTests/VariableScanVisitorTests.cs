@@ -71,7 +71,7 @@ namespace CloacaTests
         /// variable context.
         /// </summary>        
         [Test]
-        [Ignore("Enclosed scope logic not yet implemented")]
+        //[Ignore("Enclosed scope logic not yet implemented")]
         public void InnerFunctionReadsOuter()
         {
             string program =
@@ -83,7 +83,7 @@ namespace CloacaTests
                 "  return b\n" +
                 "c = outer()\n";
 
-            RunTest(program, "c: Local:\n" +
+            RunTest(program, "c: Local\n" +
                              "outer:\n" +
                              "  a: Enclosed\n" +
                              "  b: Local\n" +
@@ -112,7 +112,7 @@ namespace CloacaTests
                 "b = outer()\n";
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "c: Local:\n" +
+            RunTest(program, "c: Local\n" +
                              "outer:\n" +
                              "  a: Enclosed\n" +
                              "  b: Local\n" +

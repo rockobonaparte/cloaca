@@ -38,6 +38,40 @@ public class CodeNamesNode
         }
     }
 
+    private void updateScope(string name, NameScope newScope)
+    {
+        if(NamedScopes.ContainsKey(name))
+        {
+            NamedScopes[name] = newScope;
+        }
+
+        foreach(var child in Children.Values)
+        {
+            child.updateScope(name, newScope);
+        }
+    }
+
+    public void AddName(string name)
+    {
+        // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
+        // need to see how things proceed with them before I go all-in on the optimization. I'm running on
+        // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
+        NamedScopes.Add(name, NameScope.Local);
+        CodeNamesNode lastFoundAbove = this;
+        for(CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
+        {
+            if(itr.NamedScopes.ContainsKey(name))
+            {
+                lastFoundAbove = itr;
+            }
+        }
+
+        if(lastFoundAbove != this)
+        {
+            lastFoundAbove.updateScope(name, NameScope.Enclosed);
+        }
+    }
+
     public string ToReportString(int indent=0)
     {
         var b = new StringBuilder();
@@ -120,14 +154,14 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
         var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
-        currentNode.NamedScopes.Add(variableName, NameScope.Local);
+        currentNode.AddName(variableName);
         return null;
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.GetText();
-        currentNode.NamedScopes.Add(variableName, NameScope.Local);
+        currentNode.AddName(variableName);
         return null;
     }
 
