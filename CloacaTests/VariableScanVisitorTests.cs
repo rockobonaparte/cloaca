@@ -71,7 +71,6 @@ namespace CloacaTests
         /// variable context.
         /// </summary>        
         [Test]
-        //[Ignore("Enclosed scope logic not yet implemented")]
         public void InnerFunctionReadsOuter()
         {
             string program =

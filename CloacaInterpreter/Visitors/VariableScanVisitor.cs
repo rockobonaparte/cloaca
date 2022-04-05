@@ -56,7 +56,10 @@ public class CodeNamesNode
         // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
         // need to see how things proceed with them before I go all-in on the optimization. I'm running on
         // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
-        NamedScopes.Add(name, NameScope.Local);
+        if(!NamedScopes.ContainsKey(name))
+        {
+            NamedScopes.Add(name, NameScope.Local);
+        }
         CodeNamesNode lastFoundAbove = this;
         for(CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
         {
@@ -154,6 +157,13 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
         var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
+        currentNode.AddName(variableName);
+        return null;
+    }
+
+    public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
+    {
+        var variableName = context.GetText();
         currentNode.AddName(variableName);
         return null;
     }
