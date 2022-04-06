@@ -84,10 +84,10 @@ namespace CloacaTests
 
             RunTest(program, "c: Local\n" +
                              "outer:\n" +
-                             "  a: Enclosed\n" +
+                             "  a: EnclosedRead\n" +
                              "  b: Local\n" +
                              "  inner:\n" +
-                             "    a: Enclosed\n");
+                             "    a: EnclosedRead\n");
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace CloacaTests
         /// It also adds the nonlocal to make variable 'a' writeable.
         /// </summary>
         [Test]
-        [Ignore("nonlocal not yet implemented")]
+        [Ignore("Doesn't work yet")]
         public void InnerFunctionWritersOuterNonlocal()
         {
             string program =
@@ -111,12 +111,12 @@ namespace CloacaTests
                 "b = outer()\n";
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "c: Local\n" +
+            RunTest(program, "b: Local\n" +
                              "outer:\n" +
-                             "  a: Enclosed\n" +
+                             "  a: EnclosedReadWrite\n" +
                              "  b: Local\n" +
                              "  inner:\n" +
-                             "    a: Enclosed\n");
+                             "    a: EnclosedReadWrite\n");
         }
     }
 }

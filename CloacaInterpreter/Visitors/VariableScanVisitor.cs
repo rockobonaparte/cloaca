@@ -8,9 +8,10 @@ using Language;
 
 public enum NameScope
 {
-    Global,
     Local,
-    Enclosed,
+    EnclosedRead,
+    EnclosedWrite,
+    Global,
 }
 
 /// <summary>
@@ -71,7 +72,53 @@ public class CodeNamesNode
 
         if(lastFoundAbove != this)
         {
-            lastFoundAbove.updateScope(name, NameScope.Enclosed);
+            lastFoundAbove.updateScope(name, NameScope.EnclosedRead);
+        }
+    }
+
+    private NameScope selectBroadestScope(NameScope a, NameScope b)
+    {
+        if(a > b)
+        {
+            return a;
+        }
+        else
+        {
+            return b;
+        }
+    }
+
+    public void AddName(string name, NameScope scope)
+    {
+        // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
+        // need to see how things proceed with them before I go all-in on the optimization. I'm running on
+        // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
+        var selectedScope = scope;
+        if (!NamedScopes.ContainsKey(name))
+        {
+            NamedScopes.Add(name, scope);
+        }
+        else
+        {
+            selectedScope = selectBroadestScope(scope, NamedScopes[name]);
+            NamedScopes[name] = scope;
+        }
+        CodeNamesNode lastFoundAbove = this;
+        for (CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
+        {
+            if (itr.NamedScopes.ContainsKey(name))
+            {
+                lastFoundAbove = itr;
+            }
+        }
+
+        if (lastFoundAbove != this)
+        {
+            if(selectedScope == NameScope.Local)
+            {
+                selectedScope = NameScope.EnclosedRead;
+            }
+            lastFoundAbove.updateScope(name, selectedScope);
         }
     }
 
@@ -181,6 +228,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.Visit(context.parameters());
         base.VisitSuite(context.suite());
         ascendNameNode();
+        return null;
+    }
+
+    public override object VisitNonlocal_stmt([NotNull] CloacaParser.Nonlocal_stmtContext context)
+    {
+        foreach(var variableName in context.NAME())
+        {
+            currentNode.AddName(variableName.GetText(), NameScope.EnclosedWrite);
+        }
         return null;
     }
 }
