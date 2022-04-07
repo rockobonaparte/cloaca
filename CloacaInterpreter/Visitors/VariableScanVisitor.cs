@@ -10,7 +10,7 @@ public enum NameScope
 {
     Local,
     EnclosedRead,
-    EnclosedWrite,
+    EnclosedReadWrite,
     Global,
 }
 
@@ -47,33 +47,14 @@ public class CodeNamesNode
         }
 
         foreach(var child in Children.Values)
-        {
+        { 
             child.updateScope(name, newScope);
         }
     }
 
     public void AddName(string name)
     {
-        // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
-        // need to see how things proceed with them before I go all-in on the optimization. I'm running on
-        // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
-        if(!NamedScopes.ContainsKey(name))
-        {
-            NamedScopes.Add(name, NameScope.Local);
-        }
-        CodeNamesNode lastFoundAbove = this;
-        for(CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
-        {
-            if(itr.NamedScopes.ContainsKey(name))
-            {
-                lastFoundAbove = itr;
-            }
-        }
-
-        if(lastFoundAbove != this)
-        {
-            lastFoundAbove.updateScope(name, NameScope.EnclosedRead);
-        }
+        AddName(name, NameScope.Local);
     }
 
     private NameScope selectBroadestScope(NameScope a, NameScope b)
@@ -101,7 +82,7 @@ public class CodeNamesNode
         else
         {
             selectedScope = selectBroadestScope(scope, NamedScopes[name]);
-            NamedScopes[name] = scope;
+            NamedScopes[name] = selectedScope;
         }
         CodeNamesNode lastFoundAbove = this;
         for (CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
@@ -208,6 +189,18 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
+    {
+        if(context.trailer().Length > 0)
+        {
+            return null;
+        }
+        else
+        {
+            return base.VisitAtom_expr(context);
+        }
+    }
+
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         var variableName = context.GetText();
@@ -235,7 +228,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach(var variableName in context.NAME())
         {
-            currentNode.AddName(variableName.GetText(), NameScope.EnclosedWrite);
+            currentNode.AddName(variableName.GetText(), NameScope.EnclosedReadWrite);
         }
         return null;
     }

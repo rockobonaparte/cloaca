@@ -97,7 +97,6 @@ namespace CloacaTests
         /// It also adds the nonlocal to make variable 'a' writeable.
         /// </summary>
         [Test]
-        [Ignore("Doesn't work yet")]
         public void InnerFunctionWritersOuterNonlocal()
         {
             string program =
@@ -114,9 +113,14 @@ namespace CloacaTests
             RunTest(program, "b: Local\n" +
                              "outer:\n" +
                              "  a: EnclosedReadWrite\n" +
-                             "  b: Local\n" +
                              "  inner:\n" +
                              "    a: EnclosedReadWrite\n");
         }
+
+        // TODO: Add a test that tries various grammars to make sure we get variables in things like:
+        // for-loops
+        // try-except blocks
+        // conditionals
+        // ...and more...
     }
 }
