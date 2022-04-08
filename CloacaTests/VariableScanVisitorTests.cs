@@ -11,7 +11,7 @@ namespace CloacaTests
     [TestFixture]
     class VariableScanVisitorTests
     {
-        public void RunTest(string program, string compare_dump, string[] globals=null)
+        public void RunTest(string program, string compare_dump, string[] globals = null)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -121,6 +121,27 @@ namespace CloacaTests
         // for-loops
         // try-except blocks
         // conditionals
+        // Arrays
+        // Functions inside functions
         // ...and more...
+        [Test]
+        public void ParseVariousBlocks()
+        {
+            string program =
+                "for for_i in range(10):\n" +
+                "  in_for = for_i + 1\n" +
+                "try:\n" +
+                "  try_var = 3\n" +
+                "except Exception as exc_var:" +
+                "  exc_blk_var = exc_var\n";
+
+            RunTest(program, "exc_blk_var: Local\n" +
+                             "exc_var: Local\n" +
+                             "for_i: Local\n" +
+                             "in_for: Local\n" +
+                             "try_var: Local\n"
+                             );
+        }
+    
     }
 }
