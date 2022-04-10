@@ -23,9 +23,11 @@ public class CodeNamesNode
     public CodeNamesNode Parent;
     public Dictionary<string, NameScope> NamedScopes;
     public Dictionary<string, CodeNamesNode> Children;
+    public HashSet<string> GlobalsSet;
 
     public CodeNamesNode()
     {
+        GlobalsSet = new HashSet<string>();
         NamedScopes = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, CodeNamesNode>();
     }
@@ -35,8 +37,15 @@ public class CodeNamesNode
     {
         foreach(var global in externalGlobals)
         {
-            NamedScopes.Add(global, NameScope.Global);
+            GlobalsSet.Add(global);
         }
+    }
+
+    public CodeNamesNode(HashSet<string> globalsSet)
+    {
+        GlobalsSet = globalsSet;
+        NamedScopes = new Dictionary<string, NameScope>();
+        Children = new Dictionary<string, CodeNamesNode>();
     }
 
     private void updateScope(string name, NameScope newScope)
@@ -75,15 +84,25 @@ public class CodeNamesNode
         // need to see how things proceed with them before I go all-in on the optimization. I'm running on
         // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
         var selectedScope = scope;
+        if(GlobalsSet.Contains(name))
+        {
+            selectedScope = NameScope.Global;
+        } 
+        else if(scope == NameScope.Global)
+        {
+            GlobalsSet.Add(name);
+        }
+
         if (!NamedScopes.ContainsKey(name))
         {
-            NamedScopes.Add(name, scope);
+            NamedScopes.Add(name, selectedScope);
         }
         else
         {
             selectedScope = selectBroadestScope(scope, NamedScopes[name]);
             NamedScopes[name] = selectedScope;
         }
+
         CodeNamesNode lastFoundAbove = this;
         for (CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
         {
@@ -150,14 +169,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     private CodeNamesNode descendFromName(string new_name)
     {
-        var newNode = new CodeNamesNode();
-        foreach(var name in currentNode.NamedScopes.Keys)
-        {
-            if(currentNode.NamedScopes[name] == NameScope.Global)
-            {
-                newNode.NamedScopes.Add(name, NameScope.Global);
-            }
-        }
+        var newNode = new CodeNamesNode(rootNode.GlobalsSet);
         currentNode.Children.Add(new_name, newNode);
         newNode.Parent = currentNode;
         currentNode = newNode;
@@ -232,4 +244,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
         return null;
     }
+
+    public override object VisitExcept_clause([NotNull] CloacaParser.Except_clauseContext context)
+    {
+        base.VisitExcept_clause(context);
+        if(context.NAME() != null)
+        {
+            currentNode.AddName(context.NAME().GetText());
+        }
+        return null;
+    }
+
 }

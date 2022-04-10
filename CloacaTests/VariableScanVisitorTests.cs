@@ -66,6 +66,22 @@ namespace CloacaTests
                              "  c: Local\n");
         }
 
+        [Test]
+        public void BasicGlobalPlumbing()
+        {
+            string program = "a = 1\n";
+            RunTest(program, "a: Global\n", new string[] { "a" });
+        }
+
+        [Test]
+        public void GlobalInFunction()
+        {
+            string program = "def fun():\n" +
+                             "  a = 1\n";
+            RunTest(program, "fun:\n" +
+                             "  a: Global\n", new string[] { "a" });
+        }
+
         /// <summary>
         /// This came from ScopeTests and was one of two that motivated adding a first-pass to get
         /// variable context.
@@ -137,9 +153,11 @@ namespace CloacaTests
 
             RunTest(program, "exc_blk_var: Local\n" +
                              "exc_var: Local\n" +
+                             "Exception: Global\n" +
                              "for_i: Local\n" +
                              "in_for: Local\n" +
-                             "try_var: Local\n"
+                             "try_var: Local\n",
+                             new string[] { "Exception" }
                              );
         }
     
