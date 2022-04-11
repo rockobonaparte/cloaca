@@ -255,4 +255,23 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitDotted_as_name([NotNull] CloacaParser.Dotted_as_nameContext context)
+    {
+        base.VisitDotted_as_name(context);
+        if (context.NAME() != null)
+        {
+            currentNode.AddName(context.NAME().GetText());
+        }
+        return null;
+    }
+
+    public override object VisitImport_as_name([NotNull] CloacaParser.Import_as_nameContext context)
+    {
+        base.VisitImport_as_name(context);
+        if (context.NAME() != null && context.NAME().Length > 0)
+        {
+            currentNode.AddName(context.NAME()[0].GetText());
+        }
+        return null;
+    }
 }
