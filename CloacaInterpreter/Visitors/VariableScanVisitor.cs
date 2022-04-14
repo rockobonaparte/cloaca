@@ -118,7 +118,15 @@ public class CodeNamesNode
             {
                 selectedScope = NameScope.EnclosedRead;
             }
-            lastFoundAbove.updateScope(name, selectedScope);
+
+            // Global doesn't propagate "up" so much as it propagates globally.
+            // A higher level usage of the same name will just be a local unless
+            // either at root scope or marked as global with the global keyword
+            // explicitly.
+            if(selectedScope != NameScope.Global)
+            {
+                lastFoundAbove.updateScope(name, selectedScope);
+            }
         }
     }
 
@@ -245,6 +253,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitGlobal_stmt([NotNull] CloacaParser.Global_stmtContext context)
+    {
+        foreach (var variableName in context.NAME())
+        {
+            currentNode.AddName(variableName.GetText(), NameScope.Global);
+        }
+        return null;
+    }
+
     public override object VisitExcept_clause([NotNull] CloacaParser.Except_clauseContext context)
     {
         base.VisitExcept_clause(context);
@@ -274,4 +291,5 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
         return null;
     }
+
 }

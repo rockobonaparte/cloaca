@@ -74,6 +74,32 @@ namespace CloacaTests
         }
 
         [Test]
+        public void GlobalDeclaration()
+        {
+            string program = "global a\n";
+            RunTest(program, "a: Global\n");
+        }
+
+        [Test]
+        public void InnerGlobalOuterLocal()
+        {
+            string program =
+                "def outer():\n" +
+                "  a = 100\n" +
+                "  def inner():\n" +
+                "    global a\n" +
+                "    a += 1\n" +        // PS: Actually run this will get you an error that a isn't defined.
+                "    return a\n" +
+                "  return a + inner()\n";
+
+            
+            RunTest(program, "outer:\n" +
+                             "  a: Local\n" +
+                             "  inner:\n" +
+                             "    a: Global\n");
+        }
+
+        [Test]
         public void GlobalInFunction()
         {
             string program = "def fun():\n" +
