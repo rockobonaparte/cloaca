@@ -186,6 +186,43 @@ namespace CloacaTests
                              new string[] { "Exception" }
                              );
         }
-    
+
+        [Test]
+        [Ignore("This caused a tire fire haha")]
+        public void MashedUpPileOfLocalGlobalNonlocal()
+        {
+            string program =
+                "a = -1\n" +
+                "def f1():\n" +
+                "  a = 2\n" +
+                "  def f2():\n" +
+                "    def f3():\n" +
+                "      global a\n" +
+                "      a = 10000\n" +
+                "      def f4():\n" +
+                "        a = 5\n" +
+                "        return a\n" +
+                "      a += f4()\n" +
+                "      return a\n" +
+                "    \n" +
+                "    nonlocal a\n" +
+                "    a -= f3()\n" +
+                "    return a\n" +
+                "  a += f2()\n" +
+                "  return a\n" +
+                "a += f1()\n" +
+                "print(a)\n";
+
+            RunTest(program, "a: Global\n" +
+                             "f1:\n" +
+                             "  a: Local\n" +
+                             "  f2:\n" +
+                             "    a: EnclosedReadWrite\n" +
+                             "    f3:\n" +
+                             "      a: Global\n" +
+                             "      f4:\n" +
+                             "        a: Local\n");
+        }
+
     }
 }
