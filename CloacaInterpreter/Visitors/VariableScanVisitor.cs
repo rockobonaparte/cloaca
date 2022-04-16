@@ -84,6 +84,12 @@ public class CodeNamesNode
         // need to see how things proceed with them before I go all-in on the optimization. I'm running on
         // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
         var selectedScope = scope;
+
+        // Root is global and overrides whatever we think it currently is.
+        if(Parent == null)
+        {
+            selectedScope = NameScope.Global;
+        }
         if(GlobalsSet.Contains(name))
         {
             selectedScope = NameScope.Global;

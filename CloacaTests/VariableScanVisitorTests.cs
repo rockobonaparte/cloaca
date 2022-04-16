@@ -37,8 +37,9 @@ namespace CloacaTests
         [Test]
         public void Hello()
         {
+            // Root is global!!!
             string program = "a = 1\n";
-            RunTest(program, "a: Local\n");
+            RunTest(program, "a: Global\n");
         }
 
         [Test]
@@ -48,7 +49,7 @@ namespace CloacaTests
                              "def foo():\n" +
                              "   b = 2\n" +
                              "   return b";
-            RunTest(program, "a: Local\n" +
+            RunTest(program, "a: Global\n" +
                              "foo:\n" +
                              "  b: Local\n");
         }
@@ -60,7 +61,7 @@ namespace CloacaTests
                              "def foo(c):\n" +
                              "   b = 2\n" +
                              "   return b";
-            RunTest(program, "a: Local\n" +
+            RunTest(program, "a: Global\n" +
                              "foo:\n" +
                              "  b: Local\n" +
                              "  c: Local\n");
@@ -124,7 +125,7 @@ namespace CloacaTests
                 "  return b\n" +
                 "c = outer()\n";
 
-            RunTest(program, "c: Local\n" +
+            RunTest(program, "c: Global\n" +
                              "outer:\n" +
                              "  a: EnclosedRead\n" +
                              "  b: Local\n" +
@@ -152,7 +153,7 @@ namespace CloacaTests
                 "b = outer()\n";
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "b: Local\n" +
+            RunTest(program, "b: Global\n" +
                              "outer:\n" +
                              "  a: EnclosedReadWrite\n" +
                              "  inner:\n" +
