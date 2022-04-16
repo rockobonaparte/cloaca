@@ -210,14 +210,16 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
-        var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
+        var expr = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0];
+        var variableName = expr.GetText();
         currentNode.AddName(variableName);
         return null;
     }
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
-        if(context.trailer().Length > 0)
+        var trailer = context.trailer();
+        if(trailer.Length > 0)
         {
             return null;
         }

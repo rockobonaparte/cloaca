@@ -160,6 +160,29 @@ namespace CloacaTests
                              "    a: EnclosedReadWrite\n");
         }
 
+        [Test]
+        public void ParsingBundledStuff()
+        {
+            string program = "arr = [1, b]\n" +
+                             "hash = {'foo': c}\n" +
+                             "tup = {2, d}\n" +
+                             "set = (3, e)\n" +
+                             "func = call(4, f)\n";
+
+            RunTest(program, "arr: Global\n" +
+                             "b: Global\n" +
+                             "c: Global\n" +
+                             "d: Global\n" +
+                             "e: Global\n" +
+                             "f: Global\n" +
+                             "func: Global\n" +
+                             "hash: Global\n" +
+                             "set: Global\n" +
+                             "tup: Global\n" +
+                             new string[] { "b", "c", "d", "e", "f", "call"  }
+                             );
+        }
+
         // TODO: Add a test that tries various grammars to make sure we get variables in things like:
         // for-loops
         // try-except blocks
@@ -178,18 +201,17 @@ namespace CloacaTests
                 "except Exception as exc_var:" +
                 "  exc_blk_var = exc_var\n";
 
-            RunTest(program, "exc_blk_var: Local\n" +
-                             "exc_var: Local\n" +
+            RunTest(program, "exc_blk_var: Global\n" +
+                             "exc_var: Global\n" +
                              "Exception: Global\n" +
-                             "for_i: Local\n" +
-                             "in_for: Local\n" +
-                             "try_var: Local\n",
+                             "for_i: Global\n" +
+                             "in_for: Global\n" +
+                             "try_var: Global\n",
                              new string[] { "Exception" }
                              );
         }
 
         [Test]
-        [Ignore("This caused a tire fire haha")]
         public void MashedUpPileOfLocalGlobalNonlocal()
         {
             string program =
@@ -215,6 +237,7 @@ namespace CloacaTests
                 "print(a)\n";
 
             RunTest(program, "a: Global\n" +
+                             "print: Global\n" +
                              "f1:\n" +
                              "  a: Local\n" +
                              "  f2:\n" +
@@ -222,7 +245,7 @@ namespace CloacaTests
                              "    f3:\n" +
                              "      a: Global\n" +
                              "      f4:\n" +
-                             "        a: Local\n");
+                             "        a: Local\n", new string[] { "print" });
         }
 
     }
