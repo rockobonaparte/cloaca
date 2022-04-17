@@ -94,8 +94,11 @@ namespace CloacaTests
                 "  return a + inner()\n";
 
             
-            RunTest(program, "outer:\n" +
+            RunTest(program,
+                             "outer: Global\n" +
+                             "outer:\n" +
                              "  a: Local\n" +
+                             "  inner: Local\n" +
                              "  inner:\n" +
                              "    a: Global\n");
         }
@@ -126,9 +129,11 @@ namespace CloacaTests
                 "c = outer()\n";
 
             RunTest(program, "c: Global\n" +
+                             "outer: Global\n" +
                              "outer:\n" +
                              "  a: EnclosedRead\n" +
                              "  b: Local\n" +
+                             "  inner: Local\n" +
                              "  inner:\n" +
                              "    a: EnclosedRead\n");
         }
@@ -154,8 +159,10 @@ namespace CloacaTests
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
             RunTest(program, "b: Global\n" +
+                             "outer: Global\n" +
                              "outer:\n" +
                              "  a: EnclosedReadWrite\n" +
+                             "  inner: Local\n" +
                              "  inner:\n" +
                              "    a: EnclosedReadWrite\n");
         }
@@ -172,14 +179,15 @@ namespace CloacaTests
             RunTest(program, "arr: Global\n" +
                              "b: Global\n" +
                              "c: Global\n" +
+                             "call: Global\n" +
                              "d: Global\n" +
                              "e: Global\n" +
                              "f: Global\n" +
                              "func: Global\n" +
                              "hash: Global\n" +
                              "set: Global\n" +
-                             "tup: Global\n" +
-                             new string[] { "b", "c", "d", "e", "f", "call"  }
+                             "tup: Global\n",
+                             new string[] { "b", "c", "d", "e", "f", "call" }
                              );
         }
 
@@ -206,8 +214,9 @@ namespace CloacaTests
                              "Exception: Global\n" +
                              "for_i: Global\n" +
                              "in_for: Global\n" +
+                             "range: Global\n" +
                              "try_var: Global\n",
-                             new string[] { "Exception" }
+                             new string[] { "Exception", "range" }
                              );
         }
 

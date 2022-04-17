@@ -204,7 +204,21 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
     {
-        VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+        if (context.testlist_star_expr().Length == 1)
+        {
+            VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+        }
+        else
+        {
+            Visit(context.testlist_star_expr(context.testlist_star_expr().Length - 1));
+            for (int lvalue_i = context.testlist_star_expr().Length - 2; lvalue_i >= 0; --lvalue_i)
+            {
+                for (int test_i = 0; test_i < context.testlist_star_expr(lvalue_i).test().Length; ++test_i)
+                {
+                    VisitLValueTestlist_star_expr(context.testlist_star_expr(lvalue_i).test()[test_i]);
+                }
+            }
+        }
         return null;
     }
 
@@ -218,15 +232,57 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
-        var trailer = context.trailer();
-        if(trailer.Length > 0)
+        var trailers = context.trailer();
+        if(trailers.Length > 0)
         {
+            Visit(context.atom());
+            for (int trailer_i = 0; trailer_i < context.trailer().Length; ++trailer_i)
+            {
+                var trailer = context.trailer(trailer_i);
+                if (trailer.NAME() != null)
+                {
+                    var attrName = trailer.NAME().GetText();
+                    currentNode.AddName(attrName);
+
+                }
+
+                else if (trailer.arglist() != null || trailer.GetText() == "()")
+                {
+                    int argIdx = 0;
+                    for (argIdx = 0; trailer.arglist() != null &&
+                        trailer.arglist().argument(argIdx) != null; ++argIdx)
+                    {
+                        if (trailer.arglist().argument(argIdx).test().Length > 1)
+                        {
+                            base.Visit(trailer.arglist().argument(argIdx).test(1));
+                        }
+                        else
+                        {
+                            base.Visit(trailer.arglist().argument(argIdx));
+                        }
+                    }
+                }
+                else
+                {
+                    base.Visit(trailer);
+                }
+            }
             return null;
         }
         else
         {
             return base.VisitAtom_expr(context);
         }
+    }
+
+    public override object VisitAtomSquareBrackets([NotNull] CloacaParser.AtomSquareBracketsContext context)
+    {
+        return base.VisitAtomSquareBrackets(context);
+    }
+
+    public override object VisitTrailer([NotNull] CloacaParser.TrailerContext context)
+    {
+        return base.VisitTrailer(context);
     }
 
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
