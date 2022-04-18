@@ -206,7 +206,11 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         if (context.testlist_star_expr().Length == 1)
         {
-            VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+            if(context.testlist() != null)
+            {
+                Visit(context.testlist());
+            }
+            Visit(context.testlist_star_expr(0));
         }
         else
         {

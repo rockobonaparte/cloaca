@@ -82,10 +82,21 @@ namespace CloacaTests
         }
 
         [Test]
+        public void CallFuncOneArg()
+        {
+            string program =
+                "print(a)\n";
+
+            RunTest(program,
+                             "a: Global\n" +
+                             "print: Global\n", new string[] { "a", "print" });
+        }
+
+        [Test]
         public void InnerGlobalOuterLocal()
         {
             string program =
-                "def outer():\n" +
+                "def outer():\n" +      // Defined but never invoked so doesn't come up as a global.
                 "  a = 100\n" +
                 "  def inner():\n" +
                 "    global a\n" +
@@ -95,7 +106,6 @@ namespace CloacaTests
 
             
             RunTest(program,
-                             "outer: Global\n" +
                              "outer:\n" +
                              "  a: Local\n" +
                              "  inner: Local\n" +
