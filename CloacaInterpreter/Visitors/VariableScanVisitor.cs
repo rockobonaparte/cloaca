@@ -48,6 +48,7 @@ public class CodeNamesNode
         Children = new Dictionary<string, CodeNamesNode>();
     }
 
+    // TODO: I think this actually has to keep going up and up and up.
     private void updateScope(string name, NameScope newScope)
     {
         if(NamedScopes.ContainsKey(name))

@@ -178,6 +178,53 @@ namespace CloacaTests
         }
 
         [Test]
+        public void MultilevelNonlocal()
+        {
+            string program =
+                            "def f1():\n" +
+                            "  a = 2\n" +
+                            "  def f2():\n" +
+                            "    def f3():\n" +
+                            "      nonlocal a\n" +
+                            "      a = 3\n" +
+                            "    f3()\n" +
+                            "  f2()\n" +
+                            "  return a\n";
+
+            // TODO: I think I need additional context to tell if something is enclosed and writable!
+            RunTest(program, "f1:\n" +
+                             "  a: EnclosedReadWrite\n" +
+                             "  f2: Local\n" +
+                             "  f2:\n" +
+                             "    f3: Local\n" +
+                             "    f3:\n" +
+                             "      a: EnclosedReadWrite\n");
+        }
+
+        [Test]
+        public void MultilevelGlobal()
+        {
+            string program =
+                            "a = 2\n" +
+                            "def f1():\n" +
+                            "  def f2():\n" +
+                            "    def f3():\n" +
+                            "      global a\n" +
+                            "      a = 3\n" +
+                            "    f3()\n" +
+                            "  f2()\n";
+
+            // TODO: I think I need additional context to tell if something is enclosed and writable!
+            RunTest(program, "a: Global\n" +
+                             "f1:\n" +
+                             "  f2: Local\n" +
+                             "  f2:\n" +
+                             "    f3: Local\n" +
+                             "    f3:\n" +
+                             "      a: Global\n");
+        }
+
+        [Test]
         public void ParsingBundledStuff()
         {
             string program = "arr = [1, b]\n" +
