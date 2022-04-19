@@ -303,13 +303,17 @@ namespace CloacaTests
                 "print(a)\n";
 
             RunTest(program, "a: Global\n" +
+                             "f1: Global\n" +
                              "print: Global\n" +
                              "f1:\n" +
                              "  a: Local\n" +
+                             "  f2: Local\n" +
                              "  f2:\n" +
                              "    a: EnclosedReadWrite\n" +
+                             "    f3: Local\n" +
                              "    f3:\n" +
                              "      a: Global\n" +
+                             "      f4: Local\n" +
                              "      f4:\n" +
                              "        a: Local\n", new string[] { "print" });
         }

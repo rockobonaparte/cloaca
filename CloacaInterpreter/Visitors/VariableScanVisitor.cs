@@ -8,6 +8,7 @@ using Language;
 
 public enum NameScope
 {
+    Undefined,
     Local,
     EnclosedRead,
     EnclosedReadWrite,
@@ -23,6 +24,8 @@ public class CodeNamesNode
     public CodeNamesNode Parent;
     public Dictionary<string, NameScope> NamedScopes;
     public Dictionary<string, CodeNamesNode> Children;
+
+    // GlobalsSet: Globals that really came from the outside. Think functions and reserved named stuff.
     public HashSet<string> GlobalsSet;
 
     public CodeNamesNode()
@@ -91,14 +94,11 @@ public class CodeNamesNode
         {
             selectedScope = NameScope.Global;
         }
+
         if(GlobalsSet.Contains(name))
         {
             selectedScope = NameScope.Global;
         } 
-        else if(scope == NameScope.Global)
-        {
-            GlobalsSet.Add(name);
-        }
 
         if (!NamedScopes.ContainsKey(name))
         {
@@ -111,17 +111,19 @@ public class CodeNamesNode
         }
 
         CodeNamesNode lastFoundAbove = this;
+        NameScope aboveScope = NameScope.Undefined;
         for (CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
         {
             if (itr.NamedScopes.ContainsKey(name))
             {
                 lastFoundAbove = itr;
+                aboveScope = itr.NamedScopes[name];
             }
         }
 
         if (lastFoundAbove != this)
         {
-            if(selectedScope == NameScope.Local)
+            if(selectedScope == NameScope.Local && aboveScope != NameScope.Global)
             {
                 selectedScope = NameScope.EnclosedRead;
             }
@@ -130,7 +132,7 @@ public class CodeNamesNode
             // A higher level usage of the same name will just be a local unless
             // either at root scope or marked as global with the global keyword
             // explicitly.
-            if(selectedScope != NameScope.Global)
+            if(selectedScope != NameScope.Global && aboveScope != NameScope.Global)
             {
                 lastFoundAbove.updateScope(name, selectedScope);
             }
