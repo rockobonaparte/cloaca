@@ -187,6 +187,12 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     private CodeNamesNode descendFromName(string new_name)
     {
         var newNode = new CodeNamesNode(rootNode.GlobalsSet);
+
+        // The same function can be defined more than once.
+        if(currentNode.Children.ContainsKey(new_name))
+        {
+            currentNode.Children.Remove(new_name);
+        }
         currentNode.Children.Add(new_name, newNode);
         newNode.Parent = currentNode;
         currentNode = newNode;

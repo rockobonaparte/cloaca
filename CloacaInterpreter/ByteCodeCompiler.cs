@@ -42,12 +42,15 @@ namespace CloacaInterpreter
 
             errorListener.AssertNoErrors();
 
-            var visitor = new CloacaBytecodeVisitor(variablesIn, globals);
-            visitor.Visit(antlrVisitorContext);
+            var varVisitor = new VariableScanVisitor(globals.Keys);
+            varVisitor.Visit(antlrVisitorContext);
 
-            await visitor.PostProcess(scheduler);
+            var byteVisitor = new CloacaBytecodeVisitor(variablesIn, globals);
+            byteVisitor.Visit(antlrVisitorContext);
 
-            PyFunction compiledFunction = visitor.RootProgram.Build(globals);
+            await byteVisitor.PostProcess(scheduler);
+
+            PyFunction compiledFunction = byteVisitor.RootProgram.Build(globals);
             return compiledFunction;
         }
     }
