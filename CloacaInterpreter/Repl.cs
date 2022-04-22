@@ -254,8 +254,11 @@ namespace CloacaInterpreter
                 ContextVariables = new Dictionary<string, object>();
             }
 
+            var varVisitor = new VariableScanVisitor(ContextVariables.Keys);
+            varVisitor.Visit(antlrVisitorContext);
+
             // Make sure to set REPL mode so the top of the stack gets printed instead of thrown away.
-            var visitor = new CloacaBytecodeVisitor(ContextVariables, ContextVariables, true);
+            var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, ContextVariables, ContextVariables, true);
             visitor.Visit(antlrVisitorContext);
             await visitor.PostProcess(Scheduler);
 
@@ -368,8 +371,11 @@ namespace CloacaInterpreter
 
             var antlrVisitorContext = parser.file_input();
 
+            var varVisitor = new VariableScanVisitor(ContextVariables.Keys);
+            varVisitor.Visit(antlrVisitorContext);
+
             var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn, ContextVariables);
+            var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, ContextVariables);
             visitor.Visit(antlrVisitorContext);
 
             var compiledFunction = visitor.RootProgram.Build(ContextVariables);

@@ -45,7 +45,7 @@ namespace CloacaInterpreter
             var varVisitor = new VariableScanVisitor(globals.Keys);
             varVisitor.Visit(antlrVisitorContext);
 
-            var byteVisitor = new CloacaBytecodeVisitor(variablesIn, globals);
+            var byteVisitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, globals);
             byteVisitor.Visit(antlrVisitorContext);
 
             await byteVisitor.PostProcess(scheduler);

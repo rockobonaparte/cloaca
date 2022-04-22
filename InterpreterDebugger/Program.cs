@@ -44,7 +44,11 @@ namespace InterpreterDebugger
             var antlrVisitorContext = parser.file_input();
 
             var variablesIn = new Dictionary<string, object>();
-            var visitor = new CloacaBytecodeVisitor(variablesIn, variablesIn);
+
+            var varVisitor = new VariableScanVisitor(variablesIn.Keys);
+            varVisitor.Visit(antlrVisitorContext);
+
+            var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, variablesIn);
             visitor.Visit(antlrVisitorContext);
 
             PyFunction compiledFunction = visitor.RootProgram.Build(variablesIn);
