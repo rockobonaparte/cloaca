@@ -164,6 +164,17 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         postProcessActions.Clear();
     }
 
+    private void PushNewCode(string name, CodeObjectBuilder builder)
+    {
+        // TODO: Start navigating the variable scan visitor here along with PopCode
+        codeStack.Push(builder);
+    }
+
+    private CodeObjectBuilder PopCode()
+    {
+        return codeStack.Pop();
+    }
+
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
     {
         // If the variable starts with a dunder, use LOAD_NAME.
@@ -197,6 +208,23 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             return;
         }
 
+        // Starting to stir in DEREF opcodes using the variable scan visitor.
+        // This will eventually expand to consume most (?) of the logic in the load/store
+        // code. However, it's a retrofit so we are coming in incrementally. We're going
+        // to start with stuff like nonlocal and enclosed scopes only.
+        if(nameScopeRoot.NamedScopes.ContainsKey(variableName))
+        {
+            var scope = nameScopeRoot.NamedScopes[variableName];
+            if(scope == NameScope.EnclosedReadWrite)
+            {
+                var derefIdx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
+                if (derefIdx >= 0)
+                {
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
+                    return;
+                }
+            }
+        }
 
         // If it's in VarNames, we use it from there. If not, 
         // we assume it's global and deal with it at run time if
@@ -506,7 +534,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
             var callingProgram = codeStack.ActiveProgram;
 
-            codeStack.Push(newFunctionCode);
+            PushNewCode(".0", newFunctionCode);
             codeStack.ActiveProgram.ArgCount = 1;
             var listNameIdx = codeStack.ActiveProgram.ArgVarNames.AddGetIndex(".0");
             codeStack.ActiveProgram.VarNames.Add(".0");
@@ -532,7 +560,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);
 
             // Back to the originator of the list comprehension...
-            codeStack.Pop();
+            PopCode();
 
             codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, compCodeIndex, context);
             codeStack.ActiveProgram.Constants.Add(PyString.Create(codeStack.ActiveProgram.Name + ".<locals>.<listcomp>"));
@@ -1274,7 +1302,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
         // This should fill into newFunctionCode.
-        codeStack.Push(newFunctionCode);
+        PushNewCode(funcName, newFunctionCode);
 
         // Let's have our parameters set first. This should go to VisitTfpdef in particular.
         base.Visit(context.parameters());
@@ -1293,7 +1321,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
 
         // This should restore us back to the original function with which we started.
-        codeStack.Pop();
+        PopCode();
 
         // We don't support any additional flags yet.       
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, funcIndex, context);
@@ -1612,9 +1640,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
                     // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
                     // do them too.
-                    codeStack.Push(defaultBuilder);
+                    PushNewCode(visit_builder_name, defaultBuilder);
                     Visit(context.children[visit_child_i_copy]);
-                    codeStack.Pop();
+                    PopCode();
 
                     var currentTask = scheduler.GetCurrentTask();
                     var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
@@ -1885,7 +1913,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         newFunctionCode.Name = className;
 
         // Descend into the constructor's body as its own program
-        codeStack.Push(newFunctionCode);
+        PushNewCode(className, newFunctionCode);
 
         // This is what happens in a class code object that just passes __init__
         //
@@ -1923,7 +1951,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var return_none_idx = codeStack.ActiveProgram.Constants.AddGetIndex(null);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, return_none_idx, context);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.RETURN_VALUE, context);      // Return statement from generated function
-        codeStack.Pop();
+        PopCode();
 
         // We'll replace an existing name if we have one because assholes may overwrite a function.
         int funcIndex = findFunctionIndex(className);
