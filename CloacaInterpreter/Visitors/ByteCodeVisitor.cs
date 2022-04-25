@@ -122,6 +122,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     private bool replMode;
     private Dictionary<string, object> namespaceGlobals;
     private CodeNamesNode nameScopeRoot;
+    private CodeNamesNode currentNameScope;
 
     /// <summary>
     /// This is particularly useful to tell if we're running at the root level. It implies we're at a module level where locals==globals.
@@ -141,6 +142,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> existingVariables, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
     {
         this.nameScopeRoot = nameScopeRoot;
+        currentNameScope = this.nameScopeRoot;
         this.namespaceGlobals = globals;
         foreach (var name in existingVariables.Keys)
         {
@@ -168,11 +170,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     {
         // TODO: Start navigating the variable scan visitor here along with PopCode
         codeStack.Push(builder);
+        currentNameScope = currentNameScope.Children[name];
     }
 
     private CodeObjectBuilder PopCode()
     {
         return codeStack.Pop();
+        currentNameScope = currentNameScope.Parent;
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
@@ -212,9 +216,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // This will eventually expand to consume most (?) of the logic in the load/store
         // code. However, it's a retrofit so we are coming in incrementally. We're going
         // to start with stuff like nonlocal and enclosed scopes only.
-        if(nameScopeRoot.NamedScopes.ContainsKey(variableName))
+        if(currentNameScope.NamedScopes.ContainsKey(variableName))
         {
-            var scope = nameScopeRoot.NamedScopes[variableName];
+            var scope = currentNameScope.NamedScopes[variableName];
             if(scope == NameScope.EnclosedReadWrite)
             {
                 var derefIdx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
