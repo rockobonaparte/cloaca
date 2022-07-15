@@ -318,5 +318,127 @@ namespace CloacaTests
                              "        a: Local\n", new string[] { "print" });
         }
 
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassNoModifiers()
+        {
+            string program = "class Foo:\n" +
+                             "   def __init__(self, a):\n" +
+                             "      self.b = a\n" +
+                             "c = Foo(1)\n";
+            //RunTest(program, "a: Global\n" +
+            //                 "foo:\n" +
+            //                 "  b: Local\n" +
+            //                 "  c: Local\n");
+        }
+
+        // Naming convention for ClassWith123:
+        // 1. Global Scope
+        // 2. Class Scope
+        // 3. Class Init Local Scope
+        //
+        // X = absent
+        // G = Global
+        // N = NonLocal
+        // C = Class
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithLLL()
+        {
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    a = 101\n" +
+                             "    def __init__(self):\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 100
+            // SomeClass.a = 101
+        }
+
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithGGG()
+        {
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    global a\n" +
+                             "    a = 101\n" +
+                             "    def __init__(self):\n" +
+                             "        global a\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 102
+            // SomeClass.a = 102
+        }
+
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithGGX()
+        {
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    global a\n" +
+                             "    a = 101\n" +
+                             "    def __init__(self):\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 101
+            // SomeClass.a = 101
+        }
+
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithGXN()
+        {
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    def __init__(self):\n" +
+                             "        nonlocal a\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // SyntaxError: no binding for nonlocal 'a' found
+        }
+
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithGXG()
+        {
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    def __init__(self):\n" +
+                             "        global a\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 102
+        }
+
+        [Test]
+        [Ignore("Enable scanning classes")]
+        public void ClassWithGGC()
+        {
+            // This one will probably suck. Getting the class a to the local scope
+            // is probably something peculiar I have to deal with.
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    global a\n" +
+                             "    a = 101\n" +
+                             "    def __init__(self):\n" +
+                             "        self.a = a + 1\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 101
+            // sc.a = 102
+        }
     }
 }
