@@ -322,6 +322,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
+    {
+        // Basically copypasta of VisitFuncDef w/o the parameter management.
+        descendFromName(context.NAME().GetText());
+        base.VisitSuite(context.suite());
+        ascendNameNode();
+        return null;
+    }
+
     public override object VisitNonlocal_stmt([NotNull] CloacaParser.Nonlocal_stmtContext context)
     {
         foreach(var variableName in context.NAME())

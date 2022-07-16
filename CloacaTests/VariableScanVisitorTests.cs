@@ -342,10 +342,10 @@ namespace CloacaTests
         // N = NonLocal
         // C = Class
         [Test]
-        [Ignore("Enable scanning classes")]
         public void ClassWithLLL()
         {
             string program = "a = 100\n" +
+                             "\n" +
                              "class SomeClass:\n" +
                              "    a = 101\n" +
                              "    def __init__(self):\n" +
@@ -355,6 +355,15 @@ namespace CloacaTests
 
             // a = 100
             // SomeClass.a = 101
+
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  a: Local\n" +
+                             "  __init__:\n" +
+                             "    a: Local\n" +
+                             "    self: Local\n");
         }
 
         [Test]
