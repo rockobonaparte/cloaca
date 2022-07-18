@@ -319,17 +319,20 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
-        public void ClassNoModifiers()
+        [Ignore("Class members not properly parsed yet")]
+        public void ClassWithMember()
         {
             string program = "class Foo:\n" +
                              "   def __init__(self, a):\n" +
                              "      self.b = a\n" +
                              "c = Foo(1)\n";
-            //RunTest(program, "a: Global\n" +
-            //                 "foo:\n" +
-            //                 "  b: Local\n" +
-            //                 "  c: Local\n");
+
+            RunTest(program, "Foo: Global\n" +
+                             "  Foo:\n" +
+                             "  __init__:\n" +
+                             "    a: Local\n" +
+                             "    b: Local\n" +
+                             "    self: Local\n");
         }
 
         // Naming convention for ClassWith123:
@@ -367,7 +370,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
         public void ClassWithGGG()
         {
             string program = "a = 100\n" +
@@ -382,10 +384,18 @@ namespace CloacaTests
 
             // a = 102
             // SomeClass.a = 102
+
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  a: Global\n" +
+                             "  __init__:\n" +
+                             "    a: Global\n" +
+                             "    self: Local\n");
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
         public void ClassWithGGX()
         {
             string program = "a = 100\n" +
@@ -399,10 +409,18 @@ namespace CloacaTests
 
             // a = 101
             // SomeClass.a = 101
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  a: Global\n" +
+                             "  __init__:\n" +
+                             "    a: Local\n" +
+                             "    self: Local\n");
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
+        [Ignore("Need to error properly on the nonlocal: 'SyntaxError: no binding for nonlocal 'a' found'")]
         public void ClassWithGXN()
         {
             string program = "a = 100\n" +
@@ -417,7 +435,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
         public void ClassWithGXG()
         {
             string program = "a = 100\n" +
@@ -429,10 +446,17 @@ namespace CloacaTests
                              "sc = SomeClass()\n";
 
             // a = 102
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  __init__:\n" +
+                             "    a: Global\n" +
+                             "    self: Local\n");
         }
 
         [Test]
-        [Ignore("Enable scanning classes")]
+        [Ignore("Got some wild problems with self.a")]
         public void ClassWithGGC()
         {
             // This one will probably suck. Getting the class a to the local scope
@@ -448,6 +472,18 @@ namespace CloacaTests
 
             // a = 101
             // sc.a = 102
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  a: Global\n" +
+                             "  __init__:\n" +
+                             "    a: Global\n" +
+                             "    self: Local\n");
+
+            // Issues:
+            // self.a gets its own thing. I haven't really accommodated for that.
+            // a gets treated as a local in __init__.
         }
     }
 }
