@@ -239,7 +239,16 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
         var expr = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0];
+
         var variableName = expr.GetText();
+
+        // Kind of hamfisted, but anything that's being subscripted (self.a.b.something_else)
+        // only needs the first part. That's the variable name. We can blow off anything else.
+        int firstDot = variableName.IndexOf('.');
+        if (firstDot >= 0) {
+            variableName = variableName.Substring(0, firstDot);
+        } 
+
         currentNode.AddName(variableName);
         return null;
     }

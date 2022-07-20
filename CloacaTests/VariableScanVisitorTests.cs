@@ -319,7 +319,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Class members not properly parsed yet")]
+//        [Ignore("Class members not properly parsed yet")]
         public void ClassWithMember()
         {
             string program = "class Foo:\n" +
@@ -327,11 +327,11 @@ namespace CloacaTests
                              "      self.b = a\n" +
                              "c = Foo(1)\n";
 
-            RunTest(program, "Foo: Global\n" +
-                             "  Foo:\n" +
+            RunTest(program, "c: Global\n" +
+                             "Foo: Global\n" +
+                             "Foo:\n" +
                              "  __init__:\n" +
                              "    a: Local\n" +
-                             "    b: Local\n" +
                              "    self: Local\n");
         }
 
