@@ -15,6 +15,29 @@ public enum NameScope
     Global,
 }
 
+// Added when I started to run into issues with classes in particular. Stuff like:
+// a = 4
+// class Foo:
+//    nonlocal a <-- foul!
+//
+// So I needed to know what a given CodeNamesNode type was representing.
+//
+// I've included the types I could think of, with help from:
+// https://realpython.com/python-scope-legb-rule/#discovering-unusual-python-scopes
+//
+// I currently only use Class and NotClass
+//
+// TODO: Use the unused types!
+public enum ScopeType
+{
+    ModuleUnused,
+    Function,
+    Class,
+    ComprehensionUnused,
+    ExceptionUnused,
+    NotClass
+}
+
 /// <summary>
 /// Data structure for managing node names across layers of code. This is used to tell in the code generation pass
 /// whether or not to treat a variable as global, enclosed, or local.
@@ -24,6 +47,12 @@ public class CodeNamesNode
     public CodeNamesNode Parent;
     public Dictionary<string, NameScope> NamedScopes;
     public Dictionary<string, CodeNamesNode> Children;
+    
+    public ScopeType ScopeType { get; protected set; }
+    public void SetScopeType(ScopeType newType)
+    {
+        this.ScopeType = newType;
+    }
 
     // GlobalsSet: Globals that really came from the outside. Think functions and reserved named stuff.
     public HashSet<string> GlobalsSet;
@@ -33,6 +62,7 @@ public class CodeNamesNode
         GlobalsSet = new HashSet<string>();
         NamedScopes = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, CodeNamesNode>();
+        SetScopeType(ScopeType.NotClass);
     }
 
     // Alternate version that takes a list of variables from the outside to treat like globals.
@@ -49,6 +79,7 @@ public class CodeNamesNode
         GlobalsSet = globalsSet;
         NamedScopes = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, CodeNamesNode>();
+        SetScopeType(ScopeType.NotClass);
     }
 
     // TODO: I think this actually has to keep going up and up and up.
@@ -324,7 +355,8 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
     {
-        descendFromName(context.NAME().GetText());
+        var newNode = descendFromName(context.NAME().GetText());
+        newNode.SetScopeType(ScopeType.Function);
         base.Visit(context.parameters());
         base.VisitSuite(context.suite());
         ascendNameNode();
@@ -333,8 +365,8 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
     {
-        // Basically copypasta of VisitFuncDef w/o the parameter management.
-        descendFromName(context.NAME().GetText());
+        var newNode = descendFromName(context.NAME().GetText());
+        newNode.SetScopeType(ScopeType.Class);
         base.VisitSuite(context.suite());
         ascendNameNode();
         return null;
