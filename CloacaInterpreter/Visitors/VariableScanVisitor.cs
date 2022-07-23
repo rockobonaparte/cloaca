@@ -113,6 +113,20 @@ public class CodeNamesNode
         }
     }
 
+    private bool foundUpstream(string name)
+    {
+        var parentCursor = Parent;
+        while(parentCursor != null && parentCursor.ScopeType != ScopeType.Class)
+        {
+            if (parentCursor.NamedScopes.ContainsKey(name))
+            {
+                return true;
+            }
+            parentCursor = Parent.Parent;
+        }
+        return false;
+    }
+
     public void AddName(string name, NameScope scope)
     {
         // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
@@ -130,6 +144,13 @@ public class CodeNamesNode
         {
             selectedScope = NameScope.Global;
         } 
+
+        // Check that a nonlocal declaration actually resolves upstream.
+        if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite &&
+            !foundUpstream(name))
+        {
+            throw new System.Exception("Syntax Error:  no binding for nonlocal '" + name + "' found");
+        }
 
         if (!NamedScopes.ContainsKey(name))
         {

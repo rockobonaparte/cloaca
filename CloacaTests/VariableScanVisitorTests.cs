@@ -420,7 +420,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Need to error properly on the nonlocal: 'SyntaxError: no binding for nonlocal 'a' found'")]
+        //[Ignore("Need to error properly on the nonlocal: 'SyntaxError: no binding for nonlocal 'a' found'")]
         public void ClassWithGXN()
         {
             string program = "a = 100\n" +
@@ -432,6 +432,7 @@ namespace CloacaTests
                              "sc = SomeClass()\n";
 
             // SyntaxError: no binding for nonlocal 'a' found
+            RunTest(program, "Should just error about 'a' not being found\n");
         }
 
         [Test]
@@ -456,7 +457,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Got some wild problems with self.a")]
+        //[Ignore("Got some wild problems with self.a")]
         public void ClassWithGGC()
         {
             // This one will probably suck. Getting the class a to the local scope
