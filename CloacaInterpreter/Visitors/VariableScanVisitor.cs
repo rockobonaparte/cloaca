@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
-
+using Antlr4.Runtime.Tree;
 using Language;
 
 public enum NameScope
@@ -38,23 +39,20 @@ public enum ScopeType
     NotClass
 }
 
-public class AddNameResult
+public class VariableScanSyntaxException : Exception
 {
-    public bool Success { get; protected set; }
-    public string Reason { get; protected set; }
-    public AddNameResult()
+    public VariableScanSyntaxException(string msg) : base(msg)
     {
-        Success = true;
-        Reason = null;
-    }
 
-    public AddNameResult(bool success, string reason=null)
+    }
+}
+
+public class UnboundNonlocalException : VariableScanSyntaxException
+{
+    public UnboundNonlocalException(string name, ParserRuleContext context) : base("line " + context.Start.Line + ": no binding for nonlocal '" + name + "' found")
     {
-        Success = success;
-        Reason = reason;
-    }
 
-    static internal AddNameResult DefaultSuccess = new AddNameResult();
+    }
 }
 
 /// <summary>
@@ -141,12 +139,12 @@ public class CodeNamesNode
         return false;
     }
 
-    public AddNameResult AddName(string name)
+    public void AddName(string name, ParserRuleContext context)
     {
-        return AddName(name, NameScope.Local);
+        AddName(name, NameScope.Local, context);
     }
 
-    public AddNameResult AddName(string name, NameScope scope)
+    public void AddName(string name, NameScope scope, ParserRuleContext context)
     {
         // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
         // need to see how things proceed with them before I go all-in on the optimization. I'm running on
@@ -173,7 +171,7 @@ public class CodeNamesNode
         if (scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite &&
             !foundUpstream(name))
         {
-            return new AddNameResult(false, "no binding for nonlocal '" + name + "' found");
+            throw new UnboundNonlocalException(name, context);
         }
 
         if (!NamedScopes.ContainsKey(name))
@@ -213,8 +211,6 @@ public class CodeNamesNode
                 lastFoundAbove.updateScope(name, selectedScope);
             }
         }
-
-        return AddNameResult.DefaultSuccess;
     }
 
     public string ToReportString(int indent=0)
@@ -253,7 +249,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 {
     private CodeNamesNode rootNode;
     private CodeNamesNode currentNode;
-    public List<AddNameResult> Failures;
+    public string failureMessage;
 
     public CodeNamesNode RootNode
     {
@@ -289,7 +285,21 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         rootNode = new CodeNamesNode(names);
         currentNode = rootNode;
-        Failures = new List<AddNameResult>();
+    }
+
+    // Will visit the variable scan visitor, but has a guard around the
+    // main visit call for unbound variables and other syntax errors. These will
+    // be caught and modified.
+    public void TryVisit([NotNull] IParseTree tree)
+    {
+        try
+        {
+            failureMessage = null;
+            this.Visit(tree);
+        } catch(VariableScanSyntaxException error)
+        {
+            failureMessage = error.Message;
+        }
     }
 
     public override object VisitExpr_stmt([NotNull] CloacaParser.Expr_stmtContext context)
@@ -329,12 +339,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             variableName = variableName.Substring(0, firstDot);
         } 
 
-        var res = currentNode.AddName(variableName);
-        if (!res.Success)
-        {
-            Failures.Add(res);
-            throw new ParseCanceledException();
-        }
+        currentNode.AddName(variableName, context);
         return null;
     }
 
@@ -350,12 +355,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
-                    var res = currentNode.AddName(attrName);
-                    if (!res.Success)
-                    {
-                        Failures.Add(res);
-                        throw new ParseCanceledException();
-                    }
+                    currentNode.AddName(attrName, context);
                 }
 
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
@@ -400,24 +400,14 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         var variableName = context.GetText();
-        var res = currentNode.AddName(variableName);
-        if(!res.Success)
-        {
-            Failures.Add(res);
-            throw new ParseCanceledException();            
-        }
+        currentNode.AddName(variableName, context);
         return null;
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.GetText();
-        var res = currentNode.AddName(variableName);
-        if (!res.Success)
-        {
-            Failures.Add(res);
-            throw new ParseCanceledException();
-        }
+        currentNode.AddName(variableName, context);
         return null;
     }
 
@@ -444,13 +434,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach(var variableName in context.NAME())
         {
-            var res = currentNode.AddName(variableName.GetText(), NameScope.EnclosedReadWrite);
-            if (!res.Success)
-            {
-                Failures.Add(res);
-                throw new ParseCanceledException();
-            }
-
+            currentNode.AddName(variableName.GetText(), NameScope.EnclosedReadWrite, context);
         }
         return null;
     }
@@ -459,12 +443,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach (var variableName in context.NAME())
         {
-            var res = currentNode.AddName(variableName.GetText(), NameScope.Global);
-            if (!res.Success)
-            {
-                Failures.Add(res);
-                throw new ParseCanceledException();
-            }
+            currentNode.AddName(variableName.GetText(), NameScope.Global, context);
         }
         return null;
     }
@@ -474,12 +453,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitExcept_clause(context);
         if(context.NAME() != null)
         {
-            var res = currentNode.AddName(context.NAME().GetText());
-            if (!res.Success)
-            {
-                Failures.Add(res);
-                throw new ParseCanceledException();
-            }
+            currentNode.AddName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -489,12 +463,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitDotted_as_name(context);
         if (context.NAME() != null)
         {
-            var res = currentNode.AddName(context.NAME().GetText());
-            if (!res.Success)
-            {
-                Failures.Add(res);
-                throw new ParseCanceledException();
-            }
+            currentNode.AddName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -504,12 +473,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitImport_as_name(context);
         if (context.NAME() != null && context.NAME().Length > 0)
         {
-            var res = currentNode.AddName(context.NAME()[0].GetText());
-            if (!res.Success)
-            {
-                Failures.Add(res);
-                throw new ParseCanceledException();
-            }
+            currentNode.AddName(context.NAME()[0].GetText(), context);
         }
         return null;
     }

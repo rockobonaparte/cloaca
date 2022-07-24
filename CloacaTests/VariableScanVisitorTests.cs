@@ -25,20 +25,10 @@ namespace CloacaTests
             string result;
 
             var visitor = new VariableScanVisitor(globals ?? new string[0]);
-            try
-            {
-                visitor.Visit(antlrVisitorContext);
-                var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
-                result = visitor.RootNode.ToReportString();
-            }
-            catch (Antlr4.Runtime.Misc.ParseCanceledException cancelled)
-            {
-                result = "";
-                foreach(var error in visitor.Failures)
-                {
-                    result += error.Reason + "\n";
-                }
-            }
+            visitor.TryVisit(antlrVisitorContext);
+            var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
+            result = visitor.RootNode.ToReportString();
+            result = visitor.failureMessage == null ? result : visitor.failureMessage;
 
             Assert.That(result, Is.EqualTo(compare_dump));
         }
@@ -441,7 +431,7 @@ namespace CloacaTests
                              "sc = SomeClass()\n";
 
             // SyntaxError: no binding for nonlocal 'a' found
-            RunTest(program, "no binding for nonlocal 'a' found\n");
+            RunTest(program, "line 4: no binding for nonlocal 'a' found");
         }
 
         [Test]
