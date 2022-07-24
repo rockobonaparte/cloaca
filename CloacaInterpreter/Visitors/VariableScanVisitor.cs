@@ -39,17 +39,20 @@ public enum ScopeType
     NotClass
 }
 
+// TODO: Plumb this out to regular full-flow parsing so the line number and printout gets conveyed to the user.
 public class VariableScanSyntaxException : Exception
 {
-    public VariableScanSyntaxException(string msg) : base(msg)
+    public int Line { get; private set; }
+    public VariableScanSyntaxException(string msg, int line) : base(msg)
     {
-
+        Line = line;
     }
 }
 
 public class UnboundNonlocalException : VariableScanSyntaxException
 {
-    public UnboundNonlocalException(string name, ParserRuleContext context) : base("line " + context.Start.Line + ": no binding for nonlocal '" + name + "' found")
+    public UnboundNonlocalException(string name, ParserRuleContext context) : 
+        base("line " + context.Start.Line + ": no binding for nonlocal '" + name + "' found", context.Start.Line)
     {
 
     }
