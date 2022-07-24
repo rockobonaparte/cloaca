@@ -3,8 +3,6 @@ using NUnit.Framework;
 
 using Language;
 using LanguageImplementation;
-using System.Collections.Generic;
-using System;
 
 namespace CloacaTests
 {
@@ -24,12 +22,23 @@ namespace CloacaTests
 
             errorListener.AssertNoErrors();
 
+            string result;
+
             var visitor = new VariableScanVisitor(globals ?? new string[0]);
-            visitor.Visit(antlrVisitorContext);
-
-            var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
-
-            var result = visitor.RootNode.ToReportString();
+            try
+            {
+                visitor.Visit(antlrVisitorContext);
+                var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
+                result = visitor.RootNode.ToReportString();
+            }
+            catch (Antlr4.Runtime.Misc.ParseCanceledException cancelled)
+            {
+                result = "";
+                foreach(var error in visitor.Failures)
+                {
+                    result += error.Reason + "\n";
+                }
+            }
 
             Assert.That(result, Is.EqualTo(compare_dump));
         }
@@ -432,7 +441,7 @@ namespace CloacaTests
                              "sc = SomeClass()\n";
 
             // SyntaxError: no binding for nonlocal 'a' found
-            RunTest(program, "Should just error about 'a' not being found\n");
+            RunTest(program, "no binding for nonlocal 'a' found\n");
         }
 
         [Test]
