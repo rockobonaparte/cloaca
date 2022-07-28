@@ -144,6 +144,11 @@ public class CodeNamesNode
 
     public void AddName(string name, ParserRuleContext context)
     {
+        if(name == "a" && Parent != null && Parent.Children.ContainsKey("__init__"))
+        {
+            // Debug breakpoint
+            int b = 12;
+        }
         AddName(name, NameScope.Local, context);
     }
 
@@ -185,6 +190,11 @@ public class CodeNamesNode
         {
             selectedScope = selectBroadestScope(scope, NamedScopes[name]);
             NamedScopes[name] = selectedScope;
+        }
+
+        if(selectedScope == NameScope.Global)
+        {
+            GlobalsSet.Add(name);
         }
 
         CodeNamesNode lastFoundAbove = this;

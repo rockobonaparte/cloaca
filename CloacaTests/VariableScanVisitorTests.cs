@@ -414,7 +414,7 @@ namespace CloacaTests
                              "SomeClass:\n" +
                              "  a: Global\n" +
                              "  __init__:\n" +
-                             "    a: Local\n" +
+                             "    a: Global\n" +
                              "    self: Local\n");
         }
 
@@ -463,7 +463,6 @@ namespace CloacaTests
             // is probably something peculiar I have to deal with.
             string program = "a = 100\n" +
                              "class SomeClass:\n" +
-                             "    global a\n" +
                              "    a = 101\n" +
                              "    def __init__(self):\n" +
                              "        self.a = a + 1\n" +
