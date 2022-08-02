@@ -414,7 +414,34 @@ namespace CloacaTests
                              "SomeClass:\n" +
                              "  a: Global\n" +
                              "  __init__:\n" +
-                             "    a: Global\n" +
+                             "    a: Local\n" +
+                             "    self: Local\n");
+        }
+
+        [Test]
+        public void ClassWithGLL()
+        {
+            // Note to self: FASTs are NOT a thing outside of functions so use regular LEGB variable
+            // resolution in the class body. That should cause a to properly copy in and become a local,
+            // independent variable.
+            string program = "a = 100\n" +
+                             "class SomeClass:\n" +
+                             "    a += 1\n" +
+                             "    def __init__(self):\n" +
+                             "        a = 102\n" +
+                             "\n" +
+                             "sc = SomeClass()\n";
+
+            // a = 100
+            // SomeClass.a = 101
+            // sc.a = 102
+            RunTest(program, "a: Global\n" +
+                             "sc: Global\n" +
+                             "SomeClass: Global\n" +
+                             "SomeClass:\n" +
+                             "  a: Local\n" +
+                             "  __init__:\n" +
+                             "    a: Local\n" +
                              "    self: Local\n");
         }
 
