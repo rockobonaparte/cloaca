@@ -484,7 +484,7 @@ namespace CloacaTests
 
         [Test]
         //[Ignore("Got some wild problems with self.a")]
-        public void ClassWithGGC()
+        public void ClassWithGLC()
         {
             // This one will probably suck. Getting the class a to the local scope
             // is probably something peculiar I have to deal with.
@@ -502,7 +502,7 @@ namespace CloacaTests
                              "sc: Global\n" +
                              "SomeClass: Global\n" +
                              "SomeClass:\n" +
-                             "  a: Global\n" +
+                             "  a: Local\n" +
                              "  __init__:\n" +
                              "    a: Global\n" +
                              "    self: Local\n");
