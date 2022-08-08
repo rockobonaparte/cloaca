@@ -23,7 +23,8 @@ namespace InterpreterWaiting
 
             var context = parser.file_input();
 
-            var varVisitor = new VariableScanVisitor(variablesIn.Keys);
+            // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
+            var varVisitor = new VariableScanVisitor(variablesIn.Keys, new string[0]);
             varVisitor.Visit(context);
 
             var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, variablesIn);

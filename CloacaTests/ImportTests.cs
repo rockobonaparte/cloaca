@@ -447,7 +447,7 @@ namespace CloacaTests
                                     "   return x\n";
             var scheduler = new Scheduler();
             var interpreter = new Interpreter(scheduler);
-            var compiledSubProgram = await ByteCodeCompiler.Compile(subProgramCode, new Dictionary<string, object>(), new Dictionary<string, object>(), scheduler);
+            var compiledSubProgram = await ByteCodeCompiler.Compile(subProgramCode, new Dictionary<string, object>(), new Dictionary<string, object>(), new Dictionary<string, object>(), scheduler);
             fooModule.__dict__.Add("subprogram", compiledSubProgram.Code.Constants[0]);
 
             var finishedFrame = await runProgram(

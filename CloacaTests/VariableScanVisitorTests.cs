@@ -9,7 +9,8 @@ namespace CloacaTests
     [TestFixture]
     class VariableScanVisitorTests
     {
-        public void RunTest(string program, string compare_dump, string[] globals = null)
+        public void RunTest(string program, string compare_dump, 
+            string[] globals = null, string[] builtins = null)
         {
             var inputStream = new AntlrInputStream(program);
             var lexer = new CloacaLexer(inputStream);
@@ -24,7 +25,8 @@ namespace CloacaTests
 
             string result;
 
-            var visitor = new VariableScanVisitor(globals ?? new string[0]);
+            var visitor = new VariableScanVisitor(globals=globals ?? new string[0],
+                                                  builtins ?? new string[0]);
             visitor.TryVisit(antlrVisitorContext);
             var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
             result = visitor.RootNode.ToReportString();

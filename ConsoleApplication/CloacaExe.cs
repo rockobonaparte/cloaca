@@ -85,7 +85,12 @@ namespace ConsoleApplication
             interpreter.AddBuiltin(new WrappedCodeObject("print", typeof(ConsoleApplication).GetMethod("print_func")));
             interpreter.StepMode = false;
 
-            var compiledFunctionTask = ByteCodeCompiler.Compile(program, new Dictionary<string, object>(), new Dictionary<string, object>(), scheduler);
+            // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
+            var compiledFunctionTask = ByteCodeCompiler.Compile(program,
+                new Dictionary<string, object>(),
+                new Dictionary<string, object>(),
+                new Dictionary<string, object>(),
+                scheduler);
             ScheduleLoop(scheduler, cmdline_args[0]);
 
             var compiledFunction = await compiledFunctionTask;

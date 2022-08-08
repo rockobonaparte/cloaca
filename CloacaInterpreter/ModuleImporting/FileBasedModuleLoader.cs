@@ -100,7 +100,11 @@ namespace CloacaInterpreter.ModuleImporting
             var moduleGlobals = new Dictionary<string, object>();
             moduleGlobals.Add("__name__", spec.Name);
 
-            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(), moduleGlobals, interpreter.Scheduler);
+            // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
+            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(),
+                new Dictionary<string, object>(),
+                moduleGlobals,
+                interpreter.Scheduler);
 
             // This has been unused awhile but I will keep it at the ready.
             //string modulename = spec.Origin.Length == 0 ? spec.Name : spec.Origin + "." + spec.Name;

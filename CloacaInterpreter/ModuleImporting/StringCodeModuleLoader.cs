@@ -60,7 +60,13 @@ namespace CloacaInterpreter.ModuleImporting
             var code = lookup[(string)spec.LoaderState];
             var moduleGlobals = new Dictionary<string, object>();
             moduleGlobals.Add("__name__", spec.Name);
-            var moduleCode = await ByteCodeCompiler.Compile(code, new Dictionary<string, object>(), moduleGlobals, interpreter.Scheduler);
+
+            // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
+            var moduleCode = await ByteCodeCompiler.Compile(code,
+                new Dictionary<string, object>(),
+                new Dictionary<string, object>(),
+                moduleGlobals,
+                interpreter.Scheduler);
 
             // Time to make the frame ourselves so we can tie locals to globals! At the root of a module, locals==globals.
             var nextFrame = Frame.PrepareModuleFrame(moduleCode, context, moduleGlobals);

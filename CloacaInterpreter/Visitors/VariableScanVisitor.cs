@@ -13,6 +13,7 @@ public enum NameScope
     Local,
     EnclosedRead,
     EnclosedReadWrite,
+    New_Enclosed,
     Global,
     Builtin,
 }
@@ -91,11 +92,11 @@ public class ConflictingBindingException : VariableScanSyntaxException
 /// Data structure for managing node names across layers of code. This is used to tell in the code generation pass
 /// whether or not to treat a variable as global, enclosed, or local.
 /// </summary>
-public class CodeNamesNode
+public class OldCodeNamesNode
 {
-    public CodeNamesNode Parent;
+    public OldCodeNamesNode Parent;
     public Dictionary<string, NameScope> NamedScopes;
-    public Dictionary<string, CodeNamesNode> Children;
+    public Dictionary<string, OldCodeNamesNode> Children;
     
     public ScopeType ScopeType { get; protected set; }
     public void SetScopeType(ScopeType newType)
@@ -106,16 +107,16 @@ public class CodeNamesNode
     // GlobalsSet: Globals that really came from the outside. Think functions and reserved named stuff.
     public HashSet<string> GlobalsSet;
 
-    public CodeNamesNode()
+    public OldCodeNamesNode()
     {
         GlobalsSet = new HashSet<string>();
         NamedScopes = new Dictionary<string, NameScope>();
-        Children = new Dictionary<string, CodeNamesNode>();
+        Children = new Dictionary<string, OldCodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
 
     // Alternate version that takes a list of variables from the outside to treat like globals.
-    public CodeNamesNode(IEnumerable<string> externalGlobals) : this()
+    public OldCodeNamesNode(IEnumerable<string> externalGlobals) : this()
     {
         foreach(var global in externalGlobals)
         {
@@ -123,11 +124,11 @@ public class CodeNamesNode
         }
     }
 
-    public CodeNamesNode(HashSet<string> globalsSet)
+    public OldCodeNamesNode(HashSet<string> globalsSet)
     {
         GlobalsSet = globalsSet;
         NamedScopes = new Dictionary<string, NameScope>();
-        Children = new Dictionary<string, CodeNamesNode>();
+        Children = new Dictionary<string, OldCodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
 
@@ -225,9 +226,9 @@ public class CodeNamesNode
             GlobalsSet.Add(name);
         }
 
-        CodeNamesNode lastFoundAbove = this;
+        OldCodeNamesNode lastFoundAbove = this;
         NameScope aboveScope = NameScope.Undefined;
-        for (CodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
+        for (OldCodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
         {
             if (itr.NamedScopes.ContainsKey(name))
             {
@@ -331,7 +332,9 @@ public class NewCodeNamesNode
 
     public NewCodeNamesNode(HashSet<string> globalsSet, HashSet<string> builtinsSet)
     {
-        GlobalsSet = globalsSet;
+        // Copy globals but pass builtins as a reference. Builtins are read-only. Children
+        // can have different globals from the root global! Ugly!
+        GlobalsSet = new HashSet<string>(globalsSet);       
         BuiltinsSet = builtinsSet;
         NamedScopes = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, NewCodeNamesNode>();
@@ -411,7 +414,7 @@ public class NewCodeNamesNode
         //     v = 1
         //     class B :
         //         nonlocal v           // <--- dead right here.
-        if (scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite &&
+        if (scope == NameScope.New_Enclosed &&
             !foundUpstream(name))
         {
             throw new UnboundNonlocalException(name, context);
@@ -461,17 +464,34 @@ public class NewCodeNamesNode
         }
     }
 
-    private void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
+    public void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
     {
         if(scope == NameScope.Builtin)
         {
             throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" + 
                 name + "' cannot be set to builtin from code", context.Start.Line);
         }
-        throw new ConflictingBindingException(name, NameScope.Undefined, NameScope.Undefined, context);
+        else if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite)
+        {
+            throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" +
+                name + "' using deprecated EnclosedRead/Write scope types", context.Start.Line);
+        }
+        else if(NamedScopes.ContainsKey(name) && NamedScopes[name] != scope)
+        {
+            throw new ConflictingBindingException(name, NameScope.Undefined, NameScope.Undefined, context);
+        }
+
+        NamedScopes.Add(name, scope);
+
+        if(scope == NameScope.Global)
+        {
+            // Yeah, this lets you do stuff like declare "print" a global and assign it to 2.
+            // That's Python! =D
+            GlobalsSet.Add(name);
+        }        
     }
 
-    private NameScope resolve_LEGB(string name)
+    public NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context)
     {
         // Not found, start lookup upstairs in order: enclosing, global, built-in.
         for (var cursor = this; Parent != null; cursor = cursor.Parent)
@@ -481,10 +501,11 @@ public class NewCodeNamesNode
                 return NamedScopes[name];
             }
         }
-        return NameScope.Local;
+        //return NameScope.Local;
+        throw new UnboundLocalException(name, context);
     }
 
-    private NameScope resolve_LGB(string name, ParserRuleContext context)
+    public NameScope resolve_rvalue_LGB(string name, ParserRuleContext context)
     {
         // Not found, start lookup upstairs in order: enclosing, global, built-in.
         for (var cursor = this; Parent != null; cursor = cursor.Parent)
@@ -541,11 +562,11 @@ public class NewCodeNamesNode
 
 public class VariableScanVisitor : CloacaBaseVisitor<object>
 {
-    private CodeNamesNode rootNode;
-    private CodeNamesNode currentNode;
+    private NewCodeNamesNode rootNode;
+    private NewCodeNamesNode currentNode;
     public string failureMessage;
 
-    public CodeNamesNode RootNode
+    public NewCodeNamesNode RootNode
     {
         get
         {
@@ -553,9 +574,9 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    private CodeNamesNode descendFromName(string new_name)
+    private NewCodeNamesNode descendFromName(string new_name)
     {
-        var newNode = new CodeNamesNode(rootNode.GlobalsSet);
+        var newNode = new NewCodeNamesNode(rootNode.GlobalsSet, rootNode.GlobalsSet);
 
         // The same function can be defined more than once.
         // TODO: What happens if the involved function had created a nonlocal or something?
@@ -569,15 +590,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return currentNode;
     }
 
-    private CodeNamesNode ascendNameNode()
+    private NewCodeNamesNode ascendNameNode()
     {
         currentNode = currentNode.Parent;
         return currentNode;
     }
 
-    public VariableScanVisitor(IEnumerable<string> names)
+    public VariableScanVisitor(IEnumerable<string> globalNames, IEnumerable<string> builtinNames)
     {
-        rootNode = new CodeNamesNode(names);
+        rootNode = new NewCodeNamesNode(globalNames, builtinNames);
         currentNode = rootNode;
     }
 
