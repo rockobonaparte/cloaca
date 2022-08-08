@@ -59,6 +59,34 @@ public class UnboundNonlocalException : VariableScanSyntaxException
     }
 }
 
+public class UnboundLocalException : VariableScanSyntaxException
+{
+    public UnboundLocalException(string name, ParserRuleContext context) :
+        base("line " + context.Start.Line + ": local variable '" + name + "' referenced before assignment", context.Start.Line)
+    {
+
+    }
+}
+
+public class UnboundVariableException : VariableScanSyntaxException
+{
+    public UnboundVariableException(string name, ParserRuleContext context) :
+        base("line " + context.Start.Line + ": no binding for variable '" + name + "' found", context.Start.Line)
+    {
+
+    }
+}
+
+public class ConflictingBindingException : VariableScanSyntaxException
+{
+    public ConflictingBindingException(string name, NameScope first, NameScope second, ParserRuleContext context) :
+        base("line " + context.Start.Line + ": name '" + name + "' is " + first + " and " + second, context.Start.Line)
+    {
+
+    }
+
+}
+
 /// <summary>
 /// Data structure for managing node names across layers of code. This is used to tell in the code generation pass
 /// whether or not to treat a variable as global, enclosed, or local.
@@ -433,9 +461,14 @@ public class NewCodeNamesNode
         }
     }
 
-    private void assign_LEGB(string name, NameScope scope)
+    private void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
     {
-
+        if(scope == NameScope.Builtin)
+        {
+            throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" + 
+                name + "' cannot be set to builtin from code", context.Start.Line);
+        }
+        throw new ConflictingBindingException(name, NameScope.Undefined, NameScope.Undefined, context);
     }
 
     private NameScope resolve_LEGB(string name)
@@ -449,6 +482,27 @@ public class NewCodeNamesNode
             }
         }
         return NameScope.Local;
+    }
+
+    private NameScope resolve_LGB(string name, ParserRuleContext context)
+    {
+        // Not found, start lookup upstairs in order: enclosing, global, built-in.
+        for (var cursor = this; Parent != null; cursor = cursor.Parent)
+        {
+            if (cursor.NamedScopes.ContainsKey(name))
+            {
+                var scope = NamedScopes[name];
+                if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite)
+                {
+                    continue;
+                }
+                else
+                {
+                    return NamedScopes[name];
+                }
+            }
+        }
+        throw new UnboundLocalException(name, context);
     }
 
     public string ToReportString(int indent = 0)
