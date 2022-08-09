@@ -381,12 +381,12 @@ public class NewCodeNamesNode
         return false;
     }
 
-    public void AddName(string name, ParserRuleContext context)
+    public void AddNameDeprecated(string name, ParserRuleContext context)
     {
-        AddName(name, NameScope.Local, context);
+        AddNameDeprecated(name, NameScope.Local, context);
     }
 
-    public void AddName(string name, NameScope scope, ParserRuleContext context)
+    public void AddNameDeprecated(string name, NameScope scope, ParserRuleContext context)
     {
         // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
         // need to see how things proceed with them before I go all-in on the optimization. I'm running on
@@ -464,6 +464,25 @@ public class NewCodeNamesNode
         }
     }
 
+    public void assign_LEGB_default(string name, ParserRuleContext context)
+    {
+        // Handles default binding when we have an lvalue but we don't have any context for it.
+        //
+        // TODO: Resolve internally and then assign local by default if not found (unless in global context)
+        if(GlobalsSet.Contains(name))
+        {
+            assign_LEGB(name, NameScope.Global, context);
+        }
+        else if(BuiltinsSet.Contains(name))
+        {
+            assign_LEGB(name, NameScope.Builtin, context);
+        }
+        else if(!NamedScopes.ContainsKey(name))
+        {
+            assign_LEGB(name, NameScope.Local, context);
+        }
+    }
+
     public void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
     {
         if(scope == NameScope.Builtin)
@@ -478,7 +497,7 @@ public class NewCodeNamesNode
         }
         else if(NamedScopes.ContainsKey(name) && NamedScopes[name] != scope)
         {
-            throw new ConflictingBindingException(name, NameScope.Undefined, NameScope.Undefined, context);
+            throw new ConflictingBindingException(name, NamedScopes[name], scope, context);
         }
 
         NamedScopes.Add(name, scope);
@@ -654,7 +673,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             variableName = variableName.Substring(0, firstDot);
         } 
 
-        currentNode.AddName(variableName, context);
+        currentNode.assign_LEGB_default(variableName, context);
         return null;
     }
 
@@ -670,7 +689,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
-                    currentNode.AddName(attrName, context);
+                    currentNode.assign_LEGB_default(attrName, context);
                 }
 
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
@@ -715,14 +734,14 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         var variableName = context.GetText();
-        currentNode.AddName(variableName, context);
+        currentNode.assign_LEGB_default(variableName, context);
         return null;
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.GetText();
-        currentNode.AddName(variableName, context);
+        currentNode.assign_LEGB_default(variableName, context);
         return null;
     }
 
@@ -749,7 +768,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach(var variableName in context.NAME())
         {
-            currentNode.AddName(variableName.GetText(), NameScope.EnclosedReadWrite, context);
+            currentNode.assign_LEGB(variableName.GetText(), NameScope.New_Enclosed, context);
         }
         return null;
     }
@@ -758,7 +777,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach (var variableName in context.NAME())
         {
-            currentNode.AddName(variableName.GetText(), NameScope.Global, context);
+            currentNode.assign_LEGB(variableName.GetText(), NameScope.Global, context);
         }
         return null;
     }
@@ -768,7 +787,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitExcept_clause(context);
         if(context.NAME() != null)
         {
-            currentNode.AddName(context.NAME().GetText(), context);
+            currentNode.assign_LEGB_default(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -778,7 +797,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitDotted_as_name(context);
         if (context.NAME() != null)
         {
-            currentNode.AddName(context.NAME().GetText(), context);
+            currentNode.assign_LEGB_default(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -788,7 +807,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitImport_as_name(context);
         if (context.NAME() != null && context.NAME().Length > 0)
         {
-            currentNode.AddName(context.NAME()[0].GetText(), context);
+            currentNode.assign_LEGB_default(context.NAME()[0].GetText(), context);
         }
         return null;
     }
