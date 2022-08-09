@@ -479,7 +479,14 @@ public class NewCodeNamesNode
         }
         else if(!NamedScopes.ContainsKey(name))
         {
-            assign_LEGB(name, NameScope.Local, context);
+            if (Parent == null)
+            {
+                assign_LEGB(name, NameScope.Global, context);
+            }
+            else
+            {
+                assign_LEGB(name, NameScope.Local, context);
+            }
         }
     }
 
