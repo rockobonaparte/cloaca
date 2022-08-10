@@ -553,7 +553,7 @@ public class NewCodeNamesNode
             if (cursor.NamedScopes.ContainsKey(name))
             {
                 foundNode = cursor;
-                return NamedScopes[name];
+                return cursor.NamedScopes[name];
             }
         }
 
