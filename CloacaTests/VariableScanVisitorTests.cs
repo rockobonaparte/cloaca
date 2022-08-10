@@ -118,6 +118,7 @@ namespace CloacaTests
         public void GlobalInFunction()
         {
             string program = "def fun():\n" +
+                             "  global a\n" +
                              "  a = 1\n";
             RunTest(program, "fun:\n" +
                              "  a: Global\n", new string[] { "a" });

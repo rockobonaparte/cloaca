@@ -464,11 +464,15 @@ public class NewCodeNamesNode
         }
     }
 
-    public void assign_LEGB_default(string name, ParserRuleContext context)
+    public void busted_assign_LEGB_default(string name, ParserRuleContext context)
     {
         // Handles default binding when we have an lvalue but we don't have any context for it.
         //
         // TODO: Resolve internally and then assign local by default if not found (unless in global context)
+        //
+        // Actually this whole thing is gross. Yeah I should lean on resolve to try to look things up
+        // first. So try to resolve it, but figure out where it resolves to and what scope. See if it
+        // applies as something we can default to in the current context. If not, make it local.
         if(GlobalsSet.Contains(name))
         {
             assign_LEGB(name, NameScope.Global, context);
@@ -490,6 +494,20 @@ public class NewCodeNamesNode
         }
     }
 
+    public void assign_LEGB_default(string name, ParserRuleContext context)
+    {
+        NewCodeNamesNode foundNode;
+        var matchScope = resolve_rvalue_LEGB(name, context, out foundNode);
+        if(matchScope == NameScope.Undefined || foundNode != this)
+        {
+            assign_LEGB(name, NameScope.Local, context);
+        } 
+        else
+        {
+            assign_LEGB(name, matchScope, context);
+        }
+    }
+
     public void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
     {
         if(scope == NameScope.Builtin)
@@ -507,7 +525,9 @@ public class NewCodeNamesNode
             throw new ConflictingBindingException(name, NamedScopes[name], scope, context);
         }
 
-        NamedScopes.Add(name, scope);
+        if (!NamedScopes.ContainsKey(name)) {
+            NamedScopes.Add(name, scope);
+        }
 
         if(scope == NameScope.Global)
         {
@@ -515,6 +535,22 @@ public class NewCodeNamesNode
             // That's Python! =D
             GlobalsSet.Add(name);
         }        
+    }
+
+    private NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context, out NewCodeNamesNode foundNode)
+    {
+        // Not found, start lookup upstairs in order: enclosing, global, built-in.
+        for (var cursor = this; cursor.Parent != null; cursor = cursor.Parent)
+        {
+            if (cursor.NamedScopes.ContainsKey(name))
+            {
+                foundNode = cursor;
+                return NamedScopes[name];
+            }
+        }
+
+        foundNode = null;
+        return NameScope.Undefined;
     }
 
     public NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context)
@@ -539,7 +575,7 @@ public class NewCodeNamesNode
             if (cursor.NamedScopes.ContainsKey(name))
             {
                 var scope = NamedScopes[name];
-                if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite)
+                if(scope == NameScope.New_Enclosed)
                 {
                     continue;
                 }
