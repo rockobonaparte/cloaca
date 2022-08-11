@@ -294,7 +294,8 @@ public class OldCodeNamesNode
 public class NewCodeNamesNode
 {
     public NewCodeNamesNode Parent;
-    public Dictionary<string, NameScope> NamedScopes;
+    public Dictionary<string, NameScope> NamedScopesRead;
+    public Dictionary<string, NameScope> NamedScopesWrite;
     public Dictionary<string, NewCodeNamesNode> Children;
 
     public ScopeType ScopeType { get; protected set; }
@@ -311,7 +312,8 @@ public class NewCodeNamesNode
     {
         GlobalsSet = new HashSet<string>();
         BuiltinsSet = new HashSet<string>();
-        NamedScopes = new Dictionary<string, NameScope>();
+        NamedScopesRead = new Dictionary<string, NameScope>();
+        NamedScopesWrite = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, NewCodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
@@ -336,7 +338,8 @@ public class NewCodeNamesNode
         // can have different globals from the root global! Ugly!
         GlobalsSet = new HashSet<string>(globalsSet);       
         BuiltinsSet = builtinsSet;
-        NamedScopes = new Dictionary<string, NameScope>();
+        NamedScopesRead = new Dictionary<string, NameScope>();
+        NamedScopesWrite = new Dictionary<string, NameScope>();
         Children = new Dictionary<string, NewCodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
@@ -381,122 +384,14 @@ public class NewCodeNamesNode
         return false;
     }
 
-    public void AddNameDeprecated(string name, ParserRuleContext context)
-    {
-        AddNameDeprecated(name, NameScope.Local, context);
-    }
-
-    public void AddNameDeprecated(string name, NameScope scope, ParserRuleContext context)
-    {
-        // I think this can be optimized to stop when a local scope becomes enclosing or global, but I
-        // need to see how things proceed with them before I go all-in on the optimization. I'm running on
-        // a notion that we don't have tons and tons and tons of functions inside each other but who knows.
-        var selectedScope = scope;
-
-        // Root is global and overrides whatever we think it currently is.
-        if (Parent == null)
-        {
-            selectedScope = NameScope.Global;
-        }
-
-        // Look upstream for locals when:
-        // 1. We're not in a function. For functions, we use the FAST optimizations and it's assumed 
-        //    local.
-        // 2. There is a global matching the name.
-        if (scope == NameScope.Local && this.ScopeType != ScopeType.Function && GlobalsSet.Contains(name))
-        {
-            selectedScope = NameScope.Global;
-        }
-
-        // Check that a nonlocal declaration actually resolves upstream.
-        // Because this is illegal:
-        // class A:
-        //     v = 1
-        //     class B :
-        //         nonlocal v           // <--- dead right here.
-        if (scope == NameScope.New_Enclosed &&
-            !foundUpstream(name))
-        {
-            throw new UnboundNonlocalException(name, context);
-        }
-
-        if (!NamedScopes.ContainsKey(name))
-        {
-            NamedScopes.Add(name, selectedScope);
-        }
-        else
-        {
-            selectedScope = selectBroadestScope(scope, NamedScopes[name]);
-            NamedScopes[name] = selectedScope;
-        }
-
-        if (selectedScope == NameScope.Global)
-        {
-            GlobalsSet.Add(name);
-        }
-
-        NewCodeNamesNode lastFoundAbove = this;
-        NameScope aboveScope = NameScope.Undefined;
-        for (NewCodeNamesNode itr = Parent; itr != null; itr = itr.Parent)
-        {
-            if (itr.NamedScopes.ContainsKey(name))
-            {
-                lastFoundAbove = itr;
-                aboveScope = itr.NamedScopes[name];
-            }
-        }
-
-        if (lastFoundAbove != this)
-        {
-            if (selectedScope == NameScope.Local && aboveScope != NameScope.Global)
-            {
-                selectedScope = NameScope.EnclosedRead;
-            }
-
-            // Global doesn't propagate "up" so much as it propagates globally.
-            // A higher level usage of the same name will just be a local unless
-            // either at root scope or marked as global with the global keyword
-            // explicitly.
-            if (selectedScope != NameScope.Global && aboveScope != NameScope.Global)
-            {
-                lastFoundAbove.updateScope(name, selectedScope);
-            }
-        }
-    }
-
-    public void busted_assign_LEGB_default(string name, ParserRuleContext context)
-    {
-        // Handles default binding when we have an lvalue but we don't have any context for it.
-        //
-        // TODO: Resolve internally and then assign local by default if not found (unless in global context)
-        //
-        // Actually this whole thing is gross. Yeah I should lean on resolve to try to look things up
-        // first. So try to resolve it, but figure out where it resolves to and what scope. See if it
-        // applies as something we can default to in the current context. If not, make it local.
-        if(GlobalsSet.Contains(name))
-        {
-            assign_LEGB(name, NameScope.Global, context);
-        }
-        else if(BuiltinsSet.Contains(name))
-        {
-            assign_LEGB(name, NameScope.Builtin, context);
-        }
-        else if(!NamedScopes.ContainsKey(name))
-        {
-            if (Parent == null)
-            {
-                assign_LEGB(name, NameScope.Global, context);
-            }
-            else
-            {
-                assign_LEGB(name, NameScope.Local, context);
-            }
-        }
-    }
-
     public void assign_LEGB_default(string name, ParserRuleContext context)
     {
         NewCodeNamesNode foundNode;
+
+        if(this.Parent != null && this.Parent.Children.ContainsKey("__init__")) {
+            int b = 3; // debug breakpoint
+        }
+
         var matchScope = resolve_rvalue_LEGB(name, context, out foundNode);
         if(matchScope == NameScope.Undefined || foundNode != this)
         {
@@ -548,7 +443,8 @@ public class NewCodeNamesNode
     private NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context, out NewCodeNamesNode foundNode)
     {
         // Not found, start lookup upstairs in order: enclosing, global, built-in.
-        for (var cursor = this; cursor.Parent != null; cursor = cursor.Parent)
+        NewCodeNamesNode cursor = null;
+        for (cursor = this; cursor.Parent != null; cursor = cursor.Parent)
         {
             if (cursor.NamedScopes.ContainsKey(name))
             {
@@ -558,6 +454,20 @@ public class NewCodeNamesNode
         }
 
         foundNode = null;
+
+        // Cursor should now be at the root. We might still have the value in builtin's or global.
+        // This might need to be refined. We might want search globals and builtins of children that
+        // don't have names but have them in the set (that's kind of screwed up but could happen if
+        // we're just reading the stuff.
+        if(cursor.GlobalsSet.Contains(name))
+        {
+            return NameScope.Global;
+        }
+        else if(cursor.BuiltinsSet.Contains(name))
+        {
+            return NameScope.Builtin;
+        }
+
         return NameScope.Undefined;
     }
 
@@ -599,24 +509,36 @@ public class NewCodeNamesNode
     public string ToReportString(int indent = 0)
     {
         var b = new StringBuilder();
-        var keys = NamedScopes.Keys.ToList();
-        keys.Sort();
+        var allKeys = new SortedSet<string>(NamedScopesRead.Keys).Concat(NamedScopesWrite.Keys);
 
         // We're not using AppendLine because it produces a classic Windows
         // \r\n and I don't want to have to put both in my assertions because
         // it looks like garbage.
-        foreach (var key in keys)
+        foreach (var key in allKeys)
         {
             b.Append(new string(' ', indent));
             b.Append(key);
-            b.Append(": ");
-            b.Append(NamedScopes[key].ToString());
-            b.Append("\n");
+            b.Append(":");
+
+            if(NamedScopesRead.ContainsKey(key))
+            {
+                b.Append(" ");
+                b.Append(NamedScopesRead[key]);
+                b.Append(" Read");
+            }
+
+            if (NamedScopesWrite.ContainsKey(key))
+            {
+                b.Append(" ");
+                b.Append(NamedScopesWrite[key]);
+                b.Append(" Write");
+            }
+            b.AppendLine();
         }
 
-        keys = Children.Keys.ToList();
-        keys.Sort();
-        foreach (var key in keys)
+        var childrenKeys = Children.Keys.ToList();
+        childrenKeys.Sort();
+        foreach (var key in childrenKeys)
         {
             b.Append(new string(' ', indent));
             b.Append(key);
