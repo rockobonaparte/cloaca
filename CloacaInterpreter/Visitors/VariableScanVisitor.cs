@@ -344,172 +344,246 @@ public class NewCodeNamesNode
         SetScopeType(ScopeType.NotClass);
     }
 
-    // TODO: I think this actually has to keep going up and up and up.
-    private void updateScope(string name, NameScope newScope)
+    // When assigned, both read and write are assigned.
+    public void assignScope(string name, NameScope nameScope, ParserRuleContext context)
     {
-        if (NamedScopes.ContainsKey(name))
+        if(NamedScopesRead.ContainsKey(name) && NamedScopesRead[name] != nameScope)
         {
-            NamedScopes[name] = newScope;
+            throw new VariableScanSyntaxException("Cannot assign '" + name + "' to " +
+                nameScope + ": Reads are already" + NamedScopesRead[name], context.Start.Line);
         }
-
-        foreach (var child in Children.Values)
+        else if (NamedScopesWrite.ContainsKey(name) && NamedScopesWrite[name] != nameScope)
         {
-            child.updateScope(name, newScope);
+            throw new VariableScanSyntaxException("Cannot assign '" + name + "' to " +
+                nameScope + ": Writes are already" + NamedScopesWrite[name], context.Start.Line);
         }
     }
 
-    private NameScope selectBroadestScope(NameScope a, NameScope b)
+    public void noteWrittenName(string name, ParserRuleContext context)
     {
-        if (a > b)
+        if(!NamedScopesWrite.ContainsKey(name))
         {
-            return a;
-        }
-        else
-        {
-            return b;
-        }
-    }
-
-    private bool foundUpstream(string name)
-    {
-        var parentCursor = Parent;
-        while (parentCursor != null && parentCursor.ScopeType != ScopeType.Class)
-        {
-            if (parentCursor.NamedScopes.ContainsKey(name))
+            if (Parent != null)
             {
-                return true;
-            }
-            parentCursor = Parent.Parent;
-        }
-        return false;
-    }
-
-    public void assign_LEGB_default(string name, ParserRuleContext context)
-    {
-        NewCodeNamesNode foundNode;
-
-        if(this.Parent != null && this.Parent.Children.ContainsKey("__init__")) {
-            int b = 3; // debug breakpoint
-        }
-
-        var matchScope = resolve_rvalue_LEGB(name, context, out foundNode);
-        if(matchScope == NameScope.Undefined || foundNode != this)
-        {
-            if(Parent == null)
-            {
-                assign_LEGB(name, NameScope.Global, context);
-
+                NamedScopesWrite.Add(name, NameScope.Local);
             }
             else
             {
-                assign_LEGB(name, NameScope.Local, context);
+                NamedScopesWrite.Add(name, NameScope.Global);
             }
-        } 
+        }
+    }
+
+    public void noteReadName(string name, ParserRuleContext context)
+    {
+        bool startedWithFunction = this.ScopeType == ScopeType.Function;
+        if(NamedScopesRead.ContainsKey(name))
+        {
+            return;
+        }
         else
         {
-            assign_LEGB(name, matchScope, context);
-        }
-    }
-
-    public void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
-    {
-        if(scope == NameScope.Builtin)
-        {
-            throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" + 
-                name + "' cannot be set to builtin from code", context.Start.Line);
-        }
-        else if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite)
-        {
-            throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" +
-                name + "' using deprecated EnclosedRead/Write scope types", context.Start.Line);
-        }
-        else if(NamedScopes.ContainsKey(name) && NamedScopes[name] != scope)
-        {
-            throw new ConflictingBindingException(name, NamedScopes[name], scope, context);
-        }
-
-        if (!NamedScopes.ContainsKey(name)) {
-            NamedScopes.Add(name, scope);
-        }
-
-        if(scope == NameScope.Global)
-        {
-            // Yeah, this lets you do stuff like declare "print" a global and assign it to 2.
-            // That's Python! =D
-            GlobalsSet.Add(name);
-        }        
-    }
-
-    private NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context, out NewCodeNamesNode foundNode)
-    {
-        // Not found, start lookup upstairs in order: enclosing, global, built-in.
-        NewCodeNamesNode cursor = null;
-        for (cursor = this; cursor.Parent != null; cursor = cursor.Parent)
-        {
-            if (cursor.NamedScopes.ContainsKey(name))
+            // Time to find it upstairs.
+            NewCodeNamesNode cursor = null;
+            for (cursor = this; cursor.Parent != null; cursor = cursor.Parent)
             {
-                foundNode = cursor;
-                return cursor.NamedScopes[name];
-            }
-        }
-
-        foundNode = null;
-
-        // Cursor should now be at the root. We might still have the value in builtin's or global.
-        // This might need to be refined. We might want search globals and builtins of children that
-        // don't have names but have them in the set (that's kind of screwed up but could happen if
-        // we're just reading the stuff.
-        if(cursor.GlobalsSet.Contains(name))
-        {
-            return NameScope.Global;
-        }
-        else if(cursor.BuiltinsSet.Contains(name))
-        {
-            return NameScope.Builtin;
-        }
-
-        return NameScope.Undefined;
-    }
-
-    public NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context)
-    {
-        // Not found, start lookup upstairs in order: enclosing, global, built-in.
-        for (var cursor = this; Parent != null; cursor = cursor.Parent)
-        {
-            if (cursor.NamedScopes.ContainsKey(name))
-            {
-                return NamedScopes[name];
-            }
-        }
-        //return NameScope.Local;
-        throw new UnboundLocalException(name, context);
-    }
-
-    public NameScope resolve_rvalue_LGB(string name, ParserRuleContext context)
-    {
-        // Not found, start lookup upstairs in order: enclosing, global, built-in.
-        for (var cursor = this; Parent != null; cursor = cursor.Parent)
-        {
-            if (cursor.NamedScopes.ContainsKey(name))
-            {
-                var scope = NamedScopes[name];
-                if(scope == NameScope.New_Enclosed)
+                // Functions specifically skip class scopes when resolving variables.
+                if(startedWithFunction && cursor.ScopeType == ScopeType.Class)
                 {
                     continue;
                 }
-                else
+                if (cursor.NamedScopesWrite.ContainsKey(name))
                 {
-                    return NamedScopes[name];
+                    NamedScopesRead[name] = cursor.NamedScopesWrite[name];
+                    return;
                 }
             }
+
+            // Fallback: Is it a global or built-in?
+            if(cursor.GlobalsSet.Contains(name)) {
+                NamedScopesRead[name] = NameScope.Global;
+            }
+            else if (cursor.GlobalsSet.Contains(name))
+            {
+                NamedScopesRead[name] = NameScope.Builtin;
+            }
+
+            throw new UnboundLocalException(name, context);
         }
-        throw new UnboundLocalException(name, context);
     }
+
+    //// TODO: I think this actually has to keep going up and up and up.
+    //private void updateScope(string name, NameScope newScope)
+    //{
+    //    if (NamedScopes.ContainsKey(name))
+    //    {
+    //        NamedScopes[name] = newScope;
+    //    }
+
+    //    foreach (var child in Children.Values)
+    //    {
+    //        child.updateScope(name, newScope);
+    //    }
+    //}
+
+    //private NameScope selectBroadestScope(NameScope a, NameScope b)
+    //{
+    //    if (a > b)
+    //    {
+    //        return a;
+    //    }
+    //    else
+    //    {
+    //        return b;
+    //    }
+    //}
+
+    //private bool foundUpstream(string name)
+    //{
+    //    var parentCursor = Parent;
+    //    while (parentCursor != null && parentCursor.ScopeType != ScopeType.Class)
+    //    {
+    //        if (parentCursor.NamedScopes.ContainsKey(name))
+    //        {
+    //            return true;
+    //        }
+    //        parentCursor = Parent.Parent;
+    //    }
+    //    return false;
+    //}
+
+
+
+    //public void assign_LEGB_default(string name, ParserRuleContext context)
+    //{
+    //    NewCodeNamesNode foundNode;
+
+    //    if(this.Parent != null && this.Parent.Children.ContainsKey("__init__")) {
+    //        int b = 3; // debug breakpoint
+    //    }
+
+    //    var matchScope = resolve_rvalue_LEGB(name, context, out foundNode);
+    //    if(matchScope == NameScope.Undefined || foundNode != this)
+    //    {
+    //        if(Parent == null)
+    //        {
+    //            assign_LEGB(name, NameScope.Global, context);
+
+    //        }
+    //        else
+    //        {
+    //            assign_LEGB(name, NameScope.Local, context);
+    //        }
+    //    } 
+    //    else
+    //    {
+    //        assign_LEGB(name, matchScope, context);
+    //    }
+    //}
+
+    //public void assign_LEGB(string name, NameScope scope, ParserRuleContext context)
+    //{
+    //    if(scope == NameScope.Builtin)
+    //    {
+    //        throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" + 
+    //            name + "' cannot be set to builtin from code", context.Start.Line);
+    //    }
+    //    else if(scope == NameScope.EnclosedRead || scope == NameScope.EnclosedReadWrite)
+    //    {
+    //        throw new VariableScanSyntaxException("line " + context.Start.Line + ": name '" +
+    //            name + "' using deprecated EnclosedRead/Write scope types", context.Start.Line);
+    //    }
+    //    else if(NamedScopes.ContainsKey(name) && NamedScopes[name] != scope)
+    //    {
+    //        throw new ConflictingBindingException(name, NamedScopes[name], scope, context);
+    //    }
+
+    //    if (!NamedScopes.ContainsKey(name)) {
+    //        NamedScopes.Add(name, scope);
+    //    }
+
+    //    if(scope == NameScope.Global)
+    //    {
+    //        // Yeah, this lets you do stuff like declare "print" a global and assign it to 2.
+    //        // That's Python! =D
+    //        GlobalsSet.Add(name);
+    //    }        
+    //}
+
+    //private NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context, out NewCodeNamesNode foundNode)
+    //{
+    //    // Not found, start lookup upstairs in order: enclosing, global, built-in.
+    //    NewCodeNamesNode cursor = null;
+    //    for (cursor = this; cursor.Parent != null; cursor = cursor.Parent)
+    //    {
+    //        if (cursor.NamedScopes.ContainsKey(name))
+    //        {
+    //            foundNode = cursor;
+    //            return cursor.NamedScopes[name];
+    //        }
+    //    }
+
+    //    foundNode = null;
+
+    //    // Cursor should now be at the root. We might still have the value in builtin's or global.
+    //    // This might need to be refined. We might want search globals and builtins of children that
+    //    // don't have names but have them in the set (that's kind of screwed up but could happen if
+    //    // we're just reading the stuff.
+    //    if(cursor.GlobalsSet.Contains(name))
+    //    {
+    //        return NameScope.Global;
+    //    }
+    //    else if(cursor.BuiltinsSet.Contains(name))
+    //    {
+    //        return NameScope.Builtin;
+    //    }
+
+    //    return NameScope.Undefined;
+    //}
+
+    //public NameScope resolve_rvalue_LEGB(string name, ParserRuleContext context)
+    //{
+    //    // Not found, start lookup upstairs in order: enclosing, global, built-in.
+    //    for (var cursor = this; Parent != null; cursor = cursor.Parent)
+    //    {
+    //        if (cursor.NamedScopes.ContainsKey(name))
+    //        {
+    //            return NamedScopes[name];
+    //        }
+    //    }
+    //    //return NameScope.Local;
+    //    throw new UnboundLocalException(name, context);
+    //}
+
+    //public NameScope resolve_rvalue_LGB(string name, ParserRuleContext context)
+    //{
+    //    // Not found, start lookup upstairs in order: enclosing, global, built-in.
+    //    for (var cursor = this; Parent != null; cursor = cursor.Parent)
+    //    {
+    //        if (cursor.NamedScopes.ContainsKey(name))
+    //        {
+    //            var scope = NamedScopes[name];
+    //            if(scope == NameScope.New_Enclosed)
+    //            {
+    //                continue;
+    //            }
+    //            else
+    //            {
+    //                return NamedScopes[name];
+    //            }
+    //        }
+    //    }
+    //    throw new UnboundLocalException(name, context);
+    //}
 
     public string ToReportString(int indent = 0)
     {
         var b = new StringBuilder();
-        var allKeys = new SortedSet<string>(NamedScopesRead.Keys).Concat(NamedScopesWrite.Keys);
+        var allKeys = new SortedSet<string>(NamedScopesRead.Keys);
+        foreach(var write in NamedScopesWrite.Keys)
+        {
+            allKeys.Add(write);
+        }
 
         // We're not using AppendLine because it produces a classic Windows
         // \r\n and I don't want to have to put both in my assertions because
@@ -533,7 +607,7 @@ public class NewCodeNamesNode
                 b.Append(NamedScopesWrite[key]);
                 b.Append(" Write");
             }
-            b.AppendLine();
+            b.Append("\n");
         }
 
         var childrenKeys = Children.Keys.ToList();
@@ -646,7 +720,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             variableName = variableName.Substring(0, firstDot);
         } 
 
-        currentNode.assign_LEGB_default(variableName, context);
+        currentNode.noteWrittenName(variableName, context);
         return null;
     }
 
@@ -662,7 +736,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
-                    currentNode.assign_LEGB_default(attrName, context);
+                    currentNode.noteReadName(attrName, context);
                 }
 
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
@@ -707,14 +781,14 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         var variableName = context.GetText();
-        currentNode.assign_LEGB_default(variableName, context);
+        currentNode.noteReadName(variableName, context);
         return null;
     }
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.GetText();
-        currentNode.assign_LEGB_default(variableName, context);
+        currentNode.noteReadName(variableName, context);
         return null;
     }
 
@@ -741,7 +815,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach(var variableName in context.NAME())
         {
-            currentNode.assign_LEGB(variableName.GetText(), NameScope.New_Enclosed, context);
+            currentNode.assignScope(variableName.GetText(), NameScope.New_Enclosed, context);
         }
         return null;
     }
@@ -750,7 +824,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach (var variableName in context.NAME())
         {
-            currentNode.assign_LEGB(variableName.GetText(), NameScope.Global, context);
+            currentNode.assignScope(variableName.GetText(), NameScope.Global, context);
         }
         return null;
     }
@@ -760,7 +834,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitExcept_clause(context);
         if(context.NAME() != null)
         {
-            currentNode.assign_LEGB_default(context.NAME().GetText(), context);
+            currentNode.noteReadName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -770,7 +844,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitDotted_as_name(context);
         if (context.NAME() != null)
         {
-            currentNode.assign_LEGB_default(context.NAME().GetText(), context);
+            currentNode.noteReadName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -780,7 +854,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitImport_as_name(context);
         if (context.NAME() != null && context.NAME().Length > 0)
         {
-            currentNode.assign_LEGB_default(context.NAME()[0].GetText(), context);
+            currentNode.noteReadName(context.NAME()[0].GetText(), context);
         }
         return null;
     }

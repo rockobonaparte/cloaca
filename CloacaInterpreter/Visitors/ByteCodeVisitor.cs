@@ -216,9 +216,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // This will eventually expand to consume most (?) of the logic in the load/store
         // code. However, it's a retrofit so we are coming in incrementally. We're going
         // to start with stuff like nonlocal and enclosed scopes only.
-        if(currentNameScope.NamedScopes.ContainsKey(variableName))
+        if(currentNameScope.NamedScopesRead.ContainsKey(variableName))
         {
-            var scope = currentNameScope.NamedScopes[variableName];
+            var scope = currentNameScope.NamedScopesRead[variableName];
             if(scope == NameScope.EnclosedReadWrite)
             {
                 var derefIdx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);

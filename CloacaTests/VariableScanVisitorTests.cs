@@ -28,7 +28,7 @@ namespace CloacaTests
             var visitor = new VariableScanVisitor(globals=globals ?? new string[0],
                                                   builtins ?? new string[0]);
             visitor.TryVisit(antlrVisitorContext);
-            var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
+            //var rootNamesKeys = visitor.RootNode.NamedScopes.Keys;
             result = visitor.RootNode.ToReportString();
             result = visitor.failureMessage == null ? result : visitor.failureMessage;
 
@@ -40,7 +40,7 @@ namespace CloacaTests
         {
             // Root is global!!!
             string program = "a = 1\n";
-            RunTest(program, "a: Global\n");
+            RunTest(program, "a: Global Write\n");
         }
 
         [Test]
@@ -50,9 +50,9 @@ namespace CloacaTests
                              "def foo():\n" +
                              "   b = 2\n" +
                              "   return b";
-            RunTest(program, "a: Global\n" +
+            RunTest(program, "a: Global Write\n" +
                              "foo:\n" +
-                             "  b: Local\n");
+                             "  b: Local Read Local Write\n");
         }
 
         [Test]
