@@ -502,9 +502,9 @@ namespace CloacaTests
             // sc.a = 102
             RunTest(program, "a: Global Write\n" +
                              "sc: Global Write\n" +
-                             "SomeClass: Global Read Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
-                             "  __init__: Local Read Local Write\n" +
+                             "  __init__: Name Read Name Write\n" +
                              "  a: Local Write\n" +
                              "  __init__:\n" +
                              "    a: Global Read\n" +

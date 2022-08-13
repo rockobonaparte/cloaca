@@ -16,6 +16,7 @@ public enum NameScope
     New_Enclosed,
     Global,
     Builtin,
+    Name,
 }
 
 // Added when I started to run into issues with classes in particular. Stuff like:
@@ -677,8 +678,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             currentNode.Children.Remove(new_name);
         }
 
-        currentNode.assignScope(new_name,
-            currentNode.Parent == null ? NameScope.Global : NameScope.Local, context);
+        currentNode.assignScope(new_name, NameScope.Name, context);
 
         currentNode.Children.Add(new_name, newNode);
         newNode.Parent = currentNode;
