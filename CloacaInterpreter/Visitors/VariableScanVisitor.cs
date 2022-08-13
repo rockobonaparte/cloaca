@@ -351,11 +351,21 @@ public class NewCodeNamesNode
         {
             throw new VariableScanSyntaxException("Cannot assign '" + name + "' to " +
                 nameScope + ": Reads are already" + NamedScopesRead[name], context.Start.Line);
-        }
+        }        
         else if (NamedScopesWrite.ContainsKey(name) && NamedScopesWrite[name] != nameScope)
         {
             throw new VariableScanSyntaxException("Cannot assign '" + name + "' to " +
                 nameScope + ": Writes are already" + NamedScopesWrite[name], context.Start.Line);
+        }
+
+        if(!NamedScopesRead.ContainsKey(name))
+        {
+            NamedScopesRead.Add(name, nameScope);
+        }
+
+        if(!NamedScopesWrite.ContainsKey(name))
+        {
+            NamedScopesWrite.Add(name, nameScope);
         }
     }
 
@@ -376,6 +386,11 @@ public class NewCodeNamesNode
 
     public void noteReadName(string name, ParserRuleContext context)
     {
+        if(Parent != null && Parent.Children.ContainsKey("__init__") && name == "a")
+        {
+            int b = 3; // DEBUG BREAKPOINT
+        }
+
         bool startedWithFunction = this.ScopeType == ScopeType.Function;
         if(NamedScopesRead.ContainsKey(name))
         {
@@ -383,13 +398,22 @@ public class NewCodeNamesNode
         }
         else
         {
-            // Time to find it upstairs.
-            NewCodeNamesNode cursor = null;
-            for (cursor = this; cursor.Parent != null; cursor = cursor.Parent)
+            // Time to find it upstairs. It's a goofy loop because we need to scrape off
+            // the root node for final checks at the root level for globals and built-ins.
+            NewCodeNamesNode cursor = this;
+            NewCodeNamesNode cursorRoot = null;
+            do
             {
-                // Functions specifically skip class scopes when resolving variables.
-                if(startedWithFunction && cursor.ScopeType == ScopeType.Class)
+                if (cursorRoot == null && cursor.Parent == null)
                 {
+                    cursorRoot = cursor;
+                }
+
+                // Functions specifically skip class scopes when resolving variables.
+                if (startedWithFunction && cursor.ScopeType == ScopeType.Class)
+                {
+                    // Don't forget to advance the cursor even though we're about to skip.
+                    cursor = cursor.Parent;
                     continue;
                 }
                 if (cursor.NamedScopesWrite.ContainsKey(name))
@@ -397,13 +421,15 @@ public class NewCodeNamesNode
                     NamedScopesRead[name] = cursor.NamedScopesWrite[name];
                     return;
                 }
-            }
+
+                cursor = cursor.Parent;
+            } while (cursor != null);
 
             // Fallback: Is it a global or built-in?
-            if(cursor.GlobalsSet.Contains(name)) {
+            if(cursorRoot.GlobalsSet.Contains(name)) {
                 NamedScopesRead[name] = NameScope.Global;
             }
-            else if (cursor.GlobalsSet.Contains(name))
+            else if (cursorRoot.GlobalsSet.Contains(name))
             {
                 NamedScopesRead[name] = NameScope.Builtin;
             }
@@ -640,7 +666,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    private NewCodeNamesNode descendFromName(string new_name)
+    private NewCodeNamesNode descendFromName(string new_name, ParserRuleContext context)
     {
         var newNode = new NewCodeNamesNode(rootNode.GlobalsSet, rootNode.GlobalsSet);
 
@@ -650,6 +676,10 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         {
             currentNode.Children.Remove(new_name);
         }
+
+        currentNode.assignScope(new_name,
+            currentNode.Parent == null ? NameScope.Global : NameScope.Local, context);
+
         currentNode.Children.Add(new_name, newNode);
         newNode.Parent = currentNode;
         currentNode = newNode;
@@ -788,13 +818,13 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
         var variableName = context.GetText();
-        currentNode.noteReadName(variableName, context);
+        currentNode.assignScope(variableName, NameScope.Local, context);
         return null;
     }
 
     public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
     {
-        var newNode = descendFromName(context.NAME().GetText());
+        var newNode = descendFromName(context.NAME().GetText(), context);
         newNode.SetScopeType(ScopeType.Function);
         base.Visit(context.parameters());
         base.VisitSuite(context.suite());
@@ -804,7 +834,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
     {
-        var newNode = descendFromName(context.NAME().GetText());
+        var newNode = descendFromName(context.NAME().GetText(), context);
         newNode.SetScopeType(ScopeType.Class);
         base.VisitSuite(context.suite());
         ascendNameNode();

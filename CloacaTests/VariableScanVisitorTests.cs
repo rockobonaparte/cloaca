@@ -486,7 +486,6 @@ namespace CloacaTests
         }
 
         [Test]
-        //[Ignore("Got some wild problems with self.a")]
         public void ClassWithGLC()
         {
             // This one will probably suck. Getting the class a to the local scope
@@ -501,14 +500,15 @@ namespace CloacaTests
 
             // a = 101
             // sc.a = 102
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Global Read Global Write\n" +
                              "SomeClass:\n" +
-                             "  a: Local\n" +
+                             "  __init__: Local Read Local Write\n" +
+                             "  a: Local Write\n" +
                              "  __init__:\n" +
-                             "    a: Global\n" +
-                             "    self: Local\n");
+                             "    a: Global Read\n" +
+                             "    self: Local Read Local Write\n");
 
             // Issues:
             // self.a gets its own thing. I haven't really accommodated for that.
