@@ -53,7 +53,7 @@ namespace CloacaTests
             RunTest(program, "a: Global Write\n" +
                              "foo: Name Read Name Write\n" +
                              "foo:\n" +
-                             "  b: Name Read Name Write\n");
+                             "  b: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
@@ -136,7 +136,6 @@ namespace CloacaTests
         /// variable context.
         /// </summary>        
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void InnerFunctionReadsOuter()
         {
             string program =
@@ -148,14 +147,14 @@ namespace CloacaTests
                 "  return b\n" +
                 "c = outer()\n";
 
-            RunTest(program, "c: Global\n" +
-                             "outer: Global\n" +
+            RunTest(program, "c: Global Write\n" +
+                             "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: EnclosedRead\n" +
-                             "  b: Local\n" +
-                             "  inner: Local\n" +
+                             "  a: Enclosed Write\n" +
+                             "  b: LocalFast Read LocalFast Write\n" +
+                             "  inner: Name Read Name Write\n" +
                              "  inner:\n" +
-                             "    a: EnclosedRead\n");
+                             "    a: Enclosed Read\n");
         }
 
         /// <summary>

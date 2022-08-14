@@ -189,7 +189,14 @@ public class NewCodeNamesNode
             // call them globals correctly in the first place.
             if (Parent != null)
             {
-                NamedScopesWrite.Add(name, NameScope.Name);
+                if(this.ScopeType == ScopeType.Function)
+                {
+                    NamedScopesWrite.Add(name, NameScope.LocalFast);
+                }
+                else
+                {
+                    NamedScopesWrite.Add(name, NameScope.Name);
+                }
             }
             else
             {
@@ -204,6 +211,11 @@ public class NewCodeNamesNode
         //{
         //    int b = 3; // DEBUG BREAKPOINT
         //}
+
+        if (Parent != null && Parent.Children.ContainsKey("inner") && name == "a")
+        {
+            int b = 3; // DEBUG BREAKPOINT
+        }
 
         bool startedWithFunction = this.ScopeType == ScopeType.Function;
         if(NamedScopesRead.ContainsKey(name))
@@ -233,6 +245,14 @@ public class NewCodeNamesNode
                 if (cursor.NamedScopesWrite.ContainsKey(name))
                 {
                     NamedScopesRead[name] = cursor.NamedScopesWrite[name];
+
+                    // This might now be a regular variable we have to "promote" to an enclosed variable.
+                    if (NamedScopesRead[name] != NameScope.Enclosed
+                        && this != cursor
+                        && cursor.Parent != null)
+                    {
+                        NamedScopesRead[name] = cursor.NamedScopesWrite[name] = NameScope.Enclosed;
+                    }
                     return;
                 }
 
