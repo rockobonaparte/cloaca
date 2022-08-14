@@ -219,7 +219,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         if(currentNameScope.NamedScopesRead.ContainsKey(variableName))
         {
             var scope = currentNameScope.NamedScopesRead[variableName];
-            if(scope == NameScope.EnclosedReadWrite)
+            if(scope == NameScope.Enclosed)
             {
                 var derefIdx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
                 if (derefIdx >= 0)
