@@ -79,11 +79,10 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void GlobalDeclaration()
         {
             string program = "global a\n";
-            RunTest(program, "a: Global\n");
+            RunTest(program, "a: Global Read Global Write\n");
         }
 
         [Test]
@@ -121,14 +120,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void GlobalInFunction()
         {
             string program = "def fun():\n" +
                              "  global a\n" +
                              "  a = 1\n";
-            RunTest(program, "fun:\n" +
-                             "  a: Global\n", new string[] { "a" });
+            RunTest(program, "fun: Name Read Name Write\n" +
+                             "fun:\n" +
+                             "  a: Global Read Global Write\n", new string[] { "a" });
         }
 
         /// <summary>

@@ -177,6 +177,10 @@ public class NewCodeNamesNode
         if (!NamedScopesWrite.ContainsKey(name))
         {
             NamedScopesWrite.Add(name, nameScope);
+            if(nameScope == NameScope.Global)
+            {
+                GlobalsSet.Add(name);
+            }
         }
     }
 
