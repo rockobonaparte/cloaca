@@ -57,17 +57,17 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void FuncParameters()
         {
             string program = "a = 1\n" +
                              "def foo(c):\n" +
                              "   b = 2\n" +
                              "   return b";
-            RunTest(program, "a: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "foo: Name Read Name Write\n" +
                              "foo:\n" +
-                             "  b: Local\n" +
-                             "  c: Local\n");
+                             "  b: LocalFast Read LocalFast Write\n" +
+                             "  c: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
@@ -96,25 +96,25 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void InnerGlobalOuterLocal()
         {
             string program =
-                "def outer():\n" +      // Defined but never invoked so doesn't come up as a global.
+                "def outer():\n" +      
                 "  a = 100\n" +
                 "  def inner():\n" +
                 "    global a\n" +
-                "    a += 1\n" +        // PS: Actually run this will get you an error that a isn't defined.
+                "    a += 1\n" +        // PS: Actually running outer() will get you an error that 'a' isn't defined.
                 "    return a\n" +
                 "  return a + inner()\n";
 
             
             RunTest(program,
+                             "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: Local\n" +
-                             "  inner: Local\n" +
+                             "  a: LocalFast Read LocalFast Write\n" +
+                             "  inner: Name Read Name Write\n" +
                              "  inner:\n" +
-                             "    a: Global\n");
+                             "    a: Global Read Global Write\n");
         }
 
         [Test]
@@ -210,7 +210,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void MultilevelGlobal()
         {
             string program =
@@ -224,17 +223,17 @@ namespace CloacaTests
                             "  f2()\n";
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "a: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "f1: Name Read Name Write\n" +
                              "f1:\n" +
-                             "  f2: Local\n" +
+                             "  f2: Name Read Name Write\n" +
                              "  f2:\n" +
-                             "    f3: Local\n" +
+                             "    f3: Name Read Name Write\n" +
                              "    f3:\n" +
-                             "      a: Global\n");
+                             "      a: Global Read Global Write\n");
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ParsingBundledStuff()
         {
             string program = "arr = [1, b]\n" +
@@ -243,17 +242,17 @@ namespace CloacaTests
                              "set = (3, e)\n" +
                              "func = call(4, f)\n";
 
-            RunTest(program, "arr: Global\n" +
-                             "b: Global\n" +
-                             "c: Global\n" +
-                             "call: Global\n" +
-                             "d: Global\n" +
-                             "e: Global\n" +
-                             "f: Global\n" +
-                             "func: Global\n" +
-                             "hash: Global\n" +
-                             "set: Global\n" +
-                             "tup: Global\n",
+            RunTest(program, "arr: Global Write\n" +
+                             "b: Global Read\n" +
+                             "c: Global Read\n" +
+                             "call: Global Read\n" +
+                             "d: Global Read\n" +
+                             "e: Global Read\n" +
+                             "f: Global Read\n" +
+                             "func: Global Write\n" +
+                             "hash: Global Write\n" +
+                             "set: Global Write\n" +
+                             "tup: Global Write\n",
                              new string[] { "b", "c", "d", "e", "f", "call" }
                              );
         }
@@ -266,7 +265,6 @@ namespace CloacaTests
         // Functions inside functions
         // ...and more...
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ParseVariousBlocks()
         {
             string program =
@@ -277,13 +275,14 @@ namespace CloacaTests
                 "except Exception as exc_var:" +
                 "  exc_blk_var = exc_var\n";
 
-            RunTest(program, "exc_blk_var: Global\n" +
-                             "exc_var: Global\n" +
-                             "Exception: Global\n" +
-                             "for_i: Global\n" +
-                             "in_for: Global\n" +
-                             "range: Global\n" +
-                             "try_var: Global\n",
+            RunTest(program, "exc_blk_var: Global Write\n" +
+                             "exc_var: Global Read Global Write\n" +
+                             "Exception: Builtin Read\n" +
+                             "for_i: Global Read Global Write\n" +
+                             "in_for: Global Write\n" +
+                             "range: Builtin Read\n" +
+                             "try_var: Global Write\n",
+                             new string[0],
                              new string[] { "Exception", "range" }
                              );
         }

@@ -216,7 +216,12 @@ public class NewCodeNamesNode
         //    int b = 3; // DEBUG BREAKPOINT
         //}
 
-        if (Parent != null && Parent.Children.ContainsKey("inner") && name == "a")
+        //if (Parent != null && Parent.Children.ContainsKey("inner") && name == "a")
+        //{
+        //    int b = 3; // DEBUG BREAKPOINT
+        //}
+
+        if(name == "for_i")
         {
             int b = 3; // DEBUG BREAKPOINT
         }
@@ -534,12 +539,27 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitFor_stmt([NotNull] CloacaParser.For_stmtContext context)
+    {
+        Visit(context.testlist());
+        foreach (var expr in context.exprlist().expr())
+        {
+            currentNode.noteWrittenName(expr.GetText(), context);
+        }
+        Visit(context.suite(0));
+        if (context.suite().Length > 1)
+        {
+            Visit(context.suite(1));
+        }
+        return null;
+    }
+
     public override object VisitExcept_clause([NotNull] CloacaParser.Except_clauseContext context)
     {
         base.VisitExcept_clause(context);
         if(context.NAME() != null)
         {
-            currentNode.noteReadName(context.NAME().GetText(), context);
+            currentNode.noteWrittenName(context.NAME().GetText(), context);
         }
         return null;
     }
