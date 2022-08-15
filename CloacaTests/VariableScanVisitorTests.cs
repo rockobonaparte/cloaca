@@ -71,11 +71,10 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void BasicGlobalPlumbing()
         {
             string program = "a = 1\n";
-            RunTest(program, "a: Global\n", new string[] { "a" });
+            RunTest(program, "a: Global Write\n", new string[] { "a" });
         }
 
         [Test]
@@ -86,15 +85,14 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
-        public void CallFuncOneArg()
+        public void CallBuiltinFuncOneArg()
         {
             string program =
                 "print(a)\n";
 
             RunTest(program,
-                             "a: Global\n" +
-                             "print: Global\n", new string[] { "a", "print" });
+                             "a: Global Read\n" +
+                             "print: Builtin Read\n", new string[] { "a", }, new string[] { "print" });
         }
 
         [Test]

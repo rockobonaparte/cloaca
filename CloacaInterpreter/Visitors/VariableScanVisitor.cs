@@ -267,12 +267,14 @@ public class NewCodeNamesNode
             if(cursorRoot.GlobalsSet.Contains(name)) {
                 NamedScopesRead[name] = NameScope.Global;
             }
-            else if (cursorRoot.GlobalsSet.Contains(name))
+            else if (cursorRoot.BuiltinsSet.Contains(name))
             {
                 NamedScopesRead[name] = NameScope.Builtin;
             }
-
-            throw new UnboundLocalException(name, context);
+            else
+            {
+                throw new UnboundLocalException(name, context);
+            }
         }
     }
 
