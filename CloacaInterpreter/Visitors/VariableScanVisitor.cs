@@ -144,11 +144,41 @@ public class NewCodeNamesNode
         SetScopeType(ScopeType.NotClass);
     }
 
+    private bool canBePromoted(NameScope scope)
+    {
+        return scope == NameScope.LocalFast ||
+            scope == NameScope.Name ||
+            scope == NameScope.Enclosed;
+    }
+
     // When assigned, both read and write are assigned.
     public void AssignScope(string name, NameScope nameScope, ParserRuleContext context)
     {
         AssignWriteScope(name, nameScope, context);
         AssignReadScope(name, nameScope, context);
+
+        // "Promote" enclosed variables. The origin needs to flap to enclosed.
+        if(nameScope == NameScope.Enclosed)
+        {
+            bool found = false;
+            for(var cursor = this.Parent; cursor != null && cursor.Parent != null && !found; cursor = cursor.Parent)
+            {
+                if(cursor.NamedScopesWrite.ContainsKey(name) && canBePromoted(cursor.NamedScopesWrite[name]))
+                {
+                    found = true;
+                    cursor.NamedScopesWrite[name] = NameScope.Enclosed;
+                }
+                if (cursor.NamedScopesRead.ContainsKey(name) && canBePromoted(cursor.NamedScopesRead[name]))
+                {
+                    found = true;
+                    cursor.NamedScopesRead[name] = NameScope.Enclosed;
+                }
+            }
+            if(!found)
+            {
+                throw new UnboundNonlocalException(name, context);
+            }
+        }
     }
 
     public void AssignReadScope(string name, NameScope nameScope, ParserRuleContext context)

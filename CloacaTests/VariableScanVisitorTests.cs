@@ -161,7 +161,6 @@ namespace CloacaTests
         /// It also adds the nonlocal to make variable 'a' writeable.
         /// </summary>
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void InnerFunctionWritersOuterNonlocal()
         {
             string program =
@@ -175,13 +174,13 @@ namespace CloacaTests
                 "b = outer()\n";
 
             // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "b: Global\n" +
-                             "outer: Global\n" +
+            RunTest(program, "b: Global Write\n" +
+                             "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: EnclosedReadWrite\n" +
-                             "  inner: Local\n" +
+                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  inner: Name Read Name Write\n" +
                              "  inner:\n" +
-                             "    a: EnclosedReadWrite\n");
+                             "    a: Enclosed Read Enclosed Write\n");
         }
 
         [Test]
