@@ -184,7 +184,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void MultilevelNonlocal()
         {
             string program =
@@ -198,14 +197,15 @@ namespace CloacaTests
                             "  f2()\n" +
                             "  return a\n";
 
-            // TODO: I think I need additional context to tell if something is enclosed and writable!
-            RunTest(program, "f1:\n" +
-                             "  a: EnclosedReadWrite\n" +
-                             "  f2: Local\n" +
+            RunTest(program,
+                             "f1: Name Read Name Write\n" +
+                             "f1:\n" +
+                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  f2: Name Read Name Write\n" +
                              "  f2:\n" +
-                             "    f3: Local\n" +
+                             "    f3: Name Read Name Write\n" +
                              "    f3:\n" +
-                             "      a: EnclosedReadWrite\n");
+                             "      a: Enclosed Read Enclosed Write\n");
         }
 
         [Test]
