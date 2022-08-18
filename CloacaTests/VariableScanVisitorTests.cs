@@ -329,7 +329,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithMember()
         {
             string program = "class Foo:\n" +
@@ -337,12 +336,13 @@ namespace CloacaTests
                              "      self.b = a\n" +
                              "c = Foo(1)\n";
 
-            RunTest(program, "c: Global\n" +
-                             "Foo: Global\n" +
+            RunTest(program, "c: Global Write\n" +
+                             "Foo: Name Read Name Write\n" +
                              "Foo:\n" +
+                             "  __init__: Name Read Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Local\n" +
-                             "    self: Local\n");
+                             "    a: LocalFast Read LocalFast Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         // Naming convention for ClassWith123:
@@ -355,7 +355,6 @@ namespace CloacaTests
         // N = NonLocal
         // C = Class
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithLLL()
         {
             string program = "a = 100\n" +
@@ -370,18 +369,18 @@ namespace CloacaTests
             // a = 100
             // SomeClass.a = 101
 
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
-                             "  a: Local\n" +
+                             "  __init__: Name Read Name Write\n" +
+                             "  a: Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Local\n" +
-                             "    self: Local\n");
+                             "    a: LocalFast Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithGGG()
         {
             string program = "a = 100\n" +
@@ -397,18 +396,18 @@ namespace CloacaTests
             // a = 102
             // SomeClass.a = 102
 
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
-                             "  a: Global\n" +
+                             "  __init__: Name Read Name Write\n" +
+                             "  a: Global Read Global Write\n" +
                              "  __init__:\n" +
-                             "    a: Global\n" +
-                             "    self: Local\n");
+                             "    a: Global Read Global Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithGGX()
         {
             string program = "a = 100\n" +
@@ -422,18 +421,19 @@ namespace CloacaTests
 
             // a = 101
             // SomeClass.a = 101
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
-                             "  a: Global\n" +
+                             "  __init__: Name Read Name Write\n" +
+                             "  a: Global Read Global Write\n" +
                              "  __init__:\n" +
-                             "    a: Local\n" +
-                             "    self: Local\n");
+                             "    a: LocalFast Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
+        [Ignore("This one is still broken. It looks like SomeClass.a needs to be a NAME, not GLOBAL")]
         public void ClassWithGLL()
         {
             // Note to self: FASTs are NOT a thing outside of functions so use regular LEGB variable
@@ -450,18 +450,18 @@ namespace CloacaTests
             // a = 100
             // SomeClass.a = 101
             // sc.a = 102
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
-                             "  a: Local\n" +
+                             "  __init__: Name Read Name Write\n" +
+                             "  a: Name Read Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Local\n" +
-                             "    self: Local\n");
+                             "    a: LocalFast Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithGXN()
         {
             string program = "a = 100\n" +
@@ -477,7 +477,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void ClassWithGXG()
         {
             string program = "a = 100\n" +
@@ -489,13 +488,14 @@ namespace CloacaTests
                              "sc = SomeClass()\n";
 
             // a = 102
-            RunTest(program, "a: Global\n" +
-                             "sc: Global\n" +
-                             "SomeClass: Global\n" +
+            RunTest(program, "a: Global Write\n" +
+                             "sc: Global Write\n" +
+                             "SomeClass: Name Read Name Write\n" +
                              "SomeClass:\n" +
+                             "  __init__: Name Read Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Global\n" +
-                             "    self: Local\n");
+                             "    a: Global Read Global Write\n" +
+                             "    self: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
