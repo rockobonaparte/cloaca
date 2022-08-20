@@ -251,7 +251,7 @@ public class NewCodeNamesNode
         //    int b = 3; // DEBUG BREAKPOINT
         //}
 
-        if(name == "for_i")
+        if(name == "a" && Parent != null && Parent.Children.ContainsKey("SomeClass"))
         {
             int b = 3; // DEBUG BREAKPOINT
         }
@@ -291,6 +291,21 @@ public class NewCodeNamesNode
                         && cursor.Parent != null)
                     {
                         NamedScopesRead[name] = cursor.NamedScopesWrite[name] = NameScope.Enclosed;
+                    }
+
+                    // Goofy little, highly technical adjustment for LEGB resolution. If we just hit a global
+                    // then we should use LEGB ordering c/o NAME instead of GLOBAL
+                    //
+                    // Think:
+                    // a = 101
+                    // class SomeClass:
+                    //    a += 1
+                    //
+                    // SomeClass.a should be resolved as NAME instead of GLOBAL to be consistent with CPython.
+                    // I don't know how much it matters though.
+                    if(NamedScopesRead[name] == NameScope.Global && (!NamedScopesWrite.ContainsKey(name) || NamedScopesWrite[name] != NameScope.Global))
+                    {
+                        NamedScopesRead[name] = NameScope.Name;
                     }
                     return;
                 }
@@ -427,7 +442,13 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         if (context.testlist_star_expr().Length == 1)
         {
-            if(context.testlist() != null)
+            if(context.augassign() != null)
+            {
+                // Inplace operators need to note first a read, and then write for lvalue:
+                Visit(context.testlist());
+                VisitLValueTestlist_star_expr(context.testlist_star_expr()[0].test()[0]);
+            }
+            else if (context.testlist() != null)
             {
                 Visit(context.testlist());
             }

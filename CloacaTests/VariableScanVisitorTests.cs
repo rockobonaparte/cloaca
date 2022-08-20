@@ -433,7 +433,7 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("This one is still broken. It looks like SomeClass.a needs to be a NAME, not GLOBAL")]
+        //[Ignore("This one is still broken. It looks like SomeClass.a needs to be a NAME, not GLOBAL")]
         public void ClassWithGLL()
         {
             // Note to self: FASTs are NOT a thing outside of functions so use regular LEGB variable
@@ -520,7 +520,7 @@ namespace CloacaTests
                              "  __init__: Name Read Name Write\n" +
                              "  a: Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Global Read\n" +
+                             "    a: Name Read\n" +
                              "    self: LocalFast Read LocalFast Write\n");
 
             // Issues:
