@@ -287,7 +287,6 @@ namespace CloacaTests
         }
 
         [Test]
-        [Ignore("Not updated to new LocalFast, Name, Write/Read etc conventions")]
         public void MashedUpPileOfLocalGlobalNonlocal()
         {
             string program =
@@ -312,20 +311,20 @@ namespace CloacaTests
                 "a += f1()\n" +
                 "print(a)\n";
 
-            RunTest(program, "a: Global\n" +
-                             "f1: Global\n" +
-                             "print: Global\n" +
+            RunTest(program, "a: Global Read Global Write\n" +
+                             "f1: Name Read Name Write\n" +
+                             "print: Builtin Read\n" +
                              "f1:\n" +
-                             "  a: Local\n" +
-                             "  f2: Local\n" +
+                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  f2: Name Read Name Write\n" +
                              "  f2:\n" +
-                             "    a: EnclosedReadWrite\n" +
-                             "    f3: Local\n" +
+                             "    a: Enclosed Read Enclosed Write\n" +
+                             "    f3: Name Read Name Write\n" +
                              "    f3:\n" +
-                             "      a: Global\n" +
-                             "      f4: Local\n" +
+                             "      a: Global Read Global Write\n" +
+                             "      f4: Name Read Name Write\n" +
                              "      f4:\n" +
-                             "        a: Local\n", new string[] { "print" });
+                             "        a: LocalFast Read LocalFast Write\n", new string[0], new string[] { "print" });
         }
 
         [Test]
