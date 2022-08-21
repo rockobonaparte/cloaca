@@ -91,12 +91,12 @@ public class ConflictingBindingException : VariableScanSyntaxException
 /// Data structure for managing node names across layers of code. This is used to tell in the code generation pass
 /// whether or not to treat a variable as global, enclosed, or local.
 /// </summary>
-public class NewCodeNamesNode
+public class CodeNamesNode
 {
-    public NewCodeNamesNode Parent;
+    public CodeNamesNode Parent;
     public Dictionary<string, NameScope> NamedScopesRead;
     public Dictionary<string, NameScope> NamedScopesWrite;
-    public Dictionary<string, NewCodeNamesNode> Children;
+    public Dictionary<string, CodeNamesNode> Children;
 
     public ScopeType ScopeType { get; protected set; }
     public void SetScopeType(ScopeType newType)
@@ -108,18 +108,18 @@ public class NewCodeNamesNode
     public HashSet<string> GlobalsSet;
     public HashSet<string> BuiltinsSet;
 
-    public NewCodeNamesNode()
+    public CodeNamesNode()
     {
         GlobalsSet = new HashSet<string>();
         BuiltinsSet = new HashSet<string>();
         NamedScopesRead = new Dictionary<string, NameScope>();
         NamedScopesWrite = new Dictionary<string, NameScope>();
-        Children = new Dictionary<string, NewCodeNamesNode>();
+        Children = new Dictionary<string, CodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
 
     // Alternate version that takes a list of variables from the outside to treat like globals.
-    public NewCodeNamesNode(IEnumerable<string> externalGlobals, IEnumerable<string> externalBuiltins) : this()
+    public CodeNamesNode(IEnumerable<string> externalGlobals, IEnumerable<string> externalBuiltins) : this()
     {
         foreach (var global in externalGlobals)
         {
@@ -132,7 +132,7 @@ public class NewCodeNamesNode
         }
     }
 
-    public NewCodeNamesNode(HashSet<string> globalsSet, HashSet<string> builtinsSet)
+    public CodeNamesNode(HashSet<string> globalsSet, HashSet<string> builtinsSet)
     {
         // Copy globals but pass builtins as a reference. Builtins are read-only. Children
         // can have different globals from the root global! Ugly!
@@ -140,7 +140,7 @@ public class NewCodeNamesNode
         BuiltinsSet = builtinsSet;
         NamedScopesRead = new Dictionary<string, NameScope>();
         NamedScopesWrite = new Dictionary<string, NameScope>();
-        Children = new Dictionary<string, NewCodeNamesNode>();
+        Children = new Dictionary<string, CodeNamesNode>();
         SetScopeType(ScopeType.NotClass);
     }
 
@@ -241,20 +241,12 @@ public class NewCodeNamesNode
 
     public void noteReadName(string name, ParserRuleContext context)
     {
-        //if(Parent != null && Parent.Children.ContainsKey("__init__") && name == "a")
+        // We'll keep this here because if there's a place to debug, it's usually here.
+        // That should be a sign.
+        //if(name == "a" && Parent != null && Parent.Children.ContainsKey("SomeClass"))
         //{
         //    int b = 3; // DEBUG BREAKPOINT
         //}
-
-        //if (Parent != null && Parent.Children.ContainsKey("inner") && name == "a")
-        //{
-        //    int b = 3; // DEBUG BREAKPOINT
-        //}
-
-        if(name == "a" && Parent != null && Parent.Children.ContainsKey("SomeClass"))
-        {
-            int b = 3; // DEBUG BREAKPOINT
-        }
 
         bool startedWithFunction = this.ScopeType == ScopeType.Function;
         if(NamedScopesRead.ContainsKey(name))
@@ -265,8 +257,8 @@ public class NewCodeNamesNode
         {
             // Time to find it upstairs. It's a goofy loop because we need to scrape off
             // the root node for final checks at the root level for globals and built-ins.
-            NewCodeNamesNode cursor = this;
-            NewCodeNamesNode cursorRoot = null;
+            CodeNamesNode cursor = this;
+            CodeNamesNode cursorRoot = null;
             do
             {
                 if (cursorRoot == null && cursor.Parent == null)
@@ -376,15 +368,30 @@ public class NewCodeNamesNode
     }
 }
 
-
-
+/// <summary>
+/// A first-pass vistor for parsing Python code in order to build up the scope of the different
+/// variables in the program. We switched to a two-stage parser after trying to deal with the
+/// nonlocal keyword in particular. If you were parsing nonlocals in a single pass, you would
+/// find yourself in one layer making a variable a fast local, and then having to rewind it to
+/// a cell variable. This would mean changing opcodes.
+/// 
+/// We didn't do that. Instead, a first pass creates a mapping of variables and their scopes, which
+/// is then consulted by the code generator to determine how to generate load and stores for them.
+/// At the point the second-stage, byte code parser runs, it will know exactly what opcode to use.
+/// 
+/// The map starts in the RootNode and is a CodeNamesNode.
+/// 
+/// This class is aggressively tested in the VariableScanVisitorTests. If something is failing in
+/// scope resolution, you will want to try a test in there to see if the variable scopes are
+/// even correct.
+/// </summary>
 public class VariableScanVisitor : CloacaBaseVisitor<object>
 {
-    private NewCodeNamesNode rootNode;
-    private NewCodeNamesNode currentNode;
+    private CodeNamesNode rootNode;
+    private CodeNamesNode currentNode;
     public string failureMessage;
 
-    public NewCodeNamesNode RootNode
+    public CodeNamesNode RootNode
     {
         get
         {
@@ -392,9 +399,9 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    private NewCodeNamesNode descendFromName(string new_name, ParserRuleContext context)
+    private CodeNamesNode descendFromName(string new_name, ParserRuleContext context)
     {
-        var newNode = new NewCodeNamesNode(rootNode.GlobalsSet, rootNode.GlobalsSet);
+        var newNode = new CodeNamesNode(rootNode.GlobalsSet, rootNode.GlobalsSet);
 
         // The same function can be defined more than once.
         // TODO: What happens if the involved function had created a nonlocal or something?
@@ -411,7 +418,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return currentNode;
     }
 
-    private NewCodeNamesNode ascendNameNode()
+    private CodeNamesNode ascendNameNode()
     {
         currentNode = currentNode.Parent;
         return currentNode;
@@ -419,7 +426,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public VariableScanVisitor(IEnumerable<string> globalNames, IEnumerable<string> builtinNames)
     {
-        rootNode = new NewCodeNamesNode(globalNames, builtinNames);
+        rootNode = new CodeNamesNode(globalNames, builtinNames);
         currentNode = rootNode;
     }
 
