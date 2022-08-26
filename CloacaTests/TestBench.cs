@@ -59,8 +59,7 @@ namespace CloacaTests
 
                 // This is awaitable now but relies on the scheduler. We'll tick the scheduler
                 // awhile until this resolves.
-                // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
-                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, globalsDict, new Dictionary<string, object>(), scheduler);
+                compiledTask = ByteCodeCompiler.Compile(program, variablesIn, globalsDict, scheduler.Interpreter.GetBuiltins(), scheduler);
             }
             catch (CloacaParseException parseFailed)
             {

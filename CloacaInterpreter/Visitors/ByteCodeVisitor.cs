@@ -261,7 +261,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 }
             case NameScope.Builtin:
                 {
-                    throw new NotImplementedException("Cannot generate loads for built-ins yet");
+                    // There isn't actually a LOAD_BUILTIN opcode. Use LOAD_GLOBAL.
+                    // I find this kind of silly.
+                    var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
+                    return;
                 }
         }
 
