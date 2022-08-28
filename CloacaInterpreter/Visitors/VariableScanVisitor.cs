@@ -214,7 +214,7 @@ public class CodeNamesNode
         }
     }
 
-    public void noteWrittenName(string name, ParserRuleContext context)
+    public void NoteWrittenName(string name, ParserRuleContext context)
     {
         if(!NamedScopesWrite.ContainsKey(name))
         {
@@ -239,7 +239,7 @@ public class CodeNamesNode
         }
     }
 
-    public void noteReadName(string name, ParserRuleContext context)
+    public void NoteReadName(string name, ParserRuleContext context)
     {
         // We'll keep this here because if there's a place to debug, it's usually here.
         // That should be a sign.
@@ -488,7 +488,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             variableName = variableName.Substring(0, firstDot);
         } 
 
-        currentNode.noteWrittenName(variableName, context);
+        currentNode.NoteWrittenName(variableName, context);
         return null;
     }
 
@@ -504,7 +504,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
-                    currentNode.noteReadName(attrName, context);
+                    currentNode.NoteReadName(attrName, context);
                 }
 
                 else if (trailer.arglist() != null || trailer.GetText() == "()")
@@ -549,7 +549,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
         var variableName = context.GetText();
-        currentNode.noteReadName(variableName, context);
+        currentNode.NoteReadName(variableName, context);
         return null;
     }
 
@@ -602,7 +602,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         Visit(context.testlist());
         foreach (var expr in context.exprlist().expr())
         {
-            currentNode.noteWrittenName(expr.GetText(), context);
+            currentNode.NoteWrittenName(expr.GetText(), context);
         }
         Visit(context.suite(0));
         if (context.suite().Length > 1)
@@ -617,7 +617,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitExcept_clause(context);
         if(context.NAME() != null)
         {
-            currentNode.noteWrittenName(context.NAME().GetText(), context);
+            currentNode.NoteWrittenName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -627,7 +627,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitDotted_as_name(context);
         if (context.NAME() != null)
         {
-            currentNode.noteReadName(context.NAME().GetText(), context);
+            currentNode.NoteReadName(context.NAME().GetText(), context);
         }
         return null;
     }
@@ -637,7 +637,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         base.VisitImport_as_name(context);
         if (context.NAME() != null && context.NAME().Length > 0)
         {
-            currentNode.noteReadName(context.NAME()[0].GetText(), context);
+            currentNode.NoteReadName(context.NAME()[0].GetText(), context);
         }
         return null;
     }
