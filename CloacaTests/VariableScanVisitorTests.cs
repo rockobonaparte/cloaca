@@ -365,6 +365,26 @@ namespace CloacaTests
                                 "    self: LocalFast Read LocalFast Write\n");
         }
 
+        // Had a bug come up in actual integration. We were not managing derefencing class
+        // members properly at least at the root level.
+        [Test]
+        public void ClassWithUsedMembersLValue()
+        {
+            string program = "class Foo:\n" +
+                                "   def __init__(self, a):\n" +
+                                "      self.b = a\n" +
+                                "c = Foo(1)\n" +
+                                "c.b = 2\n";
+
+            RunTest(program, "c: Global Read Global Write\n" +
+                                "Foo: Name Read Name Write\n" +
+                                "Foo:\n" +
+                                "  __init__: Name Read Name Write\n" +
+                                "  __init__:\n" +
+                                "    a: LocalFast Read LocalFast Write\n" +
+                                "    self: LocalFast Read LocalFast Write\n");
+        }
+
         // Naming convention for ClassWith123:
         // 1. Global Scope
         // 2. Class Scope

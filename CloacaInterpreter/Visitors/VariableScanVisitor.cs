@@ -486,9 +486,13 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         int firstDot = variableName.IndexOf('.');
         if (firstDot >= 0) {
             variableName = variableName.Substring(0, firstDot);
+            currentNode.NoteReadName(variableName, context);
         } 
+        else
+        {
+            currentNode.NoteWrittenName(variableName, context);
+        }
 
-        currentNode.NoteWrittenName(variableName, context);
         return null;
     }
 
