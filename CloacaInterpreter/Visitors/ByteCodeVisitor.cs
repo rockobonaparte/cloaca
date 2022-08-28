@@ -171,8 +171,8 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     private CodeObjectBuilder PopCode()
     {
-        return codeStack.Pop();
         currentNameScope = currentNameScope.Parent;
+        return codeStack.Pop();
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)

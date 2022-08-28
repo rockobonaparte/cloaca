@@ -42,7 +42,6 @@ namespace CloacaInterpreter
 
             errorListener.AssertNoErrors();
 
-            // BOOKMARK: Reconcile variablesIn with GlobalsIn. Shouldn't variablesIn become part of globals?!
             var varVisitor = new VariableScanVisitor(globals.Keys, builtins.Keys);
             varVisitor.Visit(antlrVisitorContext);
 

@@ -399,7 +399,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         }
     }
 
-    private CodeNamesNode descendFromName(string new_name, ParserRuleContext context)
+    private CodeNamesNode descendNew(string new_name, ParserRuleContext context)
     {
         var newNode = new CodeNamesNode(rootNode.GlobalsSet, rootNode.GlobalsSet);
 
@@ -418,7 +418,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return currentNode;
     }
 
-    private CodeNamesNode ascendNameNode()
+    private CodeNamesNode ascend()
     {
         currentNode = currentNode.Parent;
         return currentNode;
@@ -494,10 +494,24 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
+
+        if(context.GetText() == "c.b")
+        {
+            // DEBUG BREAKPOINT
+            int a = 3;
+        }
+
         var trailers = context.trailer();
         if(trailers.Length > 0)
         {
             Visit(context.atom());
+            if(trailers[0].GetText()[0] == '.') {
+                // This is an attribute dereference and everything following the dot is
+                // just using LOAD/STORE_ATTR. We don't care about them. We *do* care
+                // about the leftmost value because that the variable sourcing all the
+                // attribute lookups.
+                return null;
+            }
             for (int trailer_i = 0; trailer_i < context.trailer().Length; ++trailer_i)
             {
                 var trailer = context.trailer(trailer_i);
@@ -562,20 +576,20 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitFuncdef([NotNull] CloacaParser.FuncdefContext context)
     {
-        var newNode = descendFromName(context.NAME().GetText(), context);
+        var newNode = descendNew(context.NAME().GetText(), context);
         newNode.SetScopeType(ScopeType.Function);
         base.Visit(context.parameters());
         base.VisitSuite(context.suite());
-        ascendNameNode();
+        ascend();
         return null;
     }
 
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
     {
-        var newNode = descendFromName(context.NAME().GetText(), context);
+        var newNode = descendNew(context.NAME().GetText(), context);
         newNode.SetScopeType(ScopeType.Class);
         base.VisitSuite(context.suite());
-        ascendNameNode();
+        ascend();
         return null;
     }
 
@@ -629,6 +643,12 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         {
             currentNode.NoteReadName(context.NAME().GetText(), context);
         }
+        return null;
+    }
+
+    public override object VisitDotted_name([NotNull] CloacaParser.Dotted_nameContext context)
+    {
+        currentNode.NoteReadName(context.NAME(0).GetText(), context);
         return null;
     }
 
