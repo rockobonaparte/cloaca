@@ -28,7 +28,7 @@ namespace CloacaInterpreter
         /// that then gets assigned as defaults.</param>
         /// <returns>The compiled code.</returns>
         /// <exception cref="CloacaParseException">There were errors trying to build the script into byte code.</exception>
-        public static async Task<PyFunction> Compile(string program, Dictionary<string, object> variablesIn, Dictionary<string, object> globals, 
+        public static async Task<PyFunction> Compile(string program, Dictionary<string, object> globals, 
             Dictionary<string, object> builtins, IScheduler scheduler)
         {
             var inputStream = new AntlrInputStream(program);
@@ -42,10 +42,11 @@ namespace CloacaInterpreter
 
             errorListener.AssertNoErrors();
 
+            // BOOKMARK: Reconcile variablesIn with GlobalsIn. Shouldn't variablesIn become part of globals?!
             var varVisitor = new VariableScanVisitor(globals.Keys, builtins.Keys);
             varVisitor.Visit(antlrVisitorContext);
 
-            var byteVisitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, globals);
+            var byteVisitor = new CloacaBytecodeVisitor(varVisitor.RootNode, globals);
             byteVisitor.Visit(antlrVisitorContext);
 
             await byteVisitor.PostProcess(scheduler);

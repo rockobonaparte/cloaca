@@ -101,7 +101,7 @@ namespace CloacaInterpreter.ModuleImporting
             moduleGlobals.Add("__name__", spec.Name);
 
             // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
-            var moduleCode = await ByteCodeCompiler.Compile(inFile, new Dictionary<string, object>(),
+            var moduleCode = await ByteCodeCompiler.Compile(inFile,
                 new Dictionary<string, object>(),
                 moduleGlobals,
                 interpreter.Scheduler);

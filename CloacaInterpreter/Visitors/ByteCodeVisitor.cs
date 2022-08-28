@@ -139,15 +139,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.replMode = replMode;
     }
 
-    public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> existingVariables, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
+    public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
     {
         this.nameScopeRoot = nameScopeRoot;
         currentNameScope = this.nameScopeRoot;
         this.namespaceGlobals = globals;
-        foreach (var name in existingVariables.Keys)
-        {
-            codeStack.ActiveProgram.Names.Add(name);
-        }
     }
 
     ///// <summary>

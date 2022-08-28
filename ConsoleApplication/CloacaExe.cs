@@ -89,7 +89,6 @@ namespace ConsoleApplication
             var compiledFunctionTask = ByteCodeCompiler.Compile(program,
                 new Dictionary<string, object>(),
                 new Dictionary<string, object>(),
-                new Dictionary<string, object>(),
                 scheduler);
             ScheduleLoop(scheduler, cmdline_args[0]);
 

@@ -27,7 +27,7 @@ namespace InterpreterWaiting
             var varVisitor = new VariableScanVisitor(variablesIn.Keys, new string[0]);
             varVisitor.Visit(context);
 
-            var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn, variablesIn);
+            var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, variablesIn);
             visitor.Visit(context);
             visitor.PostProcess(scheduler);
 
