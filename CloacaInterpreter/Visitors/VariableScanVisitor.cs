@@ -494,13 +494,6 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtom_expr([NotNull] CloacaParser.Atom_exprContext context)
     {
-
-        if(context.GetText() == "c.b")
-        {
-            // DEBUG BREAKPOINT
-            int a = 3;
-        }
-
         var trailers = context.trailer();
         if(trailers.Length > 0)
         {
