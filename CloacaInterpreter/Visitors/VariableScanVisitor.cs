@@ -506,16 +506,19 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         if(trailers.Length > 0)
         {
             Visit(context.atom());
-            if(trailers[0].GetText()[0] == '.') {
-                // This is an attribute dereference and everything following the dot is
-                // just using LOAD/STORE_ATTR. We don't care about them. We *do* care
-                // about the leftmost value because that the variable sourcing all the
-                // attribute lookups.
-                return null;
-            }
             for (int trailer_i = 0; trailer_i < context.trailer().Length; ++trailer_i)
             {
                 var trailer = context.trailer(trailer_i);
+
+                if(trailer.GetText()[0] == '.')
+                {
+                    // This is an attribute dereference and everything following the dot is
+                    // just using LOAD/STORE_ATTR. We don't care about them. However, trailers
+                    // can also be function calls and subscripts and we might care about what's
+                    // going on with them.
+                    continue;
+                }
+
                 if (trailer.NAME() != null)
                 {
                     var attrName = trailer.NAME().GetText();
