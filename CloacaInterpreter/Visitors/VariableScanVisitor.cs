@@ -315,7 +315,11 @@ public class CodeNamesNode
             }
             else
             {
-                throw new UnboundLocalException(name, context);
+                // Fallbacks of fallbacks: Set it up as a name and see at run time if it resolves.
+                // It actually might! Module level variables and crap like that will get dumped in when we run.
+                // We used to just throw UnboundLocalException here but we were failing tests with module
+                // variables like __name__ because of it.
+                NamedScopesRead[name] = NameScope.Name;
             }
         }
     }
