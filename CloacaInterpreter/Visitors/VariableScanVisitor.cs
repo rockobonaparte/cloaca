@@ -588,6 +588,30 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
         return null;
     }
 
+    public override object VisitTypedargslist([NotNull] CloacaParser.TypedargslistContext context)
+    {
+        // Gotta pluck out defaults because the names created from them are crazy.
+        // function foo's bar becomes foo_$Default_bar
+        for (int child_i = 0; child_i < context.children.Count; ++child_i)
+        {
+            // What's my name?
+            var funcName = currentNode.Parent.Children.FirstOrDefault(x => x.Value == currentNode).Key;
+            Visit(context.children[child_i]);
+
+            if (context.children[child_i].GetText() == "=")
+            {
+                descendNew(funcName + "_$Default_" + context.children[child_i + 1].GetText(), context);
+                Visit(context.children[child_i + 1]);
+                currentNode = ascend();
+            }
+            else
+            {
+                Visit(context.children[child_i]);
+            }
+        }
+        return null;
+    }
+
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
     {
         var newNode = descendNew(context.NAME().GetText(), context);

@@ -131,7 +131,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
     public bool IsRootProgram => codeStack.IsRootProgram;
     public CodeObjectBuilder RootProgram => codeStack.RootProgram;
 
-    public CloacaBytecodeVisitor(bool replMode=false)
+    public CloacaBytecodeVisitor(bool replMode = false)
     {
         codeStack = new CodeObjectBuilderStack();
         LoopBlocks = new Stack<LoopBlockRecord>();
@@ -139,7 +139,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.replMode = replMode;
     }
 
-    public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> globals, bool replMode=false) : this(replMode)
+    public CloacaBytecodeVisitor(CodeNamesNode nameScopeRoot, Dictionary<string, object> globals, bool replMode = false) : this(replMode)
     {
         this.nameScopeRoot = nameScopeRoot;
         currentNameScope = this.nameScopeRoot;
@@ -1706,7 +1706,11 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     defaultsList = codeStack.ActiveProgram.KWDefaults;
                     codeStack.ActiveProgram.KWOnlyArgCount += 1;
                 }
-                
+
+                // BOOKMARK: I think I need to seed the current name scope node in this block or else it uses the
+                //           wrong one when it runs. Probably ditto for the code stack.
+                var nameNodeAtSchedule = currentNameScope;
+
                 postProcessActions.Add(async (scheduler) =>
                 {
                     // Cute hack: Pre-populate the defaults with the code objects that will calculate the final value for each default.
@@ -1723,9 +1727,22 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     // processed right after the definition is created. So we will enqueue interpreting all of them in the post process action
                     // list and have the defaults set up with them as we go. We will get these breadth-first which is the order CPython would
                     // do them too.
+
+                    // If we use PushNewCode naively, the current name node will probably be wrong when this runs. I don't think
+                    // the code stack necessarily matters. So we're going to take a small trip to HackTown:
+                    // 1. Pass in the current name node when this was scheduled (as opposed to when it was run)
+                    // 2. Set the name scope to the backup while visiting the default builder routine.
+                    // 3. Restore it afterwards.
+                    // This makes this code very non-atomic and is some serious cruft. It was retrofitted when the code name nodes
+                    // were created for other reasons. It would take a real good sit-down-and-think to try to clear around this problem.
+                    var backupNameNode = currentNameScope;
+                    currentNameScope = nameNodeAtSchedule;
                     PushNewCode(visit_builder_name, defaultBuilder);
+
                     Visit(context.children[visit_child_i_copy]);
+
                     PopCode();
+                    currentNameScope = backupNameNode;
 
                     var currentTask = scheduler.GetCurrentTask();
                     var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
