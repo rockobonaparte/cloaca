@@ -1707,8 +1707,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     codeStack.ActiveProgram.KWOnlyArgCount += 1;
                 }
 
-                // BOOKMARK: I think I need to seed the current name scope node in this block or else it uses the
-                //           wrong one when it runs. Probably ditto for the code stack.
                 var nameNodeAtSchedule = currentNameScope;
 
                 postProcessActions.Add(async (scheduler) =>
