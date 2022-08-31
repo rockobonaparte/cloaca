@@ -614,8 +614,15 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitClassdef([NotNull] CloacaParser.ClassdefContext context)
     {
+        // Make sure to visit the subclass names if they exist.
+        if (context.arglist() != null)
+        {
+            Visit(context.arglist());
+        }
+
         var newNode = descendNew(context.NAME().GetText(), context);
         newNode.SetScopeType(ScopeType.Class);
+
         base.VisitSuite(context.suite());
         ascend();
         return null;
