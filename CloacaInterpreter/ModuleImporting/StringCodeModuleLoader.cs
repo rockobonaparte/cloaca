@@ -94,6 +94,10 @@ namespace CloacaInterpreter.ModuleImporting
                 {
                     module.__setattr__(name, moduleFrame.Locals[name]);
                 }
+                else if(moduleFrame.Globals.ContainsKey(name))
+                {
+                    module.__setattr__(name, moduleFrame.Globals[name]);
+                }
             }
             /////////////
             return module;
