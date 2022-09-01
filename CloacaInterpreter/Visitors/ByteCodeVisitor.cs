@@ -228,6 +228,13 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             }
         }
 #endif
+
+        // For debugging: Put a breakpoint here to fix issues with missing keys.
+        if(!currentNameScope.NamedScopesRead.ContainsKey(variableName))
+        {
+            int h = 3;      // DEBUG BREAKPOINT.
+        }
+
         var scope = currentNameScope.NamedScopesRead[variableName];
         switch(scope)
         {

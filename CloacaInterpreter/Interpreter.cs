@@ -290,6 +290,9 @@ namespace CloacaInterpreter
                 frame.AddOnlyNewLocal(varName, null);                
             }
 
+            // BOOKMARK: I think I need to get globals from the current active module here, not
+            // the root of what originated all the calls. So if I'm in a different module from
+            // where I started, I need that module's globals.
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
 
