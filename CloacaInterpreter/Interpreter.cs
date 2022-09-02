@@ -1407,7 +1407,6 @@ namespace CloacaInterpreter
 
                                 PyFunction function = (PyFunction)context.DataStack.Pop();
                                 context.DataStack.Push(function);
-                                context.Locals.AddOrSet(qualifiedName, function);                                // Sneaky: The function is added to locals after it is made! CPython does this!
                             }
                             context.Cursor += 2;
                             break;

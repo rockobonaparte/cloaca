@@ -80,7 +80,14 @@ namespace LanguageImplementation
         }
         public Frame(PyFunction function, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(function)
         {
-            Globals = function.Globals;
+            if(newGlobals == null)
+            {
+                Globals = function.Globals;
+            }
+            else
+            {
+                Globals = newGlobals;
+            }
         }
 
         /// <summary>

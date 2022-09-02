@@ -63,8 +63,8 @@ namespace CloacaInterpreter.ModuleImporting
 
             // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
             var moduleCode = await ByteCodeCompiler.Compile(code,
-                new Dictionary<string, object>(),
                 moduleGlobals,
+                interpreter.GetBuiltins(),
                 interpreter.Scheduler);
 
             // Time to make the frame ourselves so we can tie locals to globals! At the root of a module, locals==globals.

@@ -1431,6 +1431,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //
         //8/27/2021: Gotcha! I need to check if I'm declaring a function in the root context. If so, I need to use STORE_NAME too.
         //           Otherwise, it gets stuffed in as a fast local and we'll never be able to use it in subsequent statements.
+        //
+        // 9/2/2022: I think this is just part of LEGB resolution and I was half-assing it before. This is still hard-coded
+        //           but if it bites again, then look into what the variable scan visitor decided for resolution and just
+        //           use that.
         if ((context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
             context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
             ||
