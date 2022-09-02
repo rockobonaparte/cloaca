@@ -133,6 +133,7 @@ namespace CloacaTests
         /// variable context.
         /// </summary>        
         [Test]
+        [Ignore("inner not yet being set to localfast")]
         public void InnerFunctionReadsOuter()
         {
             string program =
@@ -149,7 +150,7 @@ namespace CloacaTests
                              "outer:\n" +
                              "  a: Enclosed Write\n" +
                              "  b: LocalFast Read LocalFast Write\n" +
-                             "  inner: Name Read Name Write\n" +
+                             "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
                              "    a: Enclosed Read\n");
         }
