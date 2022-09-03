@@ -91,8 +91,8 @@ namespace CloacaTests
                 "print(a)\n";
 
             RunTest(program,
-                             "a: Global Read\n" +
-                             "print: Builtin Read\n", new string[] { "a", }, new string[] { "print" });
+                             "a: Global Read Global Write\n" +
+                             "print: Builtin Read Global Write\n", new string[] { "a", }, new string[] { "print" });
         }
 
         [Test]
@@ -151,7 +151,7 @@ namespace CloacaTests
                              "  b: LocalFast Read LocalFast Write\n" +
                              "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
-                             "    a: Enclosed Read\n");
+                             "    a: Enclosed Read LocalFast Write\n");
         }
 
         /// <summary>
@@ -242,12 +242,12 @@ namespace CloacaTests
                              "func = call(4, f)\n";
 
             RunTest(program, "arr: Global Write\n" +
-                             "b: Global Read\n" +
-                             "c: Global Read\n" +
-                             "call: Global Read\n" +
-                             "d: Global Read\n" +
-                             "e: Global Read\n" +
-                             "f: Global Read\n" +
+                             "b: Global Read Global Write\n" +
+                             "c: Global Read Global Write\n" +
+                             "call: Global Read Global Write\n" +
+                             "d: Global Read Global Write\n" +
+                             "e: Global Read Global Write\n" +
+                             "f: Global Read Global Write\n" +
                              "func: Global Write\n" +
                              "hash: Global Write\n" +
                              "set: Global Write\n" +
@@ -276,10 +276,10 @@ namespace CloacaTests
 
             RunTest(program, "exc_blk_var: Global Write\n" +
                              "exc_var: Global Read Global Write\n" +
-                             "Exception: Builtin Read\n" +
+                             "Exception: Builtin Read Global Write\n" +
                              "for_i: Global Read Global Write\n" +
                              "in_for: Global Write\n" +
-                             "range: Builtin Read\n" +
+                             "range: Builtin Read Global Write\n" +
                              "try_var: Global Write\n",
                              new string[0],
                              new string[] { "Exception", "range" }
@@ -313,7 +313,7 @@ namespace CloacaTests
 
             RunTest(program, "a: Global Read Global Write\n" +
                              "f1: Name Read Name Write\n" +
-                             "print: Builtin Read\n" +
+                             "print: Builtin Read Global Write\n" +
                              "f1:\n" +
                              "  a: Enclosed Read Enclosed Write\n" +
                              "  f2: LocalFast Read LocalFast Write\n" +
@@ -559,8 +559,29 @@ namespace CloacaTests
                              "  __init__: Name Read Name Write\n" +
                              "  a: Name Write\n" +
                              "  __init__:\n" +
-                             "    a: Name Read\n" +
+                             "    a: Name Read LocalFast Write\n" +
                              "    self: LocalFast Read LocalFast Write\n");
+
+            // Issues:
+            // self.a gets its own thing. I haven't really accommodated for that.
+            // a gets treated as a local in __init__.
+        }
+
+        [Test]
+        public void BasicListComprehension()
+        {
+            // This one will probably suck. Getting the class a to the local scope
+            // is probably something peculiar I have to deal with.
+            string program = "x = [a for a in [1]]\n";
+
+            // a = 101
+            // sc.a = 102
+            RunTest(program,
+                             "<listcomp>: Name Read Name Write\n" +
+                             "x: Global Write\n" +
+                             "<listcomp>:\n" +
+                             "  a: Name Read Name Write\n");
+
 
             // Issues:
             // self.a gets its own thing. I haven't really accommodated for that.

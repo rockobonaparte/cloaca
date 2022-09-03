@@ -35,7 +35,7 @@ public enum ScopeType
     ModuleUnused,
     Function,
     Class,
-    ComprehensionUnused,
+    Comprehension,
     ExceptionUnused,
     NotClass
 }
@@ -566,7 +566,20 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomSquareBrackets([NotNull] CloacaParser.AtomSquareBracketsContext context)
     {
-        return base.VisitAtomSquareBrackets(context);
+        // We might be playing with a list comprehension. Let defaults be otherwise.
+        if (context.testlist_comp() != null && context.testlist_comp().comp_for() != null)
+        {
+            // TODO: What happens with TWO listcomps?
+            var newNode = descendNew("<listcomp>", context);
+            newNode.SetScopeType(ScopeType.Comprehension);
+            Visit(context.testlist_comp());
+            ascend();
+            return null;
+        }
+        else
+        {
+            return base.VisitAtomSquareBrackets(context);
+        }
     }
 
     public override object VisitTrailer([NotNull] CloacaParser.TrailerContext context)
@@ -578,6 +591,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         var variableName = context.GetText();
         currentNode.NoteReadName(variableName, context);
+        currentNode.NoteWrittenName(variableName, context);
         return null;
     }
 
