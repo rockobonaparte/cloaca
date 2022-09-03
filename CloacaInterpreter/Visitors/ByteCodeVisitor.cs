@@ -1418,36 +1418,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_CONST, nameIndex, context);
         codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
-        // TODO: Apparently sometimes (class methods) we need to store this using STORE_NAME. Why?
-        // Class declarations need all their functions declared using STORE_NAME. I'm not sure why yet. I am speculating that it's 
-        // more proper to say that *everything* needs STORE_NAME by default but we're able to optimize it in just about every other
-        // case. I don't have a full grasp on namespaces yet. So we're going to do something *very cargo cult* and hacky and just 
-        // decide that if our parent context is a class definition that we'll use a STORE_NAME here.
-        //
-        // New notes 8/20/2021: I bet it has to do with root context! However, it's not *that* simple. Replacing this with
-        // StoreFastUnlessRoot didn't just work.
-        //
-        // I noticed that the REPL would screw up parsing function declarations based on all these upwards Parent lookups.
-        //
-        //8/27/2021: Gotcha! I need to check if I'm declaring a function in the root context. If so, I need to use STORE_NAME too.
-        //           Otherwise, it gets stuffed in as a fast local and we'll never be able to use it in subsequent statements.
-        //
-        // 9/2/2022: I think this is just part of LEGB resolution and I was half-assing it before. This is still hard-coded
-        //           but if it bites again, then look into what the variable scan visitor decided for resolution and just
-        //           use that.
-        if ((context.Parent.Parent.Parent != null && context.Parent.Parent.Parent.Parent != null &&
-            context.Parent.Parent.Parent.Parent is CloacaParser.ClassdefContext)
-            ||
-            IsRootProgram)
-        {
-            var nameIdx = codeStack.ActiveProgram.Names.AddGetIndex(funcName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, nameIdx, context);
-        }
-        else
-        {
-            var nameIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(funcName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, nameIdx, context);
-        }
+        generateStoreForVariable(funcName, context);
 
         return null;
     }

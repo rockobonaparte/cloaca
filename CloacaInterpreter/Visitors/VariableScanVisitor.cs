@@ -414,7 +414,17 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
             currentNode.Children.Remove(new_name);
         }
 
-        currentNode.AssignScope(new_name, NameScope.Name, context);
+        // For consistency with CPython, we'll assign Namescope at the root level but
+        // then let it run amok for lower levels.
+        if(currentNode.Parent == null)
+        {
+            currentNode.AssignScope(new_name, NameScope.Name, context);
+        }
+        else
+        {
+            currentNode.NoteWrittenName(new_name, context);
+            currentNode.NoteReadName(new_name, context);
+        }
 
         currentNode.Children.Add(new_name, newNode);
         newNode.Parent = currentNode;

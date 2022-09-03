@@ -112,7 +112,7 @@ namespace CloacaTests
                              "outer: Name Read Name Write\n" +
                              "outer:\n" +
                              "  a: LocalFast Read LocalFast Write\n" +
-                             "  inner: Name Read Name Write\n" +
+                             "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
                              "    a: Global Read Global Write\n");
         }
@@ -133,7 +133,6 @@ namespace CloacaTests
         /// variable context.
         /// </summary>        
         [Test]
-        [Ignore("inner not yet being set to localfast")]
         public void InnerFunctionReadsOuter()
         {
             string program =
@@ -179,7 +178,7 @@ namespace CloacaTests
                              "outer: Name Read Name Write\n" +
                              "outer:\n" +
                              "  a: Enclosed Read Enclosed Write\n" +
-                             "  inner: Name Read Name Write\n" +
+                             "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
                              "    a: Enclosed Read Enclosed Write\n");
         }
@@ -202,9 +201,9 @@ namespace CloacaTests
                              "f1: Name Read Name Write\n" +
                              "f1:\n" +
                              "  a: Enclosed Read Enclosed Write\n" +
-                             "  f2: Name Read Name Write\n" +
+                             "  f2: LocalFast Read LocalFast Write\n" +
                              "  f2:\n" +
-                             "    f3: Name Read Name Write\n" +
+                             "    f3: LocalFast Read LocalFast Write\n" +
                              "    f3:\n" +
                              "      a: Enclosed Read Enclosed Write\n");
         }
@@ -226,9 +225,9 @@ namespace CloacaTests
             RunTest(program, "a: Global Write\n" +
                              "f1: Name Read Name Write\n" +
                              "f1:\n" +
-                             "  f2: Name Read Name Write\n" +
+                             "  f2: LocalFast Read LocalFast Write\n" +
                              "  f2:\n" +
-                             "    f3: Name Read Name Write\n" +
+                             "    f3: LocalFast Read LocalFast Write\n" +
                              "    f3:\n" +
                              "      a: Global Read Global Write\n");
         }
@@ -317,13 +316,13 @@ namespace CloacaTests
                              "print: Builtin Read\n" +
                              "f1:\n" +
                              "  a: Enclosed Read Enclosed Write\n" +
-                             "  f2: Name Read Name Write\n" +
+                             "  f2: LocalFast Read LocalFast Write\n" +
                              "  f2:\n" +
                              "    a: Enclosed Read Enclosed Write\n" +
-                             "    f3: Name Read Name Write\n" +
+                             "    f3: LocalFast Read LocalFast Write\n" +
                              "    f3:\n" +
                              "      a: Global Read Global Write\n" +
-                             "      f4: Name Read Name Write\n" +
+                             "      f4: LocalFast Read LocalFast Write\n" +
                              "      f4:\n" +
                              "        a: LocalFast Read LocalFast Write\n", new string[0], new string[] { "print" });
         }
