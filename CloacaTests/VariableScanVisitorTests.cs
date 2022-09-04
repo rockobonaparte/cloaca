@@ -580,7 +580,7 @@ namespace CloacaTests
                              "<listcomp>: Name Read Name Write\n" +
                              "x: Global Write\n" +
                              "<listcomp>:\n" +
-                             "  a: Name Read Name Write\n");
+                             "  a: LocalFast Read LocalFast Write\n");
 
 
             // Issues:

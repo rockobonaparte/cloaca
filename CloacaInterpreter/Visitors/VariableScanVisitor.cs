@@ -216,6 +216,11 @@ public class CodeNamesNode
 
     public void NoteWrittenName(string name, ParserRuleContext context)
     {
+        if(name == "x")
+        {
+            int h = 3;      // DEBUG breakpoint
+        }
+
         if(!NamedScopesWrite.ContainsKey(name))
         {
             // CPython likes to use NAME at global level but we'll call a spade a spade
@@ -223,7 +228,7 @@ public class CodeNamesNode
             // call them globals correctly in the first place.
             if (Parent != null)
             {
-                if(this.ScopeType == ScopeType.Function)
+                if(this.ScopeType == ScopeType.Function || this.ScopeType == ScopeType.Comprehension)
                 {
                     NamedScopesWrite.Add(name, NameScope.LocalFast);
                 }
@@ -245,10 +250,14 @@ public class CodeNamesNode
         // That should be a sign.
         //if(name == "a" && Parent != null && Parent.Children.ContainsKey("SomeClass"))
         //{
-        //    int b = 3; // DEBUG BREAKPOINT
+        //    int h = 3; // DEBUG BREAKPOINT
+        //}
+        //if (name == "x")
+        //{
+        //    int h = 3; // DEBUG BREAKPOINT
         //}
 
-        bool startedWithFunction = this.ScopeType == ScopeType.Function;
+        bool startedWithFunction = this.ScopeType == ScopeType.Function || this.ScopeType == ScopeType.Comprehension;
         if(NamedScopesRead.ContainsKey(name))
         {
             return;
@@ -312,6 +321,11 @@ public class CodeNamesNode
             else if (cursorRoot.BuiltinsSet.Contains(name))
             {
                 NamedScopesRead[name] = NameScope.Builtin;
+            }
+            else if(ScopeType == ScopeType.Comprehension)
+            {
+                // List comprehensions are their own little functions so encapsulate this inside of it.
+                NamedScopesRead[name] = NameScope.LocalFast;
             }
             else
             {

@@ -230,10 +230,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 #endif
 
         // For debugging: Put a breakpoint here to fix issues with missing keys.
-        if(!currentNameScope.NamedScopesRead.ContainsKey(variableName))
-        {
-            int h = 3;      // DEBUG BREAKPOINT.
-        }
+        //if(!currentNameScope.NamedScopesRead.ContainsKey(variableName))
+        //{
+        //    int h = 3;      // DEBUG BREAKPOINT.
+        //}
 
         var scope = currentNameScope.NamedScopesRead[variableName];
         switch(scope)
@@ -617,14 +617,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             //   5. Call list comp function
 
             var newFunctionCode = new CodeObjectBuilder();
-            newFunctionCode.Name = "listcomp";
+            newFunctionCode.Name = "<listcomp>";
 
             codeStack.ActiveProgram.Constants.Add(newFunctionCode);
             var compCodeIndex = codeStack.ActiveProgram.Constants.Count - 1;
 
             var callingProgram = codeStack.ActiveProgram;
 
-            PushNewCode(".0", newFunctionCode);
+            PushNewCode("<listcomp>", newFunctionCode);
             codeStack.ActiveProgram.ArgCount = 1;
             var listNameIdx = codeStack.ActiveProgram.ArgVarNames.AddGetIndex(".0");
             codeStack.ActiveProgram.VarNames.Add(".0");
@@ -658,7 +658,12 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
             codeStack.ActiveProgram.AddInstruction(ByteCodes.MAKE_FUNCTION, 0, context);
 
             // Loading the list we'll be using.
+            currentNameScope = currentNameScope.Children["<listcomp>"];
+
             Visit(context.testlist_comp().comp_for().or_test());        // Should drum up the list we're using
+
+            currentNameScope = currentNameScope.Parent;
+
             codeStack.ActiveProgram.AddInstruction(ByteCodes.GET_ITER, context);
             codeStack.ActiveProgram.AddInstruction(ByteCodes.CALL_FUNCTION, 1, context);
         }
