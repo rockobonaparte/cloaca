@@ -147,7 +147,7 @@ namespace CloacaTests
             RunTest(program, "c: Global Write\n" +
                              "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: Enclosed Write\n" +
+                             "  a: Enclosed Read Enclosed Write\n" +
                              "  b: LocalFast Read LocalFast Write\n" +
                              "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +

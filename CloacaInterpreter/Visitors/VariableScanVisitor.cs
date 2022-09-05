@@ -216,10 +216,10 @@ public class CodeNamesNode
 
     public void NoteWrittenName(string name, ParserRuleContext context)
     {
-        if(name == "x")
-        {
-            int h = 3;      // DEBUG breakpoint
-        }
+        //if(name == "x")
+        //{
+        //    int h = 3;      // DEBUG breakpoint
+        //}
 
         if(!NamedScopesWrite.ContainsKey(name))
         {
@@ -252,7 +252,7 @@ public class CodeNamesNode
         //{
         //    int h = 3; // DEBUG BREAKPOINT
         //}
-        //if (name == "x")
+        //if (name == "bar")
         //{
         //    int h = 3; // DEBUG BREAKPOINT
         //}
@@ -291,7 +291,7 @@ public class CodeNamesNode
                         && this != cursor
                         && cursor.Parent != null)
                     {
-                        NamedScopesRead[name] = cursor.NamedScopesWrite[name] = NameScope.Enclosed;
+                        NamedScopesRead[name] = cursor.NamedScopesWrite[name] = cursor.NamedScopesRead[name] = NameScope.Enclosed;
                     }
 
                     // Goofy little, highly technical adjustment for LEGB resolution. If we just hit a global
