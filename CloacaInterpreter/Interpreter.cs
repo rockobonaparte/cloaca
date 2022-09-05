@@ -796,6 +796,15 @@ namespace CloacaInterpreter
                                 context.Cursor += 2;
                                 break;
                             }
+                        case ByteCodes.LOAD_DEREF:
+                            {
+                                context.Cursor += 1;
+                                var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var cellVarName = context.Function.Code.CellNames[cellVarIdx];
+                                context.DataStack.Push(context.Cells[cellVarName].ob_ref);
+                                context.Cursor += 2;
+                                break;
+                            }
                         case ByteCodes.STORE_ATTR:
                             {
                                 {
@@ -858,37 +867,39 @@ namespace CloacaInterpreter
                                 context.Cursor += 2;
                                 break;
                             }
-                        case ByteCodes.LOAD_DEREF:
+                        case ByteCodes.STORE_DEREF:
                             {
                                 context.Cursor += 1;
-                                var freeVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var freeVarName = context.Function.Code.FreeNames[freeVarIdx];
-
-                                bool found = false;
-                                for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
-                                {
-                                    var frame = context.callStack.ElementAt(callStackIdx);
-                                    if (frame.Function.Code.CellNames.Contains(freeVarName))
-                                    {
-                                        if (frame.Locals.ContainsKey(freeVarName))
-                                        {
-                                            context.DataStack.Push(frame.Locals[freeVarName]);
-                                            found = true;
-                                            break;
-                                        }
-                                        else
-                                        {
-                                            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
-                                        }
-                                    }
-                                }
-
-                                if(!found)
-                                {
-                                    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
-                                }
-
+                                var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
+                                var cellVarName = context.Function.Code.CellNames[cellVarIdx];
+                                context.Cells[cellVarName].ob_ref = context.DataStack.Pop();
                                 context.Cursor += 2;
+
+                                //bool found = false;
+                                //for(int callStackIdx = context.callStack.Count - 2; callStackIdx >= 0 && !found; --callStackIdx)
+                                //{
+                                //    var frame = context.callStack.ElementAt(callStackIdx);
+                                //    if (frame.Function.Code.CellNames.Contains(freeVarName))
+                                //    {
+                                //        if (frame.Locals.ContainsKey(freeVarName))
+                                //        {
+                                //            context.DataStack.Push(frame.Locals[freeVarName]);
+                                //            found = true;
+                                //            break;
+                                //        }
+                                //        else
+                                //        {
+                                //            throw new Exception("Free variable named '" + freeVarName + "' referenced as cell variable but not found in locals");
+                                //        }
+                                //    }
+                                //}
+
+                                //if(!found)
+                                //{
+                                //    throw new Exception("Free variable named '" + freeVarName + "' was not found in lower stack frames.");
+                                //}
+
+                                //context.Cursor += 2;
                                 break;
                             }
                         case ByteCodes.LOAD_ATTR:

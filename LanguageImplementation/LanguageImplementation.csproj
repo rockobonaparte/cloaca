@@ -76,6 +76,7 @@
     <Compile Include="DataTypes\NoneType.cs" />
     <Compile Include="DataTypes\NotImplemented.cs" />
     <Compile Include="DataTypes\PyBool.cs" />
+    <Compile Include="DataTypes\PyCellObject.cs" />
     <Compile Include="DataTypes\PyDotNetClassProxy.cs" />
     <Compile Include="DataTypes\PyFloat.cs" />
     <Compile Include="DataTypes\PyDict.cs" />

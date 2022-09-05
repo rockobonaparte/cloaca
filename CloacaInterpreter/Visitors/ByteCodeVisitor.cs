@@ -240,7 +240,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             case NameScope.Enclosed:
                 {
-                    var derefIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
+                    var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
                     return;
                 }
@@ -373,7 +373,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             case NameScope.Enclosed:
                 {
-                    var derefIdx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
+                    var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
                     return;
                 }

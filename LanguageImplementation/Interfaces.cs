@@ -16,7 +16,11 @@ namespace LanguageImplementation
         public PyFunction Function;
 
         public List<object> LocalFasts;             // Used by LOAD/STORE_FAST
-        public Dictionary<string, object> Locals;   // Used be LOAD/STORE_NAME
+        public Dictionary<string, object> Locals;   // Used by LOAD/STORE_NAME
+
+        // In CPython, cell variables are a part of f_localsplus, combined with the stack.
+        // Our stack is separate so we're not going to have "localplus."
+        public Dictionary<string, PyCellObject> CellVars;   // Cell variables, used by LOAD/STORE_DEREF
 
         // Technically, globals are owned by the module owning the context of everything we're running.
         // I think in the long term that this will get assigned by those modules. You might see it getting.
@@ -31,6 +35,7 @@ namespace LanguageImplementation
             Function = null;
             LocalFasts = new List<object>();
             Locals = new Dictionary<string, object>();
+            CellVars = new Dictionary<string, PyCellObject>();
 
             // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
             // setting it to an empty one.
@@ -77,7 +82,9 @@ namespace LanguageImplementation
             {
                 Globals = new Dictionary<string, object>();
             }
+            takeCellVariables(parentContext);
         }
+
         public Frame(PyFunction function, FrameContext parentContext, Dictionary<string, object> newGlobals=null) : this(function)
         {
             if(newGlobals == null)
@@ -87,6 +94,22 @@ namespace LanguageImplementation
             else
             {
                 Globals = newGlobals;
+            }
+            takeCellVariables(parentContext);
+        }
+
+        private void takeCellVariables(FrameContext parent)
+        {
+            foreach(var cellName in Function.Code.CellNames)
+            {
+                if(parent.Cells.ContainsKey(cellName))
+                {
+                    CellVars.Add(cellName, parent.Cells[cellName]);
+                }
+                else
+                {
+                    CellVars.Add(cellName, new PyCellObject());
+                }
             }
         }
 
