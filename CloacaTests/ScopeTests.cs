@@ -210,5 +210,27 @@ namespace CloacaTests
                     { "b", PyInteger.Create(201) }
                 }), 1);
         }
+
+        /// <summary>
+        /// Testing that cell variables can retain some context when enclosed functions are
+        /// returned from their parent.
+        /// </summary>
+        [Test]
+        public async Task ReturnClosureWithCells()
+        {
+            string program =
+                "def maker(base_val):\n" +
+                "  def made(x):\n" +
+                "    return base_val + x\n" +
+                "  return made\n" +
+                "foo = maker(100)\n" +
+                "bar = foo(1)\n";
+
+            await runBasicTest(program,
+                new VariableMultimap(new TupleList<string, object>
+                {
+                    { "bar", PyInteger.Create(101) }
+                }), 1);
+        }
     }
 }
