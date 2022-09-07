@@ -273,7 +273,6 @@ namespace LanguageImplementation
         }
 
         // Converts into a regular code object using byte arrays.
-        // Functions in constants will also get converted to regular CodeObjects            
         public PyFunction Build(Dictionary<string, object> globals=null)
         {
             if(globals == null)
@@ -295,17 +294,6 @@ namespace LanguageImplementation
             newCodeObj.Defaults = Defaults != null ? Defaults : new List<object>();
             newCodeObj.KWDefaults = KWDefaults != null ? KWDefaults : new List<object>();
             newCodeObj.KWOnlyArgCount = KWOnlyArgCount;
-
-            for (int i = 0; i < newCodeObj.Constants.Count; ++i)
-            {
-                if(newCodeObj.Constants[i] is CodeObjectBuilder)
-                {
-                    var asBuilder = newCodeObj.Constants[i] as CodeObjectBuilder;
-
-                    PyFunction func = asBuilder.Build(globals);
-                    newCodeObj.Constants[i] = func;
-                }
-            }
 
             newCodeObj.firstlineno = firstLine;
             newCodeObj.lnotab = lnotab_builder.ToArray();

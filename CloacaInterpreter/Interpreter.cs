@@ -1413,8 +1413,11 @@ namespace CloacaInterpreter
                                     qualifiedName = (string)nameString;
                                 }
 
-                                PyFunction function = (PyFunction)context.DataStack.Pop();
-                                context.DataStack.Push(function);
+                                CodeObjectBuilder asBuilder = (CodeObjectBuilder)context.DataStack.Pop();
+
+                                PyFunction func = asBuilder.Build(context.Globals);
+
+                                context.DataStack.Push(func);
                             }
                             context.Cursor += 2;
                             break;
