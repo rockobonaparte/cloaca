@@ -7,6 +7,10 @@ namespace LanguageImplementation.DataTypes
 {
     public class PyFunction : PyObject, IPyCallable
     {
+        // __closure__ is only defined if this function permanently contains values
+        // technically created in an outer scope. Think factory methods.
+        public const string ClosureDunder = "__closure__";
+
         // needs a reference to:
         // 1. CodeObject
         // 2. Globals           (and how does it get this? When would it be created?)
@@ -42,6 +46,7 @@ namespace LanguageImplementation.DataTypes
             __setattr__("__call__", this);
             __setattr__("__code__", this);
             __setattr__("__globals__", Globals);
+            __setattr__(ClosureDunder, NoneType.Instance);
         }
         
         public Task<object> Call(IInterpreter interpreter, FrameContext context, object[] args,
