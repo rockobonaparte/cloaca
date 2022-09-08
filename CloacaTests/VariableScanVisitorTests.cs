@@ -147,11 +147,11 @@ namespace CloacaTests
             RunTest(program, "c: Global Write\n" +
                              "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  a: EnclosedCell Read EnclosedCell Write\n" +
                              "  b: LocalFast Read LocalFast Write\n" +
                              "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
-                             "    a: Enclosed Read LocalFast Write\n");
+                             "    a: EnclosedFree Read LocalFast Write\n");
         }
 
         /// <summary>
@@ -177,10 +177,10 @@ namespace CloacaTests
             RunTest(program, "b: Global Write\n" +
                              "outer: Name Read Name Write\n" +
                              "outer:\n" +
-                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  a: EnclosedCell Read EnclosedCell Write\n" +
                              "  inner: LocalFast Read LocalFast Write\n" +
                              "  inner:\n" +
-                             "    a: Enclosed Read Enclosed Write\n");
+                             "    a: EnclosedFree Read EnclosedFree Write\n");
         }
 
         [Test]
@@ -200,12 +200,41 @@ namespace CloacaTests
             RunTest(program,
                              "f1: Name Read Name Write\n" +
                              "f1:\n" +
-                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  a: EnclosedCell Read EnclosedCell Write\n" +
                              "  f2: LocalFast Read LocalFast Write\n" +
                              "  f2:\n" +
                              "    f3: LocalFast Read LocalFast Write\n" +
                              "    f3:\n" +
-                             "      a: Enclosed Read Enclosed Write\n");
+                             "      a: EnclosedFree Read EnclosedFree Write\n");
+        }
+
+        [Test]
+        public void EnclosedMultilevelPromotion()
+        {
+            string program =
+                            "def f1():\n" +
+                            "  a = 1\n" +
+                            "  def f2():\n" +
+                            "    b = a + 2\n" +
+                            "    def f3():\n" +
+                            "      c = a + b\n" +
+                            "      return c\n" +
+                            "    return b + f3()\n" +
+                            "  return a + f2()\n";
+
+            RunTest(program,
+                             "f1: Name Read Name Write\n" +
+                             "f1:\n" +
+                             "  a: EnclosedCell Read EnclosedCell Write\n" +
+                             "  f2: LocalFast Read LocalFast Write\n" +
+                             "  f2:\n" +
+                             "    a: EnclosedFree Read EnclosedFree Write\n" +
+                             "    b: EnclosedCell Read EnclosedCell Write\n" +
+                             "    f3: LocalFast Read LocalFast Write\n" +
+                             "    f3:\n" +
+                             "      a: EnclosedFree Read LocalFast Write\n" +       // I think the LocalFast Writes are correct here...
+                             "      b: EnclosedFree Read LocalFast Write\n" +
+                             "      c: LocalFast Read LocalFast Write\n");
         }
 
         [Test]
@@ -315,10 +344,10 @@ namespace CloacaTests
                              "f1: Name Read Name Write\n" +
                              "print: Builtin Read Global Write\n" +
                              "f1:\n" +
-                             "  a: Enclosed Read Enclosed Write\n" +
+                             "  a: EnclosedCell Read EnclosedCell Write\n" +
                              "  f2: LocalFast Read LocalFast Write\n" +
                              "  f2:\n" +
-                             "    a: Enclosed Read Enclosed Write\n" +
+                             "    a: EnclosedFree Read EnclosedFree Write\n" +
                              "    f3: LocalFast Read LocalFast Write\n" +
                              "    f3:\n" +
                              "      a: Global Read Global Write\n" +

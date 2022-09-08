@@ -10,7 +10,8 @@ using Language;
 public enum NameScope
 {
     Undefined,
-    Enclosed,
+    EnclosedCell,
+    EnclosedFree,
     Global,
     Builtin,
     Name,
@@ -108,6 +109,11 @@ public class CodeNamesNode
     public HashSet<string> GlobalsSet;
     public HashSet<string> BuiltinsSet;
 
+    private bool isEnclosed(NameScope scope)
+    {
+        return scope == NameScope.EnclosedCell || scope == NameScope.EnclosedFree;
+    }
+
     public CodeNamesNode()
     {
         GlobalsSet = new HashSet<string>();
@@ -148,7 +154,7 @@ public class CodeNamesNode
     {
         return scope == NameScope.LocalFast ||
             scope == NameScope.Name ||
-            scope == NameScope.Enclosed;
+            scope == NameScope.EnclosedCell;
     }
 
     // When assigned, both read and write are assigned.
@@ -157,8 +163,8 @@ public class CodeNamesNode
         AssignWriteScope(name, nameScope, context);
         AssignReadScope(name, nameScope, context);
 
-        // "Promote" enclosed variables. The origin needs to flap to enclosed.
-        if(nameScope == NameScope.Enclosed)
+        // "Promote" enclosed variables. The origin needs to flap to an enclosed cell.
+        if(isEnclosed(nameScope))
         {
             bool found = false;
             for(var cursor = this.Parent; cursor != null && cursor.Parent != null && !found; cursor = cursor.Parent)
@@ -166,12 +172,12 @@ public class CodeNamesNode
                 if(cursor.NamedScopesWrite.ContainsKey(name) && canBePromoted(cursor.NamedScopesWrite[name]))
                 {
                     found = true;
-                    cursor.NamedScopesWrite[name] = NameScope.Enclosed;
+                    cursor.NamedScopesWrite[name] = NameScope.EnclosedCell;
                 }
                 if (cursor.NamedScopesRead.ContainsKey(name) && canBePromoted(cursor.NamedScopesRead[name]))
                 {
                     found = true;
-                    cursor.NamedScopesRead[name] = NameScope.Enclosed;
+                    cursor.NamedScopesRead[name] = NameScope.EnclosedCell;
                 }
             }
             if(!found)
@@ -244,6 +250,28 @@ public class CodeNamesNode
         }
     }
 
+    private void updateParentEnclosed(string name)
+    {
+        var lastFound = this;
+        for(var cursor = Parent; cursor != null; cursor = cursor.Parent)
+        {
+            if(cursor.NamedScopesRead.ContainsKey(name) && cursor.isEnclosed(cursor.NamedScopesRead[name]))
+            {
+                lastFound = cursor;
+                cursor.NamedScopesRead[name] = NameScope.EnclosedFree;
+                if(cursor.isEnclosed(cursor.NamedScopesWrite[name]))
+                {
+                    cursor.NamedScopesWrite[name] = NameScope.EnclosedFree;
+                }
+            }
+        }
+        lastFound.NamedScopesRead[name] = NameScope.EnclosedCell;
+        if(lastFound.NamedScopesWrite[name] == NameScope.EnclosedFree)
+        {
+            lastFound.NamedScopesWrite[name] = NameScope.EnclosedCell;
+        }
+    }
+
     public void NoteReadName(string name, ParserRuleContext context)
     {
         // We'll keep this here because if there's a place to debug, it's usually here.
@@ -287,11 +315,12 @@ public class CodeNamesNode
                     NamedScopesRead[name] = cursor.NamedScopesWrite[name];
 
                     // This might now be a regular variable we have to "promote" to an enclosed variable.
-                    if (NamedScopesRead[name] != NameScope.Enclosed
+                    if (!isEnclosed(NamedScopesRead[name])
                         && this != cursor
                         && cursor.Parent != null)
                     {
-                        NamedScopesRead[name] = cursor.NamedScopesWrite[name] = cursor.NamedScopesRead[name] = NameScope.Enclosed;
+                        NamedScopesRead[name] = cursor.NamedScopesWrite[name] = cursor.NamedScopesRead[name] = NameScope.EnclosedFree;
+                        updateParentEnclosed(name);
                     }
 
                     // Goofy little, highly technical adjustment for LEGB resolution. If we just hit a global
@@ -304,7 +333,7 @@ public class CodeNamesNode
                     //
                     // SomeClass.a should be resolved as NAME instead of GLOBAL to be consistent with CPython.
                     // I don't know how much it matters though.
-                    if(NamedScopesRead[name] == NameScope.Global && (!NamedScopesWrite.ContainsKey(name) || NamedScopesWrite[name] != NameScope.Global))
+                    if (NamedScopesRead[name] == NameScope.Global && (!NamedScopesWrite.ContainsKey(name) || NamedScopesWrite[name] != NameScope.Global))
                     {
                         NamedScopesRead[name] = NameScope.Name;
                     }
@@ -670,7 +699,7 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
     {
         foreach(var variableName in context.NAME())
         {
-            currentNode.AssignScope(variableName.GetText(), NameScope.Enclosed, context);
+            currentNode.AssignScope(variableName.GetText(), NameScope.EnclosedFree, context);
         }
         return null;
     }
