@@ -273,7 +273,9 @@ namespace LanguageImplementation
         }
 
         // Converts into a regular code object using byte arrays.
-        public PyFunction Build(Dictionary<string, object> globals=null)
+        // context is used to pass along parent function and cell variables for functions-inside-functions
+        // that share information.
+        public PyFunction Build(Dictionary<string, object> globals=null, FrameContext context=null)
         {
             if(globals == null)
             {
@@ -298,7 +300,22 @@ namespace LanguageImplementation
             newCodeObj.firstlineno = firstLine;
             newCodeObj.lnotab = lnotab_builder.ToArray();
 
-            return PyFunction.Create(newCodeObj, globals);
+            var func = PyFunction.Create(newCodeObj, globals);
+
+            if (context != null) {                
+                if (context.Function.Code.FreeNames.Count > 0)
+                {
+                    var freeVars = new object[context.Function.Code.FreeNames.Count];
+                    for (int i = 0; i < func.Code.FreeNames.Count; ++i)
+                    {
+                        freeVars[i] = context.Cells[func.Code.FreeNames[i]];
+                    }
+                    // Carry paired cell/free variables into __closure__
+                    func.__setattr__(PyFunction.ClosureDunder, PyTuple.Create(freeVars));
+                }
+            }
+
+            return func;
         }
     }
 }

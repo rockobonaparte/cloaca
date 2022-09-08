@@ -1414,8 +1414,7 @@ namespace CloacaInterpreter
                                 }
 
                                 CodeObjectBuilder asBuilder = (CodeObjectBuilder)context.DataStack.Pop();
-
-                                PyFunction func = asBuilder.Build(context.Globals);
+                                PyFunction func = asBuilder.Build(context.Globals, context);
 
                                 context.DataStack.Push(func);
                             }
