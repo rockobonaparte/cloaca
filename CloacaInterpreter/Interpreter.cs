@@ -259,9 +259,27 @@ namespace CloacaInterpreter
         /// <param name="args">The arguments for the program. These are put on the existing data stack</param>
         /// <returns>A task that returns some kind of object. This object is the return value of the
         /// callable. It might await for something which is why it is Task.</returns>
-        public async Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals=null)
+        public async Task<object> CallInto(FrameContext context, PyFunction functionToRun, object[] args, Dictionary<string, object> newGlobals = null)
         {
             Frame nextFrame = new Frame(functionToRun, context, newGlobals);
+
+            // If the function has a __closure__ dunder that isn't just None or whatever, then assign the
+            // closure's contents as cell variables for the current frame. These are determined by
+            // the functions list of free variable names (FreeNames). They are a 1:1 correspondence in their
+            // respective lists. 
+            if (functionToRun.__dict__.ContainsKey(PyFunction.ClosureDunder))
+            {
+                var as_raw = functionToRun.__dict__[PyFunction.ClosureDunder];
+                if (as_raw is object[]) {
+                    var closure_vars = (object[])as_raw;
+                    for (int var_i = 0; var_i < functionToRun.Code.FreeNames.Count; ++var_i)
+                        {
+                            nextFrame.CellVars.AddOrSet(functionToRun.Code.FreeNames[var_i],
+                                (PyCellObject)closure_vars[var_i]);
+                        }
+                }
+            }
+
             return await CallInto(context, nextFrame, args);
         }
 
