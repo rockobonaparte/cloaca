@@ -297,9 +297,24 @@ namespace CloacaInterpreter
         /// callable. It might await for something which is why it is Task.</returns>
         public async Task<object> CallInto(FrameContext context, Frame frame, object[] args)
         {
+            // Populate fast locals with arguments that are NOT cell variables.
+            // Arguments that are cell variables are ones that get propagated to inner functions.
+            // Common use case would be a factory function:
+            // def maker(x):
+            //   def made(y):
+            //     return x + y
+            //   return made
+            // made is a closure using x as a free variable, and x in maker is a cell variable that provides it.
+            int fastIdx = 0;
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
-                frame.SetFastLocal(argIdx, args[argIdx]);
+                var argName = frame.Function.Code.ArgVarNames[argIdx];
+                if(frame.Function.Code.CellNames.Contains(argName) || frame.Function.Code.FreeNames.Contains(argName))
+                {
+                    continue;       // Skip the cell/free variable!
+                }
+                frame.SetFastLocal(fastIdx, args[argIdx]);
+                ++fastIdx;
             }
 
             for (int varIndex = 0; varIndex < frame.Function.Code.VarNames.Count; ++varIndex)
