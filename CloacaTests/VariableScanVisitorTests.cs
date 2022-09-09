@@ -208,6 +208,29 @@ namespace CloacaTests
                              "      a: EnclosedFree Read EnclosedFree Write\n");
         }
 
+        // This one's tricky because the maker's parameter, which is a localfast, goes
+        // straight down into the made function. This mixes up localfasts and enclosed free variables.
+        // What a twist!
+        [Test]
+        public void FactoryMethodParameterFreevar()
+        {
+            string program =
+                            "def maker(p):\n" +
+                            "  def made(x):\n" +
+                            "    return p + x\n" +
+                            "m = maker(1)\n";
+
+            RunTest(program,
+                             "m: Global Write\n" +
+                             "maker: Name Read Name Write\n" +
+                             "maker:\n" +
+                             "  made: LocalFast Read LocalFast Write\n" +
+                             "  p: EnclosedCell Read EnclosedCell Write\n" +
+                             "  made:\n" +
+                             "    p: EnclosedFree Read LocalFast Write\n" +
+                             "    x: LocalFast Read LocalFast Write\n");
+        }
+
         [Test]
         public void EnclosedMultilevelPromotion()
         {
