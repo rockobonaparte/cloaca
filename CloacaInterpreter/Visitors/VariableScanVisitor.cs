@@ -253,25 +253,28 @@ public class CodeNamesNode
     private void updateParentEnclosed(string name)
     {
         var lastFound = this;
-        for(var cursor = Parent; cursor != null; cursor = cursor.Parent)
+        for (var cursor = Parent; cursor != null; cursor = cursor.Parent)
         {
-            if(cursor.NamedScopesRead.ContainsKey(name) && cursor.isEnclosed(cursor.NamedScopesRead[name]))
+            if (cursor.NamedScopesRead.ContainsKey(name) && cursor.isEnclosed(cursor.NamedScopesRead[name]))
             {
                 lastFound = cursor;
-                cursor.NamedScopesRead[name] = NameScope.EnclosedFree;
-                if(cursor.isEnclosed(cursor.NamedScopesWrite[name]))
-                {
-                    cursor.NamedScopesWrite[name] = NameScope.EnclosedFree;
-                }
             }
         }
         lastFound.NamedScopesRead[name] = NameScope.EnclosedCell;
-        if(lastFound.NamedScopesWrite[name] == NameScope.EnclosedFree)
+        if (lastFound.NamedScopesWrite[name] == NameScope.EnclosedFree)
         {
             lastFound.NamedScopesWrite[name] = NameScope.EnclosedCell;
         }
-    }
 
+        // Now percolate all layers up to lastFound as EnclosedFree.
+        // This includes layers where the variable isn't directly used because it has to be
+        // propagated down to the lower layer where it is used.
+        for (var cursor = Parent; cursor != lastFound; cursor = cursor.Parent)
+        {
+            cursor.NamedScopesRead[name] = cursor.NamedScopesWrite[name] = NameScope.EnclosedFree;
+        }
+    }
+    
     public void NoteReadName(string name, ParserRuleContext context)
     {
         // We'll keep this here because if there's a place to debug, it's usually here.

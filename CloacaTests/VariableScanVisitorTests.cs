@@ -231,6 +231,32 @@ namespace CloacaTests
                              "    x: LocalFast Read LocalFast Write\n");
         }
 
+        // Double tricky. The variable p has to go through an intermediate layer that doesn't
+        // actually reference it.
+        [Test]
+        public void FactoryMethodThreeLevels()
+        {
+            string program =
+                            "def maker(p):\n" +
+                            "  def middle():\n" +
+                            "    def made(x):\n" +
+                            "      return p + x\n" +
+                            "m = maker(1)\n";
+
+            RunTest(program,
+                             "m: Global Write\n" +
+                             "maker: Name Read Name Write\n" +
+                             "maker:\n" +
+                             "  middle: LocalFast Read LocalFast Write\n" +
+                             "  p: EnclosedCell Read EnclosedCell Write\n" +
+                             "  middle:\n" +
+                             "    made: LocalFast Read LocalFast Write\n" +
+                             "    p: EnclosedFree Read EnclosedFree Write\n" +      // This is the hard one.
+                             "    made:\n" +
+                             "      p: EnclosedFree Read LocalFast Write\n" +
+                             "      x: LocalFast Read LocalFast Write\n");
+        }
+
         [Test]
         public void EnclosedMultilevelPromotion()
         {
