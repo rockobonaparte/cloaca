@@ -20,19 +20,51 @@ namespace LanguageImplementation
 
         // In CPython, cell variables are a part of f_localsplus, combined with the stack.
         // Our stack is separate so we're not going to have "localplus."
-        public Dictionary<string, PyCellObject> CellVars;   // Cell variables, used by LOAD/STORE_DEREF
+        public PyCellObject[] CellVars;   // Cell variables, used by LOAD/STORE_DEREF
 
         // If the cell doesn't exist, it is added. If it exists, the value is replaced.
         public void SetCellVar(string name, object value)
         {
-            if(CellVars.ContainsKey(name))
+            int cellIdx = Function.Code.CellNames.IndexOf(name);
+            if(cellIdx < 0)
             {
-                CellVars[name].ob_ref = value;
+                cellIdx = Function.Code.CellNames.Count + Function.Code.FreeNames.IndexOf(name);
+            }
+
+            var cell = CellVars[cellIdx];
+            if (cell == null)
+            {
+                if (value is PyCellObject)
+                {
+                    CellVars[cellIdx] = value as PyCellObject;
+                }
+                else
+                {
+                    CellVars[cellIdx] = new PyCellObject(value);
+                }
             }
             else
             {
-                CellVars.Add(name, new PyCellObject(value));
+                if(value is PyCellObject)
+                {
+                    CellVars[cellIdx].ob_ref = (value as PyCellObject).ob_ref;
+                }
+                else
+                {
+                    CellVars[cellIdx].ob_ref = value;
+                }
             }
+        }
+
+        public PyCellObject GetCellVar(string name)
+        {
+            int cellIdx = Function.Code.CellNames.IndexOf(name);
+            if (cellIdx < 0)
+            {
+                cellIdx = Function.Code.CellNames.Count + Function.Code.FreeNames.IndexOf(name);
+            }
+
+            return CellVars[cellIdx];
         }
 
         // Technically, globals are owned by the module owning the context of everything we're running.
@@ -48,7 +80,7 @@ namespace LanguageImplementation
             Function = null;
             LocalFasts = new List<object>();
             Locals = new Dictionary<string, object>();
-            CellVars = new Dictionary<string, PyCellObject>();
+            CellVars = null;
 
             // Perhaps a premature optimization, but we'll be reusing this dictionary so we won't bother
             // setting it to an empty one.
@@ -68,10 +100,20 @@ namespace LanguageImplementation
             }
         }
 
+        private void createCells(CodeObject co)
+        {
+            CellVars = new PyCellObject[co.CellNames.Count + co.FreeNames.Count];
+            for(int i = 0; i < CellVars.Length; ++i)
+            {
+                CellVars[i] = new PyCellObject();
+            }
+        }
+
         public Frame(PyFunction function) : this()
         {
             Function = function;
             createFasts(function.Code);
+            createCells(function.Code);
         }
 
         public Frame(Dictionary<string, object> globals) : this()
@@ -113,15 +155,13 @@ namespace LanguageImplementation
 
         private void takeCellVariables(FrameContext parent)
         {
-            foreach(var cellName in Function.Code.CellNames)
-            {
-                if(parent.Cells.ContainsKey(cellName))
+            for (int child_cell_i = 0; child_cell_i < Function.Code.CellNames.Count; ++child_cell_i)
+            { 
+                var cellName = Function.Code.CellNames[child_cell_i];
+                var parentCellIdx = parent.Function.Code.CellNames.IndexOf(cellName);
+                if(parentCellIdx >= 0)
                 {
-                    CellVars.Add(cellName, parent.Cells[cellName]);
-                }
-                else
-                {
-                    CellVars.Add(cellName, new PyCellObject());
+                    CellVars[child_cell_i] = parent.Cells[parentCellIdx];
                 }
             }
         }

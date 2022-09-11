@@ -144,7 +144,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.nameScopeRoot = nameScopeRoot;
         currentNameScope = this.nameScopeRoot;
         this.namespaceGlobals = globals;
-        accountForUnusedCellVariables();
+        prepareCellVariables();
     }
 
     ///// <summary>
@@ -168,7 +168,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // TODO: Start navigating the variable scan visitor here along with PopCode
         codeStack.Push(builder);
         currentNameScope = currentNameScope.Children[name];
-        accountForUnusedCellVariables();
+        prepareCellVariables();
     }
 
     private CodeObjectBuilder PopCode()
@@ -177,9 +177,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         return codeStack.Pop();
     }
 
-    // They might not be used at the current level, but we need to keep them in our names
-    // of cells so that they get carried down.
-    private void accountForUnusedCellVariables()
+    private void prepareCellVariables()
     {
         foreach(var namepair in currentNameScope.NamedScopesRead)
         {
@@ -268,7 +266,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 }
             case NameScope.EnclosedFree:
                 {
-                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
+                    // Free variables are references in CellVars after cell variables
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName)
+                        + codeStack.ActiveProgram.CellNames.Count;
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
                     return;
                 }
@@ -407,7 +407,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 }
             case NameScope.EnclosedFree:
                 {
-                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
+                    // Free variables are references in CellVars after cell variables
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName)
+                        + codeStack.ActiveProgram.CellNames.Count;
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
                     return;
                 }

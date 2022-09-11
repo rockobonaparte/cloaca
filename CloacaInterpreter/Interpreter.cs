@@ -274,8 +274,7 @@ namespace CloacaInterpreter
                 {
                     for (int var_i = 0; var_i < functionToRun.Code.FreeNames.Count; ++var_i)
                     {
-                        nextFrame.CellVars.AddOrSet(functionToRun.Code.FreeNames[var_i],
-                            (PyCellObject)closure.Values[var_i]);
+                        nextFrame.SetCellVar(functionToRun.Code.FreeNames[var_i], (PyCellObject)closure.Values[var_i]);
                     }
                 }
             }
@@ -339,7 +338,7 @@ namespace CloacaInterpreter
             // Closures are functions that carry some state with them. The norm is to make them from
             // functions that return a function. The __closure__ dunder contains the persistant cell
             // variables that the function carries with itself.
-            if (frame.Function.Code.Name == "made")
+            if (frame.Function.Code.Name == "outer")
             {
                 int h = 3;      // DEBUG BREAKPOINT
             }
@@ -348,9 +347,10 @@ namespace CloacaInterpreter
             {
                 for(int freeVar_i = 0; freeVar_i < frame.Function.Code.FreeNames.Count; ++freeVar_i)
                 {
-                    frame.CellVars[frame.Function.Code.FreeNames[freeVar_i]] = (PyCellObject) closure.Values[freeVar_i];
+                    frame.SetCellVar(frame.Function.Code.FreeNames[freeVar_i], (PyCellObject)closure.Values[freeVar_i]);
                 }
             }
+
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
 
@@ -861,8 +861,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var cellVarName = context.Function.Code.FreeNames[cellVarIdx];
-                                context.DataStack.Push(context.Cells[cellVarName].ob_ref);
+                                context.DataStack.Push(context.Cells[cellVarIdx].ob_ref);
                                 context.Cursor += 2;
                                 break;
                             }
@@ -932,8 +931,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var cellVarName = context.Function.Code.FreeNames[cellVarIdx];
-                                context.Cells[cellVarName].ob_ref = context.DataStack.Pop();
+                                context.Cells[cellVarIdx].ob_ref = context.DataStack.Pop();
                                 context.Cursor += 2;
 
                                 //bool found = false;

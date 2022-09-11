@@ -149,7 +149,7 @@ namespace LanguageImplementation
             }
         }
 
-        public Dictionary<string, PyCellObject> Cells
+        public PyCellObject[] Cells
         {
             get
             {

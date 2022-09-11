@@ -308,7 +308,7 @@ namespace LanguageImplementation
                     var freeVars = new object[func.Code.FreeNames.Count];
                     for (int i = 0; i < func.Code.FreeNames.Count; ++i)
                     {
-                        freeVars[i] = context.Cells[func.Code.FreeNames[i]];
+                        freeVars[i] = context.callStack.Peek().GetCellVar(func.Code.FreeNames[i]);
                     }
 
                     // Carry paired cell/free variables into __closure__
