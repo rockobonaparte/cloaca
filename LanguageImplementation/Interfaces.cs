@@ -22,6 +22,19 @@ namespace LanguageImplementation
         // Our stack is separate so we're not going to have "localplus."
         public Dictionary<string, PyCellObject> CellVars;   // Cell variables, used by LOAD/STORE_DEREF
 
+        // If the cell doesn't exist, it is added. If it exists, the value is replaced.
+        public void SetCellVar(string name, object value)
+        {
+            if(CellVars.ContainsKey(name))
+            {
+                CellVars[name].ob_ref = value;
+            }
+            else
+            {
+                CellVars.Add(name, new PyCellObject(value));
+            }
+        }
+
         // Technically, globals are owned by the module owning the context of everything we're running.
         // I think in the long term that this will get assigned by those modules. You might see it getting.
         // set elsewhere though.

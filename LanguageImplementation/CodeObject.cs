@@ -303,15 +303,16 @@ namespace LanguageImplementation
             var func = PyFunction.Create(newCodeObj, globals);
 
             if (context != null) {                
-                if (context.Function.Code.FreeNames.Count > 0)
+                if (func.Code.FreeNames.Count > 0)
                 {
-                    var freeVars = new object[context.Function.Code.FreeNames.Count];
+                    var freeVars = new object[func.Code.FreeNames.Count];
                     for (int i = 0; i < func.Code.FreeNames.Count; ++i)
                     {
                         freeVars[i] = context.Cells[func.Code.FreeNames[i]];
                     }
+
                     // Carry paired cell/free variables into __closure__
-                    func.__setattr__(PyFunction.ClosureDunder, PyTuple.Create(freeVars));
+                    func.SetClosure(PyTuple.Create(freeVars));
                 }
             }
 

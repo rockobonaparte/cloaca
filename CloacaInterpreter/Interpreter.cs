@@ -269,14 +269,14 @@ namespace CloacaInterpreter
             // respective lists. 
             if (functionToRun.__dict__.ContainsKey(PyFunction.ClosureDunder))
             {
-                var as_raw = functionToRun.__dict__[PyFunction.ClosureDunder];
-                if (as_raw is object[]) {
-                    var closure_vars = (object[])as_raw;
+                var closure = functionToRun.GetClosure();
+                if (closure != null)
+                {
                     for (int var_i = 0; var_i < functionToRun.Code.FreeNames.Count; ++var_i)
-                        {
-                            nextFrame.CellVars.AddOrSet(functionToRun.Code.FreeNames[var_i],
-                                (PyCellObject)closure_vars[var_i]);
-                        }
+                    {
+                        nextFrame.CellVars.AddOrSet(functionToRun.Code.FreeNames[var_i],
+                            (PyCellObject)closure.Values[var_i]);
+                    }
                 }
             }
 
@@ -309,11 +309,23 @@ namespace CloacaInterpreter
             for (int argIdx = 0; argIdx < args.Length; ++argIdx)
             {
                 var argName = frame.Function.Code.ArgVarNames[argIdx];
-                if(frame.Function.Code.CellNames.Contains(argName) || frame.Function.Code.FreeNames.Contains(argName))
+
+                // Normally variables will just be fast locals to function calls, but the
+                // parameter might be a cell variable! If it's a cell (an originator), then
+                // we need to divert it into a cell. If it is a free variable, then it's none
+                // of our business here (is that even valid for argument names?!).
+                if(frame.Function.Code.CellNames.Contains(argName))
                 {
-                    continue;       // Skip the cell/free variable!
+                    frame.SetCellVar(argName, args[argIdx]);
                 }
-                frame.SetFastLocal(fastIdx, args[argIdx]);
+                else if (frame.Function.Code.FreeNames.Contains(argName))
+                {
+                    continue;       // Skip the free variable!
+                }
+                else
+                {
+                    frame.SetFastLocal(fastIdx, args[argIdx]);
+                }
                 ++fastIdx;
             }
 
@@ -323,6 +335,22 @@ namespace CloacaInterpreter
                 frame.AddOnlyNewLocal(varName, null);                
             }
 
+            // Carry values from the closure into our available cell variables (if we have a closure).
+            // Closures are functions that carry some state with them. The norm is to make them from
+            // functions that return a function. The __closure__ dunder contains the persistant cell
+            // variables that the function carries with itself.
+            if (frame.Function.Code.Name == "made")
+            {
+                int h = 3;      // DEBUG BREAKPOINT
+            }
+            var closure = frame.Function.GetClosure();
+            if(closure != null)
+            {
+                for(int freeVar_i = 0; freeVar_i < frame.Function.Code.FreeNames.Count; ++freeVar_i)
+                {
+                    frame.CellVars[frame.Function.Code.FreeNames[freeVar_i]] = (PyCellObject) closure.Values[freeVar_i];
+                }
+            }
             context.callStack.Push(frame);      // nextFrame is now the active frame.
             await Run(context);
 
@@ -833,7 +861,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var cellVarName = context.Function.Code.CellNames[cellVarIdx];
+                                var cellVarName = context.Function.Code.FreeNames[cellVarIdx];
                                 context.DataStack.Push(context.Cells[cellVarName].ob_ref);
                                 context.Cursor += 2;
                                 break;
@@ -904,7 +932,7 @@ namespace CloacaInterpreter
                             {
                                 context.Cursor += 1;
                                 var cellVarIdx = context.CodeBytes.GetUShort(context.Cursor);
-                                var cellVarName = context.Function.Code.CellNames[cellVarIdx];
+                                var cellVarName = context.Function.Code.FreeNames[cellVarIdx];
                                 context.Cells[cellVarName].ob_ref = context.DataStack.Pop();
                                 context.Cursor += 2;
 

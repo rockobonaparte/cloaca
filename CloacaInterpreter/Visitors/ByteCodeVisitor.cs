@@ -144,6 +144,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         this.nameScopeRoot = nameScopeRoot;
         currentNameScope = this.nameScopeRoot;
         this.namespaceGlobals = globals;
+        accountForUnusedCellVariables();
     }
 
     ///// <summary>
@@ -167,12 +168,33 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         // TODO: Start navigating the variable scan visitor here along with PopCode
         codeStack.Push(builder);
         currentNameScope = currentNameScope.Children[name];
+        accountForUnusedCellVariables();
     }
 
     private CodeObjectBuilder PopCode()
     {
         currentNameScope = currentNameScope.Parent;
         return codeStack.Pop();
+    }
+
+    // They might not be used at the current level, but we need to keep them in our names
+    // of cells so that they get carried down.
+    private void accountForUnusedCellVariables()
+    {
+        foreach(var namepair in currentNameScope.NamedScopesRead)
+        {
+            if(namepair.Value == NameScope.EnclosedCell)
+            {
+                codeStack.ActiveProgram.CellNames.AddGetIndex(namepair.Key);
+            }
+        }
+        foreach (var namepair in currentNameScope.NamedScopesWrite)
+        {
+            if (namepair.Value == NameScope.EnclosedCell)
+            {
+                codeStack.ActiveProgram.CellNames.AddGetIndex(namepair.Key);
+            }
+        }
     }
 
     private void generateLoadForVariable(string variableName, ParserRuleContext context)
@@ -239,9 +261,14 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         switch(scope)
         {
             case NameScope.EnclosedCell:
-            case NameScope.EnclosedFree:
                 {
                     var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.EnclosedFree:
+                {
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
                     return;
                 }
@@ -372,10 +399,15 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         var scope = currentNameScope.NamedScopesWrite[variableName];
         switch (scope)
         {
-            case NameScope.EnclosedFree:
             case NameScope.EnclosedCell:
                 {
                     var derefIdx = codeStack.ActiveProgram.CellNames.AddGetIndex(variableName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
+                    return;
+                }
+            case NameScope.EnclosedFree:
+                {
+                    var derefIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_DEREF, derefIdx, context);
                     return;
                 }

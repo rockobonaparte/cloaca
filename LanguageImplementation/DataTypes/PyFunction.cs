@@ -63,6 +63,38 @@ namespace LanguageImplementation.DataTypes
             function.Initialize(co, globals);
             return function;
         }
+
+        public bool HasClosure()
+        {
+            if(!__dict__.ContainsKey(PyFunction.ClosureDunder))
+            {
+                return false;
+            }
+            var closureVal = __dict__[PyFunction.ClosureDunder];
+            if(closureVal == null || closureVal == NoneType.Instance)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public void SetClosure(PyTuple closureVars)
+        {
+            __setattr__(PyFunction.ClosureDunder, closureVars);
+        }
+
+        public PyTuple GetClosure()
+        {
+            if (!__dict__.ContainsKey(PyFunction.ClosureDunder))
+            {
+                return null;
+            }
+            var closureVal = __dict__[PyFunction.ClosureDunder];
+            return closureVal as PyTuple;       // Will be null for NoneType and ... invalid types.
+        }
     }
 
     public class PyFunctionClass : PyClass

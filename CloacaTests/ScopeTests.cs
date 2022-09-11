@@ -247,14 +247,14 @@ namespace CloacaTests
                 "  return made\n" +
                 "a = maker(100)\n" +
                 "b = maker(200)\n" +
-                "bar2 = a(2)\n" +
-                "bar1 = a(1)\n";
+                "bar1 = a(2)\n" +
+                "bar2 = b(1)\n";
 
             await runBasicTest(program,
                 new VariableMultimap(new TupleList<string, object>
                 {
-                    { "bar1", PyInteger.Create(101) },
-                    { "bar2", PyInteger.Create(202) }
+                    { "bar1", PyInteger.Create(102) },
+                    { "bar2", PyInteger.Create(201) }
                 }), 1);
         }
     }
