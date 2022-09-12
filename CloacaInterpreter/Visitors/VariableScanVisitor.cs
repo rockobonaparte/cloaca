@@ -643,7 +643,8 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public override object VisitTfpdef([NotNull] CloacaParser.TfpdefContext context)
     {
-        var variableName = context.GetText();
+        // Declaration might have a type declaration to go along with it that we have to ignore.
+        var variableName = context.GetText().Split(':')[0];
         currentNode.AssignScope(variableName, NameScope.LocalFast, context);
         return null;
     }

@@ -41,6 +41,6 @@ def smallest_change(denominations: list[int], total):
     return subtotals[-1]
 
 
-print(smallest_change([1, 2, 5], 11))
-print(smallest_change([1, 4, 5], 13))
-
+assert(smallest_change([1, 2, 5], 11) == 3)
+assert(smallest_change([1, 4, 5], 13) == 3)
+print("Success!")
