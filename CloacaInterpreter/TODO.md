@@ -227,11 +227,6 @@ Part 3: Hardening
   * SysModule wrapper should be easier to represent
     * Shouldn't need so much boilerplate
     * Should be able to create PyLists instead of C# arrays.
-* Scope keywords: global, nonlocal
-  * Exception checks for parsing cases where nonlocal, global are defined after variable is defined.
-  * External global declaration.
-  * Exception checks for parsing external global declarations that then use that name for function parameters.
-  * Nonlocal keyword.
 * Stackless Python channels for cross-coroutine communication.
 * Ordinal type: ord(). PyOrdinal?
 * min()/max() hardening
@@ -239,8 +234,6 @@ Part 3: Hardening
   * Support func kwarg
   * Support alternate *args form
   * This will probably require various overloaded arguments or a master function that switches off based on arguments
-* Cell variables (oh God)
-  * [CELL VARIABLES]: Wrap variables in cells.
 * TODO [INJECTOR-REUSE] Use static methods here or reuse the injector as a singleton or single instance.
 * string functions
   * TODO [str.casefold] implement.
