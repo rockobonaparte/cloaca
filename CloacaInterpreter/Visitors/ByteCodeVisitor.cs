@@ -222,35 +222,9 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         //          break;
         //
 
-#if BUTT
-        if (variableName.StartsWith("__"))
-        {
-            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, dunderNameIdx, context);
-            return;
-        }
-
-        // Starting to stir in DEREF opcodes using the variable scan visitor.
-        // This will eventually expand to consume most (?) of the logic in the load/store
-        // code. However, it's a retrofit so we are coming in incrementally. We're going
-        // to start with stuff like nonlocal and enclosed scopes only.
-        if(currentNameScope.NamedScopesRead.ContainsKey(variableName))
-        {
-            var scope = currentNameScope.NamedScopesRead[variableName];
-            if(scope == NameScope.Enclosed)
-            {
-                var derefIdx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
-                if (derefIdx >= 0)
-                {
-                    codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, derefIdx, context);
-                    return;
-                }
-            }
-        }
-#endif
 
         // For debugging: Put a breakpoint here to fix issues with missing keys.
-        //if(!currentNameScope.NamedScopesRead.ContainsKey(variableName))
+        //if (!currentNameScope.NamedScopesRead.ContainsKey(variableName))
         //{
         //    int h = 3;      // DEBUG BREAKPOINT.
         //}
@@ -299,52 +273,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     return;
                 }
         }
-
-#if BUTT
-        // If it's in VarNames, we use it from there. If not, 
-        // we assume it's global and deal with it at run time if
-        // we can't find it.
-        var idx = codeStack.ActiveProgram.VarNames.IndexOf(variableName);
-        if (idx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, idx, context);
-            return;
-        }
-        else if(IsRootProgram)
-        {
-            var rootNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, rootNameIdx, context);
-            return;
-        }
-
-        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
-        if (nameIdx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, nameIdx, context);
-            return;
-        }
-        else
-        {
-            var containingCodeObj = codeStack.FindNameInStack(variableName);
-            if(containingCodeObj == null || containingCodeObj == codeStack[0])
-            {
-                var globalIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_GLOBAL, globalIdx, context);
-            }
-            else if(containingCodeObj != codeStack.ActiveProgram)
-            {
-                var freeVarIdx = codeStack.ActiveProgram.FreeNames.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_DEREF, freeVarIdx, context);
-                containingCodeObj.CellNames.AddGetIndex(variableName);              // Using this form to only add as unique.                    
-            }
-            else
-            {
-                var localIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_NAME, localIdx, context);
-            }
-            return;
-        }
-#endif
     }
 
     private void generateStoreForVariable(string variableName, ParserRuleContext context)
@@ -353,48 +281,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         {
             throw new Exception(context.Start.Line + ":" + context.Start.Column + " SyntaxError: can't assign to keyword (tried to assign to 'None')");
         }
-
-#if BUTT
-        // If the variable starts with a dunder, use STORE_NAME.
-        // Well, in the CPython source, it just checks if the first character is an underscore:
-        // 3.9 source
-        // compile.c: 3901
-        //
-        //     /* XXX Leave assert here, but handle __doc__ and the like better */
-        //     assert(scope || PyUnicode_READ_CHAR(name, 0) == '_');
-        //
-        // ...and the mode previously fell through to OP_NAME, so we'll use STORENAME
-        //
-        // It's kind of bizarre.
-        //
-        // More bizareness: If we're at the root level, we also assume it's a local (local == global) and
-        // particularly ensure that we don't try to use STORE_FAST on it.
-        //
-        // This comes from compile.c:
-        //     case LOCAL:
-        //          if (c->u->u_ste->ste_type == FunctionBlock)
-        //          optype = OP_FAST;
-        //          break;
-        //
-        // We just flip it around and use _NAME if we're in the root.
-        if (variableName.StartsWith("__") || IsRootProgram)
-        {
-            var dunderNameIdx = codeStack.ActiveProgram.Names.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_NAME, dunderNameIdx, context);
-            return;
-        }
-
-        var nameIdx = codeStack.ActiveProgram.Names.IndexOf(variableName);
-        if (nameIdx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_GLOBAL, nameIdx, context);
-        }
-        else
-        {
-            var idx = codeStack.ActiveProgram.VarNames.AddGetIndex(variableName);
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_FAST, idx, context);
-        }
-#endif
 
         var scope = currentNameScope.NamedScopesWrite[variableName];
         switch (scope)
@@ -438,13 +324,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
         }
 
     }
-
-#if BUTT
-    private ByteCodes store_fast_if_not_root()
-    {
-        return IsRootProgram ? ByteCodes.STORE_NAME : ByteCodes.STORE_FAST;
-    }
-#endif
 
     private void AddStoreFastUnlessRoot(string name, ParserRuleContext context)
     {
@@ -544,19 +423,6 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
     public override object VisitAtomName([NotNull] CloacaParser.AtomNameContext context)
     {
-#if BUTT
-        // It might be a function name. Look for it in names.
-        int nameIdx = codeStack.ActiveProgram.VarNames.IndexOf(context.GetText());
-        if (nameIdx >= 0)
-        {
-            codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_FAST, nameIdx, context);
-        }
-        else
-        {
-            generateLoadForVariable(context.GetText(), context);
-        }
-        return null;
-#endif
         generateLoadForVariable(context.GetText(), context);
         return null;
     }

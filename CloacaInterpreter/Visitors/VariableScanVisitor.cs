@@ -537,22 +537,47 @@ public class VariableScanVisitor : CloacaBaseVisitor<object>
 
     public object VisitLValueTestlist_star_expr([NotNull] CloacaParser.TestContext context)
     {
-        var expr = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0];
-
-        var variableName = expr.GetText();
-
-        // Kind of hamfisted, but anything that's being subscripted (self.a.b.something_else)
-        // only needs the first part. That's the variable name. We can blow off anything else.
-        int firstDot = variableName.IndexOf('.');
-        if (firstDot >= 0) {
-            variableName = variableName.Substring(0, firstDot);
-            currentNode.NoteReadName(variableName, context);
-        } 
-        else
+        var maybeAtom = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].
+            xor_expr()[0].and_expr()[0].shift_expr()[0].arith_expr()[0].term()[0].factor()[0].power().atom_expr();
+        var variableName = context.or_test()[0].and_test()[0].not_test()[0].comparison().expr()[0].GetText();
+        if (maybeAtom.trailer().Length > 0)
         {
+            // Is it subscriptable?
+            if (maybeAtom.trailer()[0].subscriptlist() != null)
+            {
+                variableName = maybeAtom.atom().GetText();
+                currentNode.NoteReadName(variableName, context);
+                base.VisitSubscriptlist(maybeAtom.trailer()[0].subscriptlist());
+            }
+            else if (maybeAtom.trailer().Length >= 1 && maybeAtom.trailer()[0].NAME() != null)
+            {
+                variableName = maybeAtom.atom().GetText();
+                currentNode.NoteReadName(variableName, context);
+
+                int last_trailer_idx = maybeAtom.trailer().Length - 1;
+                for (int trailer_idx = 0; trailer_idx < last_trailer_idx; ++trailer_idx)
+                {
+                    var loadAttrName = maybeAtom.trailer()[trailer_idx].NAME().GetText();
+                    currentNode.NoteReadName(loadAttrName, context);
+                }
+
+                var subscripts = maybeAtom.trailer()[last_trailer_idx].subscriptlist();
+                if (subscripts != null)
+                {
+                    Visit(subscripts);
+                }
+            }
+            else
+            {
+                // Function call?
+                base.Visit(context);
+            }
+        }
+        else if(variableName != "wait")
+        {
+            // Store value
             currentNode.NoteWrittenName(variableName, context);
         }
-
         return null;
     }
 
