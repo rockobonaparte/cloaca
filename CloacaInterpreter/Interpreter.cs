@@ -867,6 +867,7 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.STORE_ATTR:
                             {
+                                // TODO: [AttributeError] Error recovery when attribute is not found.
                                 {
                                     context.Cursor += 1;
                                     var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
@@ -963,6 +964,7 @@ namespace CloacaInterpreter
                             }
                         case ByteCodes.LOAD_ATTR:
                             {
+                                // TODO: [AttributeError] Error recovery when attribute is not found.
                                 context.Cursor += 1;
                                 var nameIdx = context.CodeBytes.GetUShort(context.Cursor);
                                 var attrName = context.Function.Code.Names[nameIdx];

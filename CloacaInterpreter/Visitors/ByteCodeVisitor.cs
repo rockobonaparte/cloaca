@@ -878,9 +878,21 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                     codeStack.ActiveProgram.AddInstruction(ByteCodes.LOAD_ATTR, loadAttrIdx, context);
                 }
 
-                var attrName = maybeAtom.trailer()[last_trailer_idx].NAME().GetText();
-                var attrIdx = codeStack.ActiveProgram.Names.AddGetIndex(attrName);
-                codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_ATTR, attrIdx, context);
+                // Dealing with subscripting attributes and array elements. This logic is
+                // getting a bit out of control and I have to admit I kind of guardrail-programmed
+                // it.
+                var subscripts = maybeAtom.trailer()[last_trailer_idx].subscriptlist();
+                if (subscripts != null)
+                {
+                    Visit(subscripts);
+                }
+                else
+                {
+                    var attrName = maybeAtom.trailer()[last_trailer_idx].NAME().GetText();
+                    var attrIdx = codeStack.ActiveProgram.Names.AddGetIndex(attrName);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_ATTR, attrIdx, context);
+                }
+
                 return null;
             }
             else

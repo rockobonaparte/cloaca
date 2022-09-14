@@ -57,6 +57,7 @@ Part 3: Hardening
           No traceback available. This exception was probably created outside of a running program.
           'ModuleNotFoundError' object has no attribute named 'tb'
       ```
+  * [AttributeError] Error recovery when attribute is not found.
 * Extended argument types
   * `*args`
     * [DONE] Implement
