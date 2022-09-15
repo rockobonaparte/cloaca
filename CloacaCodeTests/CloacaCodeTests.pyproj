@@ -33,13 +33,14 @@
     </Compile>
     <Compile Include="debugging4.py" />
     <Compile Include="debugging3.py" />
-    <Compile Include="debugging2.py" />
     <Compile Include="debugging.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="facebook-yearbook_signing.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="goofy_dereferencing2.py" />
+    <Compile Include="goofy_dereferencing.py" />
     <Compile Include="google-longest_word.py">
       <SubType>Code</SubType>
     </Compile>

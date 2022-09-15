@@ -884,7 +884,10 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
                 var subscripts = maybeAtom.trailer()[last_trailer_idx].subscriptlist();
                 if (subscripts != null)
                 {
-                    Visit(subscripts);
+                    // This is assuming that subscript logic doesn't get more complicated. If the subscriptlist
+                    // visitor gets a bunch more stuff then we basically have to replicate it here.
+                    base.VisitSubscriptlist(subscripts);
+                    codeStack.ActiveProgram.AddInstruction(ByteCodes.STORE_SUBSCR, context);
                 }
                 else
                 {

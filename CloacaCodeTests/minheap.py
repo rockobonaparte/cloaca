@@ -1,5 +1,3 @@
-raise NotImplementedError("Getting an NPE trying to parse this code")
-
 class KeyValue:
     def __init__(self, key, value):
         self.key = key
@@ -19,7 +17,6 @@ class MinHeap:
         child_i = self.next_i
         parent_i = child_i // 2
         while child_i != parent_i:
-
             if self.heap[child_i].key < self.heap[parent_i].key:
                 swapper = self.heap[child_i]
                 self.heap[child_i] = self.heap[parent_i]
@@ -80,8 +77,8 @@ min_heap.add(3, 3)
 min_heap.add(4, 4)
 min_heap.add(1, 1)
 
-print(min_heap.get().key)
-print(min_heap.get().key)
-print(min_heap.get().key)
-print(min_heap.get().key)
-
+assert(min_heap.get().key == 1)
+assert(min_heap.get().key == 2)
+assert(min_heap.get().key == 3)
+assert(min_heap.get().key == 4)
+print("Success!")
