@@ -322,21 +322,21 @@ namespace LanguageImplementation.DataTypes
             foreach (var mapping in asDict.dict)
             {
                 var key_repr = await __visit_repr((PyObject)mapping.Key, interpreter, context);
-                retStr = (PyString)PyStringClass.__add__(context, retStr, key_repr);
-                retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(": "));
+                retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, key_repr);
+                retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create(": "));
 
                 var val_repr = await __visit_repr((PyObject)mapping.Value, interpreter, context);
-                retStr = (PyString)PyStringClass.__add__(context, retStr, val_repr);
+                retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, val_repr);
 
                 // Appending commas except on last paring
                 if (visited < asDict.dict.Count - 1)
                 {
-                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(", "));
+                    retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create(", "));
                 }
 
                 visited += 1;
             }
-            return (PyString)PyStringClass.__add__(context, retStr, PyString.Create("}"));
+            return (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create("}"));
         }
 
         [ClassMember]

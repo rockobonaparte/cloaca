@@ -345,25 +345,25 @@ namespace LanguageImplementation.DataTypes
                     if (returned != null)
                     {
                         var asPyString = (PyString)returned;
-                        retStr = (PyString)PyStringClass.__add__(context, retStr, asPyString);
+                        retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, asPyString);
                     }
                 }
                 else if(asList.list[i] == null)
                 {
-                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create("null"));
+                    retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create("null"));
                 }
                 else
                 {
-                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(asList.list[i].ToString()));
+                    retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create(asList.list[i].ToString()));
                 }
 
                 // Appending commas except on last index
                 if (i < asList.list.Count - 1)
                 {
-                    retStr = (PyString)PyStringClass.__add__(context, retStr, PyString.Create(", "));
+                    retStr = (PyString)await PyStringClass.__add__(interpreter, context, retStr, PyString.Create(", "));
                 }
             }
-            return (PyString) PyStringClass.__add__(context, retStr, PyString.Create("]"));
+            return (PyString) await PyStringClass.__add__(interpreter, context, retStr, PyString.Create("]"));
         }
 
         [ClassMember]

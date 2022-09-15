@@ -87,19 +87,42 @@ namespace LanguageImplementation.DataTypes
         //  __add__(self, value, /)
         //      Return self+value.
         //
-        public static PyObject __add__(FrameContext context, PyObject self, PyObject other)
+        public static async Task<PyObject> __add__(IInterpreter interpreter, FrameContext context, PyObject self, PyObject other)
         {
-            PyString a, b;
+            PyString selfStr = (PyString)self;
+            string b = null;
             try
             {
-                castOperands(self, other, out a, out b, "concatenation");
+                PyString otherStr = other as PyString;
+                if(otherStr is null)
+                {
+                    var otherObj = other as PyObject;
+                    if(otherObj != null)
+                    {
+                        // Try invoking __str__
+                        var callFunc = (IPyCallable)otherObj.__dict__["__str__"];
+                        otherStr = (PyString) await callFunc.Call(interpreter, context, new object[] { otherObj });
+                        b = otherStr.InternalValue;
+                    }
+                    else if(otherObj == null)
+                    {
+                        b = "null";
+                    } else
+                    {
+                        b = other.ToString();
+                    }
+                }
+                else
+                {
+                    b = otherStr.InternalValue;
+                }
             }
             catch(Exception e)
             {
                 context.CurrentException = new TypeError(e.Message);
                 return null;
             }
-            var newPyString = PyString.Create(a.InternalValue + b.InternalValue);
+            var newPyString = PyString.Create(selfStr.InternalValue + b);
             return newPyString;
         }
 
