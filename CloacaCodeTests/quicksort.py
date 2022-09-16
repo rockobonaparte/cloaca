@@ -1,4 +1,4 @@
-raise NotImplementedError("Some issue unpacking an integer for some strange reason!\nProbably\nthe_list[last_i], the_list[left] = the_list[left], the_list[last_i]")
+raise NotImplementedError("Can't handle [last_i], the_list[left] = the_list[left], the_list[last_i]. This isn't unpacking but technically various rotations and transformations")
 
 def partition(the_list, first_i, last_i):
     pivot = the_list[last_i]
