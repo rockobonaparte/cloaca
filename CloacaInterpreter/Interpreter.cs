@@ -138,7 +138,14 @@ namespace CloacaInterpreter
 
         public void AddBuiltin(WrappedCodeObject toEmbed)
         {
-            builtins.Add(toEmbed.Name, toEmbed);
+            if(builtins.ContainsKey(toEmbed.Name))
+            {
+                builtins[toEmbed.Name] = toEmbed;
+            }
+            else
+            {
+                builtins.Add(toEmbed.Name, toEmbed);
+            }
         }
 
         public bool DumpState;

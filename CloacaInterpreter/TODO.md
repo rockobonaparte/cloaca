@@ -3,6 +3,7 @@
 
 Part 3: Hardening
 * Things that leaked out while implementing defaults parameters/keyword arguments:
+  * [ASYNC INTERPRET FAIL] Catch when Interpret() internally fails because it hangs up running a script
   * [INTEGERS WITH FLOATS] Handle mixing of PyFloat and PyInteger (PyBool?) with basic arithmetic operators; 2 - 1.0 shouldn't fail.
   * Try to connect to TaskScheduler.UnobservedTaskException now that even compilation spawns tasks that
     like to throw suppressed exceptions

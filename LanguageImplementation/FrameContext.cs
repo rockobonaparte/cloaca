@@ -218,6 +218,15 @@ namespace LanguageImplementation
             }
             Locals.AddOrSet(name, value);
         }
+        public void SetVariableIfExists(string name, object value)
+        {
+            int varIdx = LocalNames.IndexOf(name);
+            if (varIdx < 0)
+            {
+                return;
+            }
+            Locals.AddOrSet(name, value);
+        }
 
         public bool HasVariable(string name)
         {

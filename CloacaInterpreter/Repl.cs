@@ -157,11 +157,18 @@ namespace CloacaInterpreter
 
         public Repl()
         {
+            ContextVariables = new Dictionary<string, object>();
+
             errorListener = new ReplParseErrorListener();
 
             Scheduler = new Scheduler();
             Interpreter = new Interpreter(Scheduler);
             Scheduler.SetInterpreter(Interpreter);
+        }
+
+        public Dictionary<string, object> GetBuiltins()
+        {
+            return Interpreter.GetBuiltins();
         }
 
         /// <summary>
@@ -221,6 +228,7 @@ namespace CloacaInterpreter
         /// <param name="input">The code to interpret. Note that REPL code should have a trailing newline.</param>
         public async Task Interpret(string input)
         {
+            // TODO: [ASYNC INTERPRET FAIL] Catch when Interpret() internally fails because it hangs up running a script
             CaughtError = false;
 
             var inputStream = new AntlrInputStream(input);
@@ -254,8 +262,7 @@ namespace CloacaInterpreter
                 ContextVariables = new Dictionary<string, object>();
             }
 
-            // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
-            var varVisitor = new VariableScanVisitor(ContextVariables.Keys, new string[0]);
+            var varVisitor = new VariableScanVisitor(ContextVariables.Keys, Interpreter.GetBuiltins().Keys);
             varVisitor.Visit(antlrVisitorContext);
 
             // Make sure to set REPL mode so the top of the stack gets printed instead of thrown away.
@@ -269,9 +276,13 @@ namespace CloacaInterpreter
             activeContext = scheduledTaskRecord.Frame;
             scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
             scheduledTaskRecord.WhenTaskExceptionEscaped += WhenReplTaskExceptionEscaped;
-            foreach (string varName in ContextVariables.Keys)
+
+            if (ContextVariables != activeContext.Locals)
             {
-                activeContext.SetVariable(varName, ContextVariables[varName]);
+                foreach (string varName in ContextVariables.Keys)
+                {
+                    activeContext.SetVariableIfExists(varName, ContextVariables[varName]);
+                }
             }
 
             Run();
@@ -334,7 +345,6 @@ namespace CloacaInterpreter
                     }
                 }
             }
-
             WhenReplCommandDone(this, stack_output.ToString());
             ContextVariables = scheduledTaskRecord.Frame.DumpVariables();
         }
@@ -373,7 +383,7 @@ namespace CloacaInterpreter
             var antlrVisitorContext = parser.file_input();
 
             // TODO [VARIABLE RESOLUTION]: Pipe in builtins here separately.
-            var varVisitor = new VariableScanVisitor(ContextVariables.Keys, new string[0]);
+            var varVisitor = new VariableScanVisitor(ContextVariables.Keys, Interpreter.GetBuiltins().Keys);
             varVisitor.Visit(antlrVisitorContext);
 
             var visitor = new CloacaBytecodeVisitor(varVisitor.RootNode, ContextVariables);
@@ -381,7 +391,7 @@ namespace CloacaInterpreter
 
             var compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var context = Scheduler.Schedule(compiledFunction);
+            Scheduler.Schedule(compiledFunction);
             Scheduler.Tick();
         }
     }
