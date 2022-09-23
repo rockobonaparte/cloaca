@@ -88,6 +88,54 @@ namespace CloacaInterpreter
         }
     }
 
+    // A custom awaiter for the REPL's InterpretAsync() call. This is used under the hood to block
+    // until the scheduler comes back with the result of the inputted, interpreted code.
+    public class ReplInterpretationAwaiter : INotifyCompletion
+    {
+        private Action continuation;
+        private bool finished;
+
+        public bool IsCompleted
+        {
+            get
+            {
+                return finished;
+            }
+        }
+
+        public ReplInterpretationAwaiter()
+        {
+            finished = false;
+        }
+
+        public string Text
+        {
+            get; protected set;
+        }
+
+        public Task Continue()
+        {
+            finished = true;
+            continuation?.Invoke();
+            return Task.FromResult(true);
+        }
+
+        public void OnCompleted(Action continuation)
+        {
+            this.continuation = continuation;
+        }
+
+        public ReplInterpretationAwaiter GetAwaiter()
+        {
+            return this;
+        }
+
+        public void GetResult()
+        {
+            // Empty -- just needed to satisfy the rules for how custom awaiters work.
+        }
+    }
+
     public class Repl
     {
         private ReplParseErrorListener errorListener;
@@ -249,17 +297,20 @@ namespace CloacaInterpreter
         public async Task<string> InterpretAsync(string consoleInput)
         {
             string output = null;
+            var awaiter = new ReplInterpretationAwaiter();
 
             ReplCommandDone takeTextFromEvent = async(ignored, text) =>
             {
                 output = text;
+                awaiter.Continue();
             };
 
             WhenReplCommandDone += takeTextFromEvent;
 
             try
             {
-                await Interpret(consoleInput);
+                Interpret(consoleInput);
+                await awaiter;
             }
             finally
             {
