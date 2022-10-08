@@ -272,18 +272,10 @@ namespace CloacaInterpreter
 
             PyFunction compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            var scheduledTaskRecord = Scheduler.Schedule(compiledFunction);
-            activeContext = scheduledTaskRecord.Frame;
+            var scheduledTaskRecord = Scheduler.Schedule(compiledFunction, ContextVariables);
             scheduledTaskRecord.WhenTaskCompleted += WhenReplTaskCompleted;
             scheduledTaskRecord.WhenTaskExceptionEscaped += WhenReplTaskExceptionEscaped;
 
-            if (ContextVariables != activeContext.Locals)
-            {
-                foreach (string varName in ContextVariables.Keys)
-                {
-                    activeContext.SetVariableIfExists(varName, ContextVariables[varName]);
-                }
-            }
 
             Run();
         }      
@@ -391,7 +383,7 @@ namespace CloacaInterpreter
 
             var compiledFunction = visitor.RootProgram.Build(ContextVariables);
 
-            Scheduler.Schedule(compiledFunction);
+            Scheduler.Schedule(compiledFunction, ContextVariables);
             Scheduler.Tick();
         }
     }

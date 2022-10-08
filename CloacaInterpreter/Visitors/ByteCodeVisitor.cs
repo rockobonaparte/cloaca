@@ -1648,7 +1648,7 @@ public class CloacaBytecodeVisitor : CloacaBaseVisitor<object>
 
                     var currentTask = scheduler.GetCurrentTask();
                     var defaultPrecalcCode = defaultBuilder.Build(namespaceGlobals);
-                    var task = scheduler.Schedule(defaultPrecalcCode);
+                    var task = scheduler.Schedule(defaultPrecalcCode, namespaceGlobals);
 
                     // There isn't anything to actual unblock us when the code finished and the result is ready, so we need
                     // to kick the task in the ass in order to unblock the task.

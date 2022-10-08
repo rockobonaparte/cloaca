@@ -79,12 +79,7 @@ namespace CloacaTests
             compiledFunction = await compiledTask;
             Dis.dis(compiledFunction.Code);
 
-            receipt = scheduler.Schedule(compiledFunction);
-            FrameContext context = receipt.Frame;
-            foreach (string varName in variablesIn.Keys)
-            {
-                context.SetVariable(varName, variablesIn[varName]);
-            }
+            receipt = scheduler.Schedule(compiledFunction, variablesIn);
 
             // Waiting on the task makes sure we get punched in the face by any exceptions it throws.
             // But they'll come rolling in as AggregateExceptions so we'll have to unpack them.
@@ -98,7 +93,7 @@ namespace CloacaTests
             }
             
             Assert.That(scheduler.TickCount, Is.EqualTo(expectedIterations));
-            return context;
+            return receipt.Frame;
         }
 
         public void AssertNoDotNetExceptions()

@@ -163,6 +163,35 @@ namespace CloacaInterpreter
             return scheduleState.SubmitterReceipt;
         }
 
+        /// <summary>
+        /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
+        /// in order to do any other housekeeping like inject variables into it.
+        /// </summary>
+        /// <param name="program">The code to schedule.</param>
+        /// <param name="globals">Additional root-level globals to introduce to the program from the outside.</param>
+        /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
+        public TaskEventRecord Schedule(PyFunction function, Dictionary<string, object> globals)
+        {
+            var scheduleState = PrepareFrameContext(function, Interpreter.GetBuiltins());
+
+            // Some of the stuff in this block is too gross:
+            // 1. Checking that we aren't setting variables when globals == locals (root context?)
+            // 2. Use SetVariableIfExists
+            // It's too hacky and I should find a better means of getting around the problems that required
+            // the logic in the first place.
+            if (globals != scheduleState.Frame.Locals)
+            {
+                foreach (string varName in globals.Keys)
+                {
+                    scheduleState.Frame.SetVariableIfExists(varName, globals[varName]);
+                }
+            }
+
+            unblocked.Add(scheduleState);
+            OnTaskScheduled(scheduleState);
+            return scheduleState.SubmitterReceipt;
+        }
+
         public TaskEventRecord Schedule(PyFunction function, FrameContext context)
         {
             var scheduleState = PrepareFrameContext(function, context);

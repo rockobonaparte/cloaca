@@ -446,6 +446,15 @@ namespace LanguageImplementation
         /// in order to do any other housekeeping like inject variables into it.
         /// </summary>
         /// <param name="program">The code to schedule.</param>
+        /// <param name="globals">Additional root-level globals to introduce to the program from the outside.</param>
+        /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
+        TaskEventRecord Schedule(PyFunction function, Dictionary<string, object> globals);
+
+        /// <summary>
+        /// Schedule a new program to run. It returns the FrameContext that would be used to run the application
+        /// in order to do any other housekeeping like inject variables into it.
+        /// </summary>
+        /// <param name="program">The code to schedule.</param>
         /// <returns>The context the interpreter will use to maintain the program's state while it runs.</returns>
         TaskEventRecord Schedule(PyFunction function);
 
